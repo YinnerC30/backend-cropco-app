@@ -25,6 +25,7 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto) {
+    // TODO: Encriptar contraseña
     try {
       const user = await this.userRepository.create(createUserDto);
       await this.userRepository.save(user);
