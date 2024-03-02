@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CropsService } from './crops.service';
 import { CreateCropDto } from './dto/create-crop.dto';
@@ -28,17 +29,20 @@ export class CropsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.cropsService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCropDto: UpdateCropDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateCropDto: UpdateCropDto,
+  ) {
     return this.cropsService.update(id, updateCropDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.cropsService.remove(id);
   }
 }

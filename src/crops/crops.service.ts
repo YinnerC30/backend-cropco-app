@@ -32,6 +32,9 @@ export class CropsService {
   findAll(paginationDto: PaginationDto) {
     const { limit = 10, offset = 0 } = paginationDto;
     return this.cropRepository.find({
+      order: {
+        name: 'ASC',
+      },
       take: limit,
       skip: offset,
     });
