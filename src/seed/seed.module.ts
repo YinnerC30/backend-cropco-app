@@ -8,6 +8,7 @@ import { CropsModule } from 'src/crops/crops.module';
 import { EmployeesModule } from 'src/employees/employees.module';
 import { ClientsModule } from 'src/clients/clients.module';
 import { SuppliersModule } from 'src/suppliers/suppliers.module';
+import { SuppliesModule } from 'src/supplies/supplies.module';
 
 @Module({
   controllers: [SeedController],
@@ -18,6 +19,7 @@ import { SuppliersModule } from 'src/suppliers/suppliers.module';
     EmployeesModule,
     ClientsModule,
     SuppliersModule,
+    SuppliesModule,
   ],
 })
 export class SeedModule {}

@@ -1,9 +1,12 @@
+import { UnitOfMeasure } from 'src/supplies/entities/supply.entity';
+
 export interface Seed {
   users: User[];
   crops: Crop[];
   employees: Employee[];
   clients: Client[];
   suppliers: Supplier[];
+  supplies: Supply[];
 }
 
 export interface User {
@@ -42,6 +45,12 @@ export interface Crop {
   location: string;
   date_of_creation: string;
   date_of_termination: string;
+}
+export interface Supply {
+  name: string;
+  brand: string;
+  unit_of_measure: UnitOfMeasure;
+  observation: string;
 }
 
 export const initialData: Seed = {
@@ -593,6 +602,98 @@ export const initialData: Seed = {
       email: 'william.martinez@example.com',
       cell_phone_number: '9876543210',
       address: '357 Willow Dr',
+    },
+  ],
+  supplies: [
+    {
+      name: 'Fertilizer 1',
+      brand: 'Brand A',
+      unit_of_measure: 'GRAMOS',
+      observation: 'Observation 1',
+    },
+    {
+      name: 'Pesticide 1',
+      brand: 'Brand B',
+      unit_of_measure: 'MILILITROS',
+      observation: 'Observation 2',
+    },
+    {
+      name: 'Seeds 1',
+      brand: 'Brand C',
+      unit_of_measure: 'GRAMOS',
+      observation: 'Observation 3',
+    },
+    {
+      name: 'Fertilizer 2',
+      brand: 'Brand A',
+      unit_of_measure: 'GRAMOS',
+      observation: 'Observation 4',
+    },
+    {
+      name: 'Pesticide 2',
+      brand: 'Brand B',
+      unit_of_measure: 'MILILITROS',
+      observation: 'Observation 5',
+    },
+    {
+      name: 'Seeds 2',
+      brand: 'Brand C',
+      unit_of_measure: 'GRAMOS',
+      observation: 'Observation 6',
+    },
+    {
+      name: 'Fertilizer 3',
+      brand: 'Brand A',
+      unit_of_measure: 'GRAMOS',
+      observation: 'Observation 7',
+    },
+    {
+      name: 'Pesticide 3',
+      brand: 'Brand B',
+      unit_of_measure: 'MILILITROS',
+      observation: 'Observation 8',
+    },
+    {
+      name: 'Seeds 3',
+      brand: 'Brand C',
+      unit_of_measure: 'GRAMOS',
+      observation: 'Observation 9',
+    },
+    {
+      name: 'Fertilizer 4',
+      brand: 'Brand A',
+      unit_of_measure: 'GRAMOS',
+      observation: 'Observation 10',
+    },
+    {
+      name: 'Pesticide 4',
+      brand: 'Brand B',
+      unit_of_measure: 'MILILITROS',
+      observation: 'Observation 11',
+    },
+    {
+      name: 'Seeds 4',
+      brand: 'Brand C',
+      unit_of_measure: 'GRAMOS',
+      observation: 'Observation 12',
+    },
+    {
+      name: 'Fertilizer 5',
+      brand: 'Brand A',
+      unit_of_measure: 'GRAMOS',
+      observation: 'Observation 13',
+    },
+    {
+      name: 'Pesticide 5',
+      brand: 'Brand B',
+      unit_of_measure: 'MILILITROS',
+      observation: 'Observation 14',
+    },
+    {
+      name: 'Seeds 5',
+      brand: 'Brand C',
+      unit_of_measure: 'GRAMOS',
+      observation: 'Observation 15',
     },
   ],
 };
