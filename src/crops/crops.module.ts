@@ -8,5 +8,6 @@ import { cropProviders } from './crops.providers';
   imports: [DatabaseModule],
   controllers: [CropsController],
   providers: [...cropProviders, CropsService],
+  exports: [CropsService],
 })
 export class CropsModule {}

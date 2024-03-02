@@ -9,6 +9,7 @@ import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Repository } from 'typeorm';
 import { Crop } from './entities/crop.entity';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class CropsService {
@@ -28,8 +29,12 @@ export class CropsService {
     }
   }
 
-  findAll() {
-    return this.cropRepository.find();
+  findAll(paginationDto: PaginationDto) {
+    const { limit = 10, offset = 0 } = paginationDto;
+    return this.cropRepository.find({
+      take: limit,
+      skip: offset,
+    });
   }
 
   async findOne(id: string) {
@@ -50,6 +55,16 @@ export class CropsService {
   async remove(id: string) {
     const crop = await this.findOne(id);
     return this.cropRepository.remove(crop);
+  }
+
+  async deleteAllCrops() {
+    const query = this.cropRepository.createQueryBuilder('crop');
+
+    try {
+      return await query.delete().where({}).execute();
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
 
   private handleDBExceptions(error: any) {

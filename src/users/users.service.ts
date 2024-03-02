@@ -10,25 +10,29 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger('UsersService');
   constructor(
     @Inject('USER_REPOSITORY')
-    private userRepository: Repository<User>,
+    private usersRepository: Repository<User>,
   ) {}
 
-  async findAll() {
-    // TODO: Add pagination
-    return this.userRepository.find();
+  async findAll(paginationDto: PaginationDto) {
+    const { limit = 10, offset = 0 } = paginationDto;
+    return this.usersRepository.find({
+      take: limit,
+      skip: offset,
+    });
   }
 
   async create(createUserDto: CreateUserDto) {
     // TODO: Encriptar contraseña
     try {
-      const user = await this.userRepository.create(createUserDto);
-      await this.userRepository.save(user);
+      const user = await this.usersRepository.create(createUserDto);
+      await this.usersRepository.save(user);
       return user;
     } catch (error) {
       this.handleDBExceptions(error);
@@ -36,14 +40,14 @@ export class UsersService {
   }
 
   async findOne(id: string) {
-    const user = await this.userRepository.findOneBy({ id });
+    const user = await this.usersRepository.findOneBy({ id });
     if (!user) throw new NotFoundException(`User with id: ${id} not found`);
     return user;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
     try {
-      const user = await this.userRepository.update(id, updateUserDto);
+      const user = await this.usersRepository.update(id, updateUserDto);
       return user;
     } catch (error) {
       this.handleDBExceptions(error);
@@ -52,7 +56,17 @@ export class UsersService {
 
   async remove(id: string) {
     const user = await this.findOne(id);
-    return this.userRepository.remove(user);
+    return this.usersRepository.remove(user);
+  }
+
+  async deleteAllUsers() {
+    const query = this.usersRepository.createQueryBuilder('user');
+
+    try {
+      return await query.delete().where({}).execute();
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
 
   private handleDBExceptions(error: any) {
