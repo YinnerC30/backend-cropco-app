@@ -2,17 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { UsersService } from './../users/users.service';
 import { initialData } from './data/seed-data';
 import { CropsService } from 'src/crops/crops.service';
+import { EmployeesService } from 'src/employees/employees.service';
 
 @Injectable()
 export class SeedService {
   constructor(
     private readonly usersService: UsersService,
     private readonly cropsService: CropsService,
+    private readonly employeesService: EmployeesService,
   ) {}
 
   async runSeed() {
     await this.insertNewUsers();
     await this.insertNewCrops();
+    await this.insertNewEmployees();
 
     return 'SEED EXECUTED';
   }
@@ -44,6 +47,21 @@ export class SeedService {
       insertPromises.push(
         this.cropsService.create({ units: Number(units), ...rest }),
       );
+    });
+
+    await Promise.all(insertPromises);
+
+    return true;
+  }
+  private async insertNewEmployees() {
+    await this.employeesService.deleteAllEmployees();
+
+    const employees = initialData.employees;
+
+    const insertPromises = [];
+
+    employees.forEach((employee) => {
+      insertPromises.push(this.employeesService.create(employee));
     });
 
     await Promise.all(insertPromises);

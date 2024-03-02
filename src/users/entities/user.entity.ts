@@ -1,22 +1,11 @@
+import { PersonalInformation } from 'src/common/entities/personal-information.entity';
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
-export class User {
+export class User extends PersonalInformation {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ type: 'varchar', length: 100 })
-  first_name: string;
-
-  @Column({ type: 'varchar', length: 100 })
-  last_name: string;
-
-  @Column({ type: 'varchar', length: 100, unique: true })
-  email: string;
-
-  @Column({ type: 'varchar', length: 100 })
   password: string;
-
-  @Column({ type: 'varchar', length: 10 })
-  cell_phone_number: string;
 }
