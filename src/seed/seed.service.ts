@@ -4,6 +4,7 @@ import { initialData } from './data/seed-data';
 import { CropsService } from 'src/crops/crops.service';
 import { EmployeesService } from 'src/employees/employees.service';
 import { ClientsService } from 'src/clients/clients.service';
+import { SuppliersService } from 'src/suppliers/suppliers.service';
 
 @Injectable()
 export class SeedService {
@@ -12,6 +13,7 @@ export class SeedService {
     private readonly cropsService: CropsService,
     private readonly employeesService: EmployeesService,
     private readonly clientsService: ClientsService,
+    private readonly suppliersService: SuppliersService,
   ) {}
 
   async runSeed() {
@@ -19,7 +21,7 @@ export class SeedService {
     await this.insertNewCrops();
     await this.insertNewEmployees();
     await this.insertNewClients();
-    // TODO: Agregar para clients
+    await this.insertNewSuppliers();
 
     return 'SEED EXECUTED';
   }
@@ -81,6 +83,21 @@ export class SeedService {
 
     clients.forEach((client) => {
       insertPromises.push(this.clientsService.create(client));
+    });
+
+    await Promise.all(insertPromises);
+
+    return true;
+  }
+  private async insertNewSuppliers() {
+    await this.suppliersService.deleteAllSupplier();
+
+    const suppliers = initialData.suppliers;
+
+    const insertPromises = [];
+
+    suppliers.forEach((supplier) => {
+      insertPromises.push(this.suppliersService.create(supplier));
     });
 
     await Promise.all(insertPromises);

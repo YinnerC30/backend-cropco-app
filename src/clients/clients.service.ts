@@ -14,7 +14,7 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class ClientsService {
-  private readonly logger = new Logger('EmployeesService');
+  private readonly logger = new Logger('ClientsService');
   constructor(
     @Inject('CLIENT_REPOSITORY')
     private clientRepository: Repository<Client>,

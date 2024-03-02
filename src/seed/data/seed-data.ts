@@ -3,6 +3,7 @@ export interface Seed {
   crops: Crop[];
   employees: Employee[];
   clients: Client[];
+  suppliers: Supplier[];
 }
 
 export interface User {
@@ -25,6 +26,14 @@ export interface Client {
   email: string;
   cell_phone_number: string;
   address: string;
+}
+export interface Supplier {
+  first_name: string;
+  last_name: string;
+  email: string;
+  cell_phone_number: string;
+  address: string;
+  company_name?: string;
 }
 export interface Crop {
   name: string;
@@ -373,6 +382,113 @@ export const initialData: Seed = {
     },
   ],
   clients: [
+    {
+      first_name: 'John',
+      last_name: 'Doe',
+      email: 'john.doe@example.com',
+      cell_phone_number: '1234567890',
+      address: '123 Main St',
+    },
+    {
+      first_name: 'Jane',
+      last_name: 'Smith',
+      email: 'jane.smith@example.com',
+      cell_phone_number: '0987654321',
+      address: '456 Elm St',
+    },
+    {
+      first_name: 'Michael',
+      last_name: 'Johnson',
+      email: 'michael.johnson@example.com',
+      cell_phone_number: '9876543210',
+      address: '789 Oak St',
+    },
+    {
+      first_name: 'Emily',
+      last_name: 'Brown',
+      email: 'emily.brown@example.com',
+      cell_phone_number: '0123456789',
+      address: '321 Maple Ave',
+    },
+    {
+      first_name: 'Daniel',
+      last_name: 'Taylor',
+      email: 'daniel.taylor@example.com',
+      cell_phone_number: '9876543210',
+      address: '654 Pine Rd',
+    },
+    {
+      first_name: 'Olivia',
+      last_name: 'Miller',
+      email: 'olivia.miller@example.com',
+      cell_phone_number: '0123456789',
+      address: '987 Cedar Ln',
+    },
+    {
+      first_name: 'Matthew',
+      last_name: 'Anderson',
+      email: 'matthew.anderson@example.com',
+      cell_phone_number: '1234567890',
+      address: '159 Birch Blvd',
+    },
+    {
+      first_name: 'Sophia',
+      last_name: 'Thomas',
+      email: 'sophia.thomas@example.com',
+      cell_phone_number: '0987654321',
+      address: '753 Willow Dr',
+    },
+    {
+      first_name: 'David',
+      last_name: 'Jackson',
+      email: 'david.jackson@example.com',
+      cell_phone_number: '9876543210',
+      address: '852 Oak St',
+    },
+    {
+      first_name: 'Ava',
+      last_name: 'White',
+      email: 'ava.white@example.com',
+      cell_phone_number: '0123456789',
+      address: '369 Elm St',
+    },
+    {
+      first_name: 'Joseph',
+      last_name: 'Harris',
+      email: 'joseph.harris@example.com',
+      cell_phone_number: '9876543210',
+      address: '753 Maple Ave',
+    },
+    {
+      first_name: 'Mia',
+      last_name: 'Martin',
+      email: 'mia.martin@example.com',
+      cell_phone_number: '0123456789',
+      address: '258 Pine Rd',
+    },
+    {
+      first_name: 'Andrew',
+      last_name: 'Thompson',
+      email: 'andrew.thompson@example.com',
+      cell_phone_number: '1234567890',
+      address: '654 Cedar Ln',
+    },
+    {
+      first_name: 'Isabella',
+      last_name: 'Garcia',
+      email: 'isabella.garcia@example.com',
+      cell_phone_number: '0987654321',
+      address: '951 Birch Blvd',
+    },
+    {
+      first_name: 'William',
+      last_name: 'Martinez',
+      email: 'william.martinez@example.com',
+      cell_phone_number: '9876543210',
+      address: '357 Willow Dr',
+    },
+  ],
+  suppliers: [
     {
       first_name: 'John',
       last_name: 'Doe',
