@@ -50,11 +50,7 @@ export class EmployeesService {
   }
 
   async update(id: string, updateEmployeeDto: UpdateEmployeeDto) {
-    const employee = await this.findOne(id);
-    if (!employee) {
-      throw new NotFoundException(`Employee with id: ${id} not found`);
-    }
-
+    await this.findOne(id);
     await this.employeeRepository.update(id, updateEmployeeDto);
   }
 

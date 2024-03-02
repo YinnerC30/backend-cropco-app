@@ -47,24 +47,20 @@ export class CropsService {
   }
 
   async update(id: string, updateCropDto: UpdateCropDto) {
-    try {
-      await this.cropRepository.update(id, updateCropDto);
-      return updateCropDto;
-    } catch (error) {
-      this.handleDBExceptions(error);
-    }
+    await this.findOne(id);
+    await this.cropRepository.update(id, updateCropDto);
   }
 
   async remove(id: string) {
     const crop = await this.findOne(id);
-    return this.cropRepository.remove(crop);
+    await this.cropRepository.remove(crop);
   }
 
   async deleteAllCrops() {
     const query = this.cropRepository.createQueryBuilder('crop');
 
     try {
-      return await query.delete().where({}).execute();
+      await query.delete().where({}).execute();
     } catch (error) {
       this.handleDBExceptions(error);
     }

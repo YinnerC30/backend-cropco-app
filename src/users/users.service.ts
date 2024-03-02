@@ -21,8 +21,8 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    // TODO: Encriptar contraseña
     try {
+      // TODO: Encriptar contraseña
       const user = await this.usersRepository.create(createUserDto);
       await this.usersRepository.save(user);
       return user;
@@ -49,24 +49,20 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    try {
-      const user = await this.usersRepository.update(id, updateUserDto);
-      return user;
-    } catch (error) {
-      this.handleDBExceptions(error);
-    }
+    await this.findOne(id);
+    await this.usersRepository.update(id, updateUserDto);
   }
 
   async remove(id: string) {
     const user = await this.findOne(id);
-    return this.usersRepository.remove(user);
+    await this.usersRepository.remove(user);
   }
 
   async deleteAllUsers() {
     const query = this.usersRepository.createQueryBuilder('user');
 
     try {
-      return await query.delete().where({}).execute();
+      await query.delete().where({}).execute();
     } catch (error) {
       this.handleDBExceptions(error);
     }
