@@ -20,14 +20,6 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) {}
 
-  async findAll(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
-    return this.usersRepository.find({
-      take: limit,
-      skip: offset,
-    });
-  }
-
   async create(createUserDto: CreateUserDto) {
     // TODO: Encriptar contraseña
     try {
@@ -37,6 +29,14 @@ export class UsersService {
     } catch (error) {
       this.handleDBExceptions(error);
     }
+  }
+
+  async findAll(paginationDto: PaginationDto) {
+    const { limit = 10, offset = 0 } = paginationDto;
+    return this.usersRepository.find({
+      take: limit,
+      skip: offset,
+    });
   }
 
   async findOne(id: string) {
