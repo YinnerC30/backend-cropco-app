@@ -3,6 +3,7 @@ import { UsersService } from './../users/users.service';
 import { initialData } from './data/seed-data';
 import { CropsService } from 'src/crops/crops.service';
 import { EmployeesService } from 'src/employees/employees.service';
+import { ClientsService } from 'src/clients/clients.service';
 
 @Injectable()
 export class SeedService {
@@ -10,12 +11,15 @@ export class SeedService {
     private readonly usersService: UsersService,
     private readonly cropsService: CropsService,
     private readonly employeesService: EmployeesService,
+    private readonly clientsService: ClientsService,
   ) {}
 
   async runSeed() {
     await this.insertNewUsers();
     await this.insertNewCrops();
     await this.insertNewEmployees();
+    await this.insertNewClients();
+    // TODO: Agregar para clients
 
     return 'SEED EXECUTED';
   }
@@ -62,6 +66,21 @@ export class SeedService {
 
     employees.forEach((employee) => {
       insertPromises.push(this.employeesService.create(employee));
+    });
+
+    await Promise.all(insertPromises);
+
+    return true;
+  }
+  private async insertNewClients() {
+    await this.clientsService.deleteAllClients();
+
+    const clients = initialData.clients;
+
+    const insertPromises = [];
+
+    clients.forEach((client) => {
+      insertPromises.push(this.clientsService.create(client));
     });
 
     await Promise.all(insertPromises);
