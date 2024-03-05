@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Harvest } from 'src/harvest/entities/harvest.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Crop {
@@ -16,4 +17,7 @@ export class Crop {
   date_of_creation: string;
   @Column({ type: 'date' })
   date_of_termination: string;
+
+  @OneToMany(() => Harvest, (harvest) => harvest.crop)
+  harvests: Harvest[];
 }
