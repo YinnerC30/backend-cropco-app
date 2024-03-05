@@ -1,5 +1,13 @@
+import { HarvestStock } from 'src/harvest/entities/harvest-stock.entity';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Crop {
@@ -18,6 +26,12 @@ export class Crop {
   @Column({ type: 'date' })
   date_of_termination: string;
 
-  @OneToMany(() => Harvest, (harvest) => harvest.crop)
+  // External relations
+
+  @OneToMany(() => Harvest, (harvest) => harvest.cropId)
   harvests: Harvest[];
+
+  // @OneToOne(() => HarvestStock)
+  // @JoinColumn({ name: 'harvestStockId' })
+  // harvest_stock: HarvestStock;
 }

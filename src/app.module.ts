@@ -18,6 +18,7 @@ import { Supplier } from './suppliers/entities/supplier.entity';
 import { Supply } from './supplies/entities/supply.entity';
 import { User } from './users/entities/user.entity';
 import { HarvestDetails } from './harvest/entities/harvest-details.entity';
+import { HarvestStock } from './harvest/entities/harvest-stock.entity';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { HarvestDetails } from './harvest/entities/harvest-details.entity';
       username: 'postgres',
       password: 'admin',
       database: 'cropco',
+      logging: true,
       entities: [
         Client,
         Crop,
@@ -38,6 +40,7 @@ import { HarvestDetails } from './harvest/entities/harvest-details.entity';
         Supply,
         User,
         HarvestDetails,
+        HarvestStock,
       ],
       synchronize: true,
     }),

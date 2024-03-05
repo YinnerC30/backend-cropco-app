@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Harvest } from './harvest.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
 
@@ -24,11 +30,14 @@ export class HarvestDetails {
   // Foreign Keys
   @ManyToOne(() => Harvest, (harvest) => harvest.harvest_details, {
     nullable: false,
+    cascade: true,
   })
-  harvest: Harvest;
+  @JoinColumn({ name: 'harvestId' })
+  harvestId: Harvest;
 
   @ManyToOne(() => Employee, (employee) => employee.harvest_details, {
     nullable: false,
   })
-  employee: Employee;
+  @JoinColumn({ name: 'employeeId' })
+  employeeId: Employee;
 }

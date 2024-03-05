@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { HarvestDetails } from './harvest-details.entity';
+import { JoinColumn } from 'typeorm';
 
 export type UnitOfMeasure = 'KILOGRAMOS' | 'LIBRAS';
 
@@ -32,10 +33,17 @@ export class Harvest {
   observation: string;
 
   // Foreign Keys
-  @ManyToOne(() => Crop, (crop) => crop.harvests, { nullable: false })
-  crop: Crop;
+  @ManyToOne(() => Crop, (crop) => crop.harvests, {
+    nullable: false,
+    cascade: ['remove'],
+  })
+  @JoinColumn({ name: 'cropId' })
+  cropId: string;
 
   // External Relations
-  @OneToMany(() => HarvestDetails, (harvest_details) => harvest_details.harvest)
+  @OneToMany(
+    () => HarvestDetails,
+    (harvest_details) => harvest_details.harvestId,
+  )
   harvest_details: HarvestDetails[];
 }
