@@ -1,5 +1,12 @@
 import { Crop } from 'src/crops/entities/crop.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { HarvestDetails } from './harvest-details.entity';
 
 export type UnitOfMeasure = 'KILOGRAMOS' | 'LIBRAS';
 
@@ -12,9 +19,6 @@ export class Harvest {
   })
   date: string;
 
-  @ManyToOne(() => Crop, (crop) => crop.harvests, { nullable: false })
-  crop: Crop;
-
   @Column({ type: 'enum', enum: ['KILOGRAMOS', 'LIBRAS'] })
   unit_of_measure: UnitOfMeasure;
 
@@ -26,4 +30,12 @@ export class Harvest {
 
   @Column({ type: 'varchar', length: 500 })
   observation: string;
+
+  // Foreign Keys
+  @ManyToOne(() => Crop, (crop) => crop.harvests, { nullable: false })
+  crop: Crop;
+
+  // External Relations
+  @OneToMany(() => HarvestDetails, (harvest_details) => harvest_details.harvest)
+  harvest_details: HarvestDetails[];
 }

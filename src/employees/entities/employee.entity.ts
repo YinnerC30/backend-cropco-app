@@ -1,5 +1,6 @@
 import { PersonalInformation } from 'src/common/entities/personal-information.entity';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 @Entity()
 export class Employee extends PersonalInformation {
   @PrimaryGeneratedColumn('uuid')
@@ -7,4 +8,11 @@ export class Employee extends PersonalInformation {
 
   @Column({ type: 'varchar', length: 200 })
   address: string;
+
+  // External relations
+  @OneToMany(
+    () => HarvestDetails,
+    (harvest_details) => harvest_details.employee,
+  )
+  harvest_details: HarvestDetails[];
 }
