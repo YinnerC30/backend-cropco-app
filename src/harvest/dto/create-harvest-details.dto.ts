@@ -12,6 +12,7 @@ export class HarvestDetailsDto {
   @IsUUID()
   employee: DeepPartial<Employee>;
 
+  @IsOptional()
   @IsUUID()
   harvest: DeepPartial<Harvest>;
 
