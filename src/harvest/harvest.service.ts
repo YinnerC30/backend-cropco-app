@@ -3,11 +3,12 @@ import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { Harvest } from './entities/harvest.entity';
 import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class HarvestService {
   constructor(
-    @Inject('HARVEST_REPOSITORY')
+    @InjectRepository(Harvest)
     private readonly harvestRepository: Repository<Harvest>,
   ) {}
 

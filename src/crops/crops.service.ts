@@ -4,19 +4,21 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Repository } from 'typeorm';
 import { Crop } from './entities/crop.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class CropsService {
   logger: any;
   constructor(
-    @Inject('CROP_REPOSITORY')
-    private cropRepository: Repository<Crop>,
+    @InjectRepository(Crop)
+    private readonly cropRepository: Repository<Crop>,
   ) {}
 
   async create(createCropDto: CreateCropDto) {

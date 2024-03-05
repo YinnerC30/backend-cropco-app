@@ -11,13 +11,14 @@ import { UpdateClientDto } from './dto/update-client.dto';
 import { Repository } from 'typeorm';
 import { Client } from './entities/client.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class ClientsService {
   private readonly logger = new Logger('ClientsService');
   constructor(
-    @Inject('CLIENT_REPOSITORY')
-    private clientRepository: Repository<Client>,
+    @InjectRepository(Client)
+    private readonly clientRepository: Repository<Client>,
   ) {}
 
   async create(createClientDto: CreateClientDto) {

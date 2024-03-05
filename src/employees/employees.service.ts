@@ -11,13 +11,14 @@ import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { Repository } from 'typeorm';
 import { Employee } from './entities/employee.entity';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class EmployeesService {
   private readonly logger = new Logger('EmployeesService');
   constructor(
-    @Inject('EMPLOYEE_REPOSITORY')
-    private employeeRepository: Repository<Employee>,
+    @InjectRepository(Employee)
+    private readonly employeeRepository: Repository<Employee>,
   ) {}
 
   async create(createEmployeeDto: CreateEmployeeDto) {

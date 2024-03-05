@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { HarvestService } from './harvest.service';
 import { HarvestController } from './harvest.controller';
-import { DatabaseModule } from 'src/database/database.module';
-import { harvestProviders } from './harvest.providers';
+import { Harvest } from './entities/harvest.entity';
+import { HarvestDetails } from './entities/harvest-details.entity';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [TypeOrmModule.forFeature([Harvest, HarvestDetails])],
   controllers: [HarvestController],
-  providers: [...harvestProviders, HarvestService],
+  providers: [HarvestService],
+  exports: [TypeOrmModule, HarvestService],
 })
 export class HarvestModule {}

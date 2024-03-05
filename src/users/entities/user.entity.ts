@@ -1,4 +1,4 @@
-import { PersonalInformation } from 'src/common/entities/personal-information.entity';
+import { PersonalInformation } from '../../common/entities/personal-information.entity';
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()

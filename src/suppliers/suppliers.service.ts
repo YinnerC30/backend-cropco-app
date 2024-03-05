@@ -11,13 +11,14 @@ import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Supplier } from './entities/supplier.entity';
 import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class SuppliersService {
   private readonly logger = new Logger('SuppliersService');
   constructor(
-    @Inject('SUPPLIER_REPOSITORY')
-    private supplierRepository: Repository<Supplier>,
+    @InjectRepository(Supplier)
+    private readonly supplierRepository: Repository<Supplier>,
   ) {}
 
   async create(createSupplierDto: CreateSupplierDto) {
