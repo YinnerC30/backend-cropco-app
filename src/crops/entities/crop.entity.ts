@@ -28,7 +28,7 @@ export class Crop {
 
   // External relations
 
-  @OneToMany(() => Harvest, (harvest) => harvest.cropId)
+  @OneToMany(() => Harvest, (harvest) => harvest.crop)
   harvests: Harvest[];
 
   // @OneToOne(() => HarvestStock)

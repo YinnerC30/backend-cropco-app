@@ -12,9 +12,9 @@ export class HarvestStock {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Crop, { nullable: false })
+  @OneToOne(() => Crop, { eager: true })
   @JoinColumn({ name: 'cropId' })
-  cropId: string;
+  crop: Crop;
 
   @Column({
     type: 'int4',

@@ -12,7 +12,7 @@ export class Employee extends PersonalInformation {
   // External relations
   @OneToMany(
     () => HarvestDetails,
-    (harvest_details) => harvest_details.employeeId,
+    (harvest_details) => harvest_details.employee,
   )
   harvest_details: HarvestDetails[];
 }

@@ -4,7 +4,7 @@ import { DeepPartial } from 'typeorm';
 
 export class HarvestStockDto {
   @IsUUID()
-  cropId: string;
+  crop: DeepPartial<Crop>;
   @IsInt()
   @IsPositive()
   total: number;

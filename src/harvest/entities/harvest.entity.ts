@@ -1,5 +1,6 @@
 import { Crop } from 'src/crops/entities/crop.entity';
 import {
+  BeforeInsert,
   Column,
   Entity,
   ManyToOne,
@@ -8,6 +9,7 @@ import {
 } from 'typeorm';
 import { HarvestDetails } from './harvest-details.entity';
 import { JoinColumn } from 'typeorm';
+import { BadRequestException } from '@nestjs/common';
 
 export type UnitOfMeasure = 'KILOGRAMOS' | 'LIBRAS';
 
@@ -33,17 +35,15 @@ export class Harvest {
   observation: string;
 
   // Foreign Keys
-  @ManyToOne(() => Crop, (crop) => crop.harvests, {
-    nullable: false,
-    cascade: ['remove'],
-  })
+  @ManyToOne(() => Crop, (crop) => crop.harvests, { eager: true })
   @JoinColumn({ name: 'cropId' })
-  cropId: string;
+  crop: Crop;
 
   // External Relations
   @OneToMany(
     () => HarvestDetails,
-    (harvest_details) => harvest_details.harvestId,
+    (harvest_details) => harvest_details.harvest,
+    { cascade: ['remove', 'soft-remove'] },
   )
   harvest_details: HarvestDetails[];
 }

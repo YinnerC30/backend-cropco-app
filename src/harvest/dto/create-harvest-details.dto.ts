@@ -10,11 +10,11 @@ import { DeepPartial } from 'typeorm';
 import { Harvest } from '../entities/harvest.entity';
 export class HarvestDetailsDto {
   @IsUUID()
-  employeeId: DeepPartial<Employee>;
+  employee: DeepPartial<Employee>;
 
   @IsOptional()
   @IsUUID()
-  harvestId: DeepPartial<Harvest>;
+  harvest: DeepPartial<Harvest>;
 
   @IsInt()
   @IsPositive()

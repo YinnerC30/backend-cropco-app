@@ -31,6 +31,7 @@ import { HarvestStock } from './harvest/entities/harvest-stock.entity';
       password: 'admin',
       database: 'cropco',
       logging: true,
+      // dropSchema: true,
       entities: [
         Client,
         Crop,

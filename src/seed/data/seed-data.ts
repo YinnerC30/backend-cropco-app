@@ -1,4 +1,5 @@
 import { UnitOfMeasure } from 'src/supplies/entities/supply.entity';
+import { DeepPartial } from 'typeorm';
 
 export interface Seed {
   users: User[];
@@ -7,6 +8,7 @@ export interface Seed {
   clients: Client[];
   suppliers: Supplier[];
   supplies: Supply[];
+  harvests: Harvest[];
 }
 
 export interface User {
@@ -51,6 +53,20 @@ export interface Supply {
   brand: string;
   unit_of_measure: UnitOfMeasure;
   observation: string;
+}
+
+export interface Harvest {
+  date: string;
+  unit_of_measure: string;
+  total: number;
+  value_pay: number;
+  observation: string;
+  harvest_details: HarvestDetail[];
+}
+
+export interface HarvestDetail {
+  total: number;
+  value_pay: number;
 }
 
 export const initialData: Seed = {
@@ -694,6 +710,25 @@ export const initialData: Seed = {
       brand: 'Brand C',
       unit_of_measure: 'GRAMOS',
       observation: 'Observation 15',
+    },
+  ],
+  harvests: [
+    {
+      date: '2024-05-10',
+      unit_of_measure: 'KILOGRAMOS',
+      total: 4000,
+      value_pay: 100000,
+      observation: 'Ninguna por el momento',
+      harvest_details: [
+        {
+          total: 2000,
+          value_pay: 50000,
+        },
+        {
+          total: 2000,
+          value_pay: 50000,
+        },
+      ],
     },
   ],
 };

@@ -6,32 +6,51 @@ import { EmployeesService } from 'src/employees/employees.service';
 import { ClientsService } from 'src/clients/clients.service';
 import { SuppliersService } from 'src/suppliers/suppliers.service';
 import { SuppliesService } from 'src/supplies/supplies.service';
+import { HarvestService } from 'src/harvest/harvest.service';
+import { DataSource, DeepPartial } from 'typeorm';
+import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
+import { Employee } from 'src/employees/entities/employee.entity';
 
 @Injectable()
 export class SeedService {
+  private cropIds = [];
+  private employeeIds = [];
+
   constructor(
+    private dataSource: DataSource,
     private readonly usersService: UsersService,
     private readonly cropsService: CropsService,
     private readonly employeesService: EmployeesService,
     private readonly clientsService: ClientsService,
     private readonly suppliersService: SuppliersService,
     private readonly suppliesService: SuppliesService,
+    private readonly harvestsService: HarvestService,
   ) {}
 
   async runSeed() {
+    await this.deleteTables();
     await this.insertNewUsers();
-    await this.insertNewCrops();
-    await this.insertNewEmployees();
     await this.insertNewClients();
     await this.insertNewSuppliers();
     await this.insertNewSupplies();
+    await this.insertNewEmployees();
+    await this.insertNewCrops();
+    await this.insertNewHarvests();
 
     return 'SEED EXECUTED';
   }
 
-  private async insertNewUsers() {
+  private async deleteTables() {
     await this.usersService.deleteAllUsers();
+    await this.clientsService.deleteAllClients();
+    await this.suppliersService.deleteAllSupplier();
+    await this.suppliesService.deleteAllSupplies();
+    await this.harvestsService.deleteAllHarvest();
+    await this.cropsService.deleteAllCrops();
+    await this.employeesService.deleteAllEmployees();
+  }
 
+  private async insertNewUsers() {
     const Users = initialData.users;
 
     const insertPromises = [];
@@ -45,8 +64,6 @@ export class SeedService {
     return true;
   }
   private async insertNewCrops() {
-    await this.cropsService.deleteAllCrops();
-
     const crops = initialData.crops;
 
     const insertPromises = [];
@@ -58,13 +75,13 @@ export class SeedService {
       );
     });
 
-    await Promise.all(insertPromises);
+    const result = await Promise.all(insertPromises);
+
+    this.cropIds = result.map((crop) => new String(crop.id).toString());
 
     return true;
   }
   private async insertNewEmployees() {
-    await this.employeesService.deleteAllEmployees();
-
     const employees = initialData.employees;
 
     const insertPromises = [];
@@ -73,13 +90,15 @@ export class SeedService {
       insertPromises.push(this.employeesService.create(employee));
     });
 
-    await Promise.all(insertPromises);
+    const result = await Promise.all(insertPromises);
+
+    this.employeeIds = result.map((employee) =>
+      new String(employee.id).toString(),
+    );
 
     return true;
   }
   private async insertNewClients() {
-    await this.clientsService.deleteAllClients();
-
     const clients = initialData.clients;
 
     const insertPromises = [];
@@ -93,8 +112,6 @@ export class SeedService {
     return true;
   }
   private async insertNewSuppliers() {
-    await this.suppliersService.deleteAllSupplier();
-
     const suppliers = initialData.suppliers;
 
     const insertPromises = [];
@@ -108,8 +125,6 @@ export class SeedService {
     return true;
   }
   private async insertNewSupplies() {
-    await this.suppliesService.deleteAllSupplies();
-
     const supplies = initialData.supplies;
 
     const insertPromises = [];
@@ -122,4 +137,40 @@ export class SeedService {
 
     return true;
   }
+  private async insertNewHarvests() {
+    const [crop1, crop2, crop3, crop4] = this.cropIds;
+    const crops = [crop1, crop2, crop3];
+    const [employee1, employee2]: DeepPartial<Employee>[] = this.employeeIds;
+
+    const initialHarvest: any = initialData.harvests[0];
+
+    const { harvest_details, ...rest } = initialHarvest;
+
+    const insertPromises = [];
+
+    for (let index = 0; index < 3; index++) {
+      const objectToCreate: CreateHarvestDto = {
+        ...rest,
+        crop: crops[index],
+        harvest_details: [
+          {
+            ...harvest_details[0],
+            employee: `${employee1}`,
+          },
+          {
+            ...harvest_details[1],
+            employee: `${employee2}`,
+          },
+        ],
+      };
+
+      insertPromises.push(this.harvestsService.create(objectToCreate));
+    }
+
+    await Promise.all(insertPromises);
+
+    return true;
+  }
+
+  private handleExceptions(error: any) {}
 }

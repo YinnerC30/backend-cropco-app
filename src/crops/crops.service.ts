@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -15,7 +14,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class CropsService {
-  logger: any;
+  private readonly logger = new Logger('CropsService');
   constructor(
     @InjectRepository(Crop)
     private readonly cropRepository: Repository<Crop>,

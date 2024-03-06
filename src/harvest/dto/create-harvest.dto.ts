@@ -20,7 +20,7 @@ export class CreateHarvestDto {
   date: string;
 
   @IsUUID()
-  cropId: string;
+  crop: DeepPartial<Crop>;
 
   @IsString()
   @IsIn(['KILOGRAMOS', 'LIBRAS'])
