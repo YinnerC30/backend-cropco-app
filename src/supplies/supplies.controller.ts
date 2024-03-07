@@ -13,6 +13,7 @@ import { SuppliesService } from './supplies.service';
 import { CreateSupplyDto } from './dto/create-supply.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { CreatePurchaseSuppliesDto } from './dto/create-purchase-supplies.dto';
 
 @Controller('supplies')
 export class SuppliesController {
@@ -44,5 +45,38 @@ export class SuppliesController {
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.suppliesService.remove(id);
+  }
+
+  // Purchase methods
+
+  @Post('/purchase')
+  purchase(@Body() createPurchaseSuppliesDto: CreatePurchaseSuppliesDto) {
+    return this.suppliesService.createPurchase(createPurchaseSuppliesDto);
+  }
+
+  @Get('/purchase/:id')
+  findOnePurchase(@Param('id', ParseUUIDPipe) id: string) {
+    return this.suppliesService.findOnePurchase(id);
+  }
+
+  @Get('/purchases')
+  findAllPurchases(@Query() paginationDto: PaginationDto) {
+    return this.suppliesService.findAllPurchases(paginationDto);
+  }
+
+  // TODO: Implementar método PATCH
+
+  @Delete('/purchase/:id')
+  removePurchase(@Param('id', ParseUUIDPipe) id: string) {
+    return this.suppliesService.removePurchase(id);
+  }
+
+  // Consumption methods
+
+  // TODO: Implementar metodos restantes
+
+  @Post('/consumption')
+  consumption() {
+    return this.suppliesService.createConsumption();
   }
 }

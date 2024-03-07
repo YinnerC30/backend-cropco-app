@@ -1,5 +1,7 @@
 import { HarvestStock } from 'src/harvest/entities/harvest-stock.entity';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
+import { SuppliesConsumptionDetails } from 'src/supplies/entities/supplies-consumption-details.entity';
+import { SuppliesConsumption } from 'src/supplies/entities/supplies-consumption.entity';
 import {
   Column,
   Entity,
@@ -31,7 +33,9 @@ export class Crop {
   @OneToMany(() => Harvest, (harvest) => harvest.crop)
   harvests: Harvest[];
 
-  // @OneToOne(() => HarvestStock)
-  // @JoinColumn({ name: 'harvestStockId' })
-  // harvest_stock: HarvestStock;
+  @OneToMany(
+    () => SuppliesConsumptionDetails,
+    (suppliesConsumptionDetails) => suppliesConsumptionDetails.crop,
+  )
+  suppliesConsumptionDetails: SuppliesConsumptionDetails;
 }

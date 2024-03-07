@@ -1,4 +1,14 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { SuppliesPurchaseDetails } from './supplies-purchase-details.entity';
+import { SuppliesStock } from './supplies-stock.entity';
+import { SuppliesConsumption } from './supplies-consumption.entity';
+import { SuppliesConsumptionDetails } from './supplies-consumption-details.entity';
 
 export type UnitOfMeasure = 'GRAMOS' | 'MILILITROS';
 
@@ -18,4 +28,21 @@ export class Supply {
 
   @Column({ type: 'varchar', length: 500 })
   observation: string;
+
+  // External relations
+
+  @OneToMany(
+    () => SuppliesPurchaseDetails,
+    (suppliesPurchaseDetails) => suppliesPurchaseDetails.supply,
+  )
+  purchaseDetails: SuppliesPurchaseDetails;
+
+  @OneToOne(() => SuppliesStock)
+  stock: SuppliesStock;
+
+  @OneToMany(
+    () => SuppliesConsumptionDetails,
+    (suppliesConsumptionDetails) => suppliesConsumptionDetails.supply,
+  )
+  suppliesConsumption: SuppliesConsumptionDetails;
 }

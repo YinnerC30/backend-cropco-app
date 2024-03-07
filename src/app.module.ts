@@ -19,6 +19,12 @@ import { Supply } from './supplies/entities/supply.entity';
 import { User } from './users/entities/user.entity';
 import { HarvestDetails } from './harvest/entities/harvest-details.entity';
 import { HarvestStock } from './harvest/entities/harvest-stock.entity';
+import { SuppliesPurchase } from './supplies/entities/supplies-purchase.entity';
+import { SuppliesPurchaseDetails } from './supplies/entities/supplies-purchase-details.entity';
+import { SuppliesStock } from './supplies/entities/supplies-stock.entity';
+import { SuppliesConsumption } from './supplies/entities/supplies-consumption.entity';
+import { SuppliesConsumptionDetails } from './supplies/entities/supplies-consumption-details.entity';
+import { DataSource } from 'typeorm';
 
 @Module({
   imports: [
@@ -42,6 +48,11 @@ import { HarvestStock } from './harvest/entities/harvest-stock.entity';
         User,
         HarvestDetails,
         HarvestStock,
+        SuppliesPurchase,
+        SuppliesPurchaseDetails,
+        SuppliesStock,
+        SuppliesConsumption,
+        SuppliesConsumptionDetails,
       ],
       synchronize: true,
     }),

@@ -1,5 +1,6 @@
 import { PersonalInformation } from '../../common/entities/personal-information.entity';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { SuppliesPurchaseDetails } from 'src/supplies/entities/supplies-purchase-details.entity';
 
 @Entity()
 export class Supplier extends PersonalInformation {
@@ -11,4 +12,11 @@ export class Supplier extends PersonalInformation {
 
   @Column({ type: 'varchar', length: 200 })
   address: string;
+
+  // External relations
+  @OneToMany(
+    () => SuppliesPurchaseDetails,
+    (suppliesPurchaseDetails) => suppliesPurchaseDetails.supplier,
+  )
+  purchaseSuppliesDetails: SuppliesPurchaseDetails;
 }

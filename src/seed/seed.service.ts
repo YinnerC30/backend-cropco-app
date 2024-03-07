@@ -10,11 +10,16 @@ import { HarvestService } from 'src/harvest/harvest.service';
 import { DataSource, DeepPartial } from 'typeorm';
 import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
 import { Employee } from 'src/employees/entities/employee.entity';
+import { CreatePurchaseSuppliesDto } from 'src/supplies/dto/create-purchase-supplies.dto';
+import { Supply } from 'src/supplies/entities/supply.entity';
+import { CreateSupplyDto } from 'src/supplies/dto/create-supply.dto';
 
 @Injectable()
 export class SeedService {
   private cropIds = [];
   private employeeIds = [];
+  private suppliesIds = [];
+  private suppliersIds = [];
 
   constructor(
     private dataSource: DataSource,
@@ -36,6 +41,7 @@ export class SeedService {
     await this.insertNewEmployees();
     await this.insertNewCrops();
     await this.insertNewHarvests();
+    await this.insertNewPurchaseSupplies();
 
     return 'SEED EXECUTED';
   }
@@ -43,6 +49,7 @@ export class SeedService {
   private async deleteTables() {
     await this.usersService.deleteAllUsers();
     await this.clientsService.deleteAllClients();
+    await this.suppliesService.deleteAllPurchaseSupplies();
     await this.suppliersService.deleteAllSupplier();
     await this.suppliesService.deleteAllSupplies();
     await this.harvestsService.deleteAllHarvest();
@@ -120,7 +127,11 @@ export class SeedService {
       insertPromises.push(this.suppliersService.create(supplier));
     });
 
-    await Promise.all(insertPromises);
+    const result = await Promise.all(insertPromises);
+
+    this.suppliersIds = result.map((supplier) =>
+      new String(supplier.id).toString(),
+    );
 
     return true;
   }
@@ -133,7 +144,9 @@ export class SeedService {
       insertPromises.push(this.suppliesService.create(supply));
     });
 
-    await Promise.all(insertPromises);
+    const result = await Promise.all(insertPromises);
+
+    this.suppliesIds = result.map((supply) => new String(supply.id).toString());
 
     return true;
   }
@@ -168,6 +181,47 @@ export class SeedService {
     }
 
     await Promise.all(insertPromises);
+
+    return true;
+  }
+  private async insertNewPurchaseSupplies() {
+    const [supply1, supply2, supply3] = this.suppliesIds;
+    const [supplier1] = this.suppliersIds;
+
+    const initialPurchase: any = initialData.purchaseSupplies[0];
+
+    const { details, ...rest } = initialPurchase;
+
+    const insertPromises = [];
+
+    for (let index = 0; index < 3; index++) {
+      const objectToCreate: CreatePurchaseSuppliesDto = {
+        ...rest,
+        details: [
+          {
+            ...details[0],
+            supplier: `${supplier1}`,
+            supply: `${supply1}`,
+          },
+          {
+            ...details[1],
+            supplier: `${supplier1}`,
+            supply: `${supply2}`,
+          },
+          {
+            ...details[2],
+            supplier: `${supplier1}`,
+            supply: `${supply3}`,
+          },
+        ],
+      };
+
+      await this.suppliesService.createPurchase(objectToCreate);
+
+      // insertPromises.push(this.suppliesService.createPurchase(objectToCreate));
+    }
+
+    // await Promise.all(insertPromises);
 
     return true;
   }
