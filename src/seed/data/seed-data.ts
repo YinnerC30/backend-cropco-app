@@ -61,7 +61,7 @@ export interface Harvest {
   total: number;
   value_pay: number;
   observation: string;
-  harvest_details: HarvestDetail[];
+  details: HarvestDetail[];
 }
 
 export interface HarvestDetail {
@@ -719,7 +719,7 @@ export const initialData: Seed = {
       total: 4000,
       value_pay: 100000,
       observation: 'Ninguna por el momento',
-      harvest_details: [
+      details: [
         {
           total: 2000,
           value_pay: 50000,

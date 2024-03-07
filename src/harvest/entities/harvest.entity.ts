@@ -9,7 +9,6 @@ import {
 } from 'typeorm';
 import { HarvestDetails } from './harvest-details.entity';
 import { JoinColumn } from 'typeorm';
-import { BadRequestException } from '@nestjs/common';
 
 export type UnitOfMeasure = 'KILOGRAMOS' | 'LIBRAS';
 
@@ -45,5 +44,5 @@ export class Harvest {
     (harvest_details) => harvest_details.harvest,
     { cascade: ['remove', 'soft-remove'] },
   )
-  harvest_details: HarvestDetails[];
+  details: HarvestDetails[];
 }

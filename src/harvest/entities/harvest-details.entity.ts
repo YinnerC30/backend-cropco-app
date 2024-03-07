@@ -28,7 +28,7 @@ export class HarvestDetails {
   payment_is_pending: boolean;
 
   // Foreign Keys
-  @ManyToOne(() => Harvest, (harvest) => harvest.harvest_details)
+  @ManyToOne(() => Harvest, (harvest) => harvest.details)
   @JoinColumn({ name: 'harvestId' })
   harvest: Harvest;
 

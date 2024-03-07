@@ -40,5 +40,5 @@ export class CreateHarvestDto {
   @ArrayNotEmpty()
   @ValidateNested()
   @Type(() => HarvestDetailsDto)
-  harvest_details: HarvestDetailsDto[];
+  details: HarvestDetailsDto[];
 }

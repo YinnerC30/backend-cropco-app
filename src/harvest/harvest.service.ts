@@ -38,7 +38,7 @@ export class HarvestService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const { harvest_details, ...rest } = createHarvestDto;
+      const { details, ...rest } = createHarvestDto;
 
       // Validar valores numéricos
       // const totalHarvest = rest.total;
@@ -67,7 +67,7 @@ export class HarvestService {
       // Guardar detalles de cosecha
       const arrayPromises = [];
 
-      for (const register of harvest_details) {
+      for (const register of details) {
         const registerToSave = queryRunner.manager.create(HarvestDetails, {
           harvest: id,
           ...register,
@@ -133,7 +133,7 @@ export class HarvestService {
       where: {
         id,
       },
-      relations: { harvest_details: true },
+      relations: { details: true },
     });
     if (!harvest)
       throw new NotFoundException(`Harvest with id: ${id} not found`);
@@ -153,12 +153,12 @@ export class HarvestService {
     try {
       // Obtener detalles de cosecha nueva
       // Nuevos
-      const newHarvestDetails = updateHarvestDto.harvest_details;
+      const newHarvestDetails = updateHarvestDto.details;
       const newIDsEmployees = newHarvestDetails.map((record) =>
         new String(record.employee).toString(),
       );
       // Antiguos
-      const oldHarvestDetails = harvest.harvest_details;
+      const oldHarvestDetails = harvest.details;
       const oldIDsEmployees = oldHarvestDetails.map((record) =>
         new String(record.employee.id).toString(),
       );
@@ -232,7 +232,7 @@ export class HarvestService {
       );
 
       // Actualizar cosecha
-      const { harvest_details, ...rest } = updateHarvestDto;
+      const { details, ...rest } = updateHarvestDto;
       await queryRunner.manager.update(Harvest, { id }, rest);
 
       await queryRunner.commitTransaction();

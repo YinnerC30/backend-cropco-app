@@ -144,7 +144,7 @@ export class SeedService {
 
     const initialHarvest: any = initialData.harvests[0];
 
-    const { harvest_details, ...rest } = initialHarvest;
+    const { details, ...rest } = initialHarvest;
 
     const insertPromises = [];
 
@@ -152,13 +152,13 @@ export class SeedService {
       const objectToCreate: CreateHarvestDto = {
         ...rest,
         crop: crops[index],
-        harvest_details: [
+        details: [
           {
-            ...harvest_details[0],
+            ...details[0],
             employee: `${employee1}`,
           },
           {
-            ...harvest_details[1],
+            ...details[1],
             employee: `${employee2}`,
           },
         ],
