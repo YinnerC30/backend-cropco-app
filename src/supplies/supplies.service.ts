@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -16,6 +15,13 @@ import { CreatePurchaseSuppliesDto } from './dto/create-purchase-supplies.dto';
 import { SuppliesPurchase } from './entities/supplies-purchase.entity';
 import { SuppliesPurchaseDetails } from './entities/supplies-purchase-details.entity';
 import { SuppliesStock } from './entities/supplies-stock.entity';
+import { UpdateSuppliesPurchaseDto } from './dto/update-supplies-purchase.dto';
+import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
+import { validateTotalPurchase } from './helpers/validateTotalPurchase';
+import { QueryRunner } from 'typeorm';
+
+import { PurchaseSuppliesDetailsDto } from './dto/purchase-supplies-details.dto';
+import { Condition } from './interfaces/condition.interface';
 
 @Injectable()
 export class SuppliesService {
@@ -79,6 +85,75 @@ export class SuppliesService {
     }
   }
 
+  // Methods SuppliesStock
+
+  async updateStock(
+    queryRunner: QueryRunner,
+    supplyId: any,
+    amount: number,
+    increment = true,
+  ) {
+    const recordSupplyStock = await queryRunner.manager
+      .getRepository(SuppliesStock)
+      .createQueryBuilder('supplyStock')
+      .where('supplyStock.supplyId = :supplyId', { supplyId })
+      .getOne();
+
+    if (!recordSupplyStock) {
+      const recordToSave = queryRunner.manager.create(SuppliesStock, {
+        supply: supplyId,
+        amount: 0,
+      });
+
+      await queryRunner.manager.save(SuppliesStock, recordToSave);
+    }
+
+    if (increment) {
+      await queryRunner.manager.increment(
+        SuppliesStock,
+        { supply: supplyId },
+        'amount',
+        amount,
+      );
+    } else {
+      await queryRunner.manager.decrement(
+        SuppliesStock,
+        { supply: supplyId },
+        'amount',
+        amount,
+      );
+    }
+  }
+
+  // Methods purchase details
+
+  async createPurchaseDetails(
+    queryRunner: QueryRunner,
+    object: PurchaseSuppliesDetailsDto,
+  ) {
+    const recordToSave = queryRunner.manager.create(
+      SuppliesPurchaseDetails,
+      object,
+    );
+    await queryRunner.manager.save(SuppliesPurchaseDetails, recordToSave);
+  }
+
+  async updatePurchaseDetails(
+    queryRunner: QueryRunner,
+    condition: Condition,
+    object: PurchaseSuppliesDetailsDto,
+  ) {
+    await queryRunner.manager.update(
+      SuppliesPurchaseDetails,
+      condition,
+      object,
+    );
+  }
+
+  async removePurchaseDetails(queryRunner: QueryRunner, condition: Condition) {
+    await queryRunner.manager.delete(SuppliesPurchaseDetails, condition);
+  }
+
   // Methods purchase supplies
 
   async createPurchase(createPurchaseSuppliesDto: CreatePurchaseSuppliesDto) {
@@ -86,29 +161,11 @@ export class SuppliesService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+
+    validateTotalPurchase(createPurchaseSuppliesDto);
+
     try {
       const { details, ...rest } = createPurchaseSuppliesDto;
-
-      // Validar valores numéricos
-      // const totalHarvest = rest.total;
-      // const valuePay = rest.value_pay;
-
-      // const totalArray = harvest_details.reduce((acumulador, record) => {
-      //   return acumulador + record.total;
-      // }, 0);
-
-      // const valuePayArray = harvest_details.reduce((acumulador, record) => {
-      //   return acumulador + record.value_pay;
-      // }, 0);
-
-      // const isTotalValid = totalHarvest === totalArray;
-      // const isValuePayValid = valuePay === valuePayArray;
-
-      // if (!(isTotalValid && isValuePayValid)) {
-      //   return;
-      // TODO: Retornar excepción personalizada
-      // }
-
       // Guardar compra
       const purchase = queryRunner.manager.create(SuppliesPurchase, {
         ...rest,
@@ -119,15 +176,12 @@ export class SuppliesService {
       const arrayPromises = [];
 
       for (const register of details) {
-        const registerToSave = queryRunner.manager.create(
-          SuppliesPurchaseDetails,
-          {
+        arrayPromises.push(
+          this.createPurchaseDetails(queryRunner, {
             purchase: id,
             ...register,
-          },
+          }),
         );
-
-        arrayPromises.push(queryRunner.manager.save(registerToSave));
       }
 
       await Promise.all(arrayPromises);
@@ -136,27 +190,7 @@ export class SuppliesService {
 
       for (const item of details) {
         const { amount } = item;
-
-        const stockRegister = await this.suppliesStockRepository
-          .createQueryBuilder('supplyStock')
-          .where(`supplyStock.supplyId = '${item.supply}'`)
-          .getOne();
-
-        if (!stockRegister) {
-          const supplyStock = queryRunner.manager.create(SuppliesStock, {
-            ...item,
-            amount: 0,
-          });
-
-          await queryRunner.manager.save(supplyStock);
-        }
-
-        await queryRunner.manager.increment(
-          SuppliesStock,
-          { supply: item.supply },
-          'amount',
-          amount,
-        );
+        await this.updateStock(queryRunner, item.supply, amount, true);
       }
 
       await queryRunner.commitTransaction();
@@ -190,10 +224,112 @@ export class SuppliesService {
     return supplyPurchase;
   }
 
-  // TODO: Implementar método actualizar compra
+  async updatePurchase(
+    id: string,
+    updateSuppliesPurchaseDto: UpdateSuppliesPurchaseDto,
+  ) {
+    const purchase: SuppliesPurchase = await this.findOnePurchase(id);
+
+    validateTotalPurchase(updateSuppliesPurchaseDto);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Obtener ids supplies old record
+      // TODO: Add type
+      const oldDetails: SuppliesPurchaseDetails[] = purchase.details;
+      const newDetails: PurchaseSuppliesDetailsDto[] =
+        updateSuppliesPurchaseDto.details;
+
+      const oldIDsSupplies: string[] = oldDetails.map(
+        (record: SuppliesPurchaseDetails) => record.supply.id,
+      );
+      const newIDsSupplies: string[] = newDetails.map((record) =>
+        new String(record.supply).toString(),
+      );
+
+      const { toCreate, toUpdate, toDelete } = organizeIDsToUpdateEntity(
+        newIDsSupplies,
+        oldIDsSupplies,
+      );
+
+      // Delete
+      for (const supply of toDelete) {
+        const oldRecordData: SuppliesPurchaseDetails = oldDetails.find(
+          (record: SuppliesPurchaseDetails) => record.supply.id === supply,
+        );
+
+        await this.removePurchaseDetails(queryRunner, {
+          purchase: id,
+          supply,
+        });
+
+        // Validar que los valores sean distintos para realizar la actualización
+
+        await this.updateStock(
+          queryRunner,
+          supply,
+          oldRecordData.amount,
+          false,
+        );
+      }
+
+      // Update
+      for (const supply of toUpdate) {
+        const oldRecordData = oldDetails.find(
+          (record: SuppliesPurchaseDetails) => record.supply.id === supply,
+        );
+
+        // Decrement antiguo valor
+
+        await this.updateStock(
+          queryRunner,
+          supply,
+          oldRecordData.amount,
+          false,
+        );
+
+        // Increment nuevo valor
+        const newRecordData = newDetails.find(
+          (record) => record.supply === supply,
+        );
+
+        await this.updateStock(queryRunner, supply, newRecordData.amount, true);
+
+        // Update register
+
+        await this.updatePurchaseDetails(
+          queryRunner,
+          { purchase: id, supply },
+          { ...newRecordData },
+        );
+      }
+
+      // Create
+      for (const supply of toCreate) {
+        const newRecordData = newDetails.find(
+          (record) => record.supply === supply,
+        );
+
+        await this.createPurchaseDetails(queryRunner, {
+          purchase: id,
+          ...newRecordData,
+        });
+
+        await this.updateStock(queryRunner, supply, newRecordData.amount, true);
+      }
+
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
+  }
 
   async removePurchase(id: string) {
-    const purchaseSupply: any = await this.findOnePurchase(id);
+    const purchaseSupply: SuppliesPurchase = await this.findOnePurchase(id);
 
     const { details } = purchaseSupply;
 
@@ -203,27 +339,21 @@ export class SuppliesService {
 
     try {
       // Delete PurchaseDetails
-      await queryRunner.manager.delete(SuppliesPurchaseDetails, {
+
+      await this.removePurchaseDetails(queryRunner, {
         purchase: id,
       });
 
       // Decrement stock
       for (const record of details) {
         const { supply } = record;
-        await queryRunner.manager.decrement(
-          SuppliesStock,
-          {
-            supply: supply.id,
-          },
-          'amount',
-          record.amount,
-        );
+
+        await this.updateStock(queryRunner, supply.id, record.amount, false);
       }
       // Delete Purchase
       await queryRunner.manager.remove(purchaseSupply);
 
       await queryRunner.commitTransaction();
-      // await queryRunner.rollbackTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.handleDBExceptions(error);

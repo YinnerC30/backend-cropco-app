@@ -11,8 +11,6 @@ import { DataSource, DeepPartial } from 'typeorm';
 import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { CreatePurchaseSuppliesDto } from 'src/supplies/dto/create-purchase-supplies.dto';
-import { Supply } from 'src/supplies/entities/supply.entity';
-import { CreateSupplyDto } from 'src/supplies/dto/create-supply.dto';
 
 @Injectable()
 export class SeedService {

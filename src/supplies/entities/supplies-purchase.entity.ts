@@ -21,5 +21,5 @@ export class SuppliesPurchase {
     (suppliesPurchaseDetails) => suppliesPurchaseDetails.purchase,
     { eager: true },
   )
-  details: SuppliesPurchaseDetails;
+  details: SuppliesPurchaseDetails[];
 }
