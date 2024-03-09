@@ -37,5 +37,5 @@ export class Crop {
     () => SuppliesConsumptionDetails,
     (suppliesConsumptionDetails) => suppliesConsumptionDetails.crop,
   )
-  suppliesConsumptionDetails: SuppliesConsumptionDetails;
+  suppliesConsumptionDetails: SuppliesConsumptionDetails[];
 }

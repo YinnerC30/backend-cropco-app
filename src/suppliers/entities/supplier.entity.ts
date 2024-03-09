@@ -18,5 +18,5 @@ export class Supplier extends PersonalInformation {
     () => SuppliesPurchaseDetails,
     (suppliesPurchaseDetails) => suppliesPurchaseDetails.supplier,
   )
-  purchaseSuppliesDetails: SuppliesPurchaseDetails;
+  purchaseSuppliesDetails: SuppliesPurchaseDetails[];
 }

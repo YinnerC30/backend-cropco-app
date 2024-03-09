@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { SuppliesConsumption } from './supplies-consumption.entity';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Supply } from './supply.entity';
@@ -12,13 +18,19 @@ export class SuppliesConsumptionDetails {
   @ManyToOne(
     () => SuppliesConsumption,
     (suppliesConsumption) => suppliesConsumption.details,
+    { onDelete: 'CASCADE', orphanedRowAction: 'delete' },
   )
-  suppliesConsumption: SuppliesConsumption;
+  @JoinColumn({ name: 'consumptionId' })
+  consumption: SuppliesConsumption;
 
-  @ManyToOne(() => Supply, (supply) => supply.suppliesConsumption)
+  @ManyToOne(() => Supply, (supply) => supply.suppliesConsumption, {
+    eager: true,
+  })
   supply: Supply;
 
-  @ManyToOne(() => Crop, (crop) => crop.suppliesConsumptionDetails)
+  @ManyToOne(() => Crop, (crop) => crop.suppliesConsumptionDetails, {
+    eager: true,
+  })
   crop: Crop;
 
   @Column({

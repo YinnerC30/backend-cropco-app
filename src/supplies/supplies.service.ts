@@ -5,23 +5,36 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateSupplyDto } from './dto/create-supply.dto';
-import { UpdateSupplyDto } from './dto/update-supply.dto';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { DataSource, Repository } from 'typeorm';
-import { Supply } from './entities/supply.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CreatePurchaseSuppliesDto } from './dto/create-purchase-supplies.dto';
-import { SuppliesPurchase } from './entities/supplies-purchase.entity';
-import { SuppliesPurchaseDetails } from './entities/supplies-purchase-details.entity';
-import { SuppliesStock } from './entities/supplies-stock.entity';
-import { UpdateSuppliesPurchaseDto } from './dto/update-supplies-purchase.dto';
-import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
-import { validateTotalPurchase } from './helpers/validateTotalPurchase';
-import { QueryRunner } from 'typeorm';
 
+import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { CreateConsumptionSuppliesDto } from './dto/create-consumption-supplies.dto';
+import { CreatePurchaseSuppliesDto } from './dto/create-purchase-supplies.dto';
+import { CreateSupplyDto } from './dto/create-supply.dto';
 import { PurchaseSuppliesDetailsDto } from './dto/purchase-supplies-details.dto';
+import { UpdateSuppliesPurchaseDto } from './dto/update-supplies-purchase.dto';
+import { UpdateSupplyDto } from './dto/update-supply.dto';
+
+import { DataSource, QueryRunner, Repository } from 'typeorm';
+
+import { InjectRepository } from '@nestjs/typeorm';
+
+import {
+  SuppliesConsumption,
+  SuppliesConsumptionDetails,
+  SuppliesPurchase,
+  SuppliesPurchaseDetails,
+  SuppliesStock,
+  Supply,
+} from './entities/';
+
+import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
+
+import { validateTotalPurchase } from './helpers/validateTotalPurchase';
+
 import { Condition } from './interfaces/condition.interface';
+import { ConsumptionSuppliesDetailsDto } from './dto/consumption-supplies-details.dto';
+import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.dto';
+import { InsufficientSupplyStockException } from './exceptions/insufficient-supply-stock.exception';
 
 @Injectable()
 export class SuppliesService {
@@ -33,6 +46,10 @@ export class SuppliesService {
     private readonly suppliesPurchaseRepository: Repository<SuppliesPurchase>,
     @InjectRepository(SuppliesPurchaseDetails)
     private readonly suppliesPurchaseDetailsRepository: Repository<SuppliesPurchaseDetails>,
+    @InjectRepository(SuppliesConsumption)
+    private readonly suppliesConsumptionRepository: Repository<SuppliesConsumption>,
+    @InjectRepository(SuppliesConsumptionDetails)
+    private readonly suppliesConsumptionDetailsRepository: Repository<SuppliesConsumptionDetails>,
     @InjectRepository(SuppliesStock)
     private readonly suppliesStockRepository: Repository<SuppliesStock>,
     private dataSource: DataSource,
@@ -109,20 +126,26 @@ export class SuppliesService {
     }
 
     if (increment) {
-      await queryRunner.manager.increment(
-        SuppliesStock,
-        { supply: supplyId },
-        'amount',
-        amount,
-      );
-    } else {
-      await queryRunner.manager.decrement(
+      return await queryRunner.manager.increment(
         SuppliesStock,
         { supply: supplyId },
         'amount',
         amount,
       );
     }
+
+    const amountActually = recordSupplyStock.amount;
+
+    if (amountActually < amount) {
+      throw new InsufficientSupplyStockException();
+    }
+
+    await queryRunner.manager.decrement(
+      SuppliesStock,
+      { supply: supplyId },
+      'amount',
+      amount,
+    );
   }
 
   // Methods purchase details
@@ -166,32 +189,34 @@ export class SuppliesService {
 
     try {
       const { details, ...rest } = createPurchaseSuppliesDto;
+
+      // Crear objetos detalles de compra
+
+      let purchaseDetails: SuppliesPurchaseDetails[] = [];
+
+      for (const register of details) {
+        purchaseDetails.push(
+          queryRunner.manager.create(SuppliesPurchaseDetails, register),
+        );
+
+        // Agregar insumo al stock
+
+        await this.updateStock(
+          queryRunner,
+          register.supply,
+          register.amount,
+          true,
+        );
+      }
+
       // Guardar compra
       const purchase = queryRunner.manager.create(SuppliesPurchase, {
         ...rest,
       });
-      const { id } = await queryRunner.manager.save(purchase);
 
-      // Guardar detalles de cosecha
-      const arrayPromises = [];
+      purchase.details = purchaseDetails;
 
-      for (const register of details) {
-        arrayPromises.push(
-          this.createPurchaseDetails(queryRunner, {
-            purchase: id,
-            ...register,
-          }),
-        );
-      }
-
-      await Promise.all(arrayPromises);
-
-      // Agregar insumo al stock de
-
-      for (const item of details) {
-        const { amount } = item;
-        await this.updateStock(queryRunner, item.supply, amount, true);
-      }
+      await queryRunner.manager.save(purchase);
 
       await queryRunner.commitTransaction();
       await queryRunner.release();
@@ -321,6 +346,9 @@ export class SuppliesService {
         await this.updateStock(queryRunner, supply, newRecordData.amount, true);
       }
 
+      const { details, ...rest } = updateSuppliesPurchaseDto;
+      await queryRunner.manager.update(SuppliesPurchase, { id }, rest);
+
       await queryRunner.commitTransaction();
       await queryRunner.release();
     } catch (error) {
@@ -338,16 +366,9 @@ export class SuppliesService {
     await queryRunner.startTransaction();
 
     try {
-      // Delete PurchaseDetails
-
-      await this.removePurchaseDetails(queryRunner, {
-        purchase: id,
-      });
-
       // Decrement stock
       for (const record of details) {
         const { supply } = record;
-
         await this.updateStock(queryRunner, supply.id, record.amount, false);
       }
       // Delete Purchase
@@ -381,18 +402,147 @@ export class SuppliesService {
     }
   }
 
+  // Methods to consumption Supplies Details
+
+  async createConsumptionDetails(
+    queryRunner: QueryRunner,
+    object: ConsumptionSuppliesDetailsDto,
+  ) {
+    const recordToSave = queryRunner.manager.create(
+      SuppliesConsumptionDetails,
+      object,
+    );
+    await queryRunner.manager.save(SuppliesConsumptionDetails, recordToSave);
+  }
+
+  async updateConsumptionDetails(
+    queryRunner: QueryRunner,
+    condition: Condition,
+    object: UpdateSuppliesConsumptionDto | any, // TODO: Remover any
+  ) {
+    await queryRunner.manager.update(
+      SuppliesConsumptionDetails,
+      condition,
+      object,
+    );
+  }
+
+  async removeConsumptionDetails(
+    queryRunner: QueryRunner,
+    condition: Condition,
+  ) {
+    await queryRunner.manager.delete(SuppliesConsumptionDetails, condition);
+  }
+
   // Methods to consumption Supplies
 
-  // TODO: Implementar todos los métodos para consumption
+  async createConsumption(
+    createConsumptionSuppliesDto: CreateConsumptionSuppliesDto,
+  ) {
+    // Crear e iniciar la transacción
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-  async createConsumption() {
-    return 'Consumption Successful';
+    try {
+      const { details, ...rest } = createConsumptionSuppliesDto;
+
+      // Crear objetos de detalle de consumo
+
+      let consumptionDetails: SuppliesConsumptionDetails[] = [];
+
+      for (const register of details) {
+        consumptionDetails.push(
+          queryRunner.manager.create(SuppliesConsumptionDetails, {
+            ...register,
+          }),
+        );
+      }
+
+      // Guardar consumo
+      const consumption = queryRunner.manager.create(SuppliesConsumption, {
+        ...rest,
+      });
+
+      consumption.details = [...consumptionDetails];
+
+      await queryRunner.manager.save(consumption);
+
+      // Agregar insumo al stock de
+
+      for (const item of details) {
+        const { amount } = item;
+        await this.updateStock(queryRunner, item.supply, amount, false);
+      }
+
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.handleDBExceptions(error);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async findAllConsumptions(paginationDto: PaginationDto) {
+    const { limit = 10, offset = 0 } = paginationDto;
+
+    return this.suppliesConsumptionRepository.find({
+      order: {
+        date: 'ASC',
+      },
+      take: limit,
+      skip: offset,
+    });
+  }
+
+  async findOneConsumption(id: string) {
+    const supplyConsumption = await this.suppliesConsumptionRepository.findOne({
+      where: { id },
+    });
+    if (!supplyConsumption)
+      throw new NotFoundException(
+        `Supplies consumption with id: ${id} not found`,
+      );
+    return supplyConsumption;
+  }
+
+  async removeConsumption(id: string) {
+    const consumptionSupply: SuppliesConsumption =
+      await this.findOneConsumption(id);
+
+    const { details } = consumptionSupply;
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Decrement stock
+      for (const record of details) {
+        const { supply } = record;
+        await this.updateStock(queryRunner, supply.id, record.amount, true);
+      }
+      // Delete Purchase
+      await queryRunner.manager.remove(consumptionSupply);
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.handleDBExceptions(error);
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   private handleDBExceptions(error: any) {
     console.log(error);
     if (error.code === '23503') throw new BadRequestException(error.detail);
     if (error.code === '23505') throw new BadRequestException(error.detail);
+    if (error instanceof InsufficientSupplyStockException)
+      throw new BadRequestException(error.message);
+
     this.logger.error(error);
     throw new InternalServerErrorException(
       'Unexpected error, check server logs',

@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { SuppliesService } from './supplies.service';
-import { SuppliesController } from './supplies.controller';
-import { Supply } from './entities/supply.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SuppliesPurchase } from './entities/supplies-purchase.entity';
-import { SuppliesPurchaseDetails } from './entities/supplies-purchase-details.entity';
-import { SuppliesStock } from './entities/supplies-stock.entity';
-import { SuppliesConsumption } from './entities/supplies-consumption.entity';
 import { SuppliesConsumptionDetails } from './entities/supplies-consumption-details.entity';
+import { SuppliesConsumption } from './entities/supplies-consumption.entity';
+import { SuppliesPurchaseDetails } from './entities/supplies-purchase-details.entity';
+import { SuppliesPurchase } from './entities/supplies-purchase.entity';
+import { SuppliesStock } from './entities/supplies-stock.entity';
+import { Supply } from './entities/supply.entity';
+import { SuppliesController } from './supplies.controller';
+import { SuppliesService } from './supplies.service';
 
 @Module({
   imports: [

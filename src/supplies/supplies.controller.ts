@@ -15,6 +15,7 @@ import { UpdateSupplyDto } from './dto/update-supply.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CreatePurchaseSuppliesDto } from './dto/create-purchase-supplies.dto';
 import { UpdateSuppliesPurchaseDto } from './dto/update-supplies-purchase.dto';
+import { CreateConsumptionSuppliesDto } from './dto/create-consumption-supplies.dto';
 
 @Controller('supplies')
 export class SuppliesController {
@@ -29,6 +30,10 @@ export class SuppliesController {
   findAllPurchases(@Query() paginationDto: PaginationDto) {
     return this.suppliesService.findAllPurchases(paginationDto);
   }
+  @Get('consumption/all')
+  findAllConsumptions(@Query() paginationDto: PaginationDto) {
+    return this.suppliesService.findAllConsumptions(paginationDto);
+  }
 
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
@@ -40,6 +45,11 @@ export class SuppliesController {
     return this.suppliesService.findOnePurchase(id);
   }
 
+  @Get('consumption/:id')
+  findOneConsumption(@Param('id', ParseUUIDPipe) id: string) {
+    return this.suppliesService.findOneConsumption(id);
+  }
+
   @Post()
   create(@Body() createSupplyDto: CreateSupplyDto) {
     return this.suppliesService.create(createSupplyDto);
@@ -48,6 +58,13 @@ export class SuppliesController {
   @Post('/purchase')
   purchase(@Body() createPurchaseSuppliesDto: CreatePurchaseSuppliesDto) {
     return this.suppliesService.createPurchase(createPurchaseSuppliesDto);
+  }
+
+  @Post('/consumption')
+  consumption(
+    @Body() createConsumptionSuppliesDto: CreateConsumptionSuppliesDto,
+  ) {
+    return this.suppliesService.createConsumption(createConsumptionSuppliesDto);
   }
 
   @Patch(':id')
@@ -76,10 +93,8 @@ export class SuppliesController {
     return this.suppliesService.removePurchase(id);
   }
 
-  // TODO: Implementar métodos restantes
-
-  @Post('/consumption')
-  consumption() {
-    return this.suppliesService.createConsumption();
+  @Delete('/consumption/:id')
+  removeConsumption(@Param('id', ParseUUIDPipe) id: string) {
+    return this.suppliesService.removeConsumption(id);
   }
 }

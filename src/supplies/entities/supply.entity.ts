@@ -7,7 +7,6 @@ import {
 } from 'typeorm';
 import { SuppliesPurchaseDetails } from './supplies-purchase-details.entity';
 import { SuppliesStock } from './supplies-stock.entity';
-import { SuppliesConsumption } from './supplies-consumption.entity';
 import { SuppliesConsumptionDetails } from './supplies-consumption-details.entity';
 
 export type UnitOfMeasure = 'GRAMOS' | 'MILILITROS';
@@ -35,7 +34,7 @@ export class Supply {
     () => SuppliesPurchaseDetails,
     (suppliesPurchaseDetails) => suppliesPurchaseDetails.supply,
   )
-  purchaseDetails: SuppliesPurchaseDetails;
+  purchaseDetails: SuppliesPurchaseDetails[];
 
   @OneToOne(() => SuppliesStock)
   stock: SuppliesStock;
@@ -44,5 +43,5 @@ export class Supply {
     () => SuppliesConsumptionDetails,
     (suppliesConsumptionDetails) => suppliesConsumptionDetails.supply,
   )
-  suppliesConsumption: SuppliesConsumptionDetails;
+  suppliesConsumption: SuppliesConsumptionDetails[];
 }

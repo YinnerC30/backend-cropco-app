@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { SuppliesPurchase } from './supplies-purchase.entity';
 import { Supply } from './supply.entity';
 import { Supplier } from 'src/suppliers/entities/supplier.entity';
@@ -21,7 +27,9 @@ export class SuppliesPurchaseDetails {
   @ManyToOne(
     () => SuppliesPurchase,
     (suppliesPurchase) => suppliesPurchase.details,
+    { onDelete: 'CASCADE', onUpdate: 'CASCADE' },
   )
+  @JoinColumn({ name: 'purchaseId' })
   purchase: SuppliesPurchase;
 
   @ManyToOne(() => Supply, (supply) => supply.purchaseDetails, { eager: true })

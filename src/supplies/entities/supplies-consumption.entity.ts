@@ -1,5 +1,5 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { SuppliesConsumptionDetails } from './supplies-consumption-details.entity';
+import { SuppliesConsumptionDetails } from '.';
 
 @Entity()
 export class SuppliesConsumption {
@@ -13,8 +13,8 @@ export class SuppliesConsumption {
   // External relations
   @OneToMany(
     () => SuppliesConsumptionDetails,
-    (suppliesConsumptionDetails) =>
-      suppliesConsumptionDetails.suppliesConsumption,
+    (suppliesConsumptionDetails) => suppliesConsumptionDetails.consumption,
+    { eager: true, cascade: true },
   )
-  details: SuppliesConsumptionDetails;
+  details: SuppliesConsumptionDetails[];
 }
