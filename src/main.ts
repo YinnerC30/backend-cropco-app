@@ -9,6 +9,7 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
+      errorHttpStatusCode: 400,
     }),
   );
   await app.listen(process.env.PORT);

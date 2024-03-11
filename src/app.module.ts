@@ -25,6 +25,8 @@ import { SuppliesModule } from './supplies/supplies.module';
 import { User } from './users/entities/user.entity';
 import { UsersModule } from './users/users.module';
 import { APP_FILTER } from '@nestjs/core';
+import { WorkModule } from './work/work.module';
+import { Work } from './work/entities/work.entity';
 
 @Module({
   imports: [
@@ -53,6 +55,7 @@ import { APP_FILTER } from '@nestjs/core';
         SuppliesStock,
         SuppliesConsumption,
         SuppliesConsumptionDetails,
+        Work,
       ],
       synchronize: true,
     }),
@@ -66,6 +69,7 @@ import { APP_FILTER } from '@nestjs/core';
     SuppliersModule,
     SuppliesModule,
     UsersModule,
+    WorkModule,
   ],
 })
 export class AppModule {}

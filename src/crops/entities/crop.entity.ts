@@ -2,6 +2,7 @@ import { HarvestStock } from 'src/harvest/entities/harvest-stock.entity';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
 import { SuppliesConsumptionDetails } from 'src/supplies/entities/supplies-consumption-details.entity';
 import { SuppliesConsumption } from 'src/supplies/entities/supplies-consumption.entity';
+import { Work } from 'src/work/entities/work.entity';
 import {
   Column,
   Entity,
@@ -38,4 +39,7 @@ export class Crop {
     (suppliesConsumptionDetails) => suppliesConsumptionDetails.crop,
   )
   suppliesConsumptionDetails: SuppliesConsumptionDetails[];
+
+  @OneToMany(() => Work, (work) => work.crop)
+  works: Work[];
 }
