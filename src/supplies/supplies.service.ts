@@ -104,6 +104,18 @@ export class SuppliesService {
 
   // Methods SuppliesStock
 
+  async findAllSuppliesStock(paginationDto: PaginationDto) {
+    const { limit = 10, offset = 0 } = paginationDto;
+
+    return this.suppliesStockRepository.find({
+      order: {
+        amount: 'ASC',
+      },
+      take: limit,
+      skip: offset,
+    });
+  }
+
   async updateStock(
     queryRunner: QueryRunner,
     supplyId: any,
@@ -146,6 +158,16 @@ export class SuppliesService {
       'amount',
       amount,
     );
+  }
+
+  async deleteAllStockSupplies() {
+    const suppliesStock =
+      this.suppliesStockRepository.createQueryBuilder('suppliesStock');
+    try {
+      await suppliesStock.delete().where({}).execute();
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
 
   // Methods purchase details
@@ -263,7 +285,6 @@ export class SuppliesService {
 
     try {
       // Obtener ids supplies old record
-      // TODO: Add type
       const oldDetails: SuppliesPurchaseDetails[] = purchase.details;
       const newDetails: PurchaseSuppliesDetailsDto[] =
         updateSuppliesPurchaseDto.details;
@@ -390,11 +411,8 @@ export class SuppliesService {
       this.suppliesPurchaseDetailsRepository.createQueryBuilder(
         'purchaseDetails',
       );
-    const suppliesStock =
-      this.suppliesStockRepository.createQueryBuilder('suppliesStock');
 
     try {
-      await suppliesStock.delete().where({}).execute();
       await purchaseDetails.delete().where({}).execute();
       await purchase.delete().where({}).execute();
     } catch (error) {
@@ -448,7 +466,6 @@ export class SuppliesService {
       const { details, ...rest } = createConsumptionSuppliesDto;
 
       // Crear objetos de detalle de consumo
-
       let consumptionDetails: SuppliesConsumptionDetails[] = [];
 
       for (const register of details) {
@@ -458,21 +475,19 @@ export class SuppliesService {
           }),
         );
       }
-
       // Guardar consumo
       const consumption = queryRunner.manager.create(SuppliesConsumption, {
         ...rest,
       });
 
-      consumption.details = [...consumptionDetails];
+      consumption.details = consumptionDetails;
 
       await queryRunner.manager.save(consumption);
 
       // Agregar insumo al stock de
 
       for (const item of details) {
-        const { amount } = item;
-        await this.updateStock(queryRunner, item.supply, amount, false);
+        await this.updateStock(queryRunner, item.supply, item.amount, false);
       }
 
       await queryRunner.commitTransaction();
@@ -508,6 +523,110 @@ export class SuppliesService {
     return supplyConsumption;
   }
 
+  async updateConsumption(
+    id: string,
+    updateSuppliesConsumptionDto: UpdateSuppliesConsumptionDto,
+  ) {
+    const consumption: SuppliesConsumption = await this.findOneConsumption(id);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Obtener ids supplies old record
+      const oldDetails: SuppliesConsumptionDetails[] = consumption.details;
+      const newDetails: ConsumptionSuppliesDetailsDto[] =
+        updateSuppliesConsumptionDto.details;
+
+      const oldIDsSupplies: string[] = oldDetails.map(
+        (record: SuppliesConsumptionDetails) => record.supply.id,
+      );
+      const newIDsSupplies: string[] = newDetails.map((record) =>
+        new String(record.supply).toString(),
+      );
+
+      const { toCreate, toUpdate, toDelete } = organizeIDsToUpdateEntity(
+        newIDsSupplies,
+        oldIDsSupplies,
+      );
+
+      // Delete
+      for (const supply of toDelete) {
+        const oldRecordData: SuppliesConsumptionDetails = oldDetails.find(
+          (record: SuppliesConsumptionDetails) => record.supply.id === supply,
+        );
+
+        await this.removeConsumptionDetails(queryRunner, {
+          consumption: id,
+          supply,
+        });
+
+        // Validar que los valores sean distintos para realizar la actualización
+
+        await this.updateStock(queryRunner, supply, oldRecordData.amount, true);
+      }
+
+      // Update
+      for (const supply of toUpdate) {
+        const oldRecordData: SuppliesConsumptionDetails = oldDetails.find(
+          (record: SuppliesConsumptionDetails) => record.supply.id === supply,
+        );
+
+        // Decrement antiguo valor
+
+        await this.updateStock(queryRunner, supply, oldRecordData.amount, true);
+
+        // Increment nuevo valor
+        const newRecordData = newDetails.find(
+          (record) => record.supply === supply,
+        );
+
+        await this.updateStock(
+          queryRunner,
+          supply,
+          newRecordData.amount,
+          false,
+        );
+
+        // Update register
+
+        await this.updateConsumptionDetails(
+          queryRunner,
+          { consumption: id, supply },
+          { ...newRecordData },
+        );
+      }
+
+      // Create
+      for (const supply of toCreate) {
+        const newRecordData = newDetails.find(
+          (record) => record.supply === supply,
+        );
+
+        await this.createConsumptionDetails(queryRunner, {
+          consumption: id,
+          ...newRecordData,
+        });
+
+        await this.updateStock(
+          queryRunner,
+          supply,
+          newRecordData.amount,
+          false,
+        );
+      }
+
+      const { details, ...rest } = updateSuppliesConsumptionDto;
+      await queryRunner.manager.update(SuppliesConsumption, { id }, rest);
+
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
+  }
+
   async removeConsumption(id: string) {
     const consumptionSupply: SuppliesConsumption =
       await this.findOneConsumption(id);
@@ -521,8 +640,12 @@ export class SuppliesService {
     try {
       // Decrement stock
       for (const record of details) {
-        const { supply } = record;
-        await this.updateStock(queryRunner, supply.id, record.amount, true);
+        await this.updateStock(
+          queryRunner,
+          record.supply.id,
+          record.amount,
+          true,
+        );
       }
       // Delete Purchase
       await queryRunner.manager.remove(consumptionSupply);
@@ -533,6 +656,17 @@ export class SuppliesService {
       this.handleDBExceptions(error);
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  async deleteAllConsumptionSupplies() {
+    const consumption =
+      this.suppliesConsumptionRepository.createQueryBuilder('consumption');
+
+    try {
+      await consumption.delete().where({}).execute();
+    } catch (error) {
+      this.handleDBExceptions(error);
     }
   }
 

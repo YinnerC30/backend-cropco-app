@@ -16,6 +16,7 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CreatePurchaseSuppliesDto } from './dto/create-purchase-supplies.dto';
 import { UpdateSuppliesPurchaseDto } from './dto/update-supplies-purchase.dto';
 import { CreateConsumptionSuppliesDto } from './dto/create-consumption-supplies.dto';
+import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.dto';
 
 @Controller('supplies')
 export class SuppliesController {
@@ -24,6 +25,11 @@ export class SuppliesController {
   @Get()
   findAll(@Query() paginationDto: PaginationDto) {
     return this.suppliesService.findAll(paginationDto);
+  }
+
+  @Get('stock/all')
+  findAllSuppliesStock(@Query() paginationDto: PaginationDto) {
+    return this.suppliesService.findAllSuppliesStock(paginationDto);
   }
 
   @Get('purchase/all')
@@ -81,6 +87,17 @@ export class SuppliesController {
     @Body() updateSuppliesPurchaseDto: UpdateSuppliesPurchaseDto,
   ) {
     return this.suppliesService.updatePurchase(id, updateSuppliesPurchaseDto);
+  }
+
+  @Patch('/consumption/:id')
+  updateConsumption(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateSuppliesConsumptionDto: UpdateSuppliesConsumptionDto,
+  ) {
+    return this.suppliesService.updateConsumption(
+      id,
+      updateSuppliesConsumptionDto,
+    );
   }
 
   @Delete(':id')

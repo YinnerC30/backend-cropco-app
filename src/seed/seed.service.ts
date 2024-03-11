@@ -11,6 +11,7 @@ import { DataSource, DeepPartial } from 'typeorm';
 import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { CreatePurchaseSuppliesDto } from 'src/supplies/dto/create-purchase-supplies.dto';
+import { CreateConsumptionSuppliesDto } from 'src/supplies/dto/create-consumption-supplies.dto';
 
 @Injectable()
 export class SeedService {
@@ -40,6 +41,7 @@ export class SeedService {
     await this.insertNewCrops();
     await this.insertNewHarvests();
     await this.insertNewPurchaseSupplies();
+    await this.insertNewConsumptionSupplies();
 
     return 'SEED EXECUTED';
   }
@@ -47,8 +49,10 @@ export class SeedService {
   private async deleteTables() {
     await this.usersService.deleteAllUsers();
     await this.clientsService.deleteAllClients();
+    await this.suppliesService.deleteAllStockSupplies();
     await this.suppliesService.deleteAllPurchaseSupplies();
     await this.suppliersService.deleteAllSupplier();
+    await this.suppliesService.deleteAllConsumptionSupplies();
     await this.suppliesService.deleteAllSupplies();
     await this.harvestsService.deleteAllHarvest();
     await this.cropsService.deleteAllCrops();
@@ -215,11 +219,42 @@ export class SeedService {
       };
 
       await this.suppliesService.createPurchase(objectToCreate);
-
-      // insertPromises.push(this.suppliesService.createPurchase(objectToCreate));
     }
 
-    // await Promise.all(insertPromises);
+    return true;
+  }
+  private async insertNewConsumptionSupplies() {
+    const [supply1, supply2, supply3] = this.suppliesIds;
+    const [crop1] = this.cropIds;
+
+    const initialConsumption: any = initialData.consumptionSupplies[0];
+
+    const { details, ...rest } = initialConsumption;
+
+    for (let index = 0; index < 3; index++) {
+      const objectToCreate: CreateConsumptionSuppliesDto = {
+        ...rest,
+        details: [
+          {
+            ...details[0],
+            crop: `${crop1}`,
+            supply: `${supply1}`,
+          },
+          {
+            ...details[1],
+            crop: `${crop1}`,
+            supply: `${supply2}`,
+          },
+          {
+            ...details[2],
+            crop: `${crop1}`,
+            supply: `${supply3}`,
+          },
+        ],
+      };
+
+      await this.suppliesService.createConsumption(objectToCreate);
+    }
 
     return true;
   }

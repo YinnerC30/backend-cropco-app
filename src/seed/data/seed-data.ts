@@ -9,6 +9,7 @@ export interface Seed {
   supplies: Supply[];
   harvests: Harvest[];
   purchaseSupplies: PurchaseSupplies[];
+  consumptionSupplies: ConsumptionSupplies[];
 }
 
 export interface User {
@@ -78,6 +79,16 @@ export interface PurchaseSupplies {
 export interface PurchaseSuppliesDetails {
   amount: number;
   total: number;
+}
+export interface ConsumptionSupplies {
+  date: string;
+  details: ConsumptionSuppliesDetails[];
+}
+
+export interface ConsumptionSuppliesDetails {
+  crop?: string;
+  supply?: string;
+  amount: number;
 }
 
 export const initialData: Seed = {
@@ -748,16 +759,32 @@ export const initialData: Seed = {
       total: 500000,
       details: [
         {
-          amount: 45,
+          amount: 100,
           total: 200000,
         },
         {
-          amount: 25,
+          amount: 100,
           total: 200000,
         },
         {
-          amount: 15,
+          amount: 100,
           total: 100000,
+        },
+      ],
+    },
+  ],
+  consumptionSupplies: [
+    {
+      date: '2024-05-06',
+      details: [
+        {
+          amount: 20,
+        },
+        {
+          amount: 20,
+        },
+        {
+          amount: 20,
         },
       ],
     },
