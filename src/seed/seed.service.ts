@@ -12,6 +12,8 @@ import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { CreatePurchaseSuppliesDto } from 'src/supplies/dto/create-purchase-supplies.dto';
 import { CreateConsumptionSuppliesDto } from 'src/supplies/dto/create-consumption-supplies.dto';
+import { SalesService } from 'src/sales/sales.service';
+import { WorkService } from 'src/work/work.service';
 
 @Injectable()
 export class SeedService {
@@ -29,6 +31,8 @@ export class SeedService {
     private readonly suppliersService: SuppliersService,
     private readonly suppliesService: SuppliesService,
     private readonly harvestsService: HarvestService,
+    private readonly workService: WorkService,
+    private readonly salesService: SalesService,
   ) {}
 
   async runSeed() {
@@ -55,6 +59,7 @@ export class SeedService {
     await this.suppliesService.deleteAllConsumptionSupplies();
     await this.suppliesService.deleteAllSupplies();
     await this.harvestsService.deleteAllHarvest();
+    await this.workService.deleteAllWork();
     await this.cropsService.deleteAllCrops();
     await this.employeesService.deleteAllEmployees();
   }

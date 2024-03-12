@@ -1,21 +1,17 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { Repository } from 'typeorm';
 import { Employee } from './entities/employee.entity';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
+import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 
 @Injectable()
 export class EmployeesService {
   private readonly logger = new Logger('EmployeesService');
+  private handleDBExceptions = (error: any, logger = this.logger) =>
+    handleDBExceptions(error, logger);
   constructor(
     @InjectRepository(Employee)
     private readonly employeeRepository: Repository<Employee>,
@@ -52,7 +48,11 @@ export class EmployeesService {
 
   async update(id: string, updateEmployeeDto: UpdateEmployeeDto) {
     await this.findOne(id);
-    await this.employeeRepository.update(id, updateEmployeeDto);
+    try {
+      await this.employeeRepository.update(id, updateEmployeeDto);
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
 
   async remove(id: string) {
@@ -68,14 +68,5 @@ export class EmployeesService {
     } catch (error) {
       this.handleDBExceptions(error);
     }
-  }
-
-  private handleDBExceptions(error: any) {
-    console.log(error);
-    if (error.code === '23505') throw new BadRequestException(error.detail);
-    this.logger.error(error);
-    throw new InternalServerErrorException(
-      'Unexpected error, check server logs',
-    );
   }
 }

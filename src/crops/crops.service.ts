@@ -1,20 +1,17 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Repository } from 'typeorm';
 import { Crop } from './entities/crop.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
+import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 
 @Injectable()
 export class CropsService {
   private readonly logger = new Logger('CropsService');
+  private handleDBExceptions = (error: any, logger = this.logger) =>
+    handleDBExceptions(error, logger);
   constructor(
     @InjectRepository(Crop)
     private readonly cropRepository: Repository<Crop>,
@@ -49,7 +46,11 @@ export class CropsService {
 
   async update(id: string, updateCropDto: UpdateCropDto) {
     await this.findOne(id);
-    await this.cropRepository.update(id, updateCropDto);
+    try {
+      await this.cropRepository.update(id, updateCropDto);
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
 
   async remove(id: string) {
@@ -65,14 +66,5 @@ export class CropsService {
     } catch (error) {
       this.handleDBExceptions(error);
     }
-  }
-
-  private handleDBExceptions(error: any) {
-    console.log(error);
-    if (error.code === '23505') throw new BadRequestException(error.detail);
-    this.logger.error(error);
-    throw new InternalServerErrorException(
-      'Unexpected error, check server logs',
-    );
   }
 }

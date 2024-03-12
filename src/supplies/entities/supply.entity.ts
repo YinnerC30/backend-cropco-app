@@ -33,6 +33,7 @@ export class Supply {
   @OneToMany(
     () => SuppliesPurchaseDetails,
     (suppliesPurchaseDetails) => suppliesPurchaseDetails.supply,
+    { cascade: true },
   )
   purchaseDetails: SuppliesPurchaseDetails[];
 
@@ -42,6 +43,7 @@ export class Supply {
   @OneToMany(
     () => SuppliesConsumptionDetails,
     (suppliesConsumptionDetails) => suppliesConsumptionDetails.supply,
+    { cascade: true },
   )
   suppliesConsumption: SuppliesConsumptionDetails[];
 }

@@ -27,6 +27,9 @@ import { UsersModule } from './users/users.module';
 import { APP_FILTER } from '@nestjs/core';
 import { WorkModule } from './work/work.module';
 import { Work } from './work/entities/work.entity';
+import { SalesModule } from './sales/sales.module';
+import { Sale } from './sales/entities/sale.entity';
+import { SaleDetails } from './sales/entities/sale-details.entity';
 
 @Module({
   imports: [
@@ -56,6 +59,8 @@ import { Work } from './work/entities/work.entity';
         SuppliesConsumption,
         SuppliesConsumptionDetails,
         Work,
+        Sale,
+        SaleDetails,
       ],
       synchronize: true,
     }),
@@ -70,6 +75,7 @@ import { Work } from './work/entities/work.entity';
     SuppliesModule,
     UsersModule,
     WorkModule,
+    SalesModule,
   ],
 })
 export class AppModule {}

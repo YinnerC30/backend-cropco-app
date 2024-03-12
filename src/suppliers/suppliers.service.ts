@@ -1,21 +1,17 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Supplier } from './entities/supplier.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 
 @Injectable()
 export class SuppliersService {
   private readonly logger = new Logger('SuppliersService');
+  private handleDBExceptions = (error: any, logger = this.logger) =>
+    handleDBExceptions(error, logger);
   constructor(
     @InjectRepository(Supplier)
     private readonly supplierRepository: Repository<Supplier>,
@@ -52,7 +48,11 @@ export class SuppliersService {
 
   async update(id: string, updateSupplierDto: UpdateSupplierDto) {
     await this.findOne(id);
-    await this.supplierRepository.update(id, updateSupplierDto);
+    try {
+      await this.supplierRepository.update(id, updateSupplierDto);
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
 
   async remove(id: string) {
@@ -68,14 +68,5 @@ export class SuppliersService {
     } catch (error) {
       this.handleDBExceptions(error);
     }
-  }
-
-  private handleDBExceptions(error: any) {
-    console.log(error);
-    if (error.code === '23505') throw new BadRequestException(error.detail);
-    this.logger.error(error);
-    throw new InternalServerErrorException(
-      'Unexpected error, check server logs',
-    );
   }
 }

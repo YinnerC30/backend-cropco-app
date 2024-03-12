@@ -8,13 +8,13 @@ export const validateTotalPurchase = (
   const { details, ...rest } = data;
 
   // Validar valores numéricos
-  const totalHarvest = rest.total;
+  const totalPurchase = rest.total;
 
   const totalArray = details.reduce((acumulador, record) => {
     return acumulador + record.total;
   }, 0);
 
-  const isTotalValid = totalHarvest === totalArray;
+  const isTotalValid = totalPurchase === totalArray;
 
   if (!isTotalValid) {
     throw new BadRequestException('Total purchase of supplies is not correct.');

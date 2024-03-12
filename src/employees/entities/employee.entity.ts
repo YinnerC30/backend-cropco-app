@@ -14,9 +14,10 @@ export class Employee extends PersonalInformation {
   @OneToMany(
     () => HarvestDetails,
     (harvest_details) => harvest_details.employee,
+    { cascade: true },
   )
   harvest_details: HarvestDetails[];
 
-  @OneToMany(() => Work, (work) => work.employee)
+  @OneToMany(() => Work, (work) => work.employee, { cascade: true })
   works: Work[];
 }

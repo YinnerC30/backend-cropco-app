@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CreateConsumptionSuppliesDto } from './dto/create-consumption-supplies.dto';
@@ -35,10 +29,13 @@ import { Condition } from './interfaces/condition.interface';
 import { ConsumptionSuppliesDetailsDto } from './dto/consumption-supplies-details.dto';
 import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.dto';
 import { InsufficientSupplyStockException } from './exceptions/insufficient-supply-stock.exception';
+import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 
 @Injectable()
 export class SuppliesService {
   private readonly logger = new Logger('SuppliesService');
+  private handleDBExceptions = (error: any, logger = this.logger) =>
+    handleDBExceptions(error, logger);
   constructor(
     @InjectRepository(Supply)
     private readonly supplyRepository: Repository<Supply>,
@@ -436,7 +433,7 @@ export class SuppliesService {
   async updateConsumptionDetails(
     queryRunner: QueryRunner,
     condition: Condition,
-    object: UpdateSuppliesConsumptionDto | any, // TODO: Remover any
+    object: ConsumptionSuppliesDetailsDto,
   ) {
     await queryRunner.manager.update(
       SuppliesConsumptionDetails,
@@ -668,18 +665,5 @@ export class SuppliesService {
     } catch (error) {
       this.handleDBExceptions(error);
     }
-  }
-
-  private handleDBExceptions(error: any) {
-    console.log(error);
-    if (error.code === '23503') throw new BadRequestException(error.detail);
-    if (error.code === '23505') throw new BadRequestException(error.detail);
-    if (error instanceof InsufficientSupplyStockException)
-      throw new BadRequestException(error.message);
-
-    this.logger.error(error);
-    throw new InternalServerErrorException(
-      'Unexpected error, check server logs',
-    );
   }
 }

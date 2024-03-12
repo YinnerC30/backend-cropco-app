@@ -18,18 +18,20 @@ export class SuppliesConsumptionDetails {
   @ManyToOne(
     () => SuppliesConsumption,
     (suppliesConsumption) => suppliesConsumption.details,
-    { onDelete: 'CASCADE', orphanedRowAction: 'delete' },
+    { onDelete: 'CASCADE' },
   )
   @JoinColumn({ name: 'consumptionId' })
   consumption: SuppliesConsumption;
 
   @ManyToOne(() => Supply, (supply) => supply.suppliesConsumption, {
     eager: true,
+    onDelete: 'CASCADE',
   })
   supply: Supply;
 
   @ManyToOne(() => Crop, (crop) => crop.suppliesConsumptionDetails, {
     eager: true,
+    onDelete: 'CASCADE',
   })
   crop: Crop;
 

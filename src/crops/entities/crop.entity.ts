@@ -1,5 +1,6 @@
 import { HarvestStock } from 'src/harvest/entities/harvest-stock.entity';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
+import { SaleDetails } from 'src/sales/entities/sale-details.entity';
 import { SuppliesConsumptionDetails } from 'src/supplies/entities/supplies-consumption-details.entity';
 import { SuppliesConsumption } from 'src/supplies/entities/supplies-consumption.entity';
 import { Work } from 'src/work/entities/work.entity';
@@ -31,15 +32,21 @@ export class Crop {
 
   // External relations
 
-  @OneToMany(() => Harvest, (harvest) => harvest.crop)
+  @OneToMany(() => Harvest, (harvest) => harvest.crop, { cascade: true })
   harvests: Harvest[];
 
   @OneToMany(
     () => SuppliesConsumptionDetails,
     (suppliesConsumptionDetails) => suppliesConsumptionDetails.crop,
+    { cascade: true },
   )
   suppliesConsumptionDetails: SuppliesConsumptionDetails[];
 
-  @OneToMany(() => Work, (work) => work.crop)
+  @OneToMany(() => Work, (work) => work.crop, { cascade: true })
   works: Work[];
+
+  @OneToMany(() => SaleDetails, (saleDetails) => saleDetails.crop, {
+    cascade: true,
+  })
+  saleDetails: SaleDetails[];
 }

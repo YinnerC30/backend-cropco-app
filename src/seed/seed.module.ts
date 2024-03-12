@@ -10,6 +10,8 @@ import { ClientsModule } from 'src/clients/clients.module';
 import { SuppliersModule } from 'src/suppliers/suppliers.module';
 import { SuppliesModule } from 'src/supplies/supplies.module';
 import { HarvestModule } from 'src/harvest/harvest.module';
+import { SalesModule } from 'src/sales/sales.module';
+import { WorkModule } from 'src/work/work.module';
 
 @Module({
   controllers: [SeedController],
@@ -22,6 +24,8 @@ import { HarvestModule } from 'src/harvest/harvest.module';
     SuppliersModule,
     SuppliesModule,
     HarvestModule,
+    WorkModule,
+    SalesModule,
   ],
 })
 export class SeedModule {}

@@ -11,10 +11,13 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Work } from './entities/work.entity';
 import { Repository, UpdateValuesMissingError } from 'typeorm';
+import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 
 @Injectable()
 export class WorkService {
   private readonly logger = new Logger('WorkService');
+  private handleDBExceptions = (error: any, logger = this.logger) =>
+    handleDBExceptions(error, logger);
   constructor(
     @InjectRepository(Work)
     private readonly workRepository: Repository<Work>,
@@ -59,14 +62,7 @@ export class WorkService {
     await this.workRepository.remove(user);
   }
 
-  private handleDBExceptions(error: any) {
-    console.log(error);
-    if (error.code === '23503') throw new BadRequestException(error.detail);
-    if (error instanceof UpdateValuesMissingError)
-      throw new BadRequestException('No values in object');
-    this.logger.error(error);
-    throw new InternalServerErrorException(
-      'Unexpected error, check server logs',
-    );
+  async deleteAllWork() {
+    await this.workRepository.clear();
   }
 }

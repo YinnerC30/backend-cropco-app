@@ -28,12 +28,15 @@ export class HarvestDetails {
   payment_is_pending: boolean;
 
   // Foreign Keys
-  @ManyToOne(() => Harvest, (harvest) => harvest.details)
+  @ManyToOne(() => Harvest, (harvest) => harvest.details, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'harvestId' })
   harvest: Harvest;
 
   @ManyToOne(() => Employee, (employee) => employee.harvest_details, {
     eager: true,
+    onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'employeeId' })
   employee: Employee;

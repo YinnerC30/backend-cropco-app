@@ -26,9 +26,15 @@ export class Work {
 
   // Internal relations
 
-  @ManyToOne(() => Employee, (employee) => employee.works, { eager: true })
+  @ManyToOne(() => Employee, (employee) => employee.works, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
   employee: Employee;
 
-  @ManyToOne(() => Crop, (crop) => crop.works, { eager: true })
+  @ManyToOne(() => Crop, (crop) => crop.works, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
   crop: Crop;
 }

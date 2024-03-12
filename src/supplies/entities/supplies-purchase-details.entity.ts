@@ -27,16 +27,20 @@ export class SuppliesPurchaseDetails {
   @ManyToOne(
     () => SuppliesPurchase,
     (suppliesPurchase) => suppliesPurchase.details,
-    { onDelete: 'CASCADE', onUpdate: 'CASCADE' },
+    { onDelete: 'CASCADE' },
   )
   @JoinColumn({ name: 'purchaseId' })
   purchase: SuppliesPurchase;
 
-  @ManyToOne(() => Supply, (supply) => supply.purchaseDetails, { eager: true })
+  @ManyToOne(() => Supply, (supply) => supply.purchaseDetails, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
   supply: Supply;
 
   @ManyToOne(() => Supplier, (supplier) => supplier.purchaseSuppliesDetails, {
     eager: true,
+    onDelete: 'CASCADE',
   })
   supplier: Supplier;
 }

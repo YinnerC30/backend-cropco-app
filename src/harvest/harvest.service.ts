@@ -8,17 +8,21 @@ import {
 import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { Harvest } from './entities/harvest.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository, UpdateValuesMissingError } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HarvestDetails } from './entities/harvest-details.entity';
 import { HarvestStock } from './entities/harvest-stock.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { HarvestStockDto } from './dto/create-harvest-stock.dto';
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
+import { validateTotalHarvest } from './helpers/validate-total-harvest';
+import { handleDBExceptions } from '../common/helpers/handleDBErrors';
 
 @Injectable()
 export class HarvestService {
   private readonly logger = new Logger('HarvestsService');
+  private handleDBExceptions = (error: any, logger = this.logger) =>
+    handleDBExceptions(error, logger);
   constructor(
     @InjectRepository(Harvest)
     private readonly harvestRepository: Repository<Harvest>,
@@ -33,32 +37,15 @@ export class HarvestService {
   ) {}
 
   async create(createHarvestDto: CreateHarvestDto) {
+    validateTotalHarvest(createHarvestDto);
+
     // Crear e iniciar la transacción
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+
     try {
       const { details, ...rest } = createHarvestDto;
-
-      // Validar valores numéricos
-      // const totalHarvest = rest.total;
-      // const valuePay = rest.value_pay;
-
-      // const totalArray = harvest_details.reduce((acumulador, record) => {
-      //   return acumulador + record.total;
-      // }, 0);
-
-      // const valuePayArray = harvest_details.reduce((acumulador, record) => {
-      //   return acumulador + record.value_pay;
-      // }, 0);
-
-      // const isTotalValid = totalHarvest === totalArray;
-      // const isValuePayValid = valuePay === valuePayArray;
-
-      // if (!(isTotalValid && isValuePayValid)) {
-      //   return;
-      // TODO: Retornar excepción personalizada
-      // }
 
       // Guardar Cosecha
       const harvest = queryRunner.manager.create(Harvest, { ...rest });
@@ -141,14 +128,15 @@ export class HarvestService {
   }
 
   async update(id: string, updateHarvestDto: UpdateHarvestDto) {
+    validateTotalHarvest(updateHarvestDto);
+
+    // Obtener detalles de cosecha antigua
+    const harvest = await this.findOne(id);
+
     // Crear e iniciar la transacción
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-
-    // Obtener detalles de cosecha antigua
-    const harvest = await this.findOne(id);
-    // return harvest;
 
     try {
       // Obtener detalles de cosecha nueva
@@ -295,14 +283,5 @@ export class HarvestService {
     } catch (error) {
       this.handleDBExceptions(error);
     }
-  }
-
-  private handleDBExceptions(error: any) {
-    console.log(error);
-    if (error.code === '23503') throw new BadRequestException(error.detail);
-    this.logger.error(error);
-    throw new InternalServerErrorException(
-      'Unexpected error, check server logs',
-    );
   }
 }
