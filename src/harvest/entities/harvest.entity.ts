@@ -1,14 +1,15 @@
 import { Crop } from 'src/crops/entities/crop.entity';
 import {
-  BeforeInsert,
   Column,
   Entity,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { HarvestDetails } from './harvest-details.entity';
 import { JoinColumn } from 'typeorm';
+import { HarvestProcessed } from './harvest-processed.entity';
 
 export type UnitOfMeasure = 'KILOGRAMOS' | 'LIBRAS';
 
@@ -45,7 +46,10 @@ export class Harvest {
   @OneToMany(
     () => HarvestDetails,
     (harvest_details) => harvest_details.harvest,
-    { cascade: true },
+    { cascade: true, eager: true },
   )
   details: HarvestDetails[];
+
+  @OneToOne(() => HarvestProcessed, { cascade: true })
+  harvestProcessed: HarvestProcessed;
 }

@@ -19,14 +19,21 @@ export class SaleDetails {
   total: number;
 
   // Internal relations
-  @ManyToOne(() => Sale, (sale) => sale.details, { onDelete: 'CASCADE' })
-  sale: Sale;
+  @ManyToOne(() => Sale, (sale) => sale.details, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
+  sale?: Sale;
 
-  @ManyToOne(() => Crop, (crop) => crop.saleDetails, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Crop, (crop) => crop.saleDetails, {
+    onDelete: 'CASCADE',
+    eager: true,
+  })
   crop: Crop;
 
   @ManyToOne(() => Client, (client) => client.saleDetails, {
     onDelete: 'CASCADE',
+    eager: true,
   })
   client: Client;
 }

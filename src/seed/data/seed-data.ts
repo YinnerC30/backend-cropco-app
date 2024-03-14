@@ -8,8 +8,11 @@ export interface Seed {
   suppliers: Supplier[];
   supplies: Supply[];
   harvests: Harvest[];
+  harvestProcessed: HarvestProcessed[];
   purchaseSupplies: PurchaseSupplies[];
   consumptionSupplies: ConsumptionSupplies[];
+  works: Work[];
+  sales: Sale[];
 }
 
 export interface User {
@@ -55,6 +58,13 @@ export interface Supply {
   unit_of_measure: UnitOfMeasure;
   observation: string;
 }
+export interface Work {
+  date: string;
+  description: string;
+  value_pay: number;
+  employee?: string;
+  crop?: string;
+}
 
 export interface Harvest {
   date: string;
@@ -63,6 +73,12 @@ export interface Harvest {
   value_pay: number;
   observation: string;
   details: HarvestDetail[];
+}
+export interface HarvestProcessed {
+  date: string;
+  crop?: string;
+  harvest?: string;
+  total: number;
 }
 
 export interface HarvestDetail {
@@ -89,6 +105,21 @@ export interface ConsumptionSuppliesDetails {
   crop?: string;
   supply?: string;
   amount: number;
+}
+
+export interface Sale {
+  date: string;
+  quantity: number;
+  total: number;
+  is_receivable: boolean;
+  details: SaleDetails[];
+}
+
+export interface SaleDetails {
+  quantity: number;
+  total: number;
+  crop?: string;
+  client?: string;
 }
 
 export const initialData: Seed = {
@@ -753,6 +784,12 @@ export const initialData: Seed = {
       ],
     },
   ],
+  harvestProcessed: [
+    {
+      date: '2023-06-09',
+      total: 1500,
+    },
+  ],
   purchaseSupplies: [
     {
       date: '2024-06-23',
@@ -785,6 +822,50 @@ export const initialData: Seed = {
         },
         {
           amount: 20,
+        },
+      ],
+    },
+  ],
+  works: [
+    {
+      date: '2023-02-06',
+      description: 'Ninguna por el momento',
+      value_pay: 35000,
+    },
+    {
+      date: '2023-02-06',
+      description: 'Ninguna por el momento',
+      value_pay: 35000,
+    },
+    {
+      date: '2023-02-06',
+      description: 'Ninguna por el momento',
+      value_pay: 35000,
+    },
+    {
+      date: '2023-02-06',
+      description: 'Ninguna por el momento',
+      value_pay: 35000,
+    },
+  ],
+  sales: [
+    {
+      date: '2023-06-07',
+      quantity: 125,
+      total: 50000,
+      is_receivable: false,
+      details: [
+        {
+          quantity: 50,
+          total: 20000,
+        },
+        {
+          quantity: 50,
+          total: 20000,
+        },
+        {
+          quantity: 25,
+          total: 10000,
         },
       ],
     },

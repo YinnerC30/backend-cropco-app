@@ -14,13 +14,19 @@ import { CreatePurchaseSuppliesDto } from 'src/supplies/dto/create-purchase-supp
 import { CreateConsumptionSuppliesDto } from 'src/supplies/dto/create-consumption-supplies.dto';
 import { SalesService } from 'src/sales/sales.service';
 import { WorkService } from 'src/work/work.service';
+import { Harvest } from 'src/harvest/entities/harvest.entity';
+import { CreateHarvestProcessedDto } from 'src/harvest/dto/create-harvest-processed.dto';
+import { CreateWorkDto } from 'src/work/dto/create-work.dto';
+import { CreateSaleDto } from 'src/sales/dto/create-sale.dto';
 
 @Injectable()
 export class SeedService {
   private cropIds = [];
   private employeeIds = [];
+  private clientsIds = [];
   private suppliesIds = [];
   private suppliersIds = [];
+  private harvestIds = [];
 
   constructor(
     private dataSource: DataSource,
@@ -44,8 +50,11 @@ export class SeedService {
     await this.insertNewEmployees();
     await this.insertNewCrops();
     await this.insertNewHarvests();
+    await this.insertNewHarvestsProcessed();
     await this.insertNewPurchaseSupplies();
     await this.insertNewConsumptionSupplies();
+    await this.insertNewWork();
+    await this.insertNewSales();
 
     return 'SEED EXECUTED';
   }
@@ -121,7 +130,9 @@ export class SeedService {
       insertPromises.push(this.clientsService.create(client));
     });
 
-    await Promise.all(insertPromises);
+    const result = await Promise.all(insertPromises);
+
+    this.clientsIds = result.map((client) => new String(client.id).toString());
 
     return true;
   }
@@ -185,6 +196,37 @@ export class SeedService {
       };
 
       insertPromises.push(this.harvestsService.create(objectToCreate));
+    }
+
+    const result = await Promise.all(insertPromises);
+    this.harvestIds = result.map((harvest) =>
+      new String(harvest.id).toString(),
+    );
+
+    return true;
+  }
+  private async insertNewHarvestsProcessed() {
+    const [crop1, crop2, crop3] = this.cropIds;
+    const crops = [crop1, crop2, crop3];
+    const [harvest1, harvest2, harvest3]: DeepPartial<Harvest>[] =
+      this.harvestIds;
+
+    const harvests = [harvest1, harvest2, harvest3];
+
+    const initialHarvest: any = initialData.harvestProcessed[0];
+
+    const insertPromises = [];
+
+    for (let index = 0; index < 3; index++) {
+      const objectToCreate: CreateHarvestProcessedDto = {
+        ...initialHarvest,
+        crop: crops[index],
+        harvest: harvests[index],
+      };
+
+      insertPromises.push(
+        this.harvestsService.createHarvestProcessed(objectToCreate),
+      );
     }
 
     await Promise.all(insertPromises);
@@ -264,5 +306,59 @@ export class SeedService {
     return true;
   }
 
-  private handleExceptions(error: any) {}
+  private async insertNewWork() {
+    const [crop1, crop2, crop3] = this.cropIds;
+    const crops = [crop1, crop2, crop3];
+
+    const [employee1, employee2, employee3]: DeepPartial<Employee>[] =
+      this.employeeIds;
+    const employees = [employee1, employee2, employee3];
+
+    const works = initialData.works;
+    const insertPromises = [];
+    works.forEach((work, index) => {
+      const recordToCreate: CreateWorkDto = {
+        ...work,
+        crop: crops[index],
+        employee: employees[index],
+      };
+      insertPromises.push(this.workService.create(recordToCreate));
+    });
+    await Promise.all(insertPromises);
+    return true;
+  }
+
+  private async insertNewSales() {
+    const [crop1, crop2, crop3] = this.cropIds;
+
+    const [client1, client2, client3] = this.clientsIds;
+
+    const initialSale: any = initialData.sales[0];
+
+    const { details, ...rest } = initialSale;
+
+    const objectToCreate: CreateSaleDto = {
+      ...rest,
+      details: [
+        {
+          ...details[0],
+          crop: `${crop1}`,
+          client: `${client1}`,
+        },
+        {
+          ...details[1],
+          crop: `${crop2}`,
+          client: `${client2}`,
+        },
+        {
+          ...details[2],
+          crop: `${crop3}`,
+          client: `${client3}`,
+        },
+      ],
+    };
+    await this.salesService.create(objectToCreate);
+
+    return true;
+  }
 }

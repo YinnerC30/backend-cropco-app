@@ -30,6 +30,7 @@ import { ConsumptionSuppliesDetailsDto } from './dto/consumption-supplies-detail
 import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.dto';
 import { InsufficientSupplyStockException } from './exceptions/insufficient-supply-stock.exception';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { validateTotalInArray } from 'src/common/helpers/validTotalInArray';
 
 @Injectable()
 export class SuppliesService {
@@ -199,12 +200,12 @@ export class SuppliesService {
   // Methods purchase supplies
 
   async createPurchase(createPurchaseSuppliesDto: CreatePurchaseSuppliesDto) {
+    validateTotalInArray(createPurchaseSuppliesDto);
+
     // Crear e iniciar la transacción
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-
-    validateTotalPurchase(createPurchaseSuppliesDto);
 
     try {
       const { details, ...rest } = createPurchaseSuppliesDto;
@@ -272,9 +273,9 @@ export class SuppliesService {
     id: string,
     updateSuppliesPurchaseDto: UpdateSuppliesPurchaseDto,
   ) {
-    const purchase: SuppliesPurchase = await this.findOnePurchase(id);
+    validateTotalInArray(updateSuppliesPurchaseDto);
 
-    validateTotalPurchase(updateSuppliesPurchaseDto);
+    const purchase: SuppliesPurchase = await this.findOnePurchase(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -368,9 +369,10 @@ export class SuppliesService {
       await queryRunner.manager.update(SuppliesPurchase, { id }, rest);
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
     } catch (error) {
       this.handleDBExceptions(error);
+    } finally {
+      await queryRunner.release();
     }
   }
 

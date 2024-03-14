@@ -1,22 +1,23 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
-import { Harvest } from './entities/harvest.entity';
-import { DataSource, Repository, UpdateValuesMissingError } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { HarvestDetails } from './entities/harvest-details.entity';
-import { HarvestStock } from './entities/harvest-stock.entity';
+import { Harvest } from './entities/harvest.entity';
+
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { HarvestStockDto } from './dto/create-harvest-stock.dto';
+
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
-import { validateTotalHarvest } from './helpers/validate-total-harvest';
 import { handleDBExceptions } from '../common/helpers/handleDBErrors';
+import { HarvestDetailsDto } from './dto/create-harvest-details.dto';
+
+import { validateTotalInArray } from 'src/common/helpers/validTotalInArray';
+import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
+import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
+import { HarvestProcessed } from './entities/harvest-processed.entity';
+import { HarvestStock } from './entities/harvest-stock.entity';
+import { InsufficientHarvestStockException } from './exceptions/insufficient-harvest-stock';
 
 @Injectable()
 export class HarvestService {
@@ -27,17 +28,14 @@ export class HarvestService {
     @InjectRepository(Harvest)
     private readonly harvestRepository: Repository<Harvest>,
 
-    @InjectRepository(HarvestDetails)
-    private readonly harvestDetailsRepository: Repository<HarvestDetails>,
-
-    @InjectRepository(HarvestStock)
-    private readonly harvestStockRepository: Repository<HarvestStock>,
+    @InjectRepository(HarvestProcessed)
+    private readonly harvestProcessedRepository: Repository<HarvestProcessed>,
 
     private readonly dataSource: DataSource,
   ) {}
 
   async create(createHarvestDto: CreateHarvestDto) {
-    validateTotalHarvest(createHarvestDto);
+    validateTotalInArray(createHarvestDto);
 
     // Crear e iniciar la transacción
     const queryRunner = this.dataSource.createQueryRunner();
@@ -49,53 +47,12 @@ export class HarvestService {
 
       // Guardar Cosecha
       const harvest = queryRunner.manager.create(Harvest, { ...rest });
-      const { id } = await queryRunner.manager.save(harvest);
-
-      // Guardar detalles de cosecha
-      const arrayPromises = [];
-
-      for (const register of details) {
-        const registerToSave = queryRunner.manager.create(HarvestDetails, {
-          harvest: id,
-          ...register,
-        });
-
-        arrayPromises.push(queryRunner.manager.save(registerToSave));
-      }
-
-      await Promise.all(arrayPromises);
-
-      // Agregar cosecha al stock de
-      const { crop, total } = rest;
-
-      console.log('Aquí reventó');
-
-      const stockRegister = await this.harvestStockRepository
-        .createQueryBuilder('harvestStock')
-        .where(`harvestStock.cropId = '${createHarvestDto.crop}'`)
-        .getOne();
-
-      if (!stockRegister) {
-        const harvestStock: HarvestStockDto = queryRunner.manager.create(
-          HarvestStock,
-          {
-            total: 0,
-            crop,
-          },
-        );
-
-        await queryRunner.manager.save(harvestStock);
-      }
-
-      await queryRunner.manager.increment(
-        HarvestStock,
-        { crop },
-        'total',
-        total,
+      harvest.details = details.map((harvestDetailsDto: HarvestDetailsDto) =>
+        queryRunner.manager.create(HarvestDetails, harvestDetailsDto),
       );
-
+      await queryRunner.manager.save(harvest);
       await queryRunner.commitTransaction();
-      await queryRunner.release();
+      return harvest;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.handleDBExceptions(error);
@@ -128,7 +85,7 @@ export class HarvestService {
   }
 
   async update(id: string, updateHarvestDto: UpdateHarvestDto) {
-    validateTotalHarvest(updateHarvestDto);
+    validateTotalInArray(updateHarvestDto);
 
     // Obtener detalles de cosecha antigua
     const harvest = await this.findOne(id);
@@ -203,22 +160,6 @@ export class HarvestService {
       }
       await Promise.all(arrayRecordsToCreate);
 
-      //  Incrementar stock cosecha
-
-      await queryRunner.manager.decrement(
-        HarvestStock,
-        { crop: updateHarvestDto.crop },
-        'total',
-        harvest.total,
-      );
-
-      await queryRunner.manager.increment(
-        HarvestStock,
-        { crop: updateHarvestDto.crop },
-        'total',
-        updateHarvestDto.total,
-      );
-
       // Actualizar cosecha
       const { details, ...rest } = updateHarvestDto;
       await queryRunner.manager.update(Harvest, { id }, rest);
@@ -240,25 +181,10 @@ export class HarvestService {
     await queryRunner.startTransaction();
 
     try {
-      // Delete HarvestDetails
-      await queryRunner.manager.delete(HarvestDetails, {
-        harvest: id,
-      });
-
-      // Decrement stock
-
-      await queryRunner.manager.decrement(
-        HarvestStock,
-        { crop: harvest.crop.id },
-        'total',
-        harvest.total,
-      );
-
       // Delete Harvest
       await queryRunner.manager.remove(harvest);
 
       await queryRunner.commitTransaction();
-      // await queryRunner.rollbackTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.handleDBExceptions(error);
@@ -268,20 +194,169 @@ export class HarvestService {
   }
 
   async deleteAllHarvest() {
-    // TODO: Usar QueryRunner
-
     const harvest = this.harvestRepository.createQueryBuilder('harvest');
-    const harvestDetails =
-      this.harvestDetailsRepository.createQueryBuilder('harvestDetails');
-    const harvestStock =
-      this.harvestStockRepository.createQueryBuilder('harvestStock');
 
     try {
-      await harvestStock.delete().where({}).execute();
-      await harvestDetails.delete().where({}).execute();
       await harvest.delete().where({}).execute();
     } catch (error) {
       this.handleDBExceptions(error);
+    }
+  }
+
+  async updateStock(
+    queryRunner: QueryRunner,
+    cropId: any, //TODO: Remover tipo any aquí y en otros métodos
+    total: number,
+    increment = true,
+  ) {
+    const recordHarvestCropStock = await queryRunner.manager
+      .getRepository(HarvestStock)
+      .createQueryBuilder('harvestStock')
+      .where('harvestStock.cropId = :cropId', { cropId })
+      .getOne();
+
+    if (!recordHarvestCropStock) {
+      const recordToSave = queryRunner.manager.create(HarvestStock, {
+        crop: cropId,
+        total: 0,
+      });
+      await queryRunner.manager.save(HarvestStock, recordToSave);
+    }
+    if (increment) {
+      return await queryRunner.manager.increment(
+        HarvestStock,
+        { crop: cropId },
+        'total',
+        total,
+      );
+    }
+    const amountActually = recordHarvestCropStock.total;
+    if (amountActually < total) {
+      throw new InsufficientHarvestStockException();
+    }
+    await queryRunner.manager.decrement(
+      HarvestStock,
+      { crop: cropId },
+      'total',
+      total,
+    );
+  }
+
+  async createHarvestProcessed(
+    createHarvestProcessedDto: CreateHarvestProcessedDto,
+  ) {
+    // Crear e iniciar la transacción
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      // Guardar Cosecha Procesada
+      const harvestProcessed = queryRunner.manager.create(
+        HarvestProcessed,
+        createHarvestProcessedDto,
+      );
+      await queryRunner.manager.save(HarvestProcessed, harvestProcessed);
+      const { crop, total } = createHarvestProcessedDto;
+      await this.updateStock(queryRunner, crop, total, true);
+
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.handleDBExceptions(error);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  findAllHarvestProcessed(paginationDto: PaginationDto) {
+    const { limit = 10, offset = 0 } = paginationDto;
+    return this.harvestProcessedRepository.find({
+      order: {
+        date: 'ASC',
+      },
+      take: limit,
+      skip: offset,
+    });
+  }
+
+  async findOneHarvestProcessed(id: string) {
+    const harvestProcessed = await this.harvestProcessedRepository.findOne({
+      where: {
+        id,
+      },
+    });
+    if (!harvestProcessed)
+      throw new NotFoundException(`Harvest processed with id: ${id} not found`);
+    return harvestProcessed;
+  }
+
+  async updateHarvestProcessed(
+    id: string,
+    updateHarvestProcessedDto: UpdateHarvestProcessedDto,
+  ) {
+    // Obtener detalles de cosecha antigua
+    const harvestProcessed = await this.findOneHarvestProcessed(id);
+
+    // Crear e iniciar la transacción
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      await this.updateStock(
+        queryRunner,
+        harvestProcessed.crop.id,
+        harvestProcessed.total,
+        false,
+      );
+
+      await queryRunner.manager.update(
+        HarvestProcessed,
+        { id },
+        updateHarvestProcessedDto,
+      );
+
+      const { crop, total } = updateHarvestProcessedDto;
+
+      await this.updateStock(queryRunner, crop, total, true);
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.handleDBExceptions(error);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async removeHarvestProcessed(id: string) {
+    const harvestProcessed: HarvestProcessed =
+      await this.findOneHarvestProcessed(id);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Delete Harvest
+      await queryRunner.manager.remove(harvestProcessed);
+
+      const { crop } = harvestProcessed;
+
+      await this.updateStock(
+        queryRunner,
+        crop.id,
+        harvestProcessed.total,
+        false,
+      );
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.handleDBExceptions(error);
+    } finally {
+      await queryRunner.release();
     }
   }
 }

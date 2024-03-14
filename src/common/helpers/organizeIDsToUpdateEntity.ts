@@ -20,5 +20,9 @@ export const organizeIDsToUpdateEntity = (
     }
   });
 
-  return { toCreate, toUpdate, toDelete };
+  return {
+    toCreate,
+    toUpdate,
+    toDelete,
+  };
 };

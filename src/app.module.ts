@@ -9,9 +9,13 @@ import { Crop } from './crops/entities/crop.entity';
 import { EmployeesModule } from './employees/employees.module';
 import { Employee } from './employees/entities/employee.entity';
 import { HarvestDetails } from './harvest/entities/harvest-details.entity';
+import { HarvestProcessed } from './harvest/entities/harvest-processed.entity';
 import { HarvestStock } from './harvest/entities/harvest-stock.entity';
 import { Harvest } from './harvest/entities/harvest.entity';
 import { HarvestModule } from './harvest/harvest.module';
+import { SaleDetails } from './sales/entities/sale-details.entity';
+import { Sale } from './sales/entities/sale.entity';
+import { SalesModule } from './sales/sales.module';
 import { SeedModule } from './seed/seed.module';
 import { Supplier } from './suppliers/entities/supplier.entity';
 import { SuppliersModule } from './suppliers/suppliers.module';
@@ -24,12 +28,8 @@ import { Supply } from './supplies/entities/supply.entity';
 import { SuppliesModule } from './supplies/supplies.module';
 import { User } from './users/entities/user.entity';
 import { UsersModule } from './users/users.module';
-import { APP_FILTER } from '@nestjs/core';
-import { WorkModule } from './work/work.module';
 import { Work } from './work/entities/work.entity';
-import { SalesModule } from './sales/sales.module';
-import { Sale } from './sales/entities/sale.entity';
-import { SaleDetails } from './sales/entities/sale-details.entity';
+import { WorkModule } from './work/work.module';
 
 @Module({
   imports: [
@@ -53,6 +53,7 @@ import { SaleDetails } from './sales/entities/sale-details.entity';
         User,
         HarvestDetails,
         HarvestStock,
+        HarvestProcessed,
         SuppliesPurchase,
         SuppliesPurchaseDetails,
         SuppliesStock,
@@ -61,6 +62,7 @@ import { SaleDetails } from './sales/entities/sale-details.entity';
         Work,
         Sale,
         SaleDetails,
+        HarvestProcessed,
       ],
       synchronize: true,
     }),

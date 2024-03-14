@@ -3,7 +3,6 @@ import {
   IsDateString,
   IsIn,
   IsInt,
-  IsNotEmpty,
   IsPositive,
   IsString,
   IsUUID,
