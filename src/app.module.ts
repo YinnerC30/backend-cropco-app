@@ -30,6 +30,7 @@ import { User } from './users/entities/user.entity';
 import { UsersModule } from './users/users.module';
 import { Work } from './work/entities/work.entity';
 import { WorkModule } from './work/work.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { WorkModule } from './work/work.module';
     UsersModule,
     WorkModule,
     SalesModule,
+    PaymentsModule,
   ],
 })
 export class AppModule {}
