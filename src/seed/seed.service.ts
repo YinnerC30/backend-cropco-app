@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from './../users/users.service';
-import { initialData } from './data/seed-data';
+import { Payment, initialData } from './data/seed-data';
 import { CropsService } from 'src/crops/crops.service';
 import { EmployeesService } from 'src/employees/employees.service';
 import { ClientsService } from 'src/clients/clients.service';
@@ -18,6 +18,10 @@ import { Harvest } from 'src/harvest/entities/harvest.entity';
 import { CreateHarvestProcessedDto } from 'src/harvest/dto/create-harvest-processed.dto';
 import { CreateWorkDto } from 'src/work/dto/create-work.dto';
 import { CreateSaleDto } from 'src/sales/dto/create-sale.dto';
+import { PaymentsService } from 'src/payments/payments.service';
+import { Work } from 'src/work/entities/work.entity';
+import { CreatePaymentDto } from 'src/payments/dto/create-payment.dto';
+import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 
 @Injectable()
 export class SeedService {
@@ -27,6 +31,8 @@ export class SeedService {
   private suppliesIds = [];
   private suppliersIds = [];
   private harvestIds = [];
+  private harvestDetails = [];
+  private worksIds = [];
 
   constructor(
     private dataSource: DataSource,
@@ -39,6 +45,7 @@ export class SeedService {
     private readonly harvestsService: HarvestService,
     private readonly workService: WorkService,
     private readonly salesService: SalesService,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   async runSeed() {
@@ -55,6 +62,7 @@ export class SeedService {
     await this.insertNewConsumptionSupplies();
     await this.insertNewWork();
     await this.insertNewSales();
+    await this.insertNewPayments();
 
     return 'SEED EXECUTED';
   }
@@ -199,9 +207,14 @@ export class SeedService {
     }
 
     const result = await Promise.all(insertPromises);
+    console.log(result);
     this.harvestIds = result.map((harvest) =>
       new String(harvest.id).toString(),
     );
+
+    this.harvestDetails = result.map((harvest) => {
+      return harvest.details;
+    });
 
     return true;
   }
@@ -324,7 +337,9 @@ export class SeedService {
       };
       insertPromises.push(this.workService.create(recordToCreate));
     });
-    await Promise.all(insertPromises);
+    const result = await Promise.all(insertPromises);
+    this.worksIds = result.map((work: Work) => new String(work.id).toString());
+
     return true;
   }
 
@@ -360,5 +375,34 @@ export class SeedService {
     await this.salesService.create(objectToCreate);
 
     return true;
+  }
+
+  private async insertNewPayments() {
+    const initialPayment = initialData.payments[0];
+
+    const [employee1]: DeepPartial<Employee>[] = this.employeeIds;
+
+    const [work1]: DeepPartial<Work>[] = this.worksIds;
+
+    const harvestDetails: any = this.harvestDetails;
+
+    console.log({ employee1, work1, harvestDetails });
+
+    const objectToCreate: CreatePaymentDto = {
+      date: initialPayment.date,
+      method_of_payment: initialPayment.method_of_payment,
+      employee: employee1,
+      total: 185000,
+      categories: {
+        harvests: [
+          harvestDetails[0][0].id,
+          harvestDetails[1][0].id,
+          harvestDetails[2][0].id,
+        ],
+        works: [work1],
+      },
+    };
+
+    await this.paymentsService.create(objectToCreate);
   }
 }

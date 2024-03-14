@@ -3,10 +3,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Harvest } from './harvest.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
+import { PaymentHarvest } from 'src/payments/entities/payment-harvest.entity';
 
 @Entity()
 export class HarvestDetails {
@@ -40,4 +42,7 @@ export class HarvestDetails {
   })
   @JoinColumn({ name: 'employeeId' })
   employee: Employee;
+
+  @OneToOne(() => PaymentHarvest, { cascade: true })
+  paymentHarvest: PaymentHarvest;
 }

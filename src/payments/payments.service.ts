@@ -1,26 +1,169 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Payment } from './entities/payment.entity';
+import { DataSource, Repository, DeepPartial } from 'typeorm';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { HarvestService } from 'src/harvest/harvest.service';
+import { WorkService } from 'src/work/work.service';
+import { PaymentHarvest } from './entities/payment-harvest.entity';
+import { PaymentWork } from './entities/payment-work.entity';
+import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
+import { Work } from 'src/work/entities/work.entity';
 
 @Injectable()
 export class PaymentsService {
-  create(createPaymentDto: CreatePaymentDto) {
-    return 'This action adds a new payment';
+  private readonly logger = new Logger('PaymentsService');
+  private handleDBExceptions = (error: any, logger = this.logger) =>
+    handleDBExceptions(error, logger);
+  constructor(
+    @InjectRepository(Payment)
+    private readonly paymentRepository: Repository<Payment>,
+    private readonly dataSource: DataSource,
+    private readonly harvestService: HarvestService,
+    private readonly workService: WorkService,
+  ) {}
+
+  async create(createPaymentDto: CreatePaymentDto) {
+    // Crear e iniciar la transacción
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    const { harvests, works } = createPaymentDto.categories;
+
+    const totalValuePayHarvest = [];
+
+    for (const id of harvests) {
+      const record = await queryRunner.manager
+        .getRepository(HarvestDetails)
+        .findOne({ where: { id: `${id}` } });
+      totalValuePayHarvest.push(record.value_pay);
+    }
+
+    const totalValuePayWork = [];
+    for (const id of works) {
+      const record = await queryRunner.manager
+        .getRepository(Work)
+        .findOne({ where: { id: `${id}` } });
+      totalValuePayWork.push(record.value_pay);
+    }
+
+    const totalVerify: number = [
+      ...totalValuePayHarvest,
+      ...totalValuePayWork,
+    ].reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+
+    if (totalVerify !== createPaymentDto.total) {
+      throw new BadRequestException(
+        `Total payment is not correct, correct value is ${totalVerify}`,
+      );
+    }
+    try {
+      const payment: Payment = queryRunner.manager.create(
+        Payment,
+        createPaymentDto,
+      );
+      payment.payment_harvests = harvests.map((id) => {
+        return queryRunner.manager.create(PaymentHarvest, {
+          harvest_detail: id,
+        });
+      });
+
+      payment.payment_works = works.map((id) =>
+        queryRunner.manager.create(PaymentWork, { work: id }),
+      );
+
+      // Cambiar estado de pago
+
+      for (const id of harvests) {
+        await queryRunner.manager.update(
+          HarvestDetails,
+          { id },
+          { payment_is_pending: false },
+        );
+      }
+
+      for (const id of works) {
+        await queryRunner.manager.update(
+          Work,
+          { id },
+          { payment_is_pending: false },
+        );
+      }
+
+      await queryRunner.manager.save(Payment, payment);
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      this.handleDBExceptions(error);
+    } finally {
+      await queryRunner.release();
+    }
   }
 
-  findAll() {
-    return `This action returns all payments`;
+  findAll(paginationDto: PaginationDto) {
+    const { limit = 10, offset = 0 } = paginationDto;
+    return this.paymentRepository.find({
+      order: {
+        date: 'ASC',
+      },
+      take: limit,
+      skip: offset,
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} payment`;
+  async findOne(id: string) {
+    const payment = await this.paymentRepository.findOne({
+      where: {
+        id,
+      },
+    });
+    if (!payment)
+      throw new NotFoundException(`Payment with id: ${id} not found`);
+    return payment;
   }
 
-  update(id: number, updatePaymentDto: UpdatePaymentDto) {
-    return `This action updates a #${id} payment`;
-  }
+  async remove(id: string) {
+    const payment = await this.findOne(id);
+    // Crear e iniciar la transacción
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      await queryRunner.manager.delete(Payment, { id });
 
-  remove(id: number) {
-    return `This action removes a #${id} payment`;
+      const { payment_harvests, payment_works } = payment;
+
+      for (const record of payment_harvests) {
+        const { id } = record.harvest_detail;
+        await queryRunner.manager.update(
+          HarvestDetails,
+          { id },
+          { payment_is_pending: true },
+        );
+      }
+
+      for (const record of payment_works) {
+        const { id } = record.work;
+        await queryRunner.manager.update(
+          Work,
+          { id },
+          { payment_is_pending: true },
+        );
+      }
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.handleDBExceptions(error);
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

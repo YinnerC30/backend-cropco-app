@@ -31,6 +31,9 @@ import { UsersModule } from './users/users.module';
 import { Work } from './work/entities/work.entity';
 import { WorkModule } from './work/work.module';
 import { PaymentsModule } from './payments/payments.module';
+import { Payment } from './payments/entities/payment.entity';
+import { PaymentHarvest } from './payments/entities/payment-harvest.entity';
+import { PaymentWork } from './payments/entities/payment-work.entity';
 
 @Module({
   imports: [
@@ -43,7 +46,6 @@ import { PaymentsModule } from './payments/payments.module';
       password: 'admin',
       database: 'cropco',
       logging: true,
-      // dropSchema: true,
       entities: [
         Client,
         Crop,
@@ -64,6 +66,9 @@ import { PaymentsModule } from './payments/payments.module';
         Sale,
         SaleDetails,
         HarvestProcessed,
+        Payment,
+        PaymentHarvest,
+        PaymentWork,
       ],
       synchronize: true,
     }),

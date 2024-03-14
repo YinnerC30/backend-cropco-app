@@ -1,5 +1,6 @@
 import { PersonalInformation } from '../../common/entities/personal-information.entity';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
+import { Payment } from 'src/payments/entities/payment.entity';
 import { Work } from 'src/work/entities/work.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 @Entity()
@@ -20,4 +21,7 @@ export class Employee extends PersonalInformation {
 
   @OneToMany(() => Work, (work) => work.employee, { cascade: true })
   works: Work[];
+
+  @OneToMany(() => Payment, (payment) => payment.employee, { cascade: true })
+  payments: Payment[];
 }

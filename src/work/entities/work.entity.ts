@@ -1,6 +1,13 @@
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { PaymentWork } from 'src/payments/entities/payment-work.entity';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Work {
@@ -37,4 +44,8 @@ export class Work {
     onDelete: 'CASCADE',
   })
   crop: Crop;
+
+  // External relations
+  @OneToOne(() => PaymentWork, { cascade: true })
+  paymentWork: PaymentWork;
 }

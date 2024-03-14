@@ -26,6 +26,7 @@ export class WorkService {
   async create(createWorkDto: CreateWorkDto) {
     const work = this.workRepository.create(createWorkDto);
     await this.workRepository.save(work);
+    return work;
   }
 
   async findAll(paginationDto: PaginationDto) {
@@ -63,6 +64,6 @@ export class WorkService {
   }
 
   async deleteAllWork() {
-    await this.workRepository.clear();
+    await this.workRepository.delete({});
   }
 }

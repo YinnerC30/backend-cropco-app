@@ -13,6 +13,18 @@ export interface Seed {
   consumptionSupplies: ConsumptionSupplies[];
   works: Work[];
   sales: Sale[];
+  payments: Payment[];
+}
+
+export interface Payment {
+  date: string;
+  employee?: string;
+  method_of_payment: string;
+  categories?: {
+    harvests?: string[];
+    works?: string[];
+  };
+  total?: number;
 }
 
 export interface User {
@@ -842,11 +854,6 @@ export const initialData: Seed = {
       description: 'Ninguna por el momento',
       value_pay: 35000,
     },
-    {
-      date: '2023-02-06',
-      description: 'Ninguna por el momento',
-      value_pay: 35000,
-    },
   ],
   sales: [
     {
@@ -868,6 +875,12 @@ export const initialData: Seed = {
           total: 10000,
         },
       ],
+    },
+  ],
+  payments: [
+    {
+      date: '2023-05-03',
+      method_of_payment: 'EFECTIVO',
     },
   ],
 };
