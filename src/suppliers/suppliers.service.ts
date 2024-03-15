@@ -40,7 +40,14 @@ export class SuppliersService {
   }
 
   async findOne(id: string) {
-    const supplier = await this.supplierRepository.findOneBy({ id });
+    const supplier = await this.supplierRepository.findOne({
+      where: { id },
+      relations: {
+        supplies_purchase_details: {
+          supply: true,
+        },
+      },
+    });
     if (!supplier)
       throw new NotFoundException(`Supplier with id: ${id} not found`);
     return supplier;

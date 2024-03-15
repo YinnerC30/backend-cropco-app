@@ -40,7 +40,10 @@ export class ClientsService {
   }
 
   async findOne(id: string) {
-    const client = await this.clientRepository.findOneBy({ id });
+    const client = await this.clientRepository.findOne({
+      where: { id },
+      relations: { sales_detail: { crop: true, sale: true } },
+    });
     if (!client) throw new NotFoundException(`Client with id: ${id} not found`);
     return client;
   }

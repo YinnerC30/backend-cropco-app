@@ -73,6 +73,12 @@ export class SalesService {
       where: {
         id,
       },
+      relations: {
+        details: {
+          client: true,
+          crop: true,
+        },
+      },
     });
     if (!sale) throw new NotFoundException(`Sale with id: ${id} not found`);
     return sale;

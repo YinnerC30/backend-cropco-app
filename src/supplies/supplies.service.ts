@@ -68,13 +68,23 @@ export class SuppliesService {
       order: {
         name: 'ASC',
       },
+      relations: {
+        stock: true,
+      },
       take: limit,
       skip: offset,
     });
   }
 
   async findOne(id: string) {
-    const supply = await this.supplyRepository.findOneBy({ id });
+    const supply = await this.supplyRepository.findOne({
+      where: { id },
+      relations: {
+        stock: true,
+        consumption_details: true,
+        purchase_details: true,
+      },
+    });
     if (!supply) throw new NotFoundException(`Supply with id: ${id} not found`);
     return supply;
   }
@@ -246,6 +256,9 @@ export class SuppliesService {
   async findOnePurchase(id: string) {
     const supplyPurchase = await this.suppliesPurchaseRepository.findOne({
       where: { id },
+      relations: {
+        details: true,
+      },
     });
     if (!supplyPurchase)
       throw new NotFoundException(`Supplies Purchase with id: ${id} not found`);
@@ -468,6 +481,9 @@ export class SuppliesService {
   async findOneConsumption(id: string) {
     const supplyConsumption = await this.suppliesConsumptionRepository.findOne({
       where: { id },
+      relations: {
+        details: true,
+      },
     });
     if (!supplyConsumption)
       throw new NotFoundException(

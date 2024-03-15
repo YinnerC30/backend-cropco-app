@@ -75,7 +75,11 @@ export class HarvestService {
       where: {
         id,
       },
-      relations: { details: true },
+      relations: {
+        details: { employee: true, payments_harvest: true },
+        crop: true,
+        processed: true,
+      },
     });
     if (!harvest)
       throw new NotFoundException(`Harvest with id: ${id} not found`);
@@ -264,6 +268,10 @@ export class HarvestService {
     const harvestProcessed = await this.harvestProcessedRepository.findOne({
       where: {
         id,
+      },
+      relations: {
+        crop: true,
+        harvest: true,
       },
     });
     if (!harvestProcessed)

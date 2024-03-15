@@ -119,6 +119,15 @@ export class PaymentsService {
       where: {
         id,
       },
+      relations: {
+        employee: true,
+        payments_harvest: {
+          harvests_detail: true,
+        },
+        payments_work: {
+          work: true,
+        },
+      },
     });
     if (!payment)
       throw new NotFoundException(`Payment with id: ${id} not found`);
