@@ -9,7 +9,7 @@ import { SuppliesPurchase } from './supplies-purchase.entity';
 import { Supply } from './supply.entity';
 import { Supplier } from 'src/suppliers/entities/supplier.entity';
 
-@Entity()
+@Entity({ name: 'supplies_purchase_details' })
 export class SuppliesPurchaseDetails {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -26,19 +26,19 @@ export class SuppliesPurchaseDetails {
   // Internal relations
   @ManyToOne(
     () => SuppliesPurchase,
-    (suppliesPurchase) => suppliesPurchase.details,
+    (supplies_purchase) => supplies_purchase.details,
     { onDelete: 'CASCADE' },
   )
   @JoinColumn({ name: 'purchaseId' })
-  purchase: SuppliesPurchase;
+  supplies_purchase: SuppliesPurchase;
 
-  @ManyToOne(() => Supply, (supply) => supply.purchaseDetails, {
+  @ManyToOne(() => Supply, (supply) => supply.purchase_details, {
     eager: true,
     onDelete: 'CASCADE',
   })
   supply: Supply;
 
-  @ManyToOne(() => Supplier, (supplier) => supplier.purchaseSuppliesDetails, {
+  @ManyToOne(() => Supplier, (supplier) => supplier.supplies_purchase_details, {
     eager: true,
     onDelete: 'CASCADE',
   })

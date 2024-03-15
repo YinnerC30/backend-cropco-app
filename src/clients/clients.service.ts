@@ -60,10 +60,8 @@ export class ClientsService {
   }
 
   async deleteAllClients() {
-    const query = this.clientRepository.createQueryBuilder('client');
-
     try {
-      return await query.delete().where({}).execute();
+      await this.clientRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
     }

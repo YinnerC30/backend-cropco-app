@@ -8,17 +8,17 @@ import {
 import { Payment } from './payment.entity';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 
-@Entity({ name: 'payment_harvest' })
+@Entity({ name: 'payments_harvest' })
 export class PaymentHarvest {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Payment, (payment) => payment.payment_harvests, {
+  @ManyToOne(() => Payment, (payment) => payment.payments_harvest, {
     onDelete: 'CASCADE',
   })
   payment: Payment;
 
   @OneToOne(() => HarvestDetails, { onDelete: 'CASCADE', eager: true })
   @JoinColumn()
-  harvest_detail: HarvestDetails;
+  harvests_detail: HarvestDetails;
 }

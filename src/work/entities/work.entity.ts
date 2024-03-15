@@ -9,7 +9,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity()
+@Entity({ name: 'crops_work' })
 export class Work {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -47,5 +47,5 @@ export class Work {
 
   // External relations
   @OneToOne(() => PaymentWork, { cascade: true })
-  paymentWork: PaymentWork;
+  payments_work: PaymentWork;
 }

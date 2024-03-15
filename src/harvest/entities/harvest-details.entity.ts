@@ -10,7 +10,7 @@ import { Harvest } from './harvest.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { PaymentHarvest } from 'src/payments/entities/payment-harvest.entity';
 
-@Entity()
+@Entity({ name: 'harvests_detail' })
 export class HarvestDetails {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -36,7 +36,7 @@ export class HarvestDetails {
   @JoinColumn({ name: 'harvestId' })
   harvest: Harvest;
 
-  @ManyToOne(() => Employee, (employee) => employee.harvest_details, {
+  @ManyToOne(() => Employee, (employee) => employee.harvests_detail, {
     eager: true,
     onDelete: 'CASCADE',
   })
@@ -44,5 +44,5 @@ export class HarvestDetails {
   employee: Employee;
 
   @OneToOne(() => PaymentHarvest, { cascade: true })
-  paymentHarvest: PaymentHarvest;
+  payments_harvest: PaymentHarvest;
 }

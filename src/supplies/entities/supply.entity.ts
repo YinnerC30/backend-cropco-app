@@ -11,7 +11,7 @@ import { SuppliesConsumptionDetails } from './supplies-consumption-details.entit
 
 export type UnitOfMeasure = 'GRAMOS' | 'MILILITROS';
 
-@Entity()
+@Entity({ name: 'supplies' })
 export class Supply {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -32,18 +32,18 @@ export class Supply {
 
   @OneToMany(
     () => SuppliesPurchaseDetails,
-    (suppliesPurchaseDetails) => suppliesPurchaseDetails.supply,
+    (purchase_details) => purchase_details.supply,
     { cascade: true },
   )
-  purchaseDetails: SuppliesPurchaseDetails[];
+  purchase_details: SuppliesPurchaseDetails[];
 
   @OneToOne(() => SuppliesStock)
   stock: SuppliesStock;
 
   @OneToMany(
     () => SuppliesConsumptionDetails,
-    (suppliesConsumptionDetails) => suppliesConsumptionDetails.supply,
+    (consumption_details) => consumption_details.supply,
     { cascade: true },
   )
-  suppliesConsumption: SuppliesConsumptionDetails[];
+  consumption_details: SuppliesConsumptionDetails[];
 }

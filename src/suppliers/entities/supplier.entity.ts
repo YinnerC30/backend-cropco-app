@@ -2,7 +2,7 @@ import { PersonalInformation } from '../../common/entities/personal-information.
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { SuppliesPurchaseDetails } from 'src/supplies/entities/supplies-purchase-details.entity';
 
-@Entity()
+@Entity({ name: 'suppliers' })
 export class Supplier extends PersonalInformation {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -16,8 +16,8 @@ export class Supplier extends PersonalInformation {
   // External relations
   @OneToMany(
     () => SuppliesPurchaseDetails,
-    (suppliesPurchaseDetails) => suppliesPurchaseDetails.supplier,
+    (supplies_purchase_details) => supplies_purchase_details.supplier,
     { cascade: true },
   )
-  purchaseSuppliesDetails: SuppliesPurchaseDetails[];
+  supplies_purchase_details: SuppliesPurchaseDetails[];
 }

@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity('harvest_stock')
+@Entity('harvests_stock')
 export class HarvestStock {
   @PrimaryGeneratedColumn('uuid')
   id: string;

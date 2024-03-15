@@ -12,46 +12,52 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity()
+@Entity({ name: 'crops' })
 export class Crop {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
   @Column({ type: 'varchar', length: 100, unique: true })
   name: string;
-  @Column({ type: 'varchar', length: 500 })
+
+  @Column({ type: 'text' })
   description: string;
+
   @Column({ type: 'int4' })
   units: number;
-  @Column({ type: 'varchar', length: 500 })
+
+  @Column({ type: 'text' })
   location: string;
-  @Column({ type: 'date' })
+
+  @Column({ type: 'date', name: 'date_of_creation' })
   date_of_creation: string;
-  @Column({ type: 'date' })
+
+  @Column({ type: 'date', name: 'date_of_termination' })
   date_of_termination: string;
 
   // External relations
 
   @OneToOne(() => HarvestStock, { cascade: true })
-  stock: HarvestStock;
+  harvests_stock: HarvestStock;
 
   @OneToMany(
     () => HarvestProcessed,
-    (harvestProcessed) => harvestProcessed.crop,
+    (harvests_processed) => harvests_processed.crop,
     {
       cascade: true,
     },
   )
-  harvestsProcessed: HarvestProcessed[];
+  harvests_processed: HarvestProcessed[];
 
   @OneToMany(() => Harvest, (harvest) => harvest.crop, { cascade: true })
   harvests: Harvest[];
 
   @OneToMany(
     () => SuppliesConsumptionDetails,
-    (suppliesConsumptionDetails) => suppliesConsumptionDetails.crop,
+    (supplies_consumption_details) => supplies_consumption_details.crop,
     { cascade: true },
   )
-  suppliesConsumptionDetails: SuppliesConsumptionDetails[];
+  supplies_consumption_details: SuppliesConsumptionDetails[];
 
   @OneToMany(() => Work, (work) => work.crop, { cascade: true })
   works: Work[];
@@ -59,5 +65,5 @@ export class Crop {
   @OneToMany(() => SaleDetails, (saleDetails) => saleDetails.crop, {
     cascade: true,
   })
-  saleDetails: SaleDetails[];
+  sales_detail: SaleDetails[];
 }

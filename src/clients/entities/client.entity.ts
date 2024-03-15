@@ -2,7 +2,7 @@ import { PersonalInformation } from 'src/common/entities/personal-information.en
 import { SaleDetails } from 'src/sales/entities/sale-details.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity()
+@Entity({ name: 'clients' })
 export class Client extends PersonalInformation {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -11,8 +11,8 @@ export class Client extends PersonalInformation {
   address: string;
 
   // External relations
-  @OneToMany(() => SaleDetails, (saleDetails) => saleDetails.client, {
+  @OneToMany(() => SaleDetails, (sales_detail) => sales_detail.client, {
     cascade: true,
   })
-  saleDetails: SaleDetails[];
+  sales_detail: SaleDetails[];
 }

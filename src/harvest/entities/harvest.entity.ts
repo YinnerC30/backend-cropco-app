@@ -13,7 +13,7 @@ import { HarvestProcessed } from './harvest-processed.entity';
 
 export type UnitOfMeasure = 'KILOGRAMOS' | 'LIBRAS';
 
-@Entity()
+@Entity({ name: 'harvests' })
 export class Harvest {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -43,13 +43,12 @@ export class Harvest {
   crop: Crop;
 
   // External Relations
-  @OneToMany(
-    () => HarvestDetails,
-    (harvest_details) => harvest_details.harvest,
-    { cascade: true, eager: true },
-  )
+  @OneToMany(() => HarvestDetails, (details) => details.harvest, {
+    cascade: true,
+    eager: true,
+  })
   details: HarvestDetails[];
 
   @OneToOne(() => HarvestProcessed, { cascade: true })
-  harvestProcessed: HarvestProcessed;
+  processed: HarvestProcessed;
 }

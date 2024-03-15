@@ -9,12 +9,12 @@ import { Payment } from './payment.entity';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { Work } from 'src/work/entities/work.entity';
 
-@Entity({ name: 'payment_work' })
+@Entity({ name: 'payments_work' })
 export class PaymentWork {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Payment, (payment) => payment.payment_works, {
+  @ManyToOne(() => Payment, (payment) => payment.payments_work, {
     onDelete: 'CASCADE',
   })
   payment: Payment;

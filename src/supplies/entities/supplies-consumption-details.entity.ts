@@ -9,7 +9,7 @@ import { SuppliesConsumption } from './supplies-consumption.entity';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Supply } from './supply.entity';
 
-@Entity()
+@Entity({ name: 'supplies_consumption_details' })
 export class SuppliesConsumptionDetails {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -17,19 +17,19 @@ export class SuppliesConsumptionDetails {
   // Internal relations
   @ManyToOne(
     () => SuppliesConsumption,
-    (suppliesConsumption) => suppliesConsumption.details,
+    (supplies_consumption) => supplies_consumption.details,
     { onDelete: 'CASCADE' },
   )
   @JoinColumn({ name: 'consumptionId' })
-  consumption: SuppliesConsumption;
+  supplies_consumption: SuppliesConsumption;
 
-  @ManyToOne(() => Supply, (supply) => supply.suppliesConsumption, {
+  @ManyToOne(() => Supply, (supply) => supply.consumption_details, {
     eager: true,
     onDelete: 'CASCADE',
   })
   supply: Supply;
 
-  @ManyToOne(() => Crop, (crop) => crop.suppliesConsumptionDetails, {
+  @ManyToOne(() => Crop, (crop) => crop.supplies_consumption_details, {
     eager: true,
     onDelete: 'CASCADE',
   })

@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { Harvest } from './harvest.entity';
 
-@Entity('harvest_processed')
+@Entity('harvests_processed')
 export class HarvestProcessed {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -17,7 +17,7 @@ export class HarvestProcessed {
   @Column({ type: 'date' })
   date: string;
 
-  @ManyToOne(() => Crop, (crop) => crop.harvestsProcessed, { eager: true })
+  @ManyToOne(() => Crop, (crop) => crop.harvests_processed, { eager: true })
   crop: Crop;
 
   @OneToOne(() => Harvest, { eager: true, onDelete: 'CASCADE' })

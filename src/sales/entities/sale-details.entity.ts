@@ -3,7 +3,7 @@ import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Sale } from './sale.entity';
 import { Client } from 'src/clients/entities/client.entity';
 
-@Entity()
+@Entity({ name: 'sales_detail' })
 export class SaleDetails {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -23,15 +23,15 @@ export class SaleDetails {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   })
-  sale?: Sale;
+  sale: Sale;
 
-  @ManyToOne(() => Crop, (crop) => crop.saleDetails, {
+  @ManyToOne(() => Crop, (crop) => crop.sales_detail, {
     onDelete: 'CASCADE',
     eager: true,
   })
   crop: Crop;
 
-  @ManyToOne(() => Client, (client) => client.saleDetails, {
+  @ManyToOne(() => Client, (client) => client.sales_detail, {
     onDelete: 'CASCADE',
     eager: true,
   })

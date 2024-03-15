@@ -1,7 +1,7 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { SaleDetails } from './sale-details.entity';
 
-@Entity()
+@Entity({ name: 'sales' })
 export class Sale {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -26,7 +26,7 @@ export class Sale {
 
   // External relations
 
-  @OneToMany(() => SaleDetails, (saleDetails) => saleDetails.sale, {
+  @OneToMany(() => SaleDetails, (details) => details.sale, {
     cascade: true,
     eager: true,
   })

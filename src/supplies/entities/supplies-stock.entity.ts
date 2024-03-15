@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { Supply } from './supply.entity';
 
-@Entity()
+@Entity({ name: 'supplies_stock' })
 export class SuppliesStock {
   @PrimaryGeneratedColumn('uuid')
   id: string;

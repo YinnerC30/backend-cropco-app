@@ -28,17 +28,17 @@ export class Payment {
   // External relations
   @OneToMany(
     () => PaymentHarvest,
-    (payment_harvest) => payment_harvest.payment,
+    (payments_harvest) => payments_harvest.payment,
     {
       cascade: true,
       eager: true,
     },
   )
-  payment_harvests: PaymentHarvest[];
+  payments_harvest: PaymentHarvest[];
 
-  @OneToMany(() => PaymentWork, (payment_work) => payment_work.payment, {
+  @OneToMany(() => PaymentWork, (payments_work) => payments_work.payment, {
     cascade: true,
     eager: true,
   })
-  payment_works: PaymentWork[];
+  payments_work: PaymentWork[];
 }

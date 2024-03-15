@@ -20,7 +20,7 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     try {
       // TODO: Encriptar contraseña
-      const user = await this.usersRepository.create(createUserDto);
+      const user = this.usersRepository.create(createUserDto);
       await this.usersRepository.save(user);
       return user;
     } catch (error) {

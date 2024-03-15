@@ -5,11 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreatePaymentDto } from './dto/create-payment.dto';
-import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Payment } from './entities/payment.entity';
-import { DataSource, Repository, DeepPartial } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { WorkService } from 'src/work/work.service';
@@ -70,13 +69,13 @@ export class PaymentsService {
         Payment,
         createPaymentDto,
       );
-      payment.payment_harvests = harvests.map((id) => {
+      payment.payments_harvest = harvests.map((id) => {
         return queryRunner.manager.create(PaymentHarvest, {
-          harvest_detail: id,
+          harvests_detail: id,
         });
       });
 
-      payment.payment_works = works.map((id) =>
+      payment.payments_work = works.map((id) =>
         queryRunner.manager.create(PaymentWork, { work: id }),
       );
 
@@ -138,10 +137,10 @@ export class PaymentsService {
     try {
       await queryRunner.manager.delete(Payment, { id });
 
-      const { payment_harvests, payment_works } = payment;
+      const { payments_harvest, payments_work } = payment;
 
-      for (const record of payment_harvests) {
-        const { id } = record.harvest_detail;
+      for (const record of payments_harvest) {
+        const { id } = record.harvests_detail;
         await queryRunner.manager.update(
           HarvestDetails,
           { id },
@@ -149,7 +148,7 @@ export class PaymentsService {
         );
       }
 
-      for (const record of payment_works) {
+      for (const record of payments_work) {
         const { id } = record.work;
         await queryRunner.manager.update(
           Work,
