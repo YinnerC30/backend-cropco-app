@@ -33,13 +33,11 @@ export class SuppliesPurchaseDetails {
   supplies_purchase: SuppliesPurchase;
 
   @ManyToOne(() => Supply, (supply) => supply.purchase_details, {
-    eager: true,
     onDelete: 'CASCADE',
   })
   supply: Supply;
 
   @ManyToOne(() => Supplier, (supplier) => supplier.supplies_purchase_details, {
-    eager: true,
     onDelete: 'CASCADE',
   })
   supplier: Supplier;

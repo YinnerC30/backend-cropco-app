@@ -25,7 +25,6 @@ export class Payment {
 
   @ManyToOne(() => Employee, (employee) => employee.payments, {
     onDelete: 'CASCADE',
-    eager: true,
   })
   employee: Employee;
 
@@ -41,14 +40,12 @@ export class Payment {
     (payments_harvest) => payments_harvest.payment,
     {
       cascade: true,
-      eager: true,
     },
   )
   payments_harvest: PaymentHarvest[];
 
   @OneToMany(() => PaymentWork, (payments_work) => payments_work.payment, {
     cascade: true,
-    eager: true,
   })
   payments_work: PaymentWork[];
 }

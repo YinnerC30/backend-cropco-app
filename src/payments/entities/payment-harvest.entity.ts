@@ -23,7 +23,6 @@ export class PaymentHarvest {
     (harvests_detail) => harvests_detail.payments_harvest,
     {
       onDelete: 'CASCADE',
-      eager: true,
     },
   )
   @JoinColumn()

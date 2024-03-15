@@ -17,11 +17,10 @@ export class HarvestProcessed {
   @Column({ type: 'date' })
   date: string;
 
-  @ManyToOne(() => Crop, (crop) => crop.harvests_processed, { eager: true })
+  @ManyToOne(() => Crop, (crop) => crop.harvests_processed)
   crop: Crop;
 
   @OneToOne(() => Harvest, (harvest) => harvest.processed, {
-    eager: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn()

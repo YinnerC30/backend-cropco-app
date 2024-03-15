@@ -27,13 +27,11 @@ export class SaleDetails {
 
   @ManyToOne(() => Crop, (crop) => crop.sales_detail, {
     onDelete: 'CASCADE',
-    eager: true,
   })
   crop: Crop;
 
   @ManyToOne(() => Client, (client) => client.sales_detail, {
     onDelete: 'CASCADE',
-    eager: true,
   })
   client: Client;
 }

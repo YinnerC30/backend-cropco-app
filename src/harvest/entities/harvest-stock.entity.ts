@@ -13,7 +13,6 @@ export class HarvestStock {
   id: string;
 
   @OneToOne(() => Crop, (crop) => crop.harvests_stock, {
-    eager: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'cropId' })

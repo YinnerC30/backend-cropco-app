@@ -36,7 +36,6 @@ export class Harvest {
 
   // Foreign Keys
   @ManyToOne(() => Crop, (crop) => crop.harvests, {
-    eager: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'cropId' })
@@ -45,7 +44,6 @@ export class Harvest {
   // External Relations
   @OneToMany(() => HarvestDetails, (details) => details.harvest, {
     cascade: true,
-    eager: true,
   })
   details: HarvestDetails[];
 

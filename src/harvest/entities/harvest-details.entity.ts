@@ -37,7 +37,6 @@ export class HarvestDetails {
   harvest: Harvest;
 
   @ManyToOne(() => Employee, (employee) => employee.harvests_detail, {
-    eager: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'employeeId' })

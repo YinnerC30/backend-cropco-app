@@ -19,7 +19,7 @@ export class SuppliesPurchase {
   @OneToMany(
     () => SuppliesPurchaseDetails,
     (details) => details.supplies_purchase,
-    { eager: true, cascade: true },
+    { cascade: true },
   )
   details: SuppliesPurchaseDetails[];
 }
