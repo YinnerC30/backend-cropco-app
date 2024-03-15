@@ -1,3 +1,4 @@
+import { MethodOfPayment } from 'src/payments/entities/payment.entity';
 import { UnitOfMeasure } from 'src/supplies/entities/supply.entity';
 
 export interface Seed {
@@ -19,7 +20,7 @@ export interface Seed {
 export interface Payment {
   date: string;
   employee?: string;
-  method_of_payment: string;
+  method_of_payment: MethodOfPayment;
   categories?: {
     harvests?: string[];
     works?: string[];
@@ -880,7 +881,7 @@ export const initialData: Seed = {
   payments: [
     {
       date: '2023-05-03',
-      method_of_payment: 'EFECTIVO',
+      method_of_payment: MethodOfPayment.EFECTIVO,
     },
   ],
 };

@@ -12,6 +12,7 @@ import {
 import { Employee } from 'src/employees/entities/employee.entity';
 import { DeepPartial } from 'typeorm';
 import { PaymentCategoriesDto } from './payment-categories.dto';
+import { MethodOfPayment } from '../entities/payment.entity';
 
 export class CreatePaymentDto {
   @IsDateString()
@@ -21,8 +22,8 @@ export class CreatePaymentDto {
 
   // TODO: Crear enum
   @IsString()
-  @IsIn(['EFECTIVO', 'TRANSFERENCIA'])
-  method_of_payment: string;
+  @IsIn(['EFECTIVO', 'TRANSFERENCIA', 'INTERCAMBIO'])
+  method_of_payment: MethodOfPayment;
 
   @IsInt()
   @IsPositive()

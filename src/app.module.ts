@@ -14,6 +14,7 @@ import { UsersModule } from './users/users.module';
 import { WorkModule } from './work/work.module';
 import { PaymentsModule } from './payments/payments.module';
 
+// todo: crear vistas para consultas extensas
 @Module({
   imports: [
     ConfigModule.forRoot(),
