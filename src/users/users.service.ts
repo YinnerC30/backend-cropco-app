@@ -60,10 +60,8 @@ export class UsersService {
   }
 
   async deleteAllUsers() {
-    const query = this.usersRepository.createQueryBuilder('user');
-
     try {
-      await query.delete().where({}).execute();
+      await this.usersRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
     }

@@ -1,16 +1,10 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { CreateWorkDto } from './dto/create-work.dto';
 import type { UpdateWorkDto } from './dto/update-work.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Work } from './entities/work.entity';
-import { Repository, UpdateValuesMissingError } from 'typeorm';
+import { Repository } from 'typeorm';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 
 @Injectable()
@@ -64,6 +58,10 @@ export class WorkService {
   }
 
   async deleteAllWork() {
-    await this.workRepository.delete({});
+    try {
+      await this.workRepository.delete({});
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
 }

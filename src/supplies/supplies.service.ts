@@ -92,9 +92,8 @@ export class SuppliesService {
   }
 
   async deleteAllSupplies() {
-    const supply = this.supplyRepository.createQueryBuilder('supply');
     try {
-      await supply.delete().where({}).execute();
+      await this.supplyRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
     }
@@ -159,10 +158,8 @@ export class SuppliesService {
   }
 
   async deleteAllStockSupplies() {
-    const suppliesStock =
-      this.suppliesStockRepository.createQueryBuilder('suppliesStock');
     try {
-      await suppliesStock.delete().where({}).execute();
+      await this.suppliesStockRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
     }
@@ -404,16 +401,8 @@ export class SuppliesService {
   }
 
   async deleteAllPurchaseSupplies() {
-    const purchase =
-      this.suppliesPurchaseRepository.createQueryBuilder('purchase');
-    const purchaseDetails =
-      this.suppliesPurchaseDetailsRepository.createQueryBuilder(
-        'purchaseDetails',
-      );
-
     try {
-      await purchaseDetails.delete().where({}).execute();
-      await purchase.delete().where({}).execute();
+      await this.suppliesPurchaseRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
     }
@@ -659,11 +648,8 @@ export class SuppliesService {
   }
 
   async deleteAllConsumptionSupplies() {
-    const consumption =
-      this.suppliesConsumptionRepository.createQueryBuilder('consumption');
-
     try {
-      await consumption.delete().where({}).execute();
+      await this.suppliesConsumptionRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
     }

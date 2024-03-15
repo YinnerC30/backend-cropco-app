@@ -59,10 +59,8 @@ export class CropsService {
   }
 
   async deleteAllCrops() {
-    const query = this.cropRepository.createQueryBuilder('crop');
-
     try {
-      await query.delete().where({}).execute();
+      await this.cropRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
     }

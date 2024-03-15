@@ -194,10 +194,8 @@ export class HarvestService {
   }
 
   async deleteAllHarvest() {
-    const harvest = this.harvestRepository.createQueryBuilder('harvest');
-
     try {
-      await harvest.delete().where({}).execute();
+      await this.harvestRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
     }

@@ -61,10 +61,8 @@ export class SuppliersService {
   }
 
   async deleteAllSupplier() {
-    const query = this.supplierRepository.createQueryBuilder('supplier');
-
     try {
-      return await query.delete().where({}).execute();
+      await this.supplierRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
     }

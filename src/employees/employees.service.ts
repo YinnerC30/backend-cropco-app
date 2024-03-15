@@ -61,10 +61,8 @@ export class EmployeesService {
   }
 
   async deleteAllEmployees() {
-    const query = this.employeeRepository.createQueryBuilder('employee');
-
     try {
-      return await query.delete().where({}).execute();
+      await this.employeeRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
     }
