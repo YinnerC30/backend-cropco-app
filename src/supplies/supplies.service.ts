@@ -97,8 +97,6 @@ export class SuppliesService {
     }
   }
 
-  // Methods SuppliesStock
-
   async findAllSuppliesStock(paginationDto: PaginationDto) {
     const { limit = 10, offset = 0 } = paginationDto;
 
@@ -163,8 +161,6 @@ export class SuppliesService {
     }
   }
 
-  // Methods purchase details
-
   async createPurchaseDetails(
     queryRunner: QueryRunner,
     object: PurchaseSuppliesDetailsDto,
@@ -192,12 +188,9 @@ export class SuppliesService {
     await queryRunner.manager.delete(SuppliesPurchaseDetails, condition);
   }
 
-  // Methods purchase supplies
-
   async createPurchase(createPurchaseSuppliesDto: CreatePurchaseSuppliesDto) {
     validateTotalInArray(createPurchaseSuppliesDto);
 
-    // Crear e iniciar la transacción
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -205,16 +198,12 @@ export class SuppliesService {
     try {
       const { details, ...rest } = createPurchaseSuppliesDto;
 
-      // Crear objetos detalles de compra
-
       let purchaseDetails: SuppliesPurchaseDetails[] = [];
 
       for (const register of details) {
         purchaseDetails.push(
           queryRunner.manager.create(SuppliesPurchaseDetails, register),
         );
-
-        // Agregar insumo al stock
 
         await this.updateStock(
           queryRunner,
@@ -224,7 +213,6 @@ export class SuppliesService {
         );
       }
 
-      // Guardar compra
       const purchase = queryRunner.manager.create(SuppliesPurchase, {
         ...rest,
       });
@@ -277,7 +265,6 @@ export class SuppliesService {
     await queryRunner.startTransaction();
 
     try {
-      // Obtener ids supplies old record
       const oldDetails: SuppliesPurchaseDetails[] = purchase.details;
       const newDetails: PurchaseSuppliesDetailsDto[] =
         updateSuppliesPurchaseDto.details;
@@ -294,7 +281,6 @@ export class SuppliesService {
         oldIDsSupplies,
       );
 
-      // Delete
       for (const supply of toDelete) {
         const oldRecordData: SuppliesPurchaseDetails = oldDetails.find(
           (record: SuppliesPurchaseDetails) => record.supply.id === supply,
@@ -305,8 +291,6 @@ export class SuppliesService {
           supply,
         });
 
-        // Validar que los valores sean distintos para realizar la actualización
-
         await this.updateStock(
           queryRunner,
           supply,
@@ -315,13 +299,10 @@ export class SuppliesService {
         );
       }
 
-      // Update
       for (const supply of toUpdate) {
         const oldRecordData = oldDetails.find(
           (record: SuppliesPurchaseDetails) => record.supply.id === supply,
         );
-
-        // Decrement antiguo valor
 
         await this.updateStock(
           queryRunner,
@@ -330,14 +311,11 @@ export class SuppliesService {
           false,
         );
 
-        // Increment nuevo valor
         const newRecordData = newDetails.find(
           (record) => record.supply === supply,
         );
 
         await this.updateStock(queryRunner, supply, newRecordData.amount, true);
-
-        // Update register
 
         await this.updatePurchaseDetails(
           queryRunner,
@@ -346,7 +324,6 @@ export class SuppliesService {
         );
       }
 
-      // Create
       for (const supply of toCreate) {
         const newRecordData = newDetails.find(
           (record) => record.supply === supply,
@@ -381,12 +358,10 @@ export class SuppliesService {
     await queryRunner.startTransaction();
 
     try {
-      // Decrement stock
       for (const record of details) {
         const { supply } = record;
         await this.updateStock(queryRunner, supply.id, record.amount, false);
       }
-      // Delete Purchase
       await queryRunner.manager.remove(purchaseSupply);
 
       await queryRunner.commitTransaction();
@@ -405,8 +380,6 @@ export class SuppliesService {
       this.handleDBExceptions(error);
     }
   }
-
-  // Methods to consumption Supplies Details
 
   async createConsumptionDetails(
     queryRunner: QueryRunner,
@@ -438,12 +411,9 @@ export class SuppliesService {
     await queryRunner.manager.delete(SuppliesConsumptionDetails, condition);
   }
 
-  // Methods to consumption Supplies
-
   async createConsumption(
     createConsumptionSuppliesDto: CreateConsumptionSuppliesDto,
   ) {
-    // Crear e iniciar la transacción
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -451,7 +421,6 @@ export class SuppliesService {
     try {
       const { details, ...rest } = createConsumptionSuppliesDto;
 
-      // Crear objetos de detalle de consumo
       let consumptionDetails: SuppliesConsumptionDetails[] = [];
 
       for (const register of details) {
@@ -461,7 +430,7 @@ export class SuppliesService {
           }),
         );
       }
-      // Guardar consumo
+
       const consumption = queryRunner.manager.create(SuppliesConsumption, {
         ...rest,
       });
@@ -469,8 +438,6 @@ export class SuppliesService {
       consumption.details = consumptionDetails;
 
       await queryRunner.manager.save(consumption);
-
-      // Agregar insumo al stock de
 
       for (const item of details) {
         await this.updateStock(queryRunner, item.supply, item.amount, false);
@@ -520,7 +487,6 @@ export class SuppliesService {
     await queryRunner.startTransaction();
 
     try {
-      // Obtener ids supplies old record
       const oldDetails: SuppliesConsumptionDetails[] = consumption.details;
       const newDetails: ConsumptionSuppliesDetailsDto[] =
         updateSuppliesConsumptionDto.details;
@@ -537,7 +503,6 @@ export class SuppliesService {
         oldIDsSupplies,
       );
 
-      // Delete
       for (const supply of toDelete) {
         const oldRecordData: SuppliesConsumptionDetails = oldDetails.find(
           (record: SuppliesConsumptionDetails) => record.supply.id === supply,
@@ -548,22 +513,16 @@ export class SuppliesService {
           supply,
         });
 
-        // Validar que los valores sean distintos para realizar la actualización
-
         await this.updateStock(queryRunner, supply, oldRecordData.amount, true);
       }
 
-      // Update
       for (const supply of toUpdate) {
         const oldRecordData: SuppliesConsumptionDetails = oldDetails.find(
           (record: SuppliesConsumptionDetails) => record.supply.id === supply,
         );
 
-        // Decrement antiguo valor
-
         await this.updateStock(queryRunner, supply, oldRecordData.amount, true);
 
-        // Increment nuevo valor
         const newRecordData = newDetails.find(
           (record) => record.supply === supply,
         );
@@ -575,8 +534,6 @@ export class SuppliesService {
           false,
         );
 
-        // Update register
-
         await this.updateConsumptionDetails(
           queryRunner,
           { consumption: id, supply },
@@ -584,7 +541,6 @@ export class SuppliesService {
         );
       }
 
-      // Create
       for (const supply of toCreate) {
         const newRecordData = newDetails.find(
           (record) => record.supply === supply,
@@ -624,7 +580,6 @@ export class SuppliesService {
     await queryRunner.startTransaction();
 
     try {
-      // Decrement stock
       for (const record of details) {
         await this.updateStock(
           queryRunner,
@@ -633,7 +588,6 @@ export class SuppliesService {
           true,
         );
       }
-      // Delete Purchase
       await queryRunner.manager.remove(consumptionSupply);
 
       await queryRunner.commitTransaction();

@@ -5,12 +5,12 @@ export class PaginationDto {
   @IsOptional()
   @IsInt()
   @IsPositive()
-  @Type(() => Number) // enableImplicitConversions: true
+  @Type(() => Number)
   limit?: number;
 
   @IsOptional()
   @IsInt()
   @Min(0)
-  @Type(() => Number) // enableImplicitConversions: true
+  @Type(() => Number)
   offset?: number;
 }

@@ -7,7 +7,6 @@ export const validateTotalPurchase = (
 ) => {
   const { details, ...rest } = data;
 
-  // Validar valores numéricos
   const totalPurchase = rest.total;
 
   const totalArray = details.reduce((acumulador, record) => {

@@ -37,7 +37,6 @@ export class HarvestService {
   async create(createHarvestDto: CreateHarvestDto) {
     validateTotalInArray(createHarvestDto);
 
-    // Crear e iniciar la transacción
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -45,7 +44,6 @@ export class HarvestService {
     try {
       const { details, ...rest } = createHarvestDto;
 
-      // Guardar Cosecha
       const harvest = queryRunner.manager.create(Harvest, { ...rest });
       harvest.details = details.map((harvestDetailsDto: HarvestDetailsDto) =>
         queryRunner.manager.create(HarvestDetails, harvestDetailsDto),
@@ -87,22 +85,17 @@ export class HarvestService {
   async update(id: string, updateHarvestDto: UpdateHarvestDto) {
     validateTotalInArray(updateHarvestDto);
 
-    // Obtener detalles de cosecha antigua
     const harvest = await this.findOne(id);
 
-    // Crear e iniciar la transacción
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // Obtener detalles de cosecha nueva
-      // Nuevos
       const newHarvestDetails = updateHarvestDto.details;
       const newIDsEmployees = newHarvestDetails.map((record) =>
         new String(record.employee).toString(),
       );
-      // Antiguos
       const oldHarvestDetails = harvest.details;
       const oldIDsEmployees = oldHarvestDetails.map((record) =>
         new String(record.employee.id).toString(),
@@ -113,8 +106,6 @@ export class HarvestService {
         oldIDsEmployees,
       );
 
-      // Eliminar diferencias
-      // Registros y decrement el total del stock
       let arrayRecordsToDelete = [];
 
       for (const employeeId of toDelete) {
@@ -123,9 +114,6 @@ export class HarvestService {
         );
       }
       await Promise.all(arrayRecordsToDelete);
-
-      // Actualizar diferencias
-      // Encontrar id de harvestDetails y actualizar valores
 
       let arrayRecordsToUpdate = [];
       for (const employeeId of toUpdate) {
@@ -143,8 +131,6 @@ export class HarvestService {
       }
       await Promise.all(arrayRecordsToUpdate);
 
-      // Crear nuevos registros
-      // Crear registros
       let arrayRecordsToCreate = [];
       for (const employeeId of toCreate) {
         const dataRecord = newHarvestDetails.find(
@@ -160,7 +146,6 @@ export class HarvestService {
       }
       await Promise.all(arrayRecordsToCreate);
 
-      // Actualizar cosecha
       const { details, ...rest } = updateHarvestDto;
       await queryRunner.manager.update(Harvest, { id }, rest);
 
@@ -181,7 +166,6 @@ export class HarvestService {
     await queryRunner.startTransaction();
 
     try {
-      // Delete Harvest
       await queryRunner.manager.remove(harvest);
 
       await queryRunner.commitTransaction();
@@ -243,12 +227,10 @@ export class HarvestService {
   async createHarvestProcessed(
     createHarvestProcessedDto: CreateHarvestProcessedDto,
   ) {
-    // Crear e iniciar la transacción
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      // Guardar Cosecha Procesada
       const harvestProcessed = queryRunner.manager.create(
         HarvestProcessed,
         createHarvestProcessedDto,
@@ -293,10 +275,8 @@ export class HarvestService {
     id: string,
     updateHarvestProcessedDto: UpdateHarvestProcessedDto,
   ) {
-    // Obtener detalles de cosecha antigua
     const harvestProcessed = await this.findOneHarvestProcessed(id);
 
-    // Crear e iniciar la transacción
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();

@@ -31,7 +31,6 @@ export class PaymentsService {
   ) {}
 
   async create(createPaymentDto: CreatePaymentDto) {
-    // Crear e iniciar la transacción
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -78,8 +77,6 @@ export class PaymentsService {
       payment.payments_work = works.map((id) =>
         queryRunner.manager.create(PaymentWork, { work: id }),
       );
-
-      // Cambiar estado de pago
 
       for (const id of harvests) {
         await queryRunner.manager.update(
@@ -130,7 +127,7 @@ export class PaymentsService {
 
   async remove(id: string) {
     const payment = await this.findOne(id);
-    // Crear e iniciar la transacción
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();

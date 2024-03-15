@@ -25,7 +25,6 @@ export class SalesService {
   ) {}
 
   async create(createSaleDto: CreateSaleDto) {
-    // Crear e iniciar la transacción
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -83,7 +82,6 @@ export class SalesService {
     const sale: Sale = await this.findOne(id);
     validateTotalInArray(updateSaleDto);
 
-    // Crear e iniciar la transacción
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -103,7 +101,6 @@ export class SalesService {
         oldIDsCrop,
       );
 
-      // Stock delete
       for (const cropId of toDelete) {
         const oldData = oldDetails.find((record) => record.crop.id === cropId);
         await this.harvestService.updateStock(
@@ -114,7 +111,6 @@ export class SalesService {
         );
       }
 
-      // Stock update
       for (const cropId of toUpdate) {
         const oldData = oldDetails.find((record) => record.crop.id === cropId);
         await this.harvestService.updateStock(
@@ -133,7 +129,6 @@ export class SalesService {
         );
       }
 
-      // Stock create
       for (const cropId of toCreate) {
         const newData = newDetails.find((record) => record.crop === cropId);
         await this.harvestService.updateStock(
@@ -165,7 +160,6 @@ export class SalesService {
   }
 
   async remove(id: string) {
-    // Crear e iniciar la transacción
     const sale = await this.findOne(id);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();

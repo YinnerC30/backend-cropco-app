@@ -7,7 +7,6 @@ export const validateTotalHarvest = (
 ) => {
   const { details, ...rest } = data;
 
-  // Validar valores numéricos
   const totalHarvest = rest.total;
 
   const totalArray = details.reduce((acumulador, record) => {

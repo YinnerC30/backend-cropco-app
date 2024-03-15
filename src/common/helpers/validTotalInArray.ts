@@ -3,7 +3,6 @@ import { BadRequestException } from '@nestjs/common';
 export const validateTotalInArray = (data: any) => {
   const { details, ...rest } = data;
 
-  // Validar valores numéricos
   const total = rest.total;
 
   const totalArray = details.reduce((acumulador, record) => {
