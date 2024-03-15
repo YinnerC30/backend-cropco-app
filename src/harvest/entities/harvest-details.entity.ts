@@ -43,6 +43,10 @@ export class HarvestDetails {
   @JoinColumn({ name: 'employeeId' })
   employee: Employee;
 
-  @OneToOne(() => PaymentHarvest, { cascade: true })
+  @OneToOne(
+    () => PaymentHarvest,
+    (payments_harvest) => payments_harvest.payment,
+    { cascade: true },
+  )
   payments_harvest: PaymentHarvest;
 }

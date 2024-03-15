@@ -37,7 +37,9 @@ export class Crop {
 
   // External relations
 
-  @OneToOne(() => HarvestStock, { cascade: true })
+  @OneToOne(() => HarvestStock, (harvests_stock) => harvests_stock.crop, {
+    cascade: true,
+  })
   harvests_stock: HarvestStock;
 
   @OneToMany(

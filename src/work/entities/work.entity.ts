@@ -46,6 +46,8 @@ export class Work {
   crop: Crop;
 
   // External relations
-  @OneToOne(() => PaymentWork, { cascade: true })
+  @OneToOne(() => PaymentWork, (payments_work) => payments_work.work, {
+    cascade: true,
+  })
   payments_work: PaymentWork;
 }

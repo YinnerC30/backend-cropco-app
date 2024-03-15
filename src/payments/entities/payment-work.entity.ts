@@ -18,7 +18,10 @@ export class PaymentWork {
   })
   payment: Payment;
 
-  @OneToOne(() => Work, { onDelete: 'CASCADE', eager: true })
+  @OneToOne(() => Work, (work) => work.payments_work, {
+    onDelete: 'CASCADE',
+    eager: true,
+  })
   @JoinColumn()
   work: Work;
 }

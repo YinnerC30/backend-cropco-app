@@ -12,7 +12,7 @@ export class SuppliesStock {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Supply, { eager: true })
+  @OneToOne(() => Supply, (supply) => supply.stock, { eager: true })
   @JoinColumn()
   supply: Supply;
 

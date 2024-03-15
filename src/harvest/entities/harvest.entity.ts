@@ -49,6 +49,8 @@ export class Harvest {
   })
   details: HarvestDetails[];
 
-  @OneToOne(() => HarvestProcessed, { cascade: true })
+  @OneToOne(() => HarvestProcessed, (processed) => processed.harvest, {
+    cascade: true,
+  })
   processed: HarvestProcessed;
 }

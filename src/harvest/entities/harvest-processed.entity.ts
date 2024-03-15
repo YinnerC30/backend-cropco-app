@@ -20,7 +20,10 @@ export class HarvestProcessed {
   @ManyToOne(() => Crop, (crop) => crop.harvests_processed, { eager: true })
   crop: Crop;
 
-  @OneToOne(() => Harvest, { eager: true, onDelete: 'CASCADE' })
+  @OneToOne(() => Harvest, (harvest) => harvest.processed, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   harvest: Harvest;
 

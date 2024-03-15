@@ -37,7 +37,7 @@ export class Supply {
   )
   purchase_details: SuppliesPurchaseDetails[];
 
-  @OneToOne(() => SuppliesStock)
+  @OneToOne(() => SuppliesStock, (stock) => stock.supply)
   stock: SuppliesStock;
 
   @OneToMany(

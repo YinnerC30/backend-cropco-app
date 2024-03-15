@@ -18,7 +18,14 @@ export class PaymentHarvest {
   })
   payment: Payment;
 
-  @OneToOne(() => HarvestDetails, { onDelete: 'CASCADE', eager: true })
+  @OneToOne(
+    () => HarvestDetails,
+    (harvests_detail) => harvests_detail.payments_harvest,
+    {
+      onDelete: 'CASCADE',
+      eager: true,
+    },
+  )
   @JoinColumn()
   harvests_detail: HarvestDetails;
 }

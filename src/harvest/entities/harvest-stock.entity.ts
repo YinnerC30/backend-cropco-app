@@ -12,7 +12,10 @@ export class HarvestStock {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Crop, { eager: true, onDelete: 'CASCADE' })
+  @OneToOne(() => Crop, (crop) => crop.harvests_stock, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'cropId' })
   crop: Crop;
 
