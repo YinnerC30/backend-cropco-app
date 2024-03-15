@@ -1,8 +1,8 @@
-import { PersonalInformation } from '../../common/entities/personal-information.entity';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { Payment } from 'src/payments/entities/payment.entity';
 import { Work } from 'src/work/entities/work.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { PersonalInformation } from '../../common/entities/personal-information.entity';
 @Entity({ name: 'employees' })
 export class Employee extends PersonalInformation {
   @PrimaryGeneratedColumn('uuid')

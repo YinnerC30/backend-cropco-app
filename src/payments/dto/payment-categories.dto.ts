@@ -1,4 +1,4 @@
-import { IsArray, ArrayNotEmpty, IsUUID } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsUUID } from 'class-validator';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { Work } from 'src/work/entities/work.entity';
 import { DeepPartial } from 'typeorm';

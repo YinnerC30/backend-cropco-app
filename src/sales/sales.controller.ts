@@ -1,18 +1,18 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  Query,
+  Get,
+  Param,
   ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
-import { SalesService } from './sales.service';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { SalesService } from './sales.service';
 
 @Controller('sales')
 export class SalesController {

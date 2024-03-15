@@ -1,11 +1,11 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { CreateEmployeeDto } from './dto/create-employee.dto';
-import { UpdateEmployeeDto } from './dto/update-employee.dto';
-import { Repository } from 'typeorm';
-import { Employee } from './entities/employee.entity';
-import { PaginationDto } from '../common/dto/pagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { Repository } from 'typeorm';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { UpdateEmployeeDto } from './dto/update-employee.dto';
+import { Employee } from './entities/employee.entity';
 
 @Injectable()
 export class EmployeesService {

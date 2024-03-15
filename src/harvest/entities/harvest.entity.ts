@@ -2,13 +2,13 @@ import { Crop } from 'src/crops/entities/crop.entity';
 import {
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { HarvestDetails } from './harvest-details.entity';
-import { JoinColumn } from 'typeorm';
 import { HarvestProcessed } from './harvest-processed.entity';
 
 export type UnitOfMeasure = 'KILOGRAMOS' | 'LIBRAS';

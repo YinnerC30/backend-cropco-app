@@ -5,9 +5,9 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { SuppliesConsumptionDetails } from './supplies-consumption-details.entity';
 import { SuppliesPurchaseDetails } from './supplies-purchase-details.entity';
 import { SuppliesStock } from './supplies-stock.entity';
-import { SuppliesConsumptionDetails } from './supplies-consumption-details.entity';
 
 export type UnitOfMeasure = 'GRAMOS' | 'MILILITROS';
 

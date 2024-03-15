@@ -19,6 +19,7 @@ export class CreatePaymentDto {
   @IsUUID()
   employee: DeepPartial<Employee>;
 
+  // TODO: Crear enum
   @IsString()
   @IsIn(['EFECTIVO', 'TRANSFERENCIA'])
   method_of_payment: string;

@@ -1,11 +1,11 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 
 @Injectable()
 export class UsersService {

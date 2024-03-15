@@ -1,22 +1,22 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  Query,
+  Get,
+  Param,
   ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
-import { SuppliesService } from './supplies.service';
-import { CreateSupplyDto } from './dto/create-supply.dto';
-import { UpdateSupplyDto } from './dto/update-supply.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { CreatePurchaseSuppliesDto } from './dto/create-purchase-supplies.dto';
-import { UpdateSuppliesPurchaseDto } from './dto/update-supplies-purchase.dto';
 import { CreateConsumptionSuppliesDto } from './dto/create-consumption-supplies.dto';
+import { CreatePurchaseSuppliesDto } from './dto/create-purchase-supplies.dto';
+import { CreateSupplyDto } from './dto/create-supply.dto';
 import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.dto';
+import { UpdateSuppliesPurchaseDto } from './dto/update-supplies-purchase.dto';
+import { UpdateSupplyDto } from './dto/update-supply.dto';
+import { SuppliesService } from './supplies.service';
 
 @Controller('supplies')
 export class SuppliesController {

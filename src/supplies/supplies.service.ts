@@ -23,14 +23,12 @@ import {
 
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
 
-import { validateTotalPurchase } from './helpers/validateTotalPurchase';
-
-import { Condition } from './interfaces/condition.interface';
+import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { validateTotalInArray } from 'src/common/helpers/validTotalInArray';
 import { ConsumptionSuppliesDetailsDto } from './dto/consumption-supplies-details.dto';
 import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.dto';
 import { InsufficientSupplyStockException } from './exceptions/insufficient-supply-stock.exception';
-import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { validateTotalInArray } from 'src/common/helpers/validTotalInArray';
+import { Condition } from './interfaces/condition.interface';
 
 @Injectable()
 export class SuppliesService {

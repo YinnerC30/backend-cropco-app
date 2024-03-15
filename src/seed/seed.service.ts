@@ -1,27 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { UsersService } from './../users/users.service';
-import { Payment, initialData } from './data/seed-data';
+import { ClientsService } from 'src/clients/clients.service';
 import { CropsService } from 'src/crops/crops.service';
 import { EmployeesService } from 'src/employees/employees.service';
-import { ClientsService } from 'src/clients/clients.service';
-import { SuppliersService } from 'src/suppliers/suppliers.service';
-import { SuppliesService } from 'src/supplies/supplies.service';
-import { HarvestService } from 'src/harvest/harvest.service';
-import { DataSource, DeepPartial } from 'typeorm';
-import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
 import { Employee } from 'src/employees/entities/employee.entity';
-import { CreatePurchaseSuppliesDto } from 'src/supplies/dto/create-purchase-supplies.dto';
-import { CreateConsumptionSuppliesDto } from 'src/supplies/dto/create-consumption-supplies.dto';
-import { SalesService } from 'src/sales/sales.service';
-import { WorkService } from 'src/work/work.service';
-import { Harvest } from 'src/harvest/entities/harvest.entity';
 import { CreateHarvestProcessedDto } from 'src/harvest/dto/create-harvest-processed.dto';
-import { CreateWorkDto } from 'src/work/dto/create-work.dto';
-import { CreateSaleDto } from 'src/sales/dto/create-sale.dto';
-import { PaymentsService } from 'src/payments/payments.service';
-import { Work } from 'src/work/entities/work.entity';
+import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
+import { Harvest } from 'src/harvest/entities/harvest.entity';
+import { HarvestService } from 'src/harvest/harvest.service';
 import { CreatePaymentDto } from 'src/payments/dto/create-payment.dto';
-import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
+import { PaymentsService } from 'src/payments/payments.service';
+import { CreateSaleDto } from 'src/sales/dto/create-sale.dto';
+import { SalesService } from 'src/sales/sales.service';
+import { SuppliersService } from 'src/suppliers/suppliers.service';
+import { CreateConsumptionSuppliesDto } from 'src/supplies/dto/create-consumption-supplies.dto';
+import { CreatePurchaseSuppliesDto } from 'src/supplies/dto/create-purchase-supplies.dto';
+import { SuppliesService } from 'src/supplies/supplies.service';
+import { CreateWorkDto } from 'src/work/dto/create-work.dto';
+import { Work } from 'src/work/entities/work.entity';
+import { WorkService } from 'src/work/work.service';
+import { DataSource, DeepPartial } from 'typeorm';
+import { UsersService } from './../users/users.service';
+import { initialData } from './data/seed-data';
 
 @Injectable()
 export class SeedService {

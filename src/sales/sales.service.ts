@@ -1,16 +1,16 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { CreateSaleDto } from './dto/create-sale.dto';
-import { UpdateSaleDto } from './dto/update-sale.dto';
-import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Sale } from './entities/sale.entity';
-import { DataSource, Repository } from 'typeorm';
-import { SaleDetailsDto } from './dto/sale-details.dto';
-import { SaleDetails } from './entities/sale-details.entity';
-import { HarvestService } from 'src/harvest/harvest.service';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
 import { validateTotalInArray } from 'src/common/helpers/validTotalInArray';
+import { HarvestService } from 'src/harvest/harvest.service';
+import { DataSource, Repository } from 'typeorm';
+import { CreateSaleDto } from './dto/create-sale.dto';
+import { SaleDetailsDto } from './dto/sale-details.dto';
+import { UpdateSaleDto } from './dto/update-sale.dto';
+import { SaleDetails } from './entities/sale-details.entity';
+import { Sale } from './entities/sale.entity';
 
 @Injectable()
 export class SalesService {

@@ -1,3 +1,4 @@
+import { Crop } from 'src/crops/entities/crop.entity';
 import {
   Column,
   Entity,
@@ -6,7 +7,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { SuppliesConsumption } from './supplies-consumption.entity';
-import { Crop } from 'src/crops/entities/crop.entity';
 import { Supply } from './supply.entity';
 
 @Entity({ name: 'supplies_consumption_details' })

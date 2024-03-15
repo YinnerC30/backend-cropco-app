@@ -1,3 +1,4 @@
+import { Supplier } from 'src/suppliers/entities/supplier.entity';
 import {
   Column,
   Entity,
@@ -7,7 +8,6 @@ import {
 } from 'typeorm';
 import { SuppliesPurchase } from './supplies-purchase.entity';
 import { Supply } from './supply.entity';
-import { Supplier } from 'src/suppliers/entities/supplier.entity';
 
 @Entity({ name: 'supplies_purchase_details' })
 export class SuppliesPurchaseDetails {

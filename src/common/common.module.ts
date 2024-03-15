@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
-import { PersonalInformation } from './entities/personal-information.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { PersonalInformation } from './entities/personal-information.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([PersonalInformation])],

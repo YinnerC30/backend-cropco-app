@@ -1,3 +1,5 @@
+import { Employee } from 'src/employees/entities/employee.entity';
+import { PaymentHarvest } from 'src/payments/entities/payment-harvest.entity';
 import {
   Column,
   Entity,
@@ -7,8 +9,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Harvest } from './harvest.entity';
-import { Employee } from 'src/employees/entities/employee.entity';
-import { PaymentHarvest } from 'src/payments/entities/payment-harvest.entity';
 
 @Entity({ name: 'harvests_detail' })
 export class HarvestDetails {

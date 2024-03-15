@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { CropsService } from './crops.service';
-import { CropsController } from './crops.controller';
-import { Crop } from './entities/crop.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CropsController } from './crops.controller';
+import { CropsService } from './crops.service';
+import { Crop } from './entities/crop.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Crop])],

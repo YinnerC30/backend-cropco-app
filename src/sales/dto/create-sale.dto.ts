@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsArray,
@@ -8,7 +9,6 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { SaleDetailsDto } from './sale-details.dto';
-import { Type } from 'class-transformer';
 
 export class CreateSaleDto {
   @IsDateString()

@@ -1,7 +1,7 @@
+import { Client } from 'src/clients/entities/client.entity';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Sale } from './sale.entity';
-import { Client } from 'src/clients/entities/client.entity';
 
 @Entity({ name: 'sales_detail' })
 export class SaleDetails {

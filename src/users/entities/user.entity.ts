@@ -1,5 +1,5 @@
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { PersonalInformation } from '../../common/entities/personal-information.entity';
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'users' })
 export class User extends PersonalInformation {

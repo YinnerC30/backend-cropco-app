@@ -1,3 +1,4 @@
+import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import {
   Entity,
   JoinColumn,
@@ -6,7 +7,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Payment } from './payment.entity';
-import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 
 @Entity({ name: 'payments_harvest' })
 export class PaymentHarvest {

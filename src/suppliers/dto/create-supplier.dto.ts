@@ -1,9 +1,9 @@
 import {
-  IsString,
-  MaxLength,
   IsEmail,
   IsNumberString,
   IsOptional,
+  IsString,
+  MaxLength,
 } from 'class-validator';
 
 export class CreateSupplierDto {

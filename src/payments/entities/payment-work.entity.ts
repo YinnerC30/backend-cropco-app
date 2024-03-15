@@ -1,3 +1,4 @@
+import { Work } from 'src/work/entities/work.entity';
 import {
   Entity,
   JoinColumn,
@@ -6,8 +7,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Payment } from './payment.entity';
-import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
-import { Work } from 'src/work/entities/work.entity';
 
 @Entity({ name: 'payments_work' })
 export class PaymentWork {

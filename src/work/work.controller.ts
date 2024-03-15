@@ -1,18 +1,18 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  Query,
+  Get,
+  Param,
   ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
 } from '@nestjs/common';
-import { WorkService } from './work.service';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CreateWorkDto } from './dto/create-work.dto';
 import { UpdateWorkDto } from './dto/update-work.dto';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { WorkService } from './work.service';
 
 @Controller('work')
 export class WorkController {

@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsDateString,
@@ -12,7 +13,6 @@ import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
 import { UnitOfMeasure } from '../entities/harvest.entity';
 import { HarvestDetailsDto } from './create-harvest-details.dto';
-import { Type } from 'class-transformer';
 
 export class CreateHarvestDto {
   @IsDateString()
