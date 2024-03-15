@@ -28,9 +28,9 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.usersService.findOne(id);
+  @Get(':parameter')
+  findOne(@Param('parameter') parameter: string) {
+    return this.usersService.findOne(parameter);
   }
 
   @Patch(':id')

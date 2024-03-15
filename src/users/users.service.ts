@@ -2,10 +2,12 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import { hashPassword } from './helpers/encrypt-password';
+import { validate as uuidValidate } from 'uuid';
 
 @Injectable()
 export class UsersService {
@@ -19,8 +21,8 @@ export class UsersService {
 
   async create(createUserDto: CreateUserDto) {
     try {
-      // TODO: Encriptar contraseña
       const user = this.usersRepository.create(createUserDto);
+      user.password = await hashPassword(user.password);
       await this.usersRepository.save(user);
       return user;
     } catch (error) {
@@ -39,9 +41,25 @@ export class UsersService {
     });
   }
 
-  async findOne(id: string) {
-    const user = await this.usersRepository.findOneBy({ id });
-    if (!user) throw new NotFoundException(`User with id: ${id} not found`);
+  async findOne(parameter: string) {
+    const isUUID = uuidValidate(parameter);
+
+    let user: User;
+
+    if (isUUID) {
+      user = await this.usersRepository.findOneBy({ id: parameter });
+    } else {
+      user = await this.usersRepository.findOne({
+        where: [
+          {
+            email: Like(`${parameter}%`),
+          },
+        ],
+      });
+    }
+
+    if (!user)
+      throw new NotFoundException(`User with id: ${parameter} not found`);
     return user;
   }
 
