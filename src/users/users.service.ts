@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 import { Like, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,7 +19,6 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    console.log({ createUserDto });
     try {
       const user = this.usersRepository.create(createUserDto);
       user.password = await hashPassword(user.password);
@@ -30,16 +29,16 @@ export class UsersService {
     }
   }
 
-  async findAll(search: Search) {
-    const { parameter = '', limit = 10, offset = 0 } = search;
+  async findAll(queryParams: QueryParams) {
+    const { search = '', limit = 10, offset = 0 } = queryParams;
 
     const users = await this.usersRepository.find({
       where: [
         {
-          first_name: Like(`${parameter}%`),
+          first_name: Like(`${search}%`),
         },
         {
-          email: Like(`${parameter}%`),
+          email: Like(`${search}%`),
         },
       ],
       order: {
@@ -50,18 +49,15 @@ export class UsersService {
     });
 
     let count: number;
-    if (parameter.length === 0) {
+    if (search.length === 0) {
       count = await this.usersRepository.count();
     } else {
       count = users.length;
     }
 
     return {
-      // Número total de registros
       rowCount: count,
-      // Registros limitados
       rows: users,
-      // Número total de paginas disponibles
       pageCount: Math.ceil(count / limit),
     };
   }

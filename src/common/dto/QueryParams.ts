@@ -1,7 +1,14 @@
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, IsPositive, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsPositive,
+  IsString,
+  Min,
+} from 'class-validator';
 
-export class PaginationDto {
+export class QueryParams {
   @IsOptional()
   @IsInt()
   @IsPositive()
@@ -18,4 +25,8 @@ export class PaginationDto {
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
   allRecords?: boolean;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

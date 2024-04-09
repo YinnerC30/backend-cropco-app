@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 import { Like, Repository } from 'typeorm';
 import { CreateClientDto } from './dto/create-client.dto';
@@ -27,16 +27,16 @@ export class ClientsService {
     }
   }
 
-  async findAll(search: Search) {
-    const { parameter = '', limit = 10, offset = 0 } = search;
+  async findAll(queryParams: QueryParams) {
+    const { search = '', limit = 10, offset = 0 } = queryParams;
 
     const clients = await this.clientRepository.find({
       where: [
         {
-          first_name: Like(`${parameter}%`),
+          first_name: Like(`${search}%`),
         },
         {
-          email: Like(`${parameter}%`),
+          email: Like(`${search}%`),
         },
       ],
       order: {
@@ -47,7 +47,7 @@ export class ClientsService {
     });
 
     let count: number;
-    if (parameter.length === 0) {
+    if (search.length === 0) {
       count = await this.clientRepository.count();
     } else {
       count = clients.length;

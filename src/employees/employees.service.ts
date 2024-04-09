@@ -2,11 +2,11 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 import { Like, Repository } from 'typeorm';
-import { PaginationDto } from '../common/dto/pagination.dto';
+
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { Employee } from './entities/employee.entity';
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 
 @Injectable()
 export class EmployeesService {
@@ -28,13 +28,13 @@ export class EmployeesService {
     }
   }
 
-  async findAll(search: Search) {
+  async findAll(queryParams: QueryParams) {
     const {
-      parameter = '',
+      search = '',
       limit = 10,
       offset = 0,
       allRecords = false,
-    } = search;
+    } = queryParams;
 
     let employees;
 
@@ -42,10 +42,10 @@ export class EmployeesService {
       employees = await this.employeeRepository.find({
         where: [
           {
-            first_name: Like(`${parameter}%`),
+            first_name: Like(`${search}%`),
           },
           {
-            email: Like(`${parameter}%`),
+            email: Like(`${search}%`),
           },
         ],
         order: {
@@ -56,10 +56,10 @@ export class EmployeesService {
       employees = await this.employeeRepository.find({
         where: [
           {
-            first_name: Like(`${parameter}%`),
+            first_name: Like(`${search}%`),
           },
           {
-            email: Like(`${parameter}%`),
+            email: Like(`${search}%`),
           },
         ],
         order: {
@@ -71,7 +71,7 @@ export class EmployeesService {
     }
 
     let count: number;
-    if (parameter.length === 0) {
+    if (search.length === 0) {
       count = await this.employeeRepository.count();
     } else {
       count = employees.length;

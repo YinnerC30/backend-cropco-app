@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
 import { validateTotalInArray } from 'src/common/helpers/validTotalInArray';
@@ -57,8 +57,8 @@ export class SalesService {
     }
   }
 
-  findAll(search: Search) {
-    const { limit = 10, offset = 0 } = search;
+  findAll(queryParams: QueryParams) {
+    const { limit = 10, offset = 0 } = queryParams;
     return this.saleRepository.find({
       order: {
         date: 'ASC',

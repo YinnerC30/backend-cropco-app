@@ -13,15 +13,15 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  findAll(@Query() search: Search) {
-    return this.usersService.findAll(search);
+  findAll(@Query() queryParams: QueryParams) {
+    return this.usersService.findAll(queryParams);
   }
 
   @Post()
@@ -30,7 +30,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string,) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.findOne(id);
   }
 

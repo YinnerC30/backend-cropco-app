@@ -6,7 +6,7 @@ import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { HarvestDetails } from './entities/harvest-details.entity';
 import { Harvest } from './entities/harvest.entity';
 
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
 import { handleDBExceptions } from '../common/helpers/handleDBErrors';
@@ -59,8 +59,8 @@ export class HarvestService {
     }
   }
 
-  async findAll(search: Search) {
-    const { limit = 10, offset = 0 } = search;
+  async findAll(queryParams: QueryParams) {
+    const { limit = 10, offset = 0 } = queryParams;
     const harvests = await this.harvestRepository
       .createQueryBuilder('harvest')
       .leftJoinAndSelect('harvest.crop', 'crop')
@@ -269,8 +269,8 @@ export class HarvestService {
     }
   }
 
-  findAllHarvestProcessed(search: Search) {
-    const { limit = 10, offset = 0 } = search;
+  findAllHarvestProcessed(queryParams: QueryParams) {
+    const { limit = 10, offset = 0 } = queryParams;
     return this.harvestProcessedRepository.find({
       order: {
         date: 'ASC',

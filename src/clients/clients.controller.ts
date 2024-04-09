@@ -9,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Search } from '../common/dto/search.dto';
+import { QueryParams } from '../common/dto/QueryParams';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -24,8 +24,8 @@ export class ClientsController {
   }
 
   @Get()
-  findAll(@Query() search: Search) {
-    return this.clientsService.findAll(search);
+  findAll(@Query() queryParams: QueryParams) {
+    return this.clientsService.findAll(queryParams);
   }
 
   @Get(':id')

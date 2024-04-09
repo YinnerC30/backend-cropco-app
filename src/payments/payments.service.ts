@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { HarvestService } from 'src/harvest/harvest.service';
@@ -103,8 +103,8 @@ export class PaymentsService {
     }
   }
 
-  findAll(search: Search) {
-    const { limit = 10, offset = 0 } = search;
+  findAll(queryParams: QueryParams) {
+    const { limit = 10, offset = 0 } = queryParams;
     return this.paymentRepository.find({
       order: {
         date: 'ASC',

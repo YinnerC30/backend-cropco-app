@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 import { CreateConsumptionSuppliesDto } from './dto/create-consumption-supplies.dto';
 import { CreatePurchaseSuppliesDto } from './dto/create-purchase-supplies.dto';
 import { CreateSupplyDto } from './dto/create-supply.dto';
@@ -61,16 +61,16 @@ export class SuppliesService {
     }
   }
 
-  async findAll(search: Search) {
-    const { parameter = '', limit = 10, offset = 0 } = search;
+  async findAll(queryParams: QueryParams) {
+    const { search = '', limit = 10, offset = 0 } = queryParams;
 
     const supplies = await this.supplyRepository.find({
       where: [
         {
-          name: Like(`${parameter}%`),
+          name: Like(`${search}%`),
         },
         {
-          brand: Like(`${parameter}%`),
+          brand: Like(`${search}%`),
         },
       ],
       order: {
@@ -81,7 +81,7 @@ export class SuppliesService {
     });
 
     let count: number;
-    if (parameter.length === 0) {
+    if (search.length === 0) {
       count = await this.supplyRepository.count();
     } else {
       count = supplies.length;
@@ -125,8 +125,8 @@ export class SuppliesService {
     }
   }
 
-  async findAllSuppliesStock(search: Search) {
-    const { limit = 10, offset = 0 } = search;
+  async findAllSuppliesStock(queryParams: QueryParams) {
+    const { limit = 10, offset = 0 } = queryParams;
 
     return this.suppliesStockRepository.find({
       order: {
@@ -259,8 +259,8 @@ export class SuppliesService {
     }
   }
 
-  async findAllPurchases(search: Search) {
-    const { limit = 10, offset = 0 } = search;
+  async findAllPurchases(queryParams: QueryParams) {
+    const { limit = 10, offset = 0 } = queryParams;
 
     return this.suppliesPurchaseRepository.find({
       order: {
@@ -484,8 +484,8 @@ export class SuppliesService {
     }
   }
 
-  async findAllConsumptions(search: Search) {
-    const { limit = 10, offset = 0 } = search;
+  async findAllConsumptions(queryParams: QueryParams) {
+    const { limit = 10, offset = 0 } = queryParams;
 
     return this.suppliesConsumptionRepository.find({
       order: {

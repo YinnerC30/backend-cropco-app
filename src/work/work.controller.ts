@@ -9,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 import { CreateWorkDto } from './dto/create-work.dto';
 import { UpdateWorkDto } from './dto/update-work.dto';
 import { WorkService } from './work.service';
@@ -24,8 +24,8 @@ export class WorkController {
   }
 
   @Get()
-  findAll(@Query() search: Search) {
-    return this.workService.findAll(search);
+  findAll(@Query() queryParams: QueryParams) {
+    return this.workService.findAll(queryParams);
   }
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {

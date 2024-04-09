@@ -9,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
 import { SalesService } from './sales.service';
@@ -24,8 +24,8 @@ export class SalesController {
   }
 
   @Get()
-  findAll(@Query() search: Search) {
-    return this.salesService.findAll(search);
+  findAll(@Query() queryParams: QueryParams) {
+    return this.salesService.findAll(queryParams);
   }
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {

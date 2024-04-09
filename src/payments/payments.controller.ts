@@ -8,7 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentsService } from './payments.service';
 
@@ -22,8 +22,8 @@ export class PaymentsController {
   }
 
   @Get()
-  findAll(@Query() search: Search) {
-    return this.paymentsService.findAll(search);
+  findAll(@Query() queryParams: QueryParams) {
+    return this.paymentsService.findAll(queryParams);
   }
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {

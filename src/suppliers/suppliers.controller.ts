@@ -13,7 +13,7 @@ import {
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { SuppliersService } from './suppliers.service';
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 
 @Controller('suppliers')
 export class SuppliersController {
@@ -25,8 +25,8 @@ export class SuppliersController {
   }
 
   @Get()
-  findAll(@Query() search: Search) {
-    return this.suppliersService.findAll(search);
+  findAll(@Query() queryParams: QueryParams) {
+    return this.suppliersService.findAll(queryParams);
   }
 
   @Get(':id')

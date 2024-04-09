@@ -9,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 import { CreateConsumptionSuppliesDto } from './dto/create-consumption-supplies.dto';
 import { CreatePurchaseSuppliesDto } from './dto/create-purchase-supplies.dto';
 import { CreateSupplyDto } from './dto/create-supply.dto';
@@ -23,22 +23,22 @@ export class SuppliesController {
   constructor(private readonly suppliesService: SuppliesService) {}
 
   @Get()
-  findAll(@Query() search: Search) {
-    return this.suppliesService.findAll(search);
+  findAll(@Query() queryParams: QueryParams) {
+    return this.suppliesService.findAll(queryParams);
   }
 
   @Get('stock/all')
-  findAllSuppliesStock(@Query() search: Search) {
-    return this.suppliesService.findAllSuppliesStock(search);
+  findAllSuppliesStock(@Query() queryParams: QueryParams) {
+    return this.suppliesService.findAllSuppliesStock(queryParams);
   }
 
   @Get('purchase/all')
-  findAllPurchases(@Query() search: Search) {
-    return this.suppliesService.findAllPurchases(search);
+  findAllPurchases(@Query() queryParams: QueryParams) {
+    return this.suppliesService.findAllPurchases(queryParams);
   }
   @Get('consumption/all')
-  findAllConsumptions(@Query() search: Search) {
-    return this.suppliesService.findAllConsumptions(search);
+  findAllConsumptions(@Query() queryParams: QueryParams) {
+    return this.suppliesService.findAllConsumptions(queryParams);
   }
 
   @Get(':id')

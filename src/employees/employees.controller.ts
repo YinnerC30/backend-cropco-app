@@ -9,11 +9,10 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { PaginationDto } from '../common/dto/pagination.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { EmployeesService } from './employees.service';
-import { Search } from 'src/common/dto/search.dto';
 
 @Controller('employees')
 export class EmployeesController {
@@ -25,8 +24,8 @@ export class EmployeesController {
   }
 
   @Get()
-  findAll(@Query() search: Search) {
-    return this.employeesService.findAll(search);
+  findAll(@Query() queryParams: QueryParams) {
+    return this.employeesService.findAll(queryParams);
   }
 
   @Get(':id')

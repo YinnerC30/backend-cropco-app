@@ -9,11 +9,10 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { Search } from 'src/common/dto/search.dto';
+import { QueryParams } from 'src/common/dto/QueryParams';
 import { CropsService } from './crops.service';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
-
 
 @Controller('crops')
 export class CropsController {
@@ -25,8 +24,8 @@ export class CropsController {
   }
 
   @Get()
-  findAll(@Query() search: Search) {
-    return this.cropsService.findAll(search);
+  findAll(@Query() queryParams: QueryParams) {
+    return this.cropsService.findAll(queryParams);
   }
 
   @Get(':id')
