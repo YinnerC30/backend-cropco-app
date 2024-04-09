@@ -1,8 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Search } from 'src/common/dto/search.dto';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
@@ -27,16 +27,37 @@ export class ClientsService {
     }
   }
 
-  async findAll(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
+  async findAll(search: Search) {
+    const { parameter = '', limit = 10, offset = 0 } = search;
 
-    return this.clientRepository.find({
+    const clients = await this.clientRepository.find({
+      where: [
+        {
+          first_name: Like(`${parameter}%`),
+        },
+        {
+          email: Like(`${parameter}%`),
+        },
+      ],
       order: {
         first_name: 'ASC',
       },
       take: limit,
-      skip: offset,
+      skip: offset * limit,
     });
+
+    let count: number;
+    if (parameter.length === 0) {
+      count = await this.clientRepository.count();
+    } else {
+      count = clients.length;
+    }
+
+    return {
+      rowCount: count,
+      rows: clients,
+      pageCount: Math.ceil(count / limit),
+    };
   }
 
   async findOne(id: string) {

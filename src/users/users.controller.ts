@@ -9,18 +9,19 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
+import { Search } from 'src/common/dto/search.dto';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.usersService.findAll(paginationDto);
+  findAll(@Query() search: Search) {
+    return this.usersService.findAll(search);
   }
 
   @Post()
@@ -28,9 +29,9 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Get(':parameter')
-  findOne(@Param('parameter') parameter: string) {
-    return this.usersService.findOne(parameter);
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string,) {
+    return this.usersService.findOne(id);
   }
 
   @Patch(':id')

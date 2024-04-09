@@ -1,13 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Search } from 'src/common/dto/search.dto';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 import { Like, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { hashPassword } from './helpers/encrypt-password';
-import { validate as uuidValidate } from 'uuid';
 
 @Injectable()
 export class UsersService {
@@ -20,6 +19,7 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
+    console.log({ createUserDto });
     try {
       const user = this.usersRepository.create(createUserDto);
       user.password = await hashPassword(user.password);
@@ -30,40 +30,51 @@ export class UsersService {
     }
   }
 
-  async findAll(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
-    return this.usersRepository.find({
+  async findAll(search: Search) {
+    const { parameter = '', limit = 10, offset = 0 } = search;
+
+    const users = await this.usersRepository.find({
+      where: [
+        {
+          first_name: Like(`${parameter}%`),
+        },
+        {
+          email: Like(`${parameter}%`),
+        },
+      ],
       order: {
         first_name: 'ASC',
       },
       take: limit,
-      skip: offset,
+      skip: offset * limit,
     });
-  }
 
-  async findOne(parameter: string) {
-    const isUUID = uuidValidate(parameter);
-
-    let user: User;
-
-    if (isUUID) {
-      user = await this.usersRepository.findOneBy({ id: parameter });
+    let count: number;
+    if (parameter.length === 0) {
+      count = await this.usersRepository.count();
     } else {
-      user = await this.usersRepository.findOne({
-        where: [
-          {
-            email: Like(`${parameter}%`),
-          },
-        ],
-      });
+      count = users.length;
     }
 
-    if (!user)
-      throw new NotFoundException(`User with id: ${parameter} not found`);
+    return {
+      // Número total de registros
+      rowCount: count,
+      // Registros limitados
+      rows: users,
+      // Número total de paginas disponibles
+      pageCount: Math.ceil(count / limit),
+    };
+  }
+
+  async findOne(id: string) {
+    const user = await this.usersRepository.findOneBy({ id });
+
+    if (!user) throw new NotFoundException(`User with id: ${id} not found`);
     return user;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
+    console.log({ id, updateUserDto });
     await this.findOne(id);
     try {
       await this.usersRepository.update(id, updateUserDto);

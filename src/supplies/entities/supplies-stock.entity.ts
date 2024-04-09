@@ -12,7 +12,7 @@ export class SuppliesStock {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Supply, (supply) => supply.stock)
+  @OneToOne(() => Supply, (supply) => supply.stock, {onDelete: 'CASCADE'})
   @JoinColumn()
   supply: Supply;
 

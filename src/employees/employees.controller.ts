@@ -13,6 +13,7 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { EmployeesService } from './employees.service';
+import { Search } from 'src/common/dto/search.dto';
 
 @Controller('employees')
 export class EmployeesController {
@@ -24,8 +25,8 @@ export class EmployeesController {
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.employeesService.findAll(paginationDto);
+  findAll(@Query() search: Search) {
+    return this.employeesService.findAll(search);
   }
 
   @Get(':id')

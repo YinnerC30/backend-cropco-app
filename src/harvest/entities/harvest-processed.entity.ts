@@ -17,7 +17,7 @@ export class HarvestProcessed {
   @Column({ type: 'date' })
   date: string;
 
-  @ManyToOne(() => Crop, (crop) => crop.harvests_processed)
+  @ManyToOne(() => Crop, (crop) => crop.harvests_processed, {onDelete: 'CASCADE'})
   crop: Crop;
 
   @OneToOne(() => Harvest, (harvest) => harvest.processed, {

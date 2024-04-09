@@ -9,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Search } from 'src/common/dto/search.dto';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
 import { SalesService } from './sales.service';
@@ -24,8 +24,8 @@ export class SalesController {
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.salesService.findAll(paginationDto);
+  findAll(@Query() search: Search) {
+    return this.salesService.findAll(search);
   }
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {

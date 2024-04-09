@@ -9,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Search } from 'src/common/dto/search.dto';
 import { CreateConsumptionSuppliesDto } from './dto/create-consumption-supplies.dto';
 import { CreatePurchaseSuppliesDto } from './dto/create-purchase-supplies.dto';
 import { CreateSupplyDto } from './dto/create-supply.dto';
@@ -23,22 +23,22 @@ export class SuppliesController {
   constructor(private readonly suppliesService: SuppliesService) {}
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.suppliesService.findAll(paginationDto);
+  findAll(@Query() search: Search) {
+    return this.suppliesService.findAll(search);
   }
 
   @Get('stock/all')
-  findAllSuppliesStock(@Query() paginationDto: PaginationDto) {
-    return this.suppliesService.findAllSuppliesStock(paginationDto);
+  findAllSuppliesStock(@Query() search: Search) {
+    return this.suppliesService.findAllSuppliesStock(search);
   }
 
   @Get('purchase/all')
-  findAllPurchases(@Query() paginationDto: PaginationDto) {
-    return this.suppliesService.findAllPurchases(paginationDto);
+  findAllPurchases(@Query() search: Search) {
+    return this.suppliesService.findAllPurchases(search);
   }
   @Get('consumption/all')
-  findAllConsumptions(@Query() paginationDto: PaginationDto) {
-    return this.suppliesService.findAllConsumptions(paginationDto);
+  findAllConsumptions(@Query() search: Search) {
+    return this.suppliesService.findAllConsumptions(search);
   }
 
   @Get(':id')

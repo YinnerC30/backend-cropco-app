@@ -1,8 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Search } from 'src/common/dto/search.dto';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { Supplier } from './entities/supplier.entity';
@@ -27,16 +27,37 @@ export class SuppliersService {
     }
   }
 
-  async findAll(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
+  async findAll(search: Search) {
+    const { parameter = '', limit = 10, offset = 0 } = search;
 
-    return this.supplierRepository.find({
+    const suppliers = await this.supplierRepository.find({
+      where: [
+        {
+          first_name: Like(`${parameter}%`),
+        },
+        {
+          email: Like(`${parameter}%`),
+        },
+      ],
       order: {
         first_name: 'ASC',
       },
       take: limit,
-      skip: offset,
+      skip: offset * limit,
     });
+
+    let count: number;
+    if (parameter.length === 0) {
+      count = await this.supplierRepository.count();
+    } else {
+      count = suppliers.length;
+    }
+
+    return {
+      rowCount: count,
+      rows: suppliers,
+      pageCount: Math.ceil(count / limit),
+    };
   }
 
   async findOne(id: string) {

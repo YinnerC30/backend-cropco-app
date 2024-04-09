@@ -1,8 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Search } from 'src/common/dto/search.dto';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 import { Repository } from 'typeorm';
-import { PaginationDto } from '../common/dto/pagination.dto';
 import type { CreateWorkDto } from './dto/create-work.dto';
 import type { UpdateWorkDto } from './dto/update-work.dto';
 import { Work } from './entities/work.entity';
@@ -23,8 +23,8 @@ export class WorkService {
     return work;
   }
 
-  async findAll(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
+  async findAll(search: Search) {
+    const { limit = 10, offset = 0 } = search;
     return this.workRepository.find({
       order: {
         date: 'ASC',

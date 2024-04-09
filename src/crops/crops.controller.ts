@@ -9,10 +9,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Search } from 'src/common/dto/search.dto';
 import { CropsService } from './crops.service';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
+
 
 @Controller('crops')
 export class CropsController {
@@ -24,8 +25,8 @@ export class CropsController {
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.cropsService.findAll(paginationDto);
+  findAll(@Query() search: Search) {
+    return this.cropsService.findAll(search);
   }
 
   @Get(':id')

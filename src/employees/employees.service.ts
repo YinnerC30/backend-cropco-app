@@ -1,11 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { Employee } from './entities/employee.entity';
+import { Search } from 'src/common/dto/search.dto';
 
 @Injectable()
 export class EmployeesService {
@@ -27,16 +28,60 @@ export class EmployeesService {
     }
   }
 
-  async findAll(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
+  async findAll(search: Search) {
+    const {
+      parameter = '',
+      limit = 10,
+      offset = 0,
+      allRecords = false,
+    } = search;
 
-    return this.employeeRepository.find({
-      order: {
-        first_name: 'ASC',
-      },
-      take: limit,
-      skip: offset,
-    });
+    let employees;
+
+    if (allRecords === true) {
+      employees = await this.employeeRepository.find({
+        where: [
+          {
+            first_name: Like(`${parameter}%`),
+          },
+          {
+            email: Like(`${parameter}%`),
+          },
+        ],
+        order: {
+          first_name: 'ASC',
+        },
+      });
+    } else {
+      employees = await this.employeeRepository.find({
+        where: [
+          {
+            first_name: Like(`${parameter}%`),
+          },
+          {
+            email: Like(`${parameter}%`),
+          },
+        ],
+        order: {
+          first_name: 'ASC',
+        },
+        take: limit,
+        skip: offset * limit,
+      });
+    }
+
+    let count: number;
+    if (parameter.length === 0) {
+      count = await this.employeeRepository.count();
+    } else {
+      count = employees.length;
+    }
+
+    return {
+      rowCount: count,
+      rows: employees,
+      pageCount: Math.ceil(count / limit),
+    };
   }
 
   async findOne(id: string) {

@@ -5,13 +5,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Search } from 'src/common/dto/search.dto';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { Work } from 'src/work/entities/work.entity';
 import { WorkService } from 'src/work/work.service';
 import { DataSource, Repository } from 'typeorm';
-import { PaginationDto } from '../common/dto/pagination.dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentHarvest } from './entities/payment-harvest.entity';
 import { PaymentWork } from './entities/payment-work.entity';
@@ -103,8 +103,8 @@ export class PaymentsService {
     }
   }
 
-  findAll(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
+  findAll(search: Search) {
+    const { limit = 10, offset = 0 } = search;
     return this.paymentRepository.find({
       order: {
         date: 'ASC',

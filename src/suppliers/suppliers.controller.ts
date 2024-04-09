@@ -9,10 +9,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { SuppliersService } from './suppliers.service';
+import { Search } from 'src/common/dto/search.dto';
 
 @Controller('suppliers')
 export class SuppliersController {
@@ -24,8 +25,8 @@ export class SuppliersController {
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.suppliersService.findAll(paginationDto);
+  findAll(@Query() search: Search) {
+    return this.suppliersService.findAll(search);
   }
 
   @Get(':id')

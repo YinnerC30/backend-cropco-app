@@ -1,12 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, Like, QueryRunner, Repository } from 'typeorm';
 import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { HarvestDetails } from './entities/harvest-details.entity';
 import { Harvest } from './entities/harvest.entity';
 
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Search } from 'src/common/dto/search.dto';
 
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
 import { handleDBExceptions } from '../common/helpers/handleDBErrors';
@@ -59,15 +59,31 @@ export class HarvestService {
     }
   }
 
-  findAll(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
-    return this.harvestRepository.find({
-      order: {
-        date: 'ASC',
-      },
-      take: limit,
-      skip: offset,
-    });
+  async findAll(search: Search) {
+    const { limit = 10, offset = 0 } = search;
+    const harvests = await this.harvestRepository
+      .createQueryBuilder('harvest')
+      .leftJoinAndSelect('harvest.crop', 'crop')
+      .select([
+        'harvest.id',
+        'harvest.date',
+        'harvest.unit_of_measure',
+        'harvest.total',
+        'harvest.value_pay',
+        'harvest.observation',
+        'crop.name',
+      ])
+      .orderBy('harvest.date', 'ASC')
+      .take(limit)
+      .skip(offset * limit)
+      .getMany();
+    let count: number = harvests.length;
+
+    return {
+      rowCount: count,
+      rows: harvests.map((item) => ({ ...item, crop: item.crop.name })),
+      pageCount: Math.ceil(count / limit),
+    };
   }
 
   async findOne(id: string) {
@@ -253,8 +269,8 @@ export class HarvestService {
     }
   }
 
-  findAllHarvestProcessed(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
+  findAllHarvestProcessed(search: Search) {
+    const { limit = 10, offset = 0 } = search;
     return this.harvestProcessedRepository.find({
       order: {
         date: 'ASC',

@@ -8,7 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Search } from 'src/common/dto/search.dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentsService } from './payments.service';
 
@@ -22,8 +22,8 @@ export class PaymentsController {
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.paymentsService.findAll(paginationDto);
+  findAll(@Query() search: Search) {
+    return this.paymentsService.findAll(search);
   }
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {

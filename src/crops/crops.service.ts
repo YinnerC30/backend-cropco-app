@@ -1,8 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Search } from 'src/common/dto/search.dto';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
@@ -27,19 +27,73 @@ export class CropsService {
     }
   }
 
-  findAll(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
-    return this.cropRepository.find({
-      order: {
-        name: 'ASC',
-      },
-      take: limit,
-      skip: offset,
-    });
+  async findAll(search: Search) {
+    const {
+      parameter = '',
+      limit = 10,
+      offset = 0,
+      allRecords = false,
+    } = search;
+
+    let crops;
+
+    if (allRecords === true) {
+      crops = await this.cropRepository.find({
+        where: [
+          {
+            name: Like(`${parameter}%`),
+          },
+          {
+            location: Like(`${parameter}%`),
+          },
+        ],
+        order: {
+          name: 'ASC',
+        },
+      });
+    } else {
+      crops = await this.cropRepository.find({
+        where: [
+          {
+            name: Like(`${parameter}%`),
+          },
+          {
+            location: Like(`${parameter}%`),
+          },
+        ],
+        order: {
+          name: 'ASC',
+        },
+        take: limit,
+        skip: offset * limit,
+      });
+    }
+
+    let count: number;
+    if (parameter.length === 0) {
+      count = await this.cropRepository.count();
+    } else {
+      count = crops.length;
+    }
+
+    return {
+      rowCount: count,
+      rows: crops,
+      pageCount: Math.ceil(count / limit),
+    };
   }
 
   async findOne(id: string) {
-    const crop = await this.cropRepository.findOneBy({ id });
+    const crop = await this.cropRepository
+      .createQueryBuilder('crop')
+      .leftJoinAndSelect('crop.harvests_stock', 'harvestsStock')
+      .leftJoinAndSelect('crop.harvests', 'harvest', 'harvest.cropId = crop.id')
+      .select(['crop', 'harvestsStock', 'SUM(harvest.total) AS harvestsTotal'])
+      .where('crop.id = :id', { id })
+      .groupBy('crop.id')
+      .addGroupBy('harvestsStock.id')
+      .getOne();
+
     if (!crop) throw new NotFoundException(`Crop with id: ${id} not found`);
     return crop;
   }

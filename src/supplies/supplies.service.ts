@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Search } from 'src/common/dto/search.dto';
 import { CreateConsumptionSuppliesDto } from './dto/create-consumption-supplies.dto';
 import { CreatePurchaseSuppliesDto } from './dto/create-purchase-supplies.dto';
 import { CreateSupplyDto } from './dto/create-supply.dto';
@@ -8,7 +8,7 @@ import { PurchaseSuppliesDetailsDto } from './dto/purchase-supplies-details.dto'
 import { UpdateSuppliesPurchaseDto } from './dto/update-supplies-purchase.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
 
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, Like, QueryRunner, Repository } from 'typeorm';
 
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -61,19 +61,37 @@ export class SuppliesService {
     }
   }
 
-  async findAll(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
+  async findAll(search: Search) {
+    const { parameter = '', limit = 10, offset = 0 } = search;
 
-    return this.supplyRepository.find({
+    const supplies = await this.supplyRepository.find({
+      where: [
+        {
+          name: Like(`${parameter}%`),
+        },
+        {
+          brand: Like(`${parameter}%`),
+        },
+      ],
       order: {
         name: 'ASC',
       },
-      relations: {
-        stock: true,
-      },
       take: limit,
-      skip: offset,
+      skip: offset * limit,
     });
+
+    let count: number;
+    if (parameter.length === 0) {
+      count = await this.supplyRepository.count();
+    } else {
+      count = supplies.length;
+    }
+
+    return {
+      rowCount: count,
+      rows: supplies,
+      pageCount: Math.ceil(count / limit),
+    };
   }
 
   async findOne(id: string) {
@@ -107,8 +125,8 @@ export class SuppliesService {
     }
   }
 
-  async findAllSuppliesStock(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
+  async findAllSuppliesStock(search: Search) {
+    const { limit = 10, offset = 0 } = search;
 
     return this.suppliesStockRepository.find({
       order: {
@@ -241,8 +259,8 @@ export class SuppliesService {
     }
   }
 
-  async findAllPurchases(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
+  async findAllPurchases(search: Search) {
+    const { limit = 10, offset = 0 } = search;
 
     return this.suppliesPurchaseRepository.find({
       order: {
@@ -466,8 +484,8 @@ export class SuppliesService {
     }
   }
 
-  async findAllConsumptions(paginationDto: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto;
+  async findAllConsumptions(search: Search) {
+    const { limit = 10, offset = 0 } = search;
 
     return this.suppliesConsumptionRepository.find({
       order: {

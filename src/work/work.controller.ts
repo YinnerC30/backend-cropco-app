@@ -9,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { Search } from 'src/common/dto/search.dto';
 import { CreateWorkDto } from './dto/create-work.dto';
 import { UpdateWorkDto } from './dto/update-work.dto';
 import { WorkService } from './work.service';
@@ -24,8 +24,8 @@ export class WorkController {
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.workService.findAll(paginationDto);
+  findAll(@Query() search: Search) {
+    return this.workService.findAll(search);
   }
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {

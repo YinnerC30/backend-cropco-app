@@ -9,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { PaginationDto } from '../common/dto/pagination.dto';
+import { Search } from 'src/common/dto/search.dto';
 import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
 import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
@@ -40,13 +40,13 @@ export class HarvestController {
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.harvestService.findAll(paginationDto);
+  findAll(@Query() search: Search) {
+    return this.harvestService.findAll(search);
   }
 
   @Get('processed')
-  findAllHarvestProcessed(@Query() paginationDto: PaginationDto) {
-    return this.harvestService.findAllHarvestProcessed(paginationDto);
+  findAllHarvestProcessed(@Query() search: Search) {
+    return this.harvestService.findAllHarvestProcessed(search);
   }
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {

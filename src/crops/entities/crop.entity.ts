@@ -32,7 +32,7 @@ export class Crop {
   @Column({ type: 'date', name: 'date_of_creation' })
   date_of_creation: string;
 
-  @Column({ type: 'date', name: 'date_of_termination' })
+  @Column({ type: 'date', name: 'date_of_termination', nullable:true })
   date_of_termination: string;
 
   // External relations
