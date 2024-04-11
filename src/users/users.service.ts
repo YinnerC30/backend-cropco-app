@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { Like, Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -35,10 +35,10 @@ export class UsersService {
     const users = await this.usersRepository.find({
       where: [
         {
-          first_name: Like(`${search}%`),
+          first_name: ILike(`${search}%`),
         },
         {
-          email: Like(`${search}%`),
+          email: ILike(`${search}%`),
         },
       ],
       order: {

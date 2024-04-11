@@ -6,9 +6,9 @@ import {
   IsInt,
   IsPositive,
   IsString,
-  IsUUID,
-  ValidateNested,
+  ValidateNested
 } from 'class-validator';
+import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
 import { UnitOfMeasure } from '../entities/harvest.entity';
@@ -18,7 +18,8 @@ export class CreateHarvestDto {
   @IsDateString()
   date: string;
 
-  @IsUUID()
+  @ValidateNested()
+  @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;
 
   @IsString()

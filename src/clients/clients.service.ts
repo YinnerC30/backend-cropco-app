@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { Like, Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
@@ -33,10 +33,10 @@ export class ClientsService {
     const clients = await this.clientRepository.find({
       where: [
         {
-          first_name: Like(`${search}%`),
+          first_name: ILike(`${search}%`),
         },
         {
-          email: Like(`${search}%`),
+          email: ILike(`${search}%`),
         },
       ],
       order: {

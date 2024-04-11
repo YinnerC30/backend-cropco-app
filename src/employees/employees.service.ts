@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { Like, Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
@@ -42,10 +42,10 @@ export class EmployeesService {
       employees = await this.employeeRepository.find({
         where: [
           {
-            first_name: Like(`${search}%`),
+            first_name: ILike(`${search}%`),
           },
           {
-            email: Like(`${search}%`),
+            email: ILike(`${search}%`),
           },
         ],
         order: {
@@ -56,10 +56,10 @@ export class EmployeesService {
       employees = await this.employeeRepository.find({
         where: [
           {
-            first_name: Like(`${search}%`),
+            first_name: ILike(`${search}%`),
           },
           {
-            email: Like(`${search}%`),
+            email: ILike(`${search}%`),
           },
         ],
         order: {

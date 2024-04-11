@@ -1,19 +1,24 @@
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsInt,
   IsOptional,
   IsPositive,
-  IsUUID,
+  ValidateNested,
 } from 'class-validator';
+import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { DeepPartial } from 'typeorm';
 import { Harvest } from '../entities/harvest.entity';
+
 export class HarvestDetailsDto {
-  @IsUUID()
+  @ValidateNested()
+  @Type(() => ValidateUUID)
   employee: DeepPartial<Employee>;
 
   @IsOptional()
-  @IsUUID()
+  @ValidateNested()
+  @Type(() => ValidateUUID)
   harvest: DeepPartial<Harvest>;
 
   @IsInt()

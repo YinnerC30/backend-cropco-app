@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { Like, Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
@@ -37,30 +37,20 @@ export class CropsService {
 
     let crops;
 
+    const searchCondition = {
+      name: ILike(`${search}%`),
+    };
+
     if (allRecords === true) {
       crops = await this.cropRepository.find({
-        where: [
-          {
-            name: Like(`${search}%`),
-          },
-          {
-            location: Like(`${search}%`),
-          },
-        ],
+        where: [searchCondition],
         order: {
           name: 'ASC',
         },
       });
     } else {
       crops = await this.cropRepository.find({
-        where: [
-          {
-            name: Like(`${search}%`),
-          },
-          {
-            location: Like(`${search}%`),
-          },
-        ],
+        where: [searchCondition],
         order: {
           name: 'ASC',
         },
@@ -69,12 +59,8 @@ export class CropsService {
       });
     }
 
-    let count: number;
-    if (search.length === 0) {
-      count = await this.cropRepository.count();
-    } else {
-      count = crops.length;
-    }
+    const count =
+      search.length === 0 ? await this.cropRepository.count() : crops.length;
 
     return {
       rowCount: count,

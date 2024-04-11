@@ -8,7 +8,7 @@ import { PurchaseSuppliesDetailsDto } from './dto/purchase-supplies-details.dto'
 import { UpdateSuppliesPurchaseDto } from './dto/update-supplies-purchase.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
 
-import { DataSource, Like, QueryRunner, Repository } from 'typeorm';
+import { DataSource, ILike, QueryRunner, Repository } from 'typeorm';
 
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -67,10 +67,10 @@ export class SuppliesService {
     const supplies = await this.supplyRepository.find({
       where: [
         {
-          name: Like(`${search}%`),
+          name: ILike(`${search}%`),
         },
         {
-          brand: Like(`${search}%`),
+          brand: ILike(`${search}%`),
         },
       ],
       order: {
