@@ -22,9 +22,6 @@ export class Harvest {
   })
   date: string;
 
-  @Column({ type: 'enum', enum: ['KILOGRAMOS', 'LIBRAS'] })
-  unit_of_measure: UnitOfMeasure;
-
   @Column({ type: 'int4' })
   total: number;
 

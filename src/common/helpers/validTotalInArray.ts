@@ -1,17 +1,20 @@
 import { BadRequestException } from '@nestjs/common';
 
-export const validateTotalInArray = (data: any) => {
-  const { details, ...rest } = data;
+interface PropertiesObject {
+  propertyNameArray: string;
+  namesPropertiesToSum: string[];
+}
 
-  const total = rest.total;
+export const validateTotalInArray = (data: any, config: PropertiesObject) => {
+  const array = data[config.propertyNameArray];
 
-  const totalArray = details.reduce((acumulador, record) => {
-    return acumulador + record.total;
-  }, 0);
+  const arrayValid = config.namesPropertiesToSum.map((prop) => {
+    const totalArray = array.reduce((acc, record) => acc + record[prop], 0);
+    return data[prop] === totalArray;
+  });
 
-  const isTotalValid = total === totalArray;
-
-  if (!isTotalValid) {
+  if (arrayValid.some((value) => !value)) {
     throw new BadRequestException('Total in array is not correct.');
   }
 };
+

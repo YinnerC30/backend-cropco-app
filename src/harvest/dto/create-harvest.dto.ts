@@ -2,7 +2,6 @@ import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsDateString,
-  IsIn,
   IsInt,
   IsPositive,
   IsString,
@@ -11,7 +10,6 @@ import {
 import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
-import { UnitOfMeasure } from '../entities/harvest.entity';
 import { HarvestDetailsDto } from './create-harvest-details.dto';
 
 export class CreateHarvestDto {
@@ -21,10 +19,6 @@ export class CreateHarvestDto {
   @ValidateNested()
   @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;
-
-  @IsString()
-  @IsIn(['KILOGRAMOS', 'LIBRAS'])
-  unit_of_measure: UnitOfMeasure;
 
   @IsInt()
   @IsPositive()

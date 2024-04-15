@@ -35,7 +35,10 @@ export class HarvestService {
   ) {}
 
   async create(createHarvestDto: CreateHarvestDto) {
-    validateTotalInArray(createHarvestDto);
+    validateTotalInArray(createHarvestDto, {
+      propertyNameArray: 'details',
+      namesPropertiesToSum: ['total', 'value_pay'],
+    });
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -67,7 +70,6 @@ export class HarvestService {
       .select([
         'harvest.id',
         'harvest.date',
-        'harvest.unit_of_measure',
         'harvest.total',
         'harvest.value_pay',
         'harvest.observation',
@@ -103,7 +105,10 @@ export class HarvestService {
   }
 
   async update(id: string, updateHarvestDto: UpdateHarvestDto) {
-    validateTotalInArray(updateHarvestDto);
+    validateTotalInArray(updateHarvestDto, {
+      propertyNameArray: 'details',
+      namesPropertiesToSum: ['total', 'value_pay'],
+    });
 
     const harvest = await this.findOne(id);
 
@@ -114,47 +119,52 @@ export class HarvestService {
     try {
       const newHarvestDetails = updateHarvestDto.details;
       const newIDsEmployees = newHarvestDetails.map((record) =>
-        new String(record.employee).toString(),
+        new String(record.employee.id).toString(),
       );
       const oldHarvestDetails = harvest.details;
       const oldIDsEmployees = oldHarvestDetails.map((record) =>
         new String(record.employee.id).toString(),
       );
 
+      console.log({
+        newHarvestDetails,
+        newIDsEmployees,
+        oldHarvestDetails,
+        oldIDsEmployees,
+      });
+
       const { toCreate, toDelete, toUpdate } = organizeIDsToUpdateEntity(
         newIDsEmployees,
         oldIDsEmployees,
       );
 
-      let arrayRecordsToDelete = [];
+      console.log({
+        toCreate,
+        toDelete,
+        toUpdate,
+      });
 
       for (const employeeId of toDelete) {
-        arrayRecordsToDelete.push(
-          queryRunner.manager.delete(HarvestDetails, { employee: employeeId }),
-        );
+        await queryRunner.manager.delete(HarvestDetails, {
+          harvest: id,
+          employee: employeeId,
+        });
       }
-      await Promise.all(arrayRecordsToDelete);
 
-      let arrayRecordsToUpdate = [];
       for (const employeeId of toUpdate) {
         const dataRecord = newHarvestDetails.find(
-          (record) => record.employee === employeeId,
+          (record) => record.employee.id === employeeId,
         );
-
-        arrayRecordsToUpdate.push(
-          queryRunner.manager.update(
-            HarvestDetails,
-            { harvest: id },
-            dataRecord,
-          ),
+        await queryRunner.manager.update(
+          HarvestDetails,
+          { harvest: id, employee: employeeId },
+          dataRecord,
         );
       }
-      await Promise.all(arrayRecordsToUpdate);
 
-      let arrayRecordsToCreate = [];
       for (const employeeId of toCreate) {
         const dataRecord = newHarvestDetails.find(
-          (record) => record.employee === employeeId,
+          (record) => record.employee.id === employeeId,
         );
 
         const recordToCreate = queryRunner.manager.create(HarvestDetails, {
@@ -162,9 +172,8 @@ export class HarvestService {
           ...dataRecord,
         });
 
-        arrayRecordsToCreate.push(queryRunner.manager.save(recordToCreate));
+        await queryRunner.manager.save(recordToCreate);
       }
-      await Promise.all(arrayRecordsToCreate);
 
       const { details, ...rest } = updateHarvestDto;
       await queryRunner.manager.update(Harvest, { id }, rest);
@@ -257,7 +266,7 @@ export class HarvestService {
       );
       await queryRunner.manager.save(HarvestProcessed, harvestProcessed);
       const { crop, total } = createHarvestProcessedDto;
-      await this.updateStock(queryRunner, crop, total, true);
+      await this.updateStock(queryRunner, crop.id, total, true);
 
       await queryRunner.commitTransaction();
       await queryRunner.release();
@@ -269,15 +278,30 @@ export class HarvestService {
     }
   }
 
-  findAllHarvestProcessed(queryParams: QueryParams) {
+  async findAllHarvestProcessed(queryParams: QueryParams) {
     const { limit = 10, offset = 0 } = queryParams;
-    return this.harvestProcessedRepository.find({
+    const harvestProcessed = await this.harvestProcessedRepository.find({
       order: {
         date: 'ASC',
       },
       take: limit,
       skip: offset,
+      relations: {
+        crop: true,
+        harvest: true,
+      },
     });
+    let count: number = harvestProcessed.length;
+
+    return {
+      rowCount: count,
+      rows: harvestProcessed.map((item) => ({
+        ...item,
+        crop: item.crop.name,
+        harvest: item.harvest.date,
+      })),
+      pageCount: Math.ceil(count / limit),
+    };
   }
 
   async findOneHarvestProcessed(id: string) {

@@ -86,7 +86,7 @@ export class SalesService {
 
   async update(id: string, updateSaleDto: UpdateSaleDto) {
     const sale: Sale = await this.findOne(id);
-    validateTotalInArray(updateSaleDto);
+    // validateTotalInArray(updateSaleDto);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();

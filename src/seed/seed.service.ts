@@ -193,11 +193,11 @@ export class SeedService {
         details: [
           {
             ...details[0],
-            employee: `${employee1}`,
+            employee: { id: `${employee1}` },
           },
           {
             ...details[1],
-            employee: `${employee2}`,
+            employee: { id: `${employee2}` },
           },
         ],
       };
@@ -232,8 +232,8 @@ export class SeedService {
     for (let index = 0; index < 3; index++) {
       const objectToCreate: CreateHarvestProcessedDto = {
         ...initialHarvest,
-        crop: crops[index],
-        harvest: harvests[index],
+        crop: { id: crops[index] },
+        harvest: { id: harvests[index] },
       };
 
       insertPromises.push(

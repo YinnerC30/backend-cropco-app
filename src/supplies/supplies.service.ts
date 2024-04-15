@@ -217,7 +217,7 @@ export class SuppliesService {
   }
 
   async createPurchase(createPurchaseSuppliesDto: CreatePurchaseSuppliesDto) {
-    validateTotalInArray(createPurchaseSuppliesDto);
+    // validateTotalInArray(createPurchaseSuppliesDto);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -287,7 +287,7 @@ export class SuppliesService {
     id: string,
     updateSuppliesPurchaseDto: UpdateSuppliesPurchaseDto,
   ) {
-    validateTotalInArray(updateSuppliesPurchaseDto);
+    // validateTotalInArray(updateSuppliesPurchaseDto);
 
     const purchase: SuppliesPurchase = await this.findOnePurchase(id);
 
