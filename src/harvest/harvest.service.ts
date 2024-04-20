@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, ILike, QueryRunner, Repository } from 'typeorm';
 import { CreateHarvestDto } from './dto/create-harvest.dto';
@@ -253,10 +258,41 @@ export class HarvestService {
     );
   }
 
+  async validateTotalProcessed(
+    queryRunner: QueryRunner,
+    dto: CreateHarvestDto | UpdateHarvestDto | any,
+  ) {
+    const harvest = await queryRunner.manager
+      .createQueryBuilder(Harvest, 'harvest')
+      .leftJoinAndSelect('harvest.processed', 'processed')
+      .where('harvest.id = :id', { id: dto.harvest.id })
+      .getOne();
+
+    if (!harvest) {
+      throw new NotFoundException('Cosecha no encontrada');
+    }
+
+    const totalProcessed = harvest.processed.reduce(
+      (acc, record) => acc + record.total,
+      0,
+    );
+
+    if (totalProcessed + dto.total > harvest.total) {
+      throw new BadRequestException(
+        'No puedes agregar más registros de cosecha procesada, supera el valor de la cosecha',
+      );
+    }
+
+    return;
+  }
+
   async createHarvestProcessed(
     createHarvestProcessedDto: CreateHarvestProcessedDto,
   ) {
     const queryRunner = this.dataSource.createQueryRunner();
+
+    await this.validateTotalProcessed(queryRunner, createHarvestProcessedDto);
+
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
@@ -326,6 +362,9 @@ export class HarvestService {
     const harvestProcessed = await this.findOneHarvestProcessed(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
+
+    await this.validateTotalProcessed(queryRunner, updateHarvestProcessedDto);
+
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
@@ -345,7 +384,7 @@ export class HarvestService {
 
       const { crop, total } = updateHarvestProcessedDto;
 
-      await this.updateStock(queryRunner, crop, total, true);
+      await this.updateStock(queryRunner, crop.id, total, true);
 
       await queryRunner.commitTransaction();
     } catch (error) {

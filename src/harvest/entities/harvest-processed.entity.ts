@@ -17,13 +17,14 @@ export class HarvestProcessed {
   @Column({ type: 'date' })
   date: string;
 
-  @ManyToOne(() => Crop, (crop) => crop.harvests_processed, {onDelete: 'CASCADE'})
-  crop: Crop;
-
-  @OneToOne(() => Harvest, (harvest) => harvest.processed, {
+  @ManyToOne(() => Crop, (crop) => crop.harvests_processed, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn()
+  crop: Crop;
+
+  @ManyToOne(() => Harvest, (harvest) => harvest.processed, {
+    onDelete: 'CASCADE',
+  })
   harvest: Harvest;
 
   @Column({
