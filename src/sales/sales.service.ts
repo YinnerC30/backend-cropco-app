@@ -57,15 +57,23 @@ export class SalesService {
     }
   }
 
-  findAll(queryParams: QueryParams) {
+  async findAll(queryParams: QueryParams) {
     const { limit = 10, offset = 0 } = queryParams;
-    return this.saleRepository.find({
+    const sales = await this.saleRepository.find({
       order: {
         date: 'ASC',
       },
       take: limit,
       skip: offset,
     });
+
+    let count: number = sales.length;
+
+    return {
+      rowCount: count,
+      rows: sales,
+      pageCount: Math.ceil(count / limit),
+    };
   }
 
   async findOne(id: string) {
