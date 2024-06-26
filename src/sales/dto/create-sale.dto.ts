@@ -13,14 +13,18 @@ import { SaleDetailsDto } from './sale-details.dto';
 export class CreateSaleDto {
   @IsDateString()
   date: string;
+  
   @IsInt()
   @IsPositive()
   quantity: number;
+
   @IsInt()
   @IsPositive()
   total: number;
+
   @IsBoolean()
   is_receivable: boolean;
+
   @IsArray()
   @ArrayNotEmpty()
   @ValidateNested()

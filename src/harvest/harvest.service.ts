@@ -246,7 +246,7 @@ export class HarvestService {
         total,
       );
     }
-    const amountActually = recordHarvestCropStock.total;
+    const amountActually = recordHarvestCropStock?.total ?? 0; 
     if (amountActually < total) {
       throw new InsufficientHarvestStockException();
     }
