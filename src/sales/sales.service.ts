@@ -109,7 +109,7 @@ export class SalesService {
 
       const oldIDsCrop: string[] = oldDetails.map((record) => record.crop.id);
       const newIDsCrop: string[] = newDetails.map((record) =>
-        new String(record.crop).toString(),
+        new String(record.crop.id).toString(),
       );
 
       const { toCreate, toUpdate, toDelete } = organizeIDsToUpdateEntity(
@@ -136,7 +136,7 @@ export class SalesService {
           true,
         );
 
-        const newData = newDetails.find((record) => record.crop === cropId);
+        const newData = newDetails.find((record) => record.crop.id === cropId);
         await this.harvestService.updateStock(
           queryRunner,
           cropId,
@@ -146,7 +146,7 @@ export class SalesService {
       }
 
       for (const cropId of toCreate) {
-        const newData = newDetails.find((record) => record.crop === cropId);
+        const newData = newDetails.find((record) => record.crop.id === cropId);
         await this.harvestService.updateStock(
           queryRunner,
           cropId,
@@ -158,7 +158,7 @@ export class SalesService {
       await queryRunner.manager.delete(SaleDetails, { sale: id });
 
       sale.details = [...toCreate, ...toUpdate].map((cropId) => {
-        const data = newDetails.find((record) => record.crop === cropId);
+        const data = newDetails.find((record) => record.crop.id === cropId);
         return queryRunner.manager.create(SaleDetails, data);
       });
 

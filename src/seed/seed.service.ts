@@ -60,8 +60,8 @@ export class SeedService {
     await this.insertNewPurchaseSupplies();
     await this.insertNewConsumptionSupplies();
     await this.insertNewWork();
-    await this.insertNewSales();
-    await this.insertNewPayments();
+    // await this.insertNewSales();
+    // await this.insertNewPayments();
 
     return 'SEED EXECUTED';
   }
