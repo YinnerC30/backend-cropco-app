@@ -44,10 +44,16 @@ export class HarvestController {
     return this.harvestService.findAll(queryParams);
   }
 
+  @Get('stock')
+  findAllHarvestStock(@Query() queryParams: QueryParams) {
+    return this.harvestService.findAllHarvestStock(queryParams);
+  }
+
   @Get('processed')
   findAllHarvestProcessed(@Query() queryParams: QueryParams) {
     return this.harvestService.findAllHarvestProcessed(queryParams);
   }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.harvestService.findOne(id);

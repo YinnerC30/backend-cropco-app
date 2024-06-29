@@ -35,6 +35,8 @@ export class HarvestService {
 
     @InjectRepository(HarvestProcessed)
     private readonly harvestProcessedRepository: Repository<HarvestProcessed>,
+    @InjectRepository(HarvestStock)
+    private readonly harvestStockRepository: Repository<HarvestStock>,
 
     private readonly dataSource: DataSource,
   ) {}
@@ -219,6 +221,28 @@ export class HarvestService {
     }
   }
 
+  async findAllHarvestStock(queryParams: QueryParams) {
+    const { limit = 10, offset = 0 } = queryParams;
+    const harvestStock = await this.harvestStockRepository.find({
+      take: limit,
+      skip: offset,
+      relations: {
+        crop: true,
+      },
+    });
+    let count: number = harvestStock.length;
+
+    return {
+      rowCount: count,
+      rows: harvestStock.map((item) => ({
+        id: item.crop.id,
+        name: item.crop.name,
+        stock: item.total,
+      })),
+      pageCount: Math.ceil(count / limit),
+    };
+  }
+
   async updateStock(
     queryRunner: QueryRunner,
     cropId: any, //TODO: Remover tipo any aquí y en otros métodos
@@ -246,7 +270,7 @@ export class HarvestService {
         total,
       );
     }
-    const amountActually = recordHarvestCropStock?.total ?? 0; 
+    const amountActually = recordHarvestCropStock?.total ?? 0;
     if (amountActually < total) {
       throw new InsufficientHarvestStockException();
     }
