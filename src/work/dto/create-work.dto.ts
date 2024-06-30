@@ -1,4 +1,6 @@
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsBoolean,
   IsDateString,
   IsInt,
@@ -7,10 +9,16 @@ import {
   IsString,
   IsUUID,
   Length,
+  ValidateNested,
 } from 'class-validator';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { DeepPartial } from 'typeorm';
+import { WorkDetails } from '../entities/work-details.entity';
+import { Type } from 'class-transformer';
+import { SaleDetailsDto } from 'src/sales/dto/sale-details.dto';
+import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { WorkDetailsDto } from './work-details.dto';
 
 export class CreateWorkDto {
   @IsDateString()
@@ -22,15 +30,15 @@ export class CreateWorkDto {
 
   @IsInt()
   @IsPositive()
-  value_pay: number;
+  total: number;
 
-  @IsOptional()
-  @IsBoolean()
-  payment_is_pending?: boolean;
-
-  @IsUUID()
-  employee: DeepPartial<Employee>;
-
-  @IsUUID()
+  @ValidateNested()
+  @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;
+
+  @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested()
+  @Type(() => WorkDetailsDto)
+  details: WorkDetailsDto[];
 }

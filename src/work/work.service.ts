@@ -2,10 +2,12 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { Repository } from 'typeorm';
-import type { CreateWorkDto } from './dto/create-work.dto';
+import { DataSource, Repository } from 'typeorm';
+import { CreateWorkDto } from './dto/create-work.dto';
 import type { UpdateWorkDto } from './dto/update-work.dto';
 import { Work } from './entities/work.entity';
+import { WorkDetailsDto } from './dto/work-details.dto';
+import { WorkDetails } from './entities/work-details.entity';
 
 @Injectable()
 export class WorkService {
@@ -15,12 +17,31 @@ export class WorkService {
   constructor(
     @InjectRepository(Work)
     private readonly workRepository: Repository<Work>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(createWorkDto: CreateWorkDto) {
-    const work = this.workRepository.create(createWorkDto);
-    await this.workRepository.save(work);
-    return work;
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const { details, ...rest } = createWorkDto;
+
+      const work = queryRunner.manager.create(Work, rest);
+
+      work.details = details.map((workDetails: WorkDetailsDto) => {
+        return queryRunner.manager.create(WorkDetails, workDetails);
+      });
+
+      await queryRunner.manager.save(work);
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.handleDBExceptions(error);
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async findAll(queryParams: QueryParams) {
@@ -28,6 +49,9 @@ export class WorkService {
     const works = await this.workRepository.find({
       order: {
         date: 'ASC',
+      },
+      relations: {
+        crop: true,
       },
       take: limit,
       skip: offset,

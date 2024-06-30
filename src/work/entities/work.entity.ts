@@ -5,38 +5,33 @@ import {
   Column,
   Entity,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { WorkDetails } from './work-details.entity';
 
-@Entity({ name: 'crops_work' })
+@Entity({ name: 'works' })
 export class Work {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
   @Column({
     type: 'date',
   })
   date: string;
+
   @Column({
     type: 'text',
   })
   description: string;
+
   @Column({
     type: 'int4',
   })
-  value_pay: number;
-  @Column({
-    type: 'bool',
-    default: true,
-  })
-  payment_is_pending?: boolean;
+  total: number;
 
   // Internal relations
-
-  @ManyToOne(() => Employee, (employee) => employee.works, {
-    onDelete: 'CASCADE',
-  })
-  employee: Employee;
 
   @ManyToOne(() => Crop, (crop) => crop.works, {
     onDelete: 'CASCADE',
@@ -44,6 +39,12 @@ export class Work {
   crop: Crop;
 
   // External relations
+
+  @OneToMany(() => WorkDetails, (workDetails) => workDetails.work, {
+    cascade: true,
+  })
+  details: WorkDetails[];
+
   @OneToOne(() => PaymentWork, (payments_work) => payments_work.work, {
     cascade: true,
   })

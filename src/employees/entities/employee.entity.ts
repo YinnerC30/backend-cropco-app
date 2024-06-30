@@ -3,6 +3,7 @@ import { Payment } from 'src/payments/entities/payment.entity';
 import { Work } from 'src/work/entities/work.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { PersonalInformation } from '../../common/entities/personal-information.entity';
+import { WorkDetails } from 'src/work/entities/work-details.entity';
 @Entity({ name: 'employees' })
 export class Employee extends PersonalInformation {
   @PrimaryGeneratedColumn('uuid')
@@ -19,8 +20,10 @@ export class Employee extends PersonalInformation {
   )
   harvests_detail: HarvestDetails[];
 
-  @OneToMany(() => Work, (work) => work.employee, { cascade: true })
-  works: Work[];
+  @OneToMany(() => WorkDetails, (workDetails) => workDetails.employee, {
+    cascade: true,
+  })
+  works_detail: Work[];
 
   @OneToMany(() => Payment, (payment) => payment.employee, { cascade: true })
   payments: Payment[];

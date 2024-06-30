@@ -87,7 +87,7 @@ export class EmployeesService {
   async findOne(id: string) {
     const employee = await this.employeeRepository.findOne({
       where: { id },
-      relations: { harvests_detail: true, payments: true, works: true },
+      relations: { harvests_detail: true, payments: true, works_detail: true },
     });
     if (!employee)
       throw new NotFoundException(`Employee with id: ${id} not found`);

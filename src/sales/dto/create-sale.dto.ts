@@ -13,7 +13,7 @@ import { SaleDetailsDto } from './sale-details.dto';
 export class CreateSaleDto {
   @IsDateString()
   date: string;
-  
+
   @IsInt()
   @IsPositive()
   quantity: number;
