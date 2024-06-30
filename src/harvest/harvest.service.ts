@@ -272,6 +272,7 @@ export class HarvestService {
     }
     const amountActually = recordHarvestCropStock?.total ?? 0;
     if (amountActually < total) {
+      await queryRunner.rollbackTransaction();
       throw new InsufficientHarvestStockException();
     }
     await queryRunner.manager.decrement(

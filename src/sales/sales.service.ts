@@ -38,11 +38,9 @@ export class SalesService {
       });
 
       for (const item of details) {
-        console.log(item);
-        console.log(item.crop.id, item.quantity, false);
         await this.harvestService.updateStock(
           queryRunner,
-          item.crop.id,
+          item.crop,
           item.quantity,
           false,
         );

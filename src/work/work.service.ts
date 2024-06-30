@@ -25,13 +25,21 @@ export class WorkService {
 
   async findAll(queryParams: QueryParams) {
     const { limit = 10, offset = 0 } = queryParams;
-    return this.workRepository.find({
+    const works = await this.workRepository.find({
       order: {
         date: 'ASC',
       },
       take: limit,
       skip: offset,
     });
+
+    let count: number = works.length;
+
+    return {
+      rowCount: count,
+      rows: works,
+      pageCount: Math.ceil(count / limit),
+    };
   }
 
   async findOne(id: string) {
