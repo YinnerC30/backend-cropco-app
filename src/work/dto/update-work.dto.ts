@@ -9,10 +9,16 @@ import {
   IsOptional,
   IsBoolean,
   IsUUID,
+  ArrayNotEmpty,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { DeepPartial } from 'typeorm';
+import { Type } from 'class-transformer';
+import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { WorkDetailsDto } from './work-details.dto';
 
 export class UpdateWorkDto {
   @IsOptional()
@@ -27,17 +33,17 @@ export class UpdateWorkDto {
   @IsOptional()
   @IsInt()
   @IsPositive()
-  value_pay: number;
+  total: number;
 
   @IsOptional()
-  @IsBoolean()
-  payment_is_pending?: boolean;
-
-  @IsOptional()
-  @IsUUID()
-  employee: DeepPartial<Employee>;
-
-  @IsOptional()
-  @IsUUID()
+  @ValidateNested()
+  @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested()
+  @Type(() => WorkDetailsDto)
+  details: WorkDetailsDto[];
 }

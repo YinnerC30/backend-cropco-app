@@ -13,6 +13,9 @@ import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
 import { Type } from 'class-transformer';
 
 export class WorkDetailsDto {
+  @IsUUID()
+  id: string;
+
   @ValidateNested()
   @Type(() => ValidateUUID)
   employee: Employee;
