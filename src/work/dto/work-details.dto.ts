@@ -13,6 +13,7 @@ import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
 import { Type } from 'class-transformer';
 
 export class WorkDetailsDto {
+  @IsOptional()
   @IsUUID()
   id: string;
 
