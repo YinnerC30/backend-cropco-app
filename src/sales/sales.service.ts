@@ -198,4 +198,12 @@ export class SalesService {
       await queryRunner.release();
     }
   }
+
+  async deleteAllSales() {
+    try {
+      await this.saleRepository.delete({});
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
+  }
 }

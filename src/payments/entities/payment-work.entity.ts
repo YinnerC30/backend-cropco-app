@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Payment } from './payment.entity';
+import { WorkDetails } from 'src/work/entities/work-details.entity';
 
 @Entity({ name: 'payments_work' })
 export class PaymentWork {
@@ -18,9 +19,9 @@ export class PaymentWork {
   })
   payment: Payment;
 
-  @OneToOne(() => Work, (work) => work.payments_work, {
+  @OneToOne(() => WorkDetails, (works_detail) => works_detail.payments_work, {
     onDelete: 'CASCADE',
   })
   @JoinColumn()
-  work: Work;
+  works_detail: WorkDetails;
 }

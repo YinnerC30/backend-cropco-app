@@ -13,11 +13,14 @@ import { Employee } from 'src/employees/entities/employee.entity';
 import { DeepPartial } from 'typeorm';
 import { PaymentCategoriesDto } from './payment-categories.dto';
 import { MethodOfPayment } from '../entities/payment.entity';
+import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
 
 export class CreatePaymentDto {
   @IsDateString()
   date: string;
-  @IsUUID()
+
+  @ValidateNested()
+  @Type(() => ValidateUUID)
   employee: DeepPartial<Employee>;
 
   @IsString()

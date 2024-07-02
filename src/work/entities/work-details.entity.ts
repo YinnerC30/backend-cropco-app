@@ -1,6 +1,7 @@
 import { Employee } from 'src/employees/entities/employee.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Work } from './work.entity';
+import { PaymentWork } from 'src/payments/entities/payment-work.entity';
 
 @Entity({ name: 'works_detail' })
 export class WorkDetails {
@@ -29,4 +30,10 @@ export class WorkDetails {
     onUpdate: 'CASCADE',
   })
   work: Work;
+
+  // External relations
+  @OneToOne(() => PaymentWork, (payments_work) => payments_work.works_detail, {
+    cascade: true,
+  })
+  payments_work: PaymentWork;
 }

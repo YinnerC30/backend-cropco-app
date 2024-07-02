@@ -45,8 +45,5 @@ export class Work {
   })
   details: WorkDetails[];
 
-  @OneToOne(() => PaymentWork, (payments_work) => payments_work.work, {
-    cascade: true,
-  })
-  payments_work: PaymentWork;
+  
 }

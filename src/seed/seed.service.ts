@@ -59,9 +59,9 @@ export class SeedService {
     await this.insertNewHarvestsProcessed();
     await this.insertNewPurchaseSupplies();
     await this.insertNewConsumptionSupplies();
-    await this.insertNewWork();
+    // await this.insertNewWork();
     await this.insertNewSales();
-    await this.insertNewPayments();
+    // await this.insertNewPayments();
 
     return 'SEED EXECUTED';
   }
@@ -78,6 +78,7 @@ export class SeedService {
     await this.workService.deleteAllWork();
     await this.cropsService.deleteAllCrops();
     await this.employeesService.deleteAllEmployees();
+    await this.salesService.deleteAllSales();
   }
 
   private async insertNewUsers() {
@@ -319,25 +320,25 @@ export class SeedService {
   }
 
   private async insertNewWork() {
-    const [crop1, crop2, crop3] = this.cropIds;
-    const crops = [crop1, crop2, crop3];
+    // const [crop1, crop2, crop3] = this.cropIds;
+    // const crops = [crop1, crop2, crop3];
 
-    const [employee1, employee2, employee3]: DeepPartial<Employee>[] =
-      this.employeeIds;
-    const employees = [employee1, employee2, employee3];
+    // const [employee1, employee2, employee3]: DeepPartial<Employee>[] =
+    //   this.employeeIds;
+    // const employees = [employee1, employee2, employee3];
 
-    const works = initialData.works;
-    const insertPromises = [];
-    works.forEach((work, index) => {
-      const recordToCreate: CreateWorkDto = {
-        ...work,
-        crop: crops[index],
-        employee: employees[index],
-      };
-      insertPromises.push(this.workService.create(recordToCreate));
-    });
-    const result = await Promise.all(insertPromises);
-    this.worksIds = result.map((work: Work) => new String(work.id).toString());
+    // const works = initialData.works;
+    // const insertPromises = [];
+    // works.forEach((work, index) => {
+    //   const recordToCreate: CreateWorkDto = {
+    //     ...work,
+    //     crop: crops[index],
+    //     employee: employees[index],
+    //   };
+    //   insertPromises.push(this.workService.create(recordToCreate));
+    // });
+    // const result = await Promise.all(insertPromises);
+    // this.worksIds = result.map((work: Work) => new String(work.id).toString());
 
     return true;
   }

@@ -9,7 +9,7 @@ import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { HarvestService } from 'src/harvest/harvest.service';
-import { Work } from 'src/work/entities/work.entity';
+import { WorkDetails } from 'src/work/entities/work-details.entity';
 import { WorkService } from 'src/work/work.service';
 import { DataSource, Repository } from 'typeorm';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -46,9 +46,10 @@ export class PaymentsService {
     }
 
     const totalValuePayWork = [];
+
     for (const id of works) {
       const record = await queryRunner.manager
-        .getRepository(Work)
+        .getRepository(WorkDetails)
         .findOne({ where: { id: `${id}` } });
       totalValuePayWork.push(record.value_pay);
     }
@@ -75,7 +76,7 @@ export class PaymentsService {
       });
 
       payment.payments_work = works.map((id) =>
-        queryRunner.manager.create(PaymentWork, { work: id }),
+        queryRunner.manager.create(PaymentWork, { works_detail: id }),
       );
 
       for (const id of harvests) {
@@ -88,7 +89,7 @@ export class PaymentsService {
 
       for (const id of works) {
         await queryRunner.manager.update(
-          Work,
+          WorkDetails,
           { id },
           { payment_is_pending: false },
         );
@@ -103,15 +104,26 @@ export class PaymentsService {
     }
   }
 
-  findAll(queryParams: QueryParams) {
+  async findAll(queryParams: QueryParams) {
     const { limit = 10, offset = 0 } = queryParams;
-    return this.paymentRepository.find({
+    const payments = await this.paymentRepository.find({
       order: {
         date: 'ASC',
+      },
+      relations: {
+        employee: true,
       },
       take: limit,
       skip: offset,
     });
+
+    let count: number = payments.length;
+
+    return {
+      rowCount: count,
+      rows: payments,
+      pageCount: Math.ceil(count / limit),
+    };
   }
 
   async findOne(id: string) {
@@ -125,7 +137,7 @@ export class PaymentsService {
           harvests_detail: true,
         },
         payments_work: {
-          work: true,
+          works_detail: true,
         },
       },
     });
@@ -155,9 +167,9 @@ export class PaymentsService {
       }
 
       for (const record of payments_work) {
-        const { id } = record.work;
+        const { id } = record.works_detail;
         await queryRunner.manager.update(
-          Work,
+          WorkDetails,
           { id },
           { payment_is_pending: true },
         );

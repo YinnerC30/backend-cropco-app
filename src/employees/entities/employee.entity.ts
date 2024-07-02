@@ -23,7 +23,7 @@ export class Employee extends PersonalInformation {
   @OneToMany(() => WorkDetails, (workDetails) => workDetails.employee, {
     cascade: true,
   })
-  works_detail: Work[];
+  works_detail: WorkDetails[];
 
   @OneToMany(() => Payment, (payment) => payment.employee, { cascade: true })
   payments: Payment[];
