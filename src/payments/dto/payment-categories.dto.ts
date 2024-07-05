@@ -6,12 +6,10 @@ import { DeepPartial } from 'typeorm';
 
 export class PaymentCategoriesDto {
   @IsArray()
-  @ArrayNotEmpty()
   @IsUUID('4', { each: true })
   harvests: DeepPartial<HarvestDetails>[];
 
   @IsArray()
-  @ArrayNotEmpty()
   @IsUUID('4', { each: true })
   works: DeepPartial<WorkDetails>[];
 

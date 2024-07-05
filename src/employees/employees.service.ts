@@ -1,12 +1,14 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { ILike, Repository } from 'typeorm';
+import { DataSource, ILike, Repository } from 'typeorm';
 
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { Employee } from './entities/employee.entity';
 import { QueryParams } from 'src/common/dto/QueryParams';
+import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
+import { WorkDetails } from 'src/work/entities/work-details.entity';
 
 @Injectable()
 export class EmployeesService {
@@ -16,6 +18,8 @@ export class EmployeesService {
   constructor(
     @InjectRepository(Employee)
     private readonly employeeRepository: Repository<Employee>,
+
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(createEmployeeDto: CreateEmployeeDto) {
@@ -81,6 +85,53 @@ export class EmployeesService {
       rowCount: count,
       rows: employees,
       pageCount: Math.ceil(count / limit),
+    };
+  }
+
+  async findAllEmployeesWithPaymentsPending() {
+    const employees = await this.employeeRepository.find({
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+      },
+      where: [
+        {
+          harvests_detail: {
+            payment_is_pending: true,
+          },
+        },
+        {
+          works_detail: {
+            payment_is_pending: true,
+          },
+        },
+      ],
+    });
+
+    return {
+      rowCount: employees.length,
+      rows: employees,
+    };
+  }
+  async findOneEmployeeWithPaymentsPending(id: string) {
+    const employee = await this.employeeRepository.findOne({
+      where: { id },
+      relations: {
+        harvests_detail: { harvest: true },
+        works_detail: { work: true },
+      },
+    });
+    if (!employee)
+      throw new NotFoundException(`Employee with id: ${id} not found`);
+    return {
+      ...employee,
+      harvests_detail: employee.harvests_detail.filter(
+        (item: HarvestDetails) => item.payment_is_pending === true,
+      ),
+      works_detail: employee.works_detail.filter(
+        (item: WorkDetails) => item.payment_is_pending === true,
+      ),
     };
   }
 

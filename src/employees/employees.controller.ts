@@ -27,10 +27,18 @@ export class EmployeesController {
   findAll(@Query() queryParams: QueryParams) {
     return this.employeesService.findAll(queryParams);
   }
+  @Get('all/pending-payments')
+  findAllEmployeeWithPaymentsPending(@Query() queryParams: QueryParams) {
+    return this.employeesService.findAllEmployeesWithPaymentsPending();
+  }
 
-  @Get(':id')
+  @Get('one/:id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.employeesService.findOne(id);
+  }
+  @Get('pending-payments/:id')
+  findOneEmployeeWithPaymentsPending(@Param('id', ParseUUIDPipe) id: string) {
+    return this.employeesService.findOneEmployeeWithPaymentsPending(id);
   }
 
   @Patch(':id')
