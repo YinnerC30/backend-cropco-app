@@ -8,4 +8,10 @@ export class User extends PersonalInformation {
 
   @Column({ type: 'varchar', length: 100, select: false })
   password: string;
+
+  @Column('text', {
+    array: true,
+    default: ['user'],
+  })
+  roles: string[];
 }
