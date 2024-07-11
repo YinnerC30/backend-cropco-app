@@ -16,7 +16,9 @@ import { GetRawHeader } from './decorators/get-raw-headers.decorator';
 import { IncomingHttpHeaders } from 'http';
 import { Auth } from './decorators/auth.decorator';
 import { ValidRoles } from './interfaces/valid-roles';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

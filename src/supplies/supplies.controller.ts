@@ -17,7 +17,9 @@ import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.
 import { UpdateSuppliesPurchaseDto } from './dto/update-supplies-purchase.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
 import { SuppliesService } from './supplies.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Supplies')
 @Controller('supplies')
 export class SuppliesController {
   constructor(private readonly suppliesService: SuppliesService) {}

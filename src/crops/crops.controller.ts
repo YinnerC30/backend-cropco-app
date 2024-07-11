@@ -13,12 +13,16 @@ import { QueryParams } from 'src/common/dto/QueryParams';
 import { CropsService } from './crops.service';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Crop } from './entities/crop.entity';
 
+@ApiTags('Crops')
 @Controller('crops')
 export class CropsController {
   constructor(private readonly cropsService: CropsService) {}
 
   @Post()
+  @ApiResponse({status: 201, description: 'Crop created', type: Crop})
   create(@Body() createCropDto: CreateCropDto) {
     return this.cropsService.create(createCropDto);
   }

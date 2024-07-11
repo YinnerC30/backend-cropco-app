@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsDateString,
   IsInt,
@@ -8,6 +9,9 @@ import {
 } from 'class-validator';
 
 export class CreateCropDto {
+  @ApiProperty({
+    description: 'Nombre del cultivo'
+  })
   @IsString()
   @Length(4, 100)
   name: string;

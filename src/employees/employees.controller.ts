@@ -13,7 +13,9 @@ import { QueryParams } from 'src/common/dto/QueryParams';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { EmployeesService } from './employees.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Employees')
 @Controller('employees')
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}

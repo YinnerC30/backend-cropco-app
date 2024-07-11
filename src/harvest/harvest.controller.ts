@@ -15,7 +15,9 @@ import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { HarvestService } from './harvest.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Harvests')
 @Controller('harvest')
 export class HarvestController {
   constructor(private readonly harvestService: HarvestService) {}

@@ -11,7 +11,9 @@ import {
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentsService } from './payments.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Payments')
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}

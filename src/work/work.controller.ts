@@ -13,7 +13,9 @@ import { QueryParams } from 'src/common/dto/QueryParams';
 import { CreateWorkDto } from './dto/create-work.dto';
 import { UpdateWorkDto } from './dto/update-work.dto';
 import { WorkService } from './work.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Works')
 @Controller('works')
 export class WorkController {
   constructor(private readonly workService: WorkService) {}

@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity';
 import { HarvestStock } from 'src/harvest/entities/harvest-stock.entity';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
@@ -14,6 +15,11 @@ import {
 
 @Entity({ name: 'crops' })
 export class Crop {
+  @ApiProperty({
+    example: 'djfksjfkdj-dfsdfdsf',
+    description: 'El ID del cultivo',
+    uniqueItems: true
+  })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -32,7 +38,7 @@ export class Crop {
   @Column({ type: 'date', name: 'date_of_creation' })
   date_of_creation: string;
 
-  @Column({ type: 'date', name: 'date_of_termination', nullable:true })
+  @Column({ type: 'date', name: 'date_of_termination', nullable: true })
   date_of_termination: string;
 
   // External relations
