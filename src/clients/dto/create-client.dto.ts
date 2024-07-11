@@ -6,6 +6,7 @@ export class CreateClientDto {
     description: 'Nombre del cliente',
     example: 'Juan',
     maxLength: 100,
+    type: 'string',
   })
   @IsString()
   @MaxLength(100)
@@ -33,7 +34,7 @@ export class CreateClientDto {
 
   @ApiProperty({
     description: 'Número de teléfono celular del cliente',
-    example: '1234567890',
+    example: '3146574352',
     maxLength: 10,
   })
   @IsNumberString()

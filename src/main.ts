@@ -16,10 +16,11 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Cropco RESTFull API')
-    .setDescription('Los endpoints de la API de Cropco')
+    .setTitle('Documentación de la API REST - Cropco')
+    .setDescription(
+      'A continuación encontrara las rutas existentes en la API, con sus respectivos parámetros, tipo de respuesta y códigos de estado.',
+    )
     .setVersion('1.0')
-    // .addTag('cats')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
