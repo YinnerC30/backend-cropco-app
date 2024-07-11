@@ -2,21 +2,14 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
-  Post,
-  Req,
-  UseGuards,
+  Post
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { LoginUserDto } from './dto/login-user.dto';
-import { AuthGuard } from '@nestjs/passport';
-import { GetUser } from './decorators/get-user.decorator';
-import { User } from 'src/users/entities/user.entity';
-import { GetRawHeader } from './decorators/get-raw-headers.decorator';
-import { IncomingHttpHeaders } from 'http';
-import { Auth } from './decorators/auth.decorator';
-import { ValidRoles } from './interfaces/valid-roles';
 import { ApiTags } from '@nestjs/swagger';
+import { User } from 'src/users/entities/user.entity';
+import { AuthService } from './auth.service';
+import { Auth } from './decorators/auth.decorator';
+import { GetUser } from './decorators/get-user.decorator';
+import { LoginUserDto } from './dto/login-user.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
