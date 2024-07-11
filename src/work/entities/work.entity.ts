@@ -44,6 +44,4 @@ export class Work {
     cascade: true,
   })
   details: WorkDetails[];
-
-  
 }

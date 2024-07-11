@@ -12,7 +12,8 @@ import {
 export class QueryParams {
   @ApiProperty({
     default: 10,
-    description: 'Numero de registros que se obtendran',
+    description: 'Número de registros que se obtendrán',
+    example: 10,
   })
   @IsOptional()
   @IsInt()
@@ -22,7 +23,8 @@ export class QueryParams {
 
   @ApiProperty({
     default: 0,
-    description: 'Numero de registros que hay que desplazarse',
+    description: 'Número de registros que hay que desplazarse',
+    example: 0,
   })
   @IsOptional()
   @IsInt()
@@ -30,11 +32,21 @@ export class QueryParams {
   @Type(() => Number)
   offset?: number;
 
+  @ApiProperty({
+    description: 'Indicador para obtener todos los registros',
+    example: true,
+    required: false,
+  })
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
   allRecords?: boolean;
 
+  @ApiProperty({
+    description: 'Cadena de búsqueda',
+    example: 'keyword',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   search?: string;

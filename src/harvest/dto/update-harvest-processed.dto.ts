@@ -1,4 +1,4 @@
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType } from '@nestjs/swagger';
 import { CreateHarvestProcessedDto } from './create-harvest-processed.dto';
 
 export class UpdateHarvestProcessedDto extends PartialType(
