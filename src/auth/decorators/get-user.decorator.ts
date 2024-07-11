@@ -15,5 +15,5 @@ export const GetUser = createParamDecorator((data, ctx: ExecutionContext) => {
     return user;
   }
 
-  return user.email;
+  return user[data];
 });
