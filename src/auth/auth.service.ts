@@ -14,6 +14,7 @@ export class AuthService {
     private readonly usersRepository: Repository<User>,
     private readonly jwtService: JwtService,
   ) {}
+
   async login(loginUserDto: LoginUserDto) {
     const { password, email } = loginUserDto;
     const user = await this.usersRepository.findOne({

@@ -9,6 +9,7 @@ export class LoginUserDto {
   })
   @IsEmail()
   email: string;
+
   @IsString()
   @ApiProperty({
     description: 'Contraseña',
