@@ -16,6 +16,11 @@ export class HarvestDetails {
   @ApiProperty({
     description: 'ID único de los detalles de la cosecha',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    uniqueItems: true,
+    readOnly: true,
+    default: 'UUID auto generado',
+    format: 'uuid',
+    type: String,
   })
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -23,6 +28,7 @@ export class HarvestDetails {
   @ApiProperty({
     description: 'Cantidad total asociada a estos detalles',
     example: 100,
+    type: Number,
   })
   @Column({ type: 'int4' })
   total: number;
@@ -30,6 +36,7 @@ export class HarvestDetails {
   @ApiProperty({
     description: 'Valor de pago asociado a estos detalles',
     example: 500,
+    type: Number,
   })
   @Column({ type: 'int4' })
   value_pay: number;
@@ -37,6 +44,7 @@ export class HarvestDetails {
   @ApiProperty({
     description: 'Indica si el pago está pendiente para estos detalles',
     example: true,
+    type: Boolean,
   })
   @Column({ type: 'bool', default: true })
   payment_is_pending: boolean;
@@ -68,6 +76,7 @@ export class HarvestDetails {
     description: 'Detalles de pagos asociados a estos detalles de la cosecha',
     type: () => PaymentHarvest,
   })
+  // TODO: Arreglar relación entre entidades, debe ser de uno a muchos, porque el empleado tendrá muchos pagos.
   @OneToOne(
     () => PaymentHarvest,
     (payments_harvest) => payments_harvest.payment,

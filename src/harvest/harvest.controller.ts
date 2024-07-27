@@ -16,6 +16,7 @@ import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { HarvestService } from './harvest.service';
 import { ApiTags, ApiResponse } from '@nestjs/swagger';
+import { Harvest } from './entities/harvest.entity';
 
 @ApiTags('Harvests')
 @Controller('harvest')
@@ -25,10 +26,13 @@ export class HarvestController {
   @Post()
   @ApiResponse({
     status: 201,
-    description: 'Harvest created',
+    description: 'La cosecha ha sido creada',
     type: CreateHarvestDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({
+    status: 400,
+    description: 'La información proporcionada es incorrecta',
+  })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   create(@Body() createHarvestDto: CreateHarvestDto) {
     return this.harvestService.create(createHarvestDto);
@@ -37,10 +41,13 @@ export class HarvestController {
   @Post('processed')
   @ApiResponse({
     status: 201,
-    description: 'Processed harvest created',
+    description: 'Registro de cosecha procesado ha sido guardado',
     type: CreateHarvestProcessedDto,
   })
-  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({
+    status: 400,
+    description: 'La información proporcionada es incorrecta',
+  })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   createHarvestProcessed(
     @Body() createHarvestProcessedDto: CreateHarvestProcessedDto,
@@ -51,21 +58,31 @@ export class HarvestController {
   }
 
   @Get('deleteAll')
-  @ApiResponse({ status: 200, description: 'All harvests deleted' })
+  @ApiResponse({
+    status: 200,
+    description: 'Todos los registros han sido eliminados',
+  })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   deleteAll() {
     return this.harvestService.deleteAllHarvest();
   }
 
   @Get()
-  @ApiResponse({ status: 200, description: 'List of all harvests' })
+  @ApiResponse({
+    status: 200,
+    description: 'Se han obtenido todos los registros de cosecha',
+    type: Harvest,
+  })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   findAll(@Query() queryParams: QueryParams) {
     return this.harvestService.findAll(queryParams);
   }
 
   @Get('stock')
-  @ApiResponse({ status: 200, description: 'List of all harvest stocks' })
+  @ApiResponse({
+    status: 200,
+    description: 'Se han obtenido todas las cosechas con su respectivo Stock',
+  })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   findAllHarvestStock(@Query() queryParams: QueryParams) {
     return this.harvestService.findAllHarvestStock(queryParams);

@@ -5,7 +5,7 @@ import {
   IsInt,
   IsPositive,
   IsString,
-  ValidateNested
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
@@ -17,14 +17,15 @@ export class CreateHarvestDto {
   @ApiProperty({
     description: 'Fecha de la cosecha',
     format: 'date',
-    example: '2024-07-11'
+    example: '2024-07-11',
+    type: String,
   })
   @IsDateString()
   date: string;
 
   @ApiProperty({
     description: 'Cultivo asociado a la cosecha',
-    type: ValidateUUID
+    type: () => ValidateUUID,
   })
   @ValidateNested()
   @Type(() => ValidateUUID)
@@ -32,7 +33,8 @@ export class CreateHarvestDto {
 
   @ApiProperty({
     description: 'Cantidad total cosechada',
-    example: 100
+    example: 100,
+    type: Number,
   })
   @IsInt()
   @IsPositive()
@@ -40,7 +42,8 @@ export class CreateHarvestDto {
 
   @ApiProperty({
     description: 'Valor de pago por la cosecha',
-    example: 500
+    example: 500,
+    type: Number,
   })
   @IsInt()
   @IsPositive()
@@ -48,14 +51,15 @@ export class CreateHarvestDto {
 
   @ApiProperty({
     description: 'Observaciones adicionales',
-    example: 'Cosecha de alta calidad'
+    example: 'Cosecha de alta calidad',
+    type: String,
   })
   @IsString()
   observation: string;
 
   @ApiProperty({
     description: 'Detalles específicos de la cosecha',
-    type: [HarvestDetailsDto]
+    type: () => [HarvestDetailsDto],
   })
   @ArrayNotEmpty()
   @ValidateNested({ each: true })

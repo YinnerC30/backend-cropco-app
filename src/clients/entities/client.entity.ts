@@ -8,6 +8,11 @@ export class Client extends PersonalInformation {
   @ApiProperty({
     description: 'Identificador único del cliente',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    uniqueItems: true,
+    readOnly: true,
+    default: 'UUID auto generado',
+    format: 'uuid',
+    type: String,
   })
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -16,6 +21,7 @@ export class Client extends PersonalInformation {
     description: 'Dirección del cliente',
     example: 'Calle Falsa 123, Ciudad, País',
     maxLength: 200,
+    type: String,
   })
   @Column({ type: 'varchar', length: 200 })
   address: string;

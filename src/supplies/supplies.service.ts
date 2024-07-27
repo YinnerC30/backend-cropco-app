@@ -8,7 +8,7 @@ import { PurchaseSuppliesDetailsDto } from './dto/purchase-supplies-details.dto'
 import { UpdateSuppliesPurchaseDto } from './dto/update-supplies-purchase.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
 
-import { DataSource, ILike, QueryRunner, Repository } from 'typeorm';
+import { DataSource, ILike, MoreThan, QueryRunner, Repository } from 'typeorm';
 
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -24,7 +24,6 @@ import {
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
 
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { validateTotalInArray } from 'src/common/helpers/validTotalInArray';
 import { ConsumptionSuppliesDetailsDto } from './dto/consumption-supplies-details.dto';
 import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.dto';
 import { InsufficientSupplyStockException } from './exceptions/insufficient-supply-stock.exception';
@@ -62,23 +61,45 @@ export class SuppliesService {
   }
 
   async findAll(queryParams: QueryParams) {
-    const { search = '', limit = 10, offset = 0 } = queryParams;
+    const {
+      search = '',
+      limit = 10,
+      offset = 0,
+      allRecords = false,
+    } = queryParams;
 
-    const supplies = await this.supplyRepository.find({
-      where: [
-        {
-          name: ILike(`${search}%`),
+    let supplies;
+    if (allRecords) {
+      supplies = await this.supplyRepository.find({
+        where: [
+          {
+            name: ILike(`${search}%`),
+          },
+          {
+            brand: ILike(`${search}%`),
+          },
+        ],
+        order: {
+          name: 'ASC',
         },
-        {
-          brand: ILike(`${search}%`),
+      });
+    } else {
+      supplies = await this.supplyRepository.find({
+        where: [
+          {
+            name: ILike(`${search}%`),
+          },
+          {
+            brand: ILike(`${search}%`),
+          },
+        ],
+        order: {
+          name: 'ASC',
         },
-      ],
-      order: {
-        name: 'ASC',
-      },
-      take: limit,
-      skip: offset * limit,
-    });
+        take: limit,
+        skip: offset * limit,
+      });
+    }
 
     let count: number;
     if (search.length === 0) {
@@ -126,15 +147,39 @@ export class SuppliesService {
   }
 
   async findAllSuppliesStock(queryParams: QueryParams) {
-    const { limit = 10, offset = 0 } = queryParams;
+    const { limit = 10, offset = 0, search = '' } = queryParams;
 
-    return this.suppliesStockRepository.find({
+    const suppliesStock = await this.suppliesStockRepository.find({
+      relations: {
+        supply: true,
+      },
+      where: {
+        amount: MoreThan(0),
+      },
       order: {
         amount: 'ASC',
       },
       take: limit,
       skip: offset,
     });
+
+    let count: number;
+    if (search.length === 0) {
+      count = await this.supplyRepository.count();
+    } else {
+      count = suppliesStock.length;
+    }
+
+    return {
+      rowCount: count,
+      rows: suppliesStock.map((item: SuppliesStock) => {
+        return {
+          ...item.supply,
+          amount: item.amount,
+        };
+      }),
+      pageCount: Math.ceil(count / limit),
+    };
   }
 
   async updateStock(
@@ -167,7 +212,7 @@ export class SuppliesService {
       );
     }
 
-    const amountActually = recordSupplyStock.amount;
+    const amountActually = recordSupplyStock?.amount || 0;
 
     if (amountActually < amount) {
       throw new InsufficientSupplyStockException();
@@ -235,7 +280,7 @@ export class SuppliesService {
 
         await this.updateStock(
           queryRunner,
-          register.supply,
+          register.supply.id,
           register.amount,
           true,
         );
@@ -260,22 +305,47 @@ export class SuppliesService {
   }
 
   async findAllPurchases(queryParams: QueryParams) {
-    const { limit = 10, offset = 0 } = queryParams;
+    const { search = '', limit = 10, offset = 0 } = queryParams;
 
-    return this.suppliesPurchaseRepository.find({
-      order: {
-        date: 'ASC',
-      },
+    const purchases = await this.suppliesPurchaseRepository.find({
+      // where: [
+      //   {
+      //     name: ILike(`${search}%`),
+      //   },
+      //   {
+      //     brand: ILike(`${search}%`),
+      //   },
+      // ],
+      // order: {
+      //   name: 'ASC',
+      // },
+
       take: limit,
-      skip: offset,
+      skip: offset * limit,
     });
+
+    let count: number;
+    if (search.length === 0) {
+      count = await this.suppliesPurchaseRepository.count();
+    } else {
+      count = purchases.length;
+    }
+
+    return {
+      rowCount: count,
+      rows: purchases,
+      pageCount: Math.ceil(count / limit),
+    };
   }
 
   async findOnePurchase(id: string) {
     const supplyPurchase = await this.suppliesPurchaseRepository.findOne({
       where: { id },
       relations: {
-        details: true,
+        details: {
+          supplier: true,
+          supply: true,
+        },
       },
     });
     if (!supplyPurchase)
@@ -287,9 +357,7 @@ export class SuppliesService {
     id: string,
     updateSuppliesPurchaseDto: UpdateSuppliesPurchaseDto,
   ) {
-    // validateTotalInArray(updateSuppliesPurchaseDto);
-
-    const purchase: SuppliesPurchase = await this.findOnePurchase(id);
+    const purchase: any = await this.findOnePurchase(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -304,7 +372,7 @@ export class SuppliesService {
         (record: SuppliesPurchaseDetails) => record.supply.id,
       );
       const newIDsSupplies: string[] = newDetails.map((record) =>
-        new String(record.supply).toString(),
+        new String(record.supply.id).toString(),
       );
 
       const { toCreate, toUpdate, toDelete } = organizeIDsToUpdateEntity(
@@ -343,7 +411,7 @@ export class SuppliesService {
         );
 
         const newRecordData = newDetails.find(
-          (record) => record.supply === supply,
+          (record) => record.supply.id === supply,
         );
 
         await this.updateStock(queryRunner, supply, newRecordData.amount, true);
@@ -357,7 +425,7 @@ export class SuppliesService {
 
       for (const supply of toCreate) {
         const newRecordData = newDetails.find(
-          (record) => record.supply === supply,
+          (record) => record.supply.id === supply,
         );
 
         await this.createPurchaseDetails(queryRunner, {
@@ -380,13 +448,15 @@ export class SuppliesService {
   }
 
   async removePurchase(id: string) {
-    const purchaseSupply: SuppliesPurchase = await this.findOnePurchase(id);
+    const purchaseSupply: any = await this.findOnePurchase(id);
 
     const { details } = purchaseSupply;
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+
+    console.log(purchaseSupply);
 
     try {
       for (const record of details) {
@@ -471,7 +541,7 @@ export class SuppliesService {
       await queryRunner.manager.save(consumption);
 
       for (const item of details) {
-        await this.updateStock(queryRunner, item.supply, item.amount, false);
+        await this.updateStock(queryRunner, item.supply.id, item.amount, false);
       }
 
       await queryRunner.commitTransaction();
@@ -485,22 +555,38 @@ export class SuppliesService {
   }
 
   async findAllConsumptions(queryParams: QueryParams) {
-    const { limit = 10, offset = 0 } = queryParams;
+    const { limit = 10, offset = 0, search = '' } = queryParams;
 
-    return this.suppliesConsumptionRepository.find({
+    const consumption = await this.suppliesConsumptionRepository.find({
       order: {
         date: 'ASC',
       },
       take: limit,
       skip: offset,
     });
+
+    let count: number;
+    if (search.length === 0) {
+      count = await this.suppliesConsumptionRepository.count();
+    } else {
+      count = consumption.length;
+    }
+
+    return {
+      rowCount: count,
+      rows: consumption,
+      pageCount: Math.ceil(count / limit),
+    };
   }
 
   async findOneConsumption(id: string) {
     const supplyConsumption = await this.suppliesConsumptionRepository.findOne({
       where: { id },
       relations: {
-        details: true,
+        details: {
+          crop: true,
+          supply: true,
+        },
       },
     });
     if (!supplyConsumption)
@@ -529,7 +615,7 @@ export class SuppliesService {
         (record: SuppliesConsumptionDetails) => record.supply.id,
       );
       const newIDsSupplies: string[] = newDetails.map((record) =>
-        new String(record.supply).toString(),
+        new String(record.supply.id).toString(),
       );
 
       const { toCreate, toUpdate, toDelete } = organizeIDsToUpdateEntity(
@@ -558,7 +644,7 @@ export class SuppliesService {
         await this.updateStock(queryRunner, supply, oldRecordData.amount, true);
 
         const newRecordData = newDetails.find(
-          (record) => record.supply === supply,
+          (record) => record.supply.id === supply,
         );
 
         await this.updateStock(
@@ -577,7 +663,7 @@ export class SuppliesService {
 
       for (const supply of toCreate) {
         const newRecordData = newDetails.find(
-          (record) => record.supply === supply,
+          (record) => record.supply.id === supply,
         );
 
         await this.createConsumptionDetails(queryRunner, {

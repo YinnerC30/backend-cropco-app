@@ -6,7 +6,7 @@ export class CreateClientDto {
     description: 'Nombre del cliente',
     example: 'Juan',
     maxLength: 100,
-    type: 'string',
+    type: String,
   })
   @IsString()
   @MaxLength(100)
@@ -16,6 +16,7 @@ export class CreateClientDto {
     description: 'Apellido del cliente',
     example: 'Pérez',
     maxLength: 100,
+    type: String,
   })
   @IsString()
   @MaxLength(100)
@@ -23,9 +24,9 @@ export class CreateClientDto {
 
   @ApiProperty({
     description: 'Correo electrónico del cliente',
-    format: 'email',
     example: 'juan.perez@example.com',
     maxLength: 100,
+    type: String,
   })
   @IsString()
   @IsEmail()
@@ -36,6 +37,7 @@ export class CreateClientDto {
     description: 'Número de teléfono celular del cliente',
     example: '3146574352',
     maxLength: 10,
+    type: String,
   })
   @IsNumberString()
   @MaxLength(10)
@@ -45,6 +47,7 @@ export class CreateClientDto {
     description: 'Dirección del cliente',
     example: 'Calle Falsa 123, Ciudad, País',
     maxLength: 200,
+    type: String,
   })
   @IsString()
   @MaxLength(200)

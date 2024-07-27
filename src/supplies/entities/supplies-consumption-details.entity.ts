@@ -21,7 +21,7 @@ export class SuppliesConsumptionDetails {
     { onDelete: 'CASCADE' },
   )
   @JoinColumn({ name: 'consumptionId' })
-  supplies_consumption: SuppliesConsumption;
+  consumption: SuppliesConsumption;
 
   @ManyToOne(() => Supply, (supply) => supply.consumption_details, {
     onDelete: 'CASCADE',

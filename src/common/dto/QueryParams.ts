@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
@@ -10,10 +10,11 @@ import {
 } from 'class-validator';
 
 export class QueryParams {
-  @ApiProperty({
+  @ApiPropertyOptional({
     default: 10,
     description: 'Número de registros que se obtendrán',
     example: 10,
+    type: Number,
   })
   @IsOptional()
   @IsInt()
@@ -21,10 +22,11 @@ export class QueryParams {
   @Type(() => Number)
   limit?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     default: 0,
     description: 'Número de registros que hay que desplazarse',
     example: 0,
+    type: Number,
   })
   @IsOptional()
   @IsInt()
@@ -32,10 +34,11 @@ export class QueryParams {
   @Type(() => Number)
   offset?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Indicador para obtener todos los registros',
     example: true,
     required: false,
+    type: Boolean,
   })
   @IsOptional()
   @IsBoolean()
@@ -46,6 +49,7 @@ export class QueryParams {
     description: 'Cadena de búsqueda',
     example: 'keyword',
     required: false,
+    type: String,
   })
   @IsOptional()
   @IsString()

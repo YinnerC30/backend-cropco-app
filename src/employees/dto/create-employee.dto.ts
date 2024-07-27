@@ -6,6 +6,7 @@ export class CreateEmployeeDto {
     description: 'Nombre del empleado',
     maxLength: 100,
     example: 'Juan',
+    type: String,
   })
   @IsString()
   @MaxLength(100)
@@ -15,6 +16,7 @@ export class CreateEmployeeDto {
     description: 'Apellido del empleado',
     maxLength: 100,
     example: 'Pérez',
+    type: String,
   })
   @IsString()
   @MaxLength(100)
@@ -25,6 +27,8 @@ export class CreateEmployeeDto {
     format: 'email',
     maxLength: 100,
     example: 'juan.perez@example.com',
+    type: String,
+    uniqueItems: true,
   })
   @IsString()
   @IsEmail()
@@ -34,7 +38,8 @@ export class CreateEmployeeDto {
   @ApiProperty({
     description: 'Número de teléfono celular del empleado',
     maxLength: 10,
-    example: '1234567890',
+    example: '3123456789',
+    type: String,
   })
   @IsNumberString()
   @MaxLength(10)
@@ -44,6 +49,7 @@ export class CreateEmployeeDto {
     description: 'Dirección del empleado',
     maxLength: 200,
     example: 'Calle Falsa 123, Ciudad, País',
+    type: String,
   })
   @IsString()
   @MaxLength(200)

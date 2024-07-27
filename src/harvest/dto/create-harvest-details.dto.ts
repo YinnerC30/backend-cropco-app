@@ -6,7 +6,7 @@ import {
   IsPositive,
   ValidateNested,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { DeepPartial } from 'typeorm';
@@ -15,15 +15,15 @@ import { Harvest } from '../entities/harvest.entity';
 export class HarvestDetailsDto {
   @ApiProperty({
     description: 'Empleado asociado a los detalles de la cosecha',
-    type: ValidateUUID,
+    type: () => ValidateUUID,
   })
   @ValidateNested()
   @Type(() => ValidateUUID)
   employee: DeepPartial<Employee>;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Cosecha asociada a los detalles (opcional)',
-    type: ValidateUUID,
+    type: () => ValidateUUID,
     required: false,
   })
   @IsOptional()
@@ -34,6 +34,7 @@ export class HarvestDetailsDto {
   @ApiProperty({
     description: 'Cantidad total asociada a estos detalles',
     example: 100,
+    type: Number,
   })
   @IsInt()
   @IsPositive()
@@ -42,6 +43,7 @@ export class HarvestDetailsDto {
   @ApiProperty({
     description: 'Valor de pago asociado a estos detalles',
     example: 500,
+    type: Number,
   })
   @IsInt()
   @IsPositive()
@@ -50,6 +52,7 @@ export class HarvestDetailsDto {
   @ApiProperty({
     description: 'Indica si el pago está pendiente para estos detalles',
     required: false,
+    type: Boolean,
   })
   @IsOptional()
   @IsBoolean()

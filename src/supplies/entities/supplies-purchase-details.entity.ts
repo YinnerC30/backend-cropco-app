@@ -24,13 +24,11 @@ export class SuppliesPurchaseDetails {
   total: number;
 
   // Internal relations
-  @ManyToOne(
-    () => SuppliesPurchase,
-    (supplies_purchase) => supplies_purchase.details,
-    { onDelete: 'CASCADE' },
-  )
+  @ManyToOne(() => SuppliesPurchase, (purchase) => purchase.details, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'purchaseId' })
-  supplies_purchase: SuppliesPurchase;
+  purchase: SuppliesPurchase;
 
   @ManyToOne(() => Supply, (supply) => supply.purchase_details, {
     onDelete: 'CASCADE',

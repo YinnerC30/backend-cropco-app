@@ -18,6 +18,11 @@ export class Harvest {
   @ApiProperty({
     description: 'ID único de la cosecha',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    uniqueItems: true,
+    readOnly: true,
+    default: 'UUID auto generado',
+    format: 'uuid',
+    type: String,
   })
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -26,6 +31,7 @@ export class Harvest {
     description: 'Fecha de la cosecha',
     format: 'date',
     example: '2024-07-11',
+    type: String,
   })
   @Column({ type: 'date' })
   date: string;
@@ -33,6 +39,7 @@ export class Harvest {
   @ApiProperty({
     description: 'Cantidad total cosechada',
     example: 100,
+    type: Number,
   })
   @Column({ type: 'int4' })
   total: number;
@@ -40,6 +47,7 @@ export class Harvest {
   @ApiProperty({
     description: 'Valor de pago por la cosecha',
     example: 500,
+    type: Number,
   })
   @Column({ type: 'int4' })
   value_pay: number;
@@ -47,6 +55,7 @@ export class Harvest {
   @ApiProperty({
     description: 'Observaciones adicionales',
     maxLength: 500,
+    type: Number,
   })
   @Column({ type: 'varchar', length: 500 })
   observation: string;

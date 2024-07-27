@@ -16,13 +16,14 @@ export class CreateHarvestProcessedDto {
     description: 'Fecha del procesamiento de la cosecha',
     format: 'date',
     example: '2024-07-11',
+    type: String,
   })
   @IsDateString()
   date: string;
 
   @ApiProperty({
     description: 'ID del cultivo asociado al procesamiento',
-    type: ValidateUUID,
+    type: () => ValidateUUID,
   })
   @ValidateNested()
   @Type(() => ValidateUUID)
@@ -39,6 +40,7 @@ export class CreateHarvestProcessedDto {
   @ApiProperty({
     description: 'Cantidad total procesada',
     example: 100,
+    type: Number,
   })
   @IsInt()
   @IsPositive()

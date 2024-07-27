@@ -13,7 +13,7 @@ export class SuppliesConsumption {
   // External relations
   @OneToMany(
     () => SuppliesConsumptionDetails,
-    (details) => details.supplies_consumption,
+    (details) => details.consumption,
     { cascade: true },
   )
   details: SuppliesConsumptionDetails[];

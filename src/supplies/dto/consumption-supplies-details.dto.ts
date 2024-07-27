@@ -1,17 +1,27 @@
 import { Supply, SuppliesConsumption } from '../entities/index';
 import { DeepPartial } from 'typeorm';
-import { IsInt, IsOptional, IsPositive, IsUUID } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsPositive,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 import { Crop } from 'src/crops/entities/crop.entity';
+import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { Type } from 'class-transformer';
 
 export class ConsumptionSuppliesDetailsDto {
-  @IsOptional()
-  @IsUUID()
+  @ValidateNested()
+  @Type(() => ValidateUUID)
   consumption: DeepPartial<SuppliesConsumption>;
 
-  @IsUUID()
+  @ValidateNested()
+  @Type(() => ValidateUUID)
   supply: DeepPartial<Supply>;
 
-  @IsUUID()
+  @ValidateNested()
+  @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;
 
   @IsInt()

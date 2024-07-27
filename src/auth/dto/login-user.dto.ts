@@ -13,6 +13,7 @@ export class LoginUserDto {
   @ApiProperty({
     description: 'Contraseña',
     example: '1234password',
+    maxLength: 100,
   })
   password: string;
 }

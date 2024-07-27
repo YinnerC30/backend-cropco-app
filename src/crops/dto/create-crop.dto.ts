@@ -14,6 +14,7 @@ export class CreateCropDto {
     example: 'Maíz',
     minLength: 4,
     maxLength: 100,
+    type: String,
   })
   @IsString()
   @Length(4, 100)
@@ -24,6 +25,7 @@ export class CreateCropDto {
     example: 'Este es un cultivo de maíz.',
     maxLength: 500,
     required: false,
+    type: String,
   })
   @IsOptional()
   @IsString()
@@ -34,6 +36,7 @@ export class CreateCropDto {
     description: 'Cantidad de unidades del cultivo',
     example: 10,
     minimum: 1,
+    type: Number,
   })
   @IsInt()
   @Min(1)
@@ -44,6 +47,7 @@ export class CreateCropDto {
     example: 'Parcela 4, Sector A',
     minLength: 4,
     maxLength: 150,
+    type: String,
   })
   @IsString()
   @Length(4, 150)
@@ -52,7 +56,8 @@ export class CreateCropDto {
   @ApiProperty({
     description: 'Fecha de creación del cultivo',
     example: '2023-07-01',
-    format: 'date-time',
+    format: 'date',
+    type: String,
   })
   @IsDateString()
   date_of_creation: string;
@@ -60,8 +65,9 @@ export class CreateCropDto {
   @ApiProperty({
     description: 'Fecha de terminación del cultivo',
     example: '2023-10-01',
-    format: 'date-time',
+    format: 'date',
     required: false,
+    type: String,
   })
   @IsOptional()
   @IsDateString()

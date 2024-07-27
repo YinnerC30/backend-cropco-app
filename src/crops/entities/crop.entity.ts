@@ -21,7 +21,8 @@ export class Crop {
     uniqueItems: true,
     readOnly: true,
     default: 'UUID auto generado',
-    type: 'uuid',
+    format: 'uuid',
+    type: String,
   })
   @PrimaryGeneratedColumn('uuid')
   id: string;

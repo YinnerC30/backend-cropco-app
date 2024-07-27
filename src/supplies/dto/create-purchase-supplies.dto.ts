@@ -16,9 +16,8 @@ export class CreatePurchaseSuppliesDto {
   @IsPositive()
   total: number;
 
-  @IsArray()
   @ArrayNotEmpty()
-  @ValidateNested()
+  @ValidateNested({ each: true })
   @Type(() => PurchaseSuppliesDetailsDto)
   details: PurchaseSuppliesDetailsDto[];
 }

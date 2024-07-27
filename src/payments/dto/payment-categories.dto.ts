@@ -11,7 +11,6 @@ export class PaymentCategoriesDto {
     example: ['uuid4'],
   })
   @IsArray()
-  @ArrayNotEmpty()
   @IsUUID('4', { each: true })
   harvests: DeepPartial<HarvestDetails>[];
 
@@ -21,7 +20,6 @@ export class PaymentCategoriesDto {
     example: ['uuid4'],
   })
   @IsArray()
-  @ArrayNotEmpty()
   @IsUUID('4', { each: true })
   works: DeepPartial<WorkDetails>[];
 }

@@ -1,19 +1,30 @@
 import { Supplier } from 'src/suppliers/entities/supplier.entity';
 import { Supply } from '../entities/supply.entity';
 import { DeepPartial } from 'typeorm';
-import { IsInt, IsOptional, IsPositive, IsUUID } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsPositive,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 import { SuppliesPurchase } from '../entities/supplies-purchase.entity';
+import { Type } from 'class-transformer';
+import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
 
 export class PurchaseSuppliesDetailsDto {
-  @IsOptional()
-  @IsUUID()
+  @ValidateNested()
+  @Type(() => ValidateUUID)
   purchase: DeepPartial<SuppliesPurchase>;
 
-  @IsUUID()
+  @ValidateNested()
+  @Type(() => ValidateUUID)
   supply: DeepPartial<Supply>;
 
-  @IsUUID()
+  @ValidateNested()
+  @Type(() => ValidateUUID)
   supplier: DeepPartial<Supplier>;
+
   @IsInt()
   @IsPositive()
   amount: number;
