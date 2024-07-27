@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend:
+    image: cropco-api
+    container_name: backend-cropco
+    ports:
+      - '3000:3000'
+    environment:
+      DB_HOST: postgres_db
+      DB_NAME: cropco
+      DB_PASSWORD: root
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      PORT: 3000
+      JWT_SECRET: 4/.Ov~78:3-A)rH/1P{r6
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: cropco
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    restart: always
