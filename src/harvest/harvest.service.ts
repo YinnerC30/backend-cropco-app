@@ -5,7 +5,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, ILike, QueryRunner, Repository } from 'typeorm';
+import {
+  DataSource,
+  Equal,
+  ILike,
+  Like,
+  QueryRunner,
+  Repository,
+} from 'typeorm';
 import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { HarvestDetails } from './entities/harvest-details.entity';
@@ -23,6 +30,8 @@ import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
 import { HarvestProcessed } from './entities/harvest-processed.entity';
 import { HarvestStock } from './entities/harvest-stock.entity';
 import { InsufficientHarvestStockException } from './exceptions/insufficient-harvest-stock';
+import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
+import { ValidateUUID } from '../common/dto/ValidateUUID.dto';
 
 @Injectable()
 export class HarvestService {
@@ -51,6 +60,7 @@ export class HarvestService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    // TODO: Validar que exista un único empleado por registro de cosecha
     try {
       const { details, ...rest } = createHarvestDto;
 
@@ -69,24 +79,57 @@ export class HarvestService {
     }
   }
 
-  async findAll(queryParams: QueryParams) {
-    const { limit = 10, offset = 0 } = queryParams;
-    const harvests = await this.harvestRepository
+  async findAll(queryParams: QueryParamsHarvest) {
+    console.log(queryParams);
+    const {
+      limit = 10,
+      offset = 0,
+      search = '',
+      crop = '',
+      after_date = '',
+      before_date = '',
+      minor_total = 0,
+      major_total = 0,
+      minor_value_pay = 0,
+      major_value_pay = 0,
+    } = queryParams;
+
+    const queryBuilder = this.harvestRepository
       .createQueryBuilder('harvest')
       .leftJoinAndSelect('harvest.crop', 'crop')
-      .select([
-        'harvest.id',
-        'harvest.date',
-        'harvest.total',
-        'harvest.value_pay',
-        'harvest.observation',
-        'crop.name',
-      ])
-      .orderBy('harvest.date', 'ASC')
+      .orderBy('harvest.date', 'DESC')
       .take(limit)
-      .skip(offset * limit)
-      .getMany();
-    let count: number = harvests.length;
+      .skip(offset * limit);
+
+    if (crop.length > 0) {
+      queryBuilder.andWhere('crop.id = :cropId', { cropId: crop });
+    }
+
+    if (before_date.length > 0) {
+      queryBuilder.andWhere('harvest.date < :before_date', { before_date });
+    }
+
+    if (after_date.length > 0) {
+      queryBuilder.andWhere('harvest.date > :after_date', { after_date });
+    }
+    if (minor_total != 0) {
+      queryBuilder.andWhere('harvest.total < :minor_total', { minor_total });
+    }
+    if (major_total != 0) {
+      queryBuilder.andWhere('harvest.total > :major_total', { major_total });
+    }
+    if (minor_value_pay != 0) {
+      queryBuilder.andWhere('harvest.value_pay < :minor_value_pay', {
+        minor_value_pay,
+      });
+    }
+    if (major_value_pay != 0) {
+      queryBuilder.andWhere('harvest.value_pay > :major_value_pay', {
+        major_value_pay,
+      });
+    }
+
+    const [harvests, count] = await queryBuilder.getManyAndCount();
 
     return {
       rowCount: count,
@@ -106,9 +149,15 @@ export class HarvestService {
         processed: true,
       },
     });
+
+    const total_processed = harvest.processed.reduce(
+      (accumulator, currentValue) => accumulator + currentValue.total,
+      0,
+    );
+
     if (!harvest)
       throw new NotFoundException(`Harvest with id: ${id} not found`);
-    return harvest;
+    return { ...harvest, total_processed };
   }
 
   async update(id: string, updateHarvestDto: UpdateHarvestDto) {
@@ -202,7 +251,7 @@ export class HarvestService {
     await queryRunner.startTransaction();
 
     try {
-      await queryRunner.manager.remove(harvest);
+      await queryRunner.manager.remove(Harvest, harvest);
 
       await queryRunner.commitTransaction();
     } catch (error) {
@@ -286,6 +335,7 @@ export class HarvestService {
   async validateTotalProcessed(
     queryRunner: QueryRunner,
     dto: CreateHarvestDto | UpdateHarvestDto | any,
+    actualAmount,
   ) {
     const harvest = await queryRunner.manager
       .createQueryBuilder(Harvest, 'harvest')
@@ -302,7 +352,7 @@ export class HarvestService {
       0,
     );
 
-    if (totalProcessed + dto.total > harvest.total) {
+    if (totalProcessed - actualAmount + dto.total > harvest.total) {
       throw new BadRequestException(
         'No puedes agregar más registros de cosecha procesada, supera el valor de la cosecha',
       );
@@ -316,7 +366,11 @@ export class HarvestService {
   ) {
     const queryRunner = this.dataSource.createQueryRunner();
 
-    await this.validateTotalProcessed(queryRunner, createHarvestProcessedDto);
+    await this.validateTotalProcessed(
+      queryRunner,
+      createHarvestProcessedDto,
+      0,
+    );
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -388,7 +442,11 @@ export class HarvestService {
 
     const queryRunner = this.dataSource.createQueryRunner();
 
-    await this.validateTotalProcessed(queryRunner, updateHarvestProcessedDto);
+    await this.validateTotalProcessed(
+      queryRunner,
+      updateHarvestProcessedDto,
+      harvestProcessed.total,
+    );
 
     await queryRunner.connect();
     await queryRunner.startTransaction();

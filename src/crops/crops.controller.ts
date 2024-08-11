@@ -60,6 +60,11 @@ export class CropsController {
     return this.cropsService.findAll(queryParams);
   }
 
+  @Get('/with-harvest')
+  findAllWithHarvest(@Query() queryParams: QueryParams) {
+    return this.cropsService.findAllWithHarvest(queryParams);
+  }
+
   // Obtener 1 cultivo
   @Get(':id')
   // Documentación

@@ -17,6 +17,7 @@ import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { HarvestService } from './harvest.service';
 import { ApiTags, ApiResponse } from '@nestjs/swagger';
 import { Harvest } from './entities/harvest.entity';
+import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
 
 @ApiTags('Harvests')
 @Controller('harvest')
@@ -74,7 +75,8 @@ export class HarvestController {
     type: Harvest,
   })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  findAll(@Query() queryParams: QueryParams) {
+  findAll(@Query() queryParams: QueryParamsHarvest) {
+    console.log(queryParams);
     return this.harvestService.findAll(queryParams);
   }
 

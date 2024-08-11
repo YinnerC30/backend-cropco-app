@@ -58,9 +58,9 @@ export class SeedService {
     await this.insertNewHarvests();
     await this.insertNewHarvestsProcessed();
     await this.insertNewPurchaseSupplies();
-    await this.insertNewConsumptionSupplies();
+    // await this.insertNewConsumptionSupplies();
     // await this.insertNewWork();
-    await this.insertNewSales();
+    // await this.insertNewSales();
     // await this.insertNewPayments();
 
     return 'SEED EXECUTED';

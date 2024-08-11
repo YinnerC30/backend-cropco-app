@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { ILike, Repository } from 'typeorm';
+import { ILike, IsNull, Not, Repository } from 'typeorm';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
@@ -62,6 +62,24 @@ export class CropsService {
     const count =
       search.length === 0 ? await this.cropRepository.count() : crops.length;
 
+    return {
+      rowCount: count,
+      rows: crops,
+      pageCount: Math.ceil(count / limit),
+    };
+  }
+  async findAllWithHarvest(queryParams: QueryParams) {
+    const { limit = 10 } = queryParams;
+    const [crops, count] = await this.cropRepository.findAndCount({
+      where: {
+        harvests: {
+          id: Not(IsNull()),
+        },
+      },
+      relations: {
+        harvests: true,
+      },
+    });
     return {
       rowCount: count,
       rows: crops,
