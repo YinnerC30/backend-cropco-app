@@ -14,6 +14,7 @@ import { UsersModule } from './users/users.module';
 import { WorkModule } from './work/work.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AuthModule } from './auth/auth.module';
+import { PrinterModule } from './printer/printer.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { AuthModule } from './auth/auth.module';
     SalesModule,
     PaymentsModule,
     AuthModule,
+    PrinterModule,
   ],
 })
 export class AppModule {}
