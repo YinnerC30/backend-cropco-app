@@ -55,3 +55,6 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 *.txt
+
+# Data DB container
+data-server-db/
