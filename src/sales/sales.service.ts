@@ -40,7 +40,7 @@ export class SalesService {
       for (const item of details) {
         await this.harvestService.updateStock(
           queryRunner,
-          item.crop,
+          item.crop.id,
           item.quantity,
           false,
         );

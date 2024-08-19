@@ -298,11 +298,10 @@ export class HarvestService {
     total: number,
     increment = true,
   ) {
-    const recordHarvestCropStock = await queryRunner.manager
-      .getRepository(HarvestStock)
-      .createQueryBuilder('harvestStock')
-      .where('harvestStock.cropId = :cropId', { cropId })
-      .getOne();
+    const recordHarvestCropStock = await queryRunner.manager.getRepository(HarvestStock).findOne({
+      relations: { crop: true },
+      where: { crop: { id: cropId } },
+    });
 
     if (!recordHarvestCropStock) {
       const recordToSave = queryRunner.manager.create(HarvestStock, {
@@ -312,16 +311,17 @@ export class HarvestService {
       await queryRunner.manager.save(HarvestStock, recordToSave);
     }
     if (increment) {
-      return await queryRunner.manager.increment(
+      await queryRunner.manager.increment(
         HarvestStock,
         { crop: cropId },
         'total',
         total,
       );
+      return;
     }
     const amountActually = recordHarvestCropStock?.total ?? 0;
     if (amountActually < total) {
-      await queryRunner.rollbackTransaction();
+      // await queryRunner.rollbackTransaction();
       throw new InsufficientHarvestStockException();
     }
     await queryRunner.manager.decrement(
