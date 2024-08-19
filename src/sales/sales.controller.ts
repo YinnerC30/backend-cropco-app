@@ -20,6 +20,7 @@ import { QueryParams } from 'src/common/dto/QueryParams';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
 import { SalesService } from './sales.service';
+import { QueryParamsSale } from './dto/query-params-sale.dto';
 
 @ApiTags('Sales')
 @Controller('sales')
@@ -41,7 +42,7 @@ export class SalesController {
   @ApiOperation({ summary: 'Get all sales' })
   @ApiResponse({ status: 200, description: 'Return all sales.' })
   @ApiQuery({ type: QueryParams })
-  findAll(@Query() queryParams: QueryParams) {
+  findAll(@Query() queryParams: QueryParamsSale) {
     return this.salesService.findAll(queryParams);
   }
 
