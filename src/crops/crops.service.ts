@@ -87,6 +87,25 @@ export class CropsService {
     };
   }
 
+  async findAllWithWork(queryParams: QueryParams) {
+    const { limit = 10 } = queryParams;
+    const [crops, count] = await this.cropRepository.findAndCount({
+      where: {
+        works: {
+          id: Not(IsNull()),
+        },
+      },
+      relations: {
+        works: true,
+      },
+    });
+    return {
+      rowCount: count,
+      rows: crops,
+      pageCount: Math.ceil(count / limit),
+    };
+  }
+
   async findOne(id: string) {
     const crop = await this.cropRepository
       .createQueryBuilder('crop')

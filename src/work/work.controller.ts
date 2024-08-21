@@ -14,6 +14,7 @@ import { CreateWorkDto } from './dto/create-work.dto';
 import { UpdateWorkDto } from './dto/update-work.dto';
 import { WorkService } from './work.service';
 import { ApiTags } from '@nestjs/swagger';
+import { QueryParamsWork } from './dto/query-params-work.dto';
 
 @ApiTags('Works')
 @Controller('works')
@@ -26,7 +27,7 @@ export class WorkController {
   }
 
   @Get()
-  findAll(@Query() queryParams: QueryParams) {
+  findAll(@Query() queryParams: QueryParamsWork) {
     return this.workService.findAll(queryParams);
   }
   @Get(':id')

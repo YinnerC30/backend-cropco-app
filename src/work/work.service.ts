@@ -9,6 +9,7 @@ import { Work } from './entities/work.entity';
 import { WorkDetailsDto } from './dto/work-details.dto';
 import { WorkDetails } from './entities/work-details.entity';
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
+import { QueryParamsWork } from './dto/query-params-work.dto';
 
 @Injectable()
 export class WorkService {
@@ -45,24 +46,50 @@ export class WorkService {
     }
   }
 
-  async findAll(queryParams: QueryParams) {
-    const { limit = 10, offset = 0 } = queryParams;
-    const works = await this.workRepository.find({
-      order: {
-        date: 'ASC',
-      },
-      relations: {
-        crop: true,
-      },
-      take: limit,
-      skip: offset,
-    });
+  async findAll(queryParams: QueryParamsWork) {
+    const {
+      limit = 10,
+      offset = 0,
+      search = '',
+      crop = '',
+      after_date = '',
+      before_date = '',
+      minor_total = 0,
+      major_total = 0,
+    } = queryParams;
+    const queryBuilder = this.workRepository
+      .createQueryBuilder('work')
+      .leftJoinAndSelect('work.crop', 'crop')
+      .orderBy('work.date', 'DESC')
+      .take(limit)
+      .skip(offset * limit);
 
-    let count: number = works.length;
+    if (crop.length > 0) {
+      queryBuilder.andWhere('crop.id = :cropId', { cropId: crop });
+    }
+
+    if (before_date.length > 0) {
+      queryBuilder.andWhere('work.date < :before_date', { before_date });
+    }
+
+    if (after_date.length > 0) {
+      queryBuilder.andWhere('work.date > :after_date', { after_date });
+    }
+    if (minor_total != 0) {
+      queryBuilder.andWhere('work.total < :minor_total', { minor_total });
+    }
+    if (major_total != 0) {
+      queryBuilder.andWhere('work.total > :major_total', { major_total });
+    }
+
+    const [works, count] = await queryBuilder.getManyAndCount();
 
     return {
       rowCount: count,
-      rows: works,
+      rows: works.map((item) => ({
+        ...item,
+        crop: { id: item.crop.id, name: item.crop.name },
+      })),
       pageCount: Math.ceil(count / limit),
     };
   }
