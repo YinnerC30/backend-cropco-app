@@ -76,7 +76,7 @@ export class HarvestController {
   })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   findAll(@Query() queryParams: QueryParamsHarvest) {
-    console.log(queryParams);
+    
     return this.harvestService.findAll(queryParams);
   }
 

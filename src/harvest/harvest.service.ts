@@ -80,7 +80,6 @@ export class HarvestService {
   }
 
   async findAll(queryParams: QueryParamsHarvest) {
-    console.log(queryParams);
     const {
       limit = 10,
       offset = 0,
@@ -182,23 +181,10 @@ export class HarvestService {
         new String(record.employee.id).toString(),
       );
 
-      console.log({
-        newHarvestDetails,
-        newIDsEmployees,
-        oldHarvestDetails,
-        oldIDsEmployees,
-      });
-
       const { toCreate, toDelete, toUpdate } = organizeIDsToUpdateEntity(
         newIDsEmployees,
         oldIDsEmployees,
       );
-
-      console.log({
-        toCreate,
-        toDelete,
-        toUpdate,
-      });
 
       for (const employeeId of toDelete) {
         await queryRunner.manager.delete(HarvestDetails, {
@@ -298,10 +284,12 @@ export class HarvestService {
     total: number,
     increment = true,
   ) {
-    const recordHarvestCropStock = await queryRunner.manager.getRepository(HarvestStock).findOne({
-      relations: { crop: true },
-      where: { crop: { id: cropId } },
-    });
+    const recordHarvestCropStock = await queryRunner.manager
+      .getRepository(HarvestStock)
+      .findOne({
+        relations: { crop: true },
+        where: { crop: { id: cropId } },
+      });
 
     if (!recordHarvestCropStock) {
       const recordToSave = queryRunner.manager.create(HarvestStock, {

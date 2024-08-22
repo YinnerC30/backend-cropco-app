@@ -18,6 +18,7 @@ import {
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentsService } from './payments.service';
+import { QueryParamsPayment } from './dto/query-params-payment.dto';
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -39,7 +40,7 @@ export class PaymentsController {
   @ApiOperation({ summary: 'Get all payments' })
   @ApiResponse({ status: 200, description: 'Return all payments.' })
   @ApiQuery({ type: QueryParams })
-  findAll(@Query() queryParams: QueryParams) {
+  findAll(@Query() queryParams: QueryParamsPayment) {
     return this.paymentsService.findAll(queryParams);
   }
 

@@ -207,7 +207,7 @@ export class SeedService {
     }
 
     const result = await Promise.all(insertPromises);
-    console.log(result);
+
     this.harvestIds = result.map((harvest) =>
       new String(harvest.id).toString(),
     );
@@ -385,8 +385,6 @@ export class SeedService {
     const [work1]: DeepPartial<Work>[] = this.worksIds;
 
     const harvestDetails: any = this.harvestDetails;
-
-    console.log({ employee1, work1, harvestDetails });
 
     const objectToCreate: CreatePaymentDto = {
       date: initialPayment.date,

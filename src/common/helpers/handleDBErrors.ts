@@ -8,7 +8,7 @@ import { InsufficientSupplyStockException } from 'src/supplies/exceptions/insuff
 import { UpdateValuesMissingError } from 'typeorm';
 
 export const handleDBExceptions = (error: any, logger: Logger) => {
-  console.log(error);
+  console.error(error);
   if (error.code === '23503') throw new BadRequestException(error.detail);
   if (error.code === '23505') throw new BadRequestException(error.detail);
   if (error instanceof InsufficientHarvestStockException)

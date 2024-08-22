@@ -456,8 +456,6 @@ export class SuppliesService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    console.log(purchaseSupply);
-
     try {
       for (const record of details) {
         const { supply } = record;

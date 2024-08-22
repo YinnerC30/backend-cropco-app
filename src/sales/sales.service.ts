@@ -220,8 +220,6 @@ export class SalesService {
       await queryRunner.manager.save(sale);
       await queryRunner.manager.update(Sale, { id }, rest);
 
-      console.log(sale);
-
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();

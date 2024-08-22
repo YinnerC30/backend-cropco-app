@@ -15,7 +15,8 @@ import { DataSource, Repository } from 'typeorm';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentHarvest } from './entities/payment-harvest.entity';
 import { PaymentWork } from './entities/payment-work.entity';
-import { Payment } from './entities/payment.entity';
+import { MethodOfPayment, Payment } from './entities/payment.entity';
+import { QueryParamsPayment } from './dto/query-params-payment.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -104,20 +105,53 @@ export class PaymentsService {
     }
   }
 
-  async findAll(queryParams: QueryParams) {
-    const { limit = 10, offset = 0 } = queryParams;
-    const payments = await this.paymentRepository.find({
-      order: {
-        date: 'ASC',
-      },
-      relations: {
-        employee: true,
-      },
-      take: limit,
-      skip: offset,
-    });
+  async findAll(queryParams: QueryParamsPayment) {
+    const {
+      limit = 10,
+      offset = 0,
+      after_date = '',
+      before_date = '',
+      major_total = 0,
+      minor_total = 0,
+      filter_by_method_of_payment = false,
+      method_of_payment = MethodOfPayment.EFECTIVO,
+      employee = '',
+    } = queryParams;
 
-    let count: number = payments.length;
+    const queryBuilder = this.paymentRepository
+      .createQueryBuilder('payment')
+      .leftJoinAndSelect('payment.employee', 'employee')
+      .orderBy('payment.date', 'DESC')
+      .take(limit)
+      .skip(offset * limit);
+
+    if (employee.length > 0) {
+      queryBuilder.andWhere('employee.id = :employeeId', {
+        employeeId: employee,
+      });
+    }
+
+    if (before_date.length > 0) {
+      queryBuilder.andWhere('payment.date < :before_date', { before_date });
+    }
+
+    if (after_date.length > 0) {
+      queryBuilder.andWhere('payment.date > :after_date', { after_date });
+    }
+    if (minor_total != 0) {
+      queryBuilder.andWhere('payment.total < :minor_total', { minor_total });
+    }
+    if (major_total != 0) {
+      queryBuilder.andWhere('payment.total > :major_total', { major_total });
+    }
+
+    if (filter_by_method_of_payment) {
+      queryBuilder.andWhere('payment.method_of_payment = :method_of_payment', {
+        method_of_payment,
+      });
+    }
+
+    const [payments, count] = await queryBuilder.getManyAndCount();
 
     return {
       rowCount: count,
@@ -134,10 +168,14 @@ export class PaymentsService {
       relations: {
         employee: true,
         payments_harvest: {
-          harvests_detail: true,
+          harvests_detail: {
+            harvest: true,
+          },
         },
         payments_work: {
-          works_detail: true,
+          works_detail: {
+            work: true,
+          },
         },
       },
     });
