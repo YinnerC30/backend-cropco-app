@@ -29,6 +29,7 @@ import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.
 import { InsufficientSupplyStockException } from './exceptions/insufficient-supply-stock.exception';
 import { Condition } from './interfaces/condition.interface';
 import { QueryParamsShopping } from './dto/query-params-shopping.dto';
+import { QueryParamsConsumption } from './dto/query-params-consumption.dto';
 
 @Injectable()
 export class SuppliesService {
@@ -567,27 +568,38 @@ export class SuppliesService {
     }
   }
 
-  async findAllConsumptions(queryParams: QueryParams) {
-    const { limit = 10, offset = 0, search = '' } = queryParams;
+  async findAllConsumptions(queryParams: QueryParamsConsumption) {
+    const {
+      limit = 10,
+      offset = 0,
+      search = '',
+      after_date = '',
+      before_date = '',
+    } = queryParams;
 
-    const consumption = await this.suppliesConsumptionRepository.find({
-      order: {
-        date: 'ASC',
-      },
-      take: limit,
-      skip: offset,
-    });
+    const queryBuilder = this.suppliesConsumptionRepository
+      .createQueryBuilder('supplies_consumption')
+      .orderBy('supplies_consumption.date', 'DESC')
+      .take(limit)
+      .skip(offset * limit);
 
-    let count: number;
-    if (search.length === 0) {
-      count = await this.suppliesConsumptionRepository.count();
-    } else {
-      count = consumption.length;
+    if (before_date.length > 0) {
+      queryBuilder.andWhere('supplies_consumption.date < :before_date', {
+        before_date,
+      });
     }
+
+    if (after_date.length > 0) {
+      queryBuilder.andWhere('supplies_consumption.date > :after_date', {
+        after_date,
+      });
+    }
+
+    const [consumptions, count] = await queryBuilder.getManyAndCount();
 
     return {
       rowCount: count,
-      rows: consumption,
+      rows: consumptions,
       pageCount: Math.ceil(count / limit),
     };
   }
