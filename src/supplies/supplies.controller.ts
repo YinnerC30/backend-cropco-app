@@ -18,6 +18,7 @@ import { UpdateSuppliesPurchaseDto } from './dto/update-supplies-purchase.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
 import { SuppliesService } from './supplies.service';
 import { ApiTags } from '@nestjs/swagger';
+import { QueryParamsShopping } from './dto/query-params-shopping.dto';
 
 @ApiTags('Supplies')
 @Controller('supplies')
@@ -35,7 +36,7 @@ export class SuppliesController {
   }
 
   @Get('purchase/all')
-  findAllPurchases(@Query() queryParams: QueryParams) {
+  findAllPurchases(@Query() queryParams: QueryParamsShopping) {
     return this.suppliesService.findAllPurchases(queryParams);
   }
   @Get('consumption/all')

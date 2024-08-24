@@ -28,6 +28,7 @@ import { ConsumptionSuppliesDetailsDto } from './dto/consumption-supplies-detail
 import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.dto';
 import { InsufficientSupplyStockException } from './exceptions/insufficient-supply-stock.exception';
 import { Condition } from './interfaces/condition.interface';
+import { QueryParamsShopping } from './dto/query-params-shopping.dto';
 
 @Injectable()
 export class SuppliesService {
@@ -304,36 +305,50 @@ export class SuppliesService {
     }
   }
 
-  async findAllPurchases(queryParams: QueryParams) {
-    const { search = '', limit = 10, offset = 0 } = queryParams;
+  async findAllPurchases(queryParams: QueryParamsShopping) {
+    const {
+      search = '',
+      limit = 10,
+      offset = 0,
+      after_date = '',
+      before_date = '',
+      minor_total = 0,
+      major_total = 0,
+    } = queryParams;
 
-    const purchases = await this.suppliesPurchaseRepository.find({
-      // where: [
-      //   {
-      //     name: ILike(`${search}%`),
-      //   },
-      //   {
-      //     brand: ILike(`${search}%`),
-      //   },
-      // ],
-      // order: {
-      //   name: 'ASC',
-      // },
+    const queryBuilder = this.suppliesPurchaseRepository
+      .createQueryBuilder('supplies_purchase')
+      .orderBy('supplies_purchase.date', 'DESC')
+      .take(limit)
+      .skip(offset * limit);
 
-      take: limit,
-      skip: offset * limit,
-    });
-
-    let count: number;
-    if (search.length === 0) {
-      count = await this.suppliesPurchaseRepository.count();
-    } else {
-      count = purchases.length;
+    if (before_date.length > 0) {
+      queryBuilder.andWhere('supplies_purchase.date < :before_date', {
+        before_date,
+      });
     }
+
+    if (after_date.length > 0) {
+      queryBuilder.andWhere('supplies_purchase.date > :after_date', {
+        after_date,
+      });
+    }
+    if (minor_total != 0) {
+      queryBuilder.andWhere('supplies_purchase.total < :minor_total', {
+        minor_total,
+      });
+    }
+    if (major_total != 0) {
+      queryBuilder.andWhere('supplies_purchase.total > :major_total', {
+        major_total,
+      });
+    }
+
+    const [shopping, count] = await queryBuilder.getManyAndCount();
 
     return {
       rowCount: count,
-      rows: purchases,
+      rows: shopping,
       pageCount: Math.ceil(count / limit),
     };
   }
