@@ -1,9 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post
-} from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { User } from 'src/users/entities/user.entity';
 import { AuthService } from './auth.service';
@@ -21,9 +16,14 @@ export class AuthController {
     return this.authService.login(loginUserDto);
   }
 
-  @Get('check-status')
+  @Get('renew-token')
   @Auth()
-  checkAuthStatus(@GetUser() user: User) {
-    return this.authService.checkAuthStatus(user);
+  renewToken(@GetUser() user: User) {
+    return this.authService.renewToken(user);
+  }
+
+  @Get('check-status')
+  checkAuthStatus(@Body() token: any) {
+    return this.authService.checkAuthStatus(token);
   }
 }

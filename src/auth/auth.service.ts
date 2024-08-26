@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/users/entities/user.entity';
@@ -35,10 +35,26 @@ export class AuthService {
     return token;
   }
 
-  async checkAuthStatus(user: User) {
+  async renewToken(user: User) {
     return {
       ...user,
       token: this.getJwtToken({ id: user.id }),
     };
+  }
+
+  async checkAuthStatus({ token }: any) {
+    try {
+      this.jwtService.verify(token);
+      return {
+        message: 'Token valid',
+        statusCode: 200,
+      };
+    } catch (error: any) {
+      if (error instanceof TokenExpiredError) {
+        throw new UnauthorizedException('Token has expired'); // Lanzar la excepción
+      } else {
+        throw new UnauthorizedException('Invalid token'); // Manejar otros tipos de errores
+      }
+    }
   }
 }
