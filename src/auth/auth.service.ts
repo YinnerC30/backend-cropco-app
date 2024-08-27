@@ -6,6 +6,7 @@ import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { CheckAuthStatusDto } from './dto/check-status.dto';
 
 @Injectable()
 export class AuthService {
@@ -27,6 +28,7 @@ export class AuthService {
     if (!bcrypt.compareSync(password, user.password))
       throw new UnauthorizedException('Credentials are not valid (password)');
 
+    delete user.password;
     return { ...user, token: this.getJwtToken({ id: user.id }) };
   }
 
@@ -42,7 +44,7 @@ export class AuthService {
     };
   }
 
-  async checkAuthStatus({ token }: any) {
+  async checkAuthStatus({ token }: CheckAuthStatusDto) {
     try {
       this.jwtService.verify(token);
       return {

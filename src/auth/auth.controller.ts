@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { Auth } from './decorators/auth.decorator';
 import { GetUser } from './decorators/get-user.decorator';
 import { LoginUserDto } from './dto/login-user.dto';
+import { CheckAuthStatusDto } from './dto/check-status.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -22,8 +23,8 @@ export class AuthController {
     return this.authService.renewToken(user);
   }
 
-  @Get('check-status')
-  checkAuthStatus(@Body() token: any) {
+  @Post('check-status')
+  checkAuthStatus(@Body() token: CheckAuthStatusDto) {
     return this.authService.checkAuthStatus(token);
   }
 }
