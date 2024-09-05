@@ -37,10 +37,11 @@ export class AuthService {
     return token;
   }
 
-  async renewToken(user: User) {
+  async renewToken({ token }: CheckAuthStatusDto) {
+    const { id } = this.jwtService.verify(token);
+    const newToken = this.jwtService.sign({ id });
     return {
-      ...user,
-      token: this.getJwtToken({ id: user.id }),
+      token: newToken,
     };
   }
 
