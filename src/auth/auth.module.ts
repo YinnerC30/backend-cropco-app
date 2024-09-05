@@ -6,6 +6,10 @@ import { UsersModule } from 'src/users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt-strategy';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Role } from './entities/role.entity';
+import { Module as ModuleCropco } from './entities/module.entity';
+import { ModuleActions } from './entities/module-actions.entity';
 
 @Module({
   controllers: [AuthController],
@@ -27,7 +31,8 @@ import { JwtStrategy } from './strategies/jwt-strategy';
         };
       },
     }),
+    TypeOrmModule.forFeature([Role, ModuleCropco, ModuleActions]),
   ],
-  exports: [JwtStrategy, PassportModule, JwtModule],
+  exports: [JwtStrategy, PassportModule, JwtModule, TypeOrmModule],
 })
 export class AuthModule {}

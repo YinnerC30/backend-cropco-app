@@ -3,10 +3,12 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { PersonalInformation } from '../../common/entities/personal-information.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { UserActions } from './user-actions.entity';
 
 @Entity({ name: 'users' })
 export class User extends PersonalInformation {
@@ -37,6 +39,9 @@ export class User extends PersonalInformation {
   })
   @Column('bool', { default: false })
   is_active: boolean;
+
+  @OneToMany(() => UserActions, (userActions) => userActions.user)
+  actions: UserActions[];
 
   @BeforeInsert()
   checkFieldsBeforeInsert() {
