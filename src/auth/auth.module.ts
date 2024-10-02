@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -10,7 +10,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Role } from './entities/role.entity';
 import { Module as ModuleCropco } from './entities/module.entity';
 import { ModuleActions } from './entities/module-actions.entity';
+import { User } from 'src/users/entities/user.entity';
+import { UserActions } from 'src/users/entities/user-actions.entity';
 
+@Global()
 @Module({
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
@@ -31,7 +34,7 @@ import { ModuleActions } from './entities/module-actions.entity';
         };
       },
     }),
-    TypeOrmModule.forFeature([Role, ModuleCropco, ModuleActions]),
+    TypeOrmModule.forFeature([Role, ModuleCropco, ModuleActions, User, UserActions]),
   ],
   exports: [JwtStrategy, PassportModule, JwtModule, TypeOrmModule],
 })

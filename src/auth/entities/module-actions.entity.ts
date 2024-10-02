@@ -1,13 +1,13 @@
 import { UserActions } from 'src/users/entities/user-actions.entity';
-import { Module } from './module.entity';
 import {
   Column,
   Entity,
   JoinColumn,
-  ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Module } from './module.entity';
 import { RoleActions } from './role-actions.entity';
 
 @Entity('module_actions')
@@ -18,15 +18,18 @@ export class ModuleActions {
   @Column({ type: 'varchar' })
   name: string;
 
+  @Column({ type: 'varchar', default: 'http://localhost' })
+  path_endpoint: string;
+
   @ManyToOne(() => Module, (module) => module.actions, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'moduleId' })
   module: Module;
 
-  @ManyToMany(() => UserActions, (userActions) => userActions.actions)
+  @OneToMany(() => UserActions, (userActions) => userActions.action)
   users_actions: UserActions[];
 
-  @ManyToMany(() => RoleActions, (roleActions) => roleActions.actions)
+  @OneToMany(() => RoleActions, (roleActions) => roleActions.action)
   rols_actions: RoleActions[];
 }

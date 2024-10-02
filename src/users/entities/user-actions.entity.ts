@@ -1,4 +1,10 @@
-import { Entity, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  JoinColumn,
+  ManyToMany,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { User } from './user.entity';
 import { ModuleActions } from 'src/auth/entities/module-actions.entity';
 
@@ -8,11 +14,12 @@ export class UserActions {
   id: string;
 
   @ManyToOne(() => User, (user) => user.actions)
+  @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToMany(
+  @ManyToOne(
     () => ModuleActions,
     (moduleActions) => moduleActions.users_actions,
   )
-  actions: ModuleActions[];
+  action: ModuleActions;
 }

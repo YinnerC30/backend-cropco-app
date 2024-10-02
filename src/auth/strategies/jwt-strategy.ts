@@ -6,12 +6,15 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
+import { Module } from '../entities/module.entity';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Module)
+    private readonly modulesRepository: Repository<Module>,
 
     configService: ConfigService,
   ) {
@@ -20,10 +23,36 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     });
   }
-  async validate(payload: JwtPayload): Promise<User> {
+  async validate(payload: JwtPayload): Promise<User | any> {
     const { id } = payload;
     const user = await this.userRepository.findOne({
       where: { id },
+      relations: {
+        actions: true,
+      },
+    });
+
+    const userPermits = await this.modulesRepository.find({
+      select: {
+        name: true,
+        actions: {
+          id: true,
+          name: true,
+          path_endpoint: true,
+        },
+      },
+      relations: {
+        actions: true,
+      },
+      where: {
+        actions: {
+          users_actions: {
+            user: {
+              id,
+            },
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -34,6 +63,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         'User is inactive, talk with an administrator',
       );
     }
-    return user;
+
+    return { ...user, actions: userPermits };
   }
 }

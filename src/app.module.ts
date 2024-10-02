@@ -24,15 +24,6 @@ import { AuthModule } from './auth/auth.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        // Aquí agregamos el console.log para ver las variables de entorno
-        console.log('Database Config:', {
-          host: configService.get<string>('DB_HOST'),
-          port: configService.get<number>('DB_PORT'),
-          username: configService.get<string>('DB_USERNAME'),
-          password: configService.get<string>('DB_PASSWORD'),
-          database: configService.get<string>('DB_NAME'),
-        });
-
         return {
           type: 'postgres',
           host: configService.get<string>('DB_HOST'),

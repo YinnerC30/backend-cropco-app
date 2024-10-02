@@ -28,4 +28,24 @@ export class AuthController {
   checkAuthStatus(@Body() token: CheckAuthStatusDto) {
     return this.authService.checkAuthStatus(token);
   }
+
+  @Get('permits')
+  getAllPermits() {
+    return this.authService.getAllPermits();
+  }
+  @Get('module-permits')
+  getModulePermits() {
+    return this.authService.getModulePermits();
+  }
+
+  @Get('user-permits')
+  getUserPermits() {
+    return this.authService.getUserPermits();
+  }
+
+  @Get('demo')
+  @Auth()
+  getDemo() {
+    return { ok: true };
+  }
 }

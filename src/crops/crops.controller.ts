@@ -9,10 +9,6 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { QueryParams } from 'src/common/dto/QueryParams';
-import { CropsService } from './crops.service';
-import { CreateCropDto } from './dto/create-crop.dto';
-import { UpdateCropDto } from './dto/update-crop.dto';
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
@@ -20,8 +16,12 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { QueryParams } from 'src/common/dto/QueryParams';
+import { CropsService } from './crops.service';
+import { CreateCropDto } from './dto/create-crop.dto';
+import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
-import { QueryParamsExtended } from 'src/common/dto/QueryParamsExtended';
 
 @ApiTags('Crops')
 @Controller('crops')
@@ -29,7 +29,7 @@ export class CropsController {
   constructor(private readonly cropsService: CropsService) {}
 
   // Crear cultivo
-  @Post()
+  @Post('create')
   // Documentación
   @ApiOperation({ summary: 'Crear un nuevo cultivo' })
   @ApiCreatedResponse({ description: 'Cultivo creado', type: Crop })
@@ -39,6 +39,7 @@ export class CropsController {
   @ApiResponse({ status: 409, description: 'Conflicto' })
   @ApiResponse({ status: 500, description: 'Error interno del servidor' })
   // Método
+  @Auth()
   create(@Body() createCropDto: CreateCropDto) {
     return this.cropsService.create(createCropDto);
   }
