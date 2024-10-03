@@ -25,10 +25,12 @@ import { Crop } from './entities/crop.entity';
 
 @ApiTags('Crops')
 @Controller('crops')
+@Auth()
 export class CropsController {
   constructor(private readonly cropsService: CropsService) {}
 
   // Crear cultivo
+
   @Post('create')
   // Documentación
   @ApiOperation({ summary: 'Crear un nuevo cultivo' })
@@ -39,13 +41,12 @@ export class CropsController {
   @ApiResponse({ status: 409, description: 'Conflicto' })
   @ApiResponse({ status: 500, description: 'Error interno del servidor' })
   // Método
-  @Auth()
   create(@Body() createCropDto: CreateCropDto) {
     return this.cropsService.create(createCropDto);
   }
 
   // Obtener todos los cultivos
-  @Get()
+  @Get('all')
   // Documentación
   @ApiOperation({ summary: 'Obtener una lista de todos los cultivos' })
   @ApiResponse({
@@ -72,7 +73,7 @@ export class CropsController {
   }
 
   // Obtener 1 cultivo
-  @Get(':id')
+  @Get('one/:id')
   // Documentación
   @ApiOperation({ summary: 'Obtener los detalles de un cultivo específico' })
   @ApiResponse({
@@ -91,7 +92,7 @@ export class CropsController {
   }
 
   // Actualización de 1 cultivo
-  @Patch(':id')
+  @Patch('update/:id')
   // Documentación
   @ApiOperation({ summary: 'Actualizar los detalles de un cultivo específico' })
   @ApiResponse({
@@ -114,7 +115,7 @@ export class CropsController {
   }
 
   // Eliminación de 1 cultivo
-  @Delete(':id')
+  @Delete('delete/:id')
   // Documentación
   @ApiOperation({ summary: 'Eliminar un cultivo específico' })
   @ApiResponse({ status: 200, description: 'Cultivo eliminado con éxito' })

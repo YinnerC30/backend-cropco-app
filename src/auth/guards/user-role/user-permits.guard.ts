@@ -8,6 +8,8 @@ import {
 import { Reflector } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
+import { ModuleActions } from 'src/auth/entities/module-actions.entity';
+import { Module } from 'src/auth/entities/module.entity';
 import { UserActions } from 'src/users/entities/user-actions.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
@@ -20,26 +22,21 @@ export class UserPermitsGuard implements CanActivate {
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
     const req = context.switchToHttp().getRequest();
+
+    // Obtener usuario
     const userRequest = req.user as User;
-    const pathEndPoint = req.originalUrl;
-    console.log(pathEndPoint);
+    // Obtener path solicitado
+    const pathEndPoint = req.route.path;
 
-    const { actions, id } = userRequest;
+    // Validar si el usuario tiene acceso a esa ruta
+    const { actions: modulesUser } = userRequest;
 
-    // TODO: Refactorizar este codigo
-    const tienePermiso = actions.some((module: any) => {
-      const { actions } = module;
-      console.log(actions);
-      const tienePermiso2 = actions.some((item: any) => {
-        console.log(item.path_endpoint === pathEndPoint);
-        return '/' + item.path_endpoint === pathEndPoint;
-      });
-      return tienePermiso2;
-    });
+    const actionsUser = modulesUser.map((item: any) => item.actions).flat(1);
+    const resultValidation = actionsUser.some(
+      (item) => item.path_endpoint === pathEndPoint,
+    );
 
-    if (tienePermiso) {
-      return true;
-    }
+    if (resultValidation) return true;
 
     if (!userRequest) throw new BadRequestException('User not found');
 
