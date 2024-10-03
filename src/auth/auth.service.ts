@@ -9,6 +9,17 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { CheckAuthStatusDto } from './dto/check-status.dto';
 import { Role } from './entities/role.entity';
 import { Module } from './entities/module.entity';
+import { pathsClientsController } from 'src/clients/clients.controller';
+import { pathsCropsController } from 'src/crops/crops.controller';
+import { pathsEmployeesController } from 'src/employees/employees.controller';
+import { pathsHarvestsController } from 'src/harvest/harvest.controller';
+import { pathsPaymentsController } from 'src/payments/payments.controller';
+import { pathsSalesController } from 'src/sales/sales.controller';
+import { pathsSuppliersController } from 'src/suppliers/suppliers.controller';
+import { pathsSuppliesController } from 'src/supplies/supplies.controller';
+import { pathsUsersController } from 'src/users/users.controller';
+import { pathsWorksController } from 'src/work/work.controller';
+import { ModuleActions } from './entities/module-actions.entity';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +30,8 @@ export class AuthService {
     private readonly rolesRepository: Repository<Role>,
     @InjectRepository(Module)
     private readonly modulesRepository: Repository<Module>,
+    @InjectRepository(ModuleActions)
+    private readonly moduleActionsRepository: Repository<ModuleActions>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -141,5 +154,58 @@ export class AuthService {
     });
 
     return { userPermits1, userPermits2 };
+  }
+
+  // TODO: Modificar paths en el frontend 😒
+  async createModuleWithActions() {
+    const modules = {
+      clients: {
+        paths: pathsClientsController,
+      },
+      crops: {
+        paths: pathsCropsController,
+      },
+      employees: {
+        paths: pathsEmployeesController,
+      },
+      harvests: {
+        paths: pathsHarvestsController,
+      },
+      payments: {
+        paths: pathsPaymentsController,
+      },
+      sales: {
+        paths: pathsSalesController,
+      },
+      suppliers: {
+        paths: pathsSuppliersController,
+      },
+      supplies: {
+        paths: pathsSuppliesController,
+      },
+      users: {
+        paths: pathsUsersController,
+      },
+      works: {
+        paths: pathsWorksController,
+      },
+    };
+
+    for (const nameModule of Object.keys(modules)) {
+      const modelEntity = this.modulesRepository.create({ name: nameModule });
+
+      const pathList = Object.keys(modules[nameModule].paths).map(
+        (key) => modules[nameModule].paths[key],
+      );
+
+      modelEntity.actions = pathList.map(({ path, name }: any) =>
+        this.moduleActionsRepository.create({
+          name: name.trim().split(' ').join('-'),
+          path_endpoint: path,
+        }),
+      );
+
+      await this.modulesRepository.save(modelEntity);
+    }
   }
 }

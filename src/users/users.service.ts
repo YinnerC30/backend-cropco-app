@@ -8,6 +8,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { hashPassword } from './helpers/encrypt-password';
 import { AuthService } from 'src/auth/auth.service';
+import { UpdateUserActionsDto } from './dto/update-user-actions.dto';
 
 @Injectable()
 export class UsersService {
@@ -71,7 +72,6 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    
     await this.findOne(id);
     try {
       await this.usersRepository.update(id, updateUserDto);
@@ -91,5 +91,9 @@ export class UsersService {
     } catch (error) {
       this.handleDBExceptions(error);
     }
+  }
+
+  async updateActions(updateUserActionsDto: UpdateUserActionsDto) {
+    console.log(updateUserActionsDto);
   }
 }

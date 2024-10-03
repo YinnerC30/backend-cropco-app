@@ -15,6 +15,38 @@ import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { EmployeesService } from './employees.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Employee } from './entities/employee.entity';
+import { PathsController } from 'src/common/interfaces/PathsController';
+
+export const pathsEmployeesController: PathsController = {
+  create: {
+    path: 'create',
+    name: 'crear empleado',
+  },
+  getAll: {
+    path: 'all',
+    name: 'obtener todos los empleados',
+  },
+  getAllPendingPayments: {
+    path: 'pending-payments/all',
+    name: 'obtener todos los empleados con pagos pendientes',
+  },
+  getOneEmployeePendingPayments: {
+    path: 'pending-payments/one/:id',
+    name: 'obtener los pagos pendientes de 1 empleado',
+  },
+  getOne: {
+    path: 'one/:id',
+    name: 'obtener 1 empleado',
+  },
+  updateEmployee: {
+    path: 'update/one/:id',
+    name: 'actualizar 1 empleado',
+  },
+  deleteEmployee: {
+    path: 'delete/one/:id',
+    name: 'eliminar 1 empleado',
+  },
+};
 
 @ApiTags('Employees')
 @Controller('employees')
@@ -22,7 +54,7 @@ export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
 
   // Crear empleado
-  @Post()
+  @Post('create')
   // Documentación
   @ApiOperation({ summary: 'Crear un nuevo empleado' })
   @ApiResponse({
@@ -38,7 +70,7 @@ export class EmployeesController {
   }
 
   // Obtener todos los clientes
-  @Get()
+  @Get('all')
   // Documentación
   @ApiOperation({ summary: 'Obtener todos los empleados' })
   @ApiResponse({
@@ -53,7 +85,7 @@ export class EmployeesController {
   }
 
   // Obtener todos los pagos pendientes de los clientes
-  @Get('all/pending-payments')
+  @Get('pending-payments/all')
   // Documentación
   @ApiOperation({ summary: 'Obtener todos los empleados con pagos pendientes' })
   @ApiResponse({
@@ -84,7 +116,7 @@ export class EmployeesController {
   }
 
   // Obtener los pagos pendientes de 1 empleado
-  @Get('pending-payments/:id')
+  @Get('pending-payments/one/:id')
   // Documentación
   @ApiOperation({
     summary: 'Obtener un empleado con pagos pendientes por su ID',
@@ -102,7 +134,7 @@ export class EmployeesController {
   }
 
   // Actualizar la información del empleado
-  @Patch(':id')
+  @Patch('update/one/:id')
   // Documentación
   @ApiOperation({ summary: 'Actualizar los datos de un empleado' })
   @ApiResponse({ status: 200, description: 'Empleado actualizado' })
@@ -118,7 +150,7 @@ export class EmployeesController {
   }
 
   // Eliminar 1 empleado
-  @Delete(':id')
+  @Delete('delete/one/:id')
   // Documentación
   @ApiOperation({ summary: 'Eliminar un empleado' })
   @ApiResponse({ status: 200, description: 'Empleado eliminado' })

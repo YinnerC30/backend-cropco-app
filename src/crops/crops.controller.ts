@@ -22,6 +22,38 @@ import { CropsService } from './crops.service';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
+import { PathsController } from 'src/common/interfaces/PathsController';
+
+export const pathsCropsController: PathsController = {
+  create: {
+    path: 'create',
+    name: 'crear cultivo',
+  },
+  getAll: {
+    path: 'all',
+    name: 'obtener todos los cultivos',
+  },
+  getOne: {
+    path: 'one/:id',
+    name: 'obtener 1 cultivo',
+  },
+  withHarvest: {
+    path: '/with-harvest',
+    name: 'obtener solo cultivos con cosechas',
+  },
+  withWork: {
+    path: '/with-work',
+    name: 'obtener solo cultivos con trabajos realizados',
+  },
+  updateCrop: {
+    path: 'update/one/:id',
+    name: 'actualizar 1 cultivo',
+  },
+  deleteCrop: {
+    path: 'delete/one/:id',
+    name: 'eliminar 1 cultivo',
+  },
+};
 
 @ApiTags('Crops')
 @Controller('crops')
@@ -92,7 +124,7 @@ export class CropsController {
   }
 
   // Actualización de 1 cultivo
-  @Patch('update/:id')
+  @Patch('update/one/:id')
   // Documentación
   @ApiOperation({ summary: 'Actualizar los detalles de un cultivo específico' })
   @ApiResponse({
@@ -115,7 +147,7 @@ export class CropsController {
   }
 
   // Eliminación de 1 cultivo
-  @Delete('delete/:id')
+  @Delete('delete/one/:id')
   // Documentación
   @ApiOperation({ summary: 'Eliminar un cultivo específico' })
   @ApiResponse({ status: 200, description: 'Cultivo eliminado con éxito' })

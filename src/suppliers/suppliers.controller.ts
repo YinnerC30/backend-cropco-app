@@ -20,13 +20,22 @@ import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { SuppliersService } from './suppliers.service';
 import { QueryParams } from 'src/common/dto/QueryParams';
+import { PathsController } from 'src/common/interfaces/PathsController';
+
+export const pathsSuppliersController: PathsController = {
+  createSupplier: { path: 'create', name: 'crear proveedor' },
+  getAll: { path: 'all', name: 'obtener todos los proveedores' },
+  getOneSupplier: { path: 'one/:id', name: 'obtener 1 proveedor' },
+  updateSupplier: { path: 'update/one/:id', name: 'actualizar 1 proveedor' },
+  deleteSupplier: { path: 'delete/one/:id', name: 'eliminar 1 proveedor' },
+};
 
 @ApiTags('Suppliers')
 @Controller('suppliers')
 export class SuppliersController {
   constructor(private readonly suppliersService: SuppliersService) {}
 
-  @Post()
+  @Post('create')
   @ApiOperation({ summary: 'Create a new supplier' })
   @ApiResponse({
     status: 201,
@@ -37,7 +46,7 @@ export class SuppliersController {
     return this.suppliersService.create(createSupplierDto);
   }
 
-  @Get()
+  @Get('all')
   @ApiOperation({ summary: 'Get all suppliers' })
   @ApiResponse({ status: 200, description: 'Return all suppliers.' })
   @ApiQuery({ type: QueryParams })
@@ -45,7 +54,7 @@ export class SuppliersController {
     return this.suppliersService.findAll(queryParams);
   }
 
-  @Get(':id')
+  @Get('one/:id')
   @ApiOperation({ summary: 'Get a supplier by id' })
   @ApiResponse({ status: 200, description: 'Return the supplier.' })
   @ApiResponse({ status: 404, description: 'Supplier not found.' })
@@ -54,7 +63,7 @@ export class SuppliersController {
     return this.suppliersService.findOne(id);
   }
 
-  @Patch(':id')
+  @Patch('update/one/:id')
   @ApiOperation({ summary: 'Update a supplier' })
   @ApiResponse({
     status: 200,
@@ -70,7 +79,7 @@ export class SuppliersController {
     return this.suppliersService.update(id, updateSupplierDto);
   }
 
-  @Delete(':id')
+  @Delete('delete/one/:id')
   @ApiOperation({ summary: 'Delete a supplier' })
   @ApiResponse({
     status: 200,

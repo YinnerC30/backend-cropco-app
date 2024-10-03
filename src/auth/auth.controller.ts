@@ -48,4 +48,9 @@ export class AuthController {
   getDemo() {
     return { ok: true };
   }
+
+  @Get('module-actions')
+  createModuleWithActions() {
+    return this.authService.createModuleWithActions();
+  }
 }

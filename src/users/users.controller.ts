@@ -16,13 +16,23 @@ import { UsersService } from './users.service';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { ApiTags, ApiResponse } from '@nestjs/swagger';
 import { User } from './entities/user.entity';
+import { PathsController } from 'src/common/interfaces/PathsController';
+import { UpdateUserActionsDto } from './dto/update-user-actions.dto';
+
+export const pathsUsersController: PathsController = {
+  createUser: { path: 'create', name: 'crear usuario' },
+  getAll: { path: 'all', name: 'obtener todos los usuarios' },
+  getOneUser: { path: 'one/:id', name: 'obtener 1 usuario' },
+  updateUser: { path: 'update/one/:id', name: 'actualizar 1 usuario' },
+  deleteUser: { path: 'delete/one/:id', name: 'eliminar 1 usuario' },
+};
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get()
+  @Get('all')
   @ApiResponse({
     status: 200,
     description: 'Lista de todos los usuarios',
@@ -33,7 +43,7 @@ export class UsersController {
     return this.usersService.findAll(queryParams);
   }
 
-  @Post()
+  @Post('create')
   @ApiResponse({
     status: 201,
     description: 'Usuario creado exitosamente',
@@ -43,7 +53,7 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Get(':id')
+  @Get('one/:id')
   @ApiResponse({
     status: 200,
     description: 'Detalle de un usuario encontrado por ID',
@@ -53,7 +63,7 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
-  @Patch(':id')
+  @Patch('update/one/:id')
   @ApiResponse({
     status: 200,
     description: 'Usuario actualizado exitosamente',
@@ -66,12 +76,20 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @Delete(':id')
+  @Delete('delete/one/:id')
   @ApiResponse({
     status: 200,
     description: 'Usuario eliminado exitosamente',
   })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.remove(id);
+  }
+
+  @Patch('update/actions/:id')
+  updateActions(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateUserActionsDto: UpdateUserActionsDto,
+  ) {
+    return this.usersService.updateActions(updateUserActionsDto);
   }
 }

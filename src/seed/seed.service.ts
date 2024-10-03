@@ -254,8 +254,6 @@ export class SeedService {
 
     const { details, ...rest } = initialPurchase;
 
-    const insertPromises = [];
-
     for (let index = 0; index < 3; index++) {
       const objectToCreate: CreatePurchaseSuppliesDto = {
         ...rest,

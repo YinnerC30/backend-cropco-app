@@ -6,7 +6,7 @@ export class Module {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 100 })
+  @Column({ type: 'varchar', length: 100, unique: true, })
   name: string;
 
   @OneToMany(() => ModuleActions, (actionsModule) => actionsModule.module, {
