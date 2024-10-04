@@ -61,6 +61,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       );
     }
 
-    return { ...user, actions: userPermits };
+    return { ...user, modules: userPermits };
   }
 }

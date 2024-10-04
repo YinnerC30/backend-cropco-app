@@ -19,32 +19,35 @@ import { PathsController } from 'src/common/interfaces/PathsController';
 
 export const pathsWorksController: PathsController = {
   createWork: { path: 'create', name: 'crear trabajo' },
-  getAll: { path: 'all', name: 'obtener todos los trabajos' },
-  getOneWork: { path: 'one/:id', name: 'obtener 1 trabajo' },
+  findAllWorks: { path: 'all', name: 'obtener todos los trabajos' },
+  findOneWork: { path: 'one/:id', name: 'obtener 1 trabajo' },
   updateWork: { path: 'update/:id', name: 'actualizar 1 trabajo' },
-  deleteWork: { path: 'delete/:id', name: 'eliminar 1 trabajo' },
+  removeWork: { path: 'remove/:id', name: 'eliminar 1 trabajo' },
 };
+
+const { createWork, findAllWorks, findOneWork, updateWork, removeWork } =
+  pathsWorksController;
 
 @ApiTags('Works')
 @Controller('works')
 export class WorkController {
   constructor(private readonly workService: WorkService) {}
 
-  @Post('create')
+  @Post(createWork.path)
   create(@Body() createWorkDto: CreateWorkDto) {
     return this.workService.create(createWorkDto);
   }
 
-  @Get('all')
+  @Get(findAllWorks.path)
   findAll(@Query() queryParams: QueryParamsWork) {
     return this.workService.findAll(queryParams);
   }
-  @Get('one/:id')
+  @Get(findOneWork.path)
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.workService.findOne(id);
   }
 
-  @Patch('update/one/:id')
+  @Patch(updateWork.path)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateWorkDto: UpdateWorkDto,
@@ -52,7 +55,7 @@ export class WorkController {
     return this.workService.update(id, updateWorkDto);
   }
 
-  @Delete('delete/one/:id')
+  @Delete(removeWork.path)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.workService.remove(id);
   }

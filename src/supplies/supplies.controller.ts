@@ -28,19 +28,26 @@ export const pathsSuppliesController: PathsController = {
     path: 'purchase/create',
     name: 'crear compra de suplementos',
   },
-  getAll: { path: 'all', name: 'obtener todos los suplementos' },
-  getAllStock: {
+  createConsumption: {
+    path: 'consumption/create',
+    name: 'crear compra de suplementos',
+  },
+  findAllSupplies: { path: 'all', name: 'obtener todos los suplementos' },
+  findAllStock: {
     path: 'stock/all',
     name: 'obtener el stock de todos los suplementos',
   },
-  getAllPurchase: { path: 'purchase/all', name: 'obtener todas las compras' },
-  getAllConsumption: {
+  findAllPurchase: { path: 'purchase/all', name: 'obtener todas las compras' },
+  findAllConsumption: {
     path: 'consumption/all',
     name: 'obtener todos los consumos de suplementos',
   },
-  getOneSupply: { path: 'one/:id', name: 'obtener 1 suplemento' },
-  getOnePurchase: { path: 'purchase/one/:id', name: 'obtener 1 compra' },
-  getOneConsumption: { path: 'consumption/one/:id', name: 'obtener 1 consumo' },
+  findOneSupply: { path: 'one/:id', name: 'obtener 1 suplemento' },
+  findOnePurchase: { path: 'purchase/one/:id', name: 'obtener 1 compra' },
+  findOneConsumption: {
+    path: 'consumption/one/:id',
+    name: 'obtener 1 consumo',
+  },
   updateSupply: { path: 'update/one/:id', name: 'actualizar suplemento' },
   updatePurchase: {
     path: 'purchase/update/one/:id',
@@ -50,74 +57,93 @@ export const pathsSuppliesController: PathsController = {
     path: 'consumption/update/one/:id',
     name: 'actualizar 1 consumo',
   },
-  deleteSupply: { path: 'delete/one/:id', name: 'eliminar 1 suplemento' },
-  deletePurchase: {
-    path: 'purchase/delete/one/:id',
+  removeSupply: { path: 'remove/one/:id', name: 'eliminar 1 suplemento' },
+  removePurchase: {
+    path: 'purchase/remove/one/:id',
     name: 'eliminar 1 compra',
   },
-  deleteConsumption: {
-    path: 'consumption/delete/one/:id',
+  removeConsumption: {
+    path: 'consumption/remove/one/:id',
     name: 'eliminar 1 consumo',
   },
 };
+
+const {
+  createSupply,
+  createPurchase,
+  createConsumption,
+  findAllSupplies,
+  findAllStock,
+  findAllPurchase,
+  findAllConsumption,
+  findOneSupply,
+  findOnePurchase,
+  findOneConsumption,
+  updateSupply,
+  updatePurchase,
+  updateConsumption,
+  removeSupply,
+  removePurchase,
+  removeConsumption,
+} = pathsSuppliesController;
 
 @ApiTags('Supplies')
 @Controller('supplies')
 export class SuppliesController {
   constructor(private readonly suppliesService: SuppliesService) {}
 
-  @Get('all')
+  @Get(findAllSupplies.path)
   findAll(@Query() queryParams: QueryParams) {
     return this.suppliesService.findAll(queryParams);
   }
 
-  @Get('stock/all')
+  @Get(findAllStock.path)
   findAllSuppliesStock(@Query() queryParams: QueryParams) {
     return this.suppliesService.findAllSuppliesStock(queryParams);
   }
 
-  @Get('purchase/all')
+  @Get(findAllPurchase.path)
   findAllPurchases(@Query() queryParams: QueryParamsShopping) {
     return this.suppliesService.findAllPurchases(queryParams);
   }
-  @Get('consumption/all')
+  @Get(findAllConsumption.path)
   findAllConsumptions(@Query() queryParams: QueryParamsConsumption) {
     return this.suppliesService.findAllConsumptions(queryParams);
   }
 
-  @Get('one/:id')
+  @Get(findOneSupply.path)
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.suppliesService.findOne(id);
   }
 
-  @Get('purchase/one/:id')
+  @Get(findOnePurchase.path)
   findOnePurchase(@Param('id', ParseUUIDPipe) id: string) {
     return this.suppliesService.findOnePurchase(id);
   }
 
-  @Get('consumption/one/:id')
+  @Get(findOneConsumption.path)
   findOneConsumption(@Param('id', ParseUUIDPipe) id: string) {
     return this.suppliesService.findOneConsumption(id);
   }
 
-  @Post('create')
+  @Post(createSupply.path)
   create(@Body() createSupplyDto: CreateSupplyDto) {
     return this.suppliesService.create(createSupplyDto);
   }
 
-  @Post('purchase/create')
+  @Post(createPurchase.path)
   purchase(@Body() createPurchaseSuppliesDto: CreatePurchaseSuppliesDto) {
     return this.suppliesService.createPurchase(createPurchaseSuppliesDto);
   }
 
-  @Post('consumption/create')
+  @Post(createConsumption.path)
   consumption(
     @Body() createConsumptionSuppliesDto: CreateConsumptionSuppliesDto,
   ) {
     return this.suppliesService.createConsumption(createConsumptionSuppliesDto);
   }
 
-  @Patch('update/one/:id')
+  @Patch(updateSupply.path)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSupplyDto: UpdateSupplyDto,
@@ -125,7 +151,7 @@ export class SuppliesController {
     return this.suppliesService.update(id, updateSupplyDto);
   }
 
-  @Patch('purchase/update/one/:id')
+  @Patch(updatePurchase.path)
   updatePurchase(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSuppliesPurchaseDto: UpdateSuppliesPurchaseDto,
@@ -133,7 +159,7 @@ export class SuppliesController {
     return this.suppliesService.updatePurchase(id, updateSuppliesPurchaseDto);
   }
 
-  @Patch('consumption/update/one/:id')
+  @Patch(updateConsumption.path)
   updateConsumption(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSuppliesConsumptionDto: UpdateSuppliesConsumptionDto,
@@ -144,17 +170,17 @@ export class SuppliesController {
     );
   }
 
-  @Delete('delete/one/:id')
+  @Delete(removeSupply.path)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.suppliesService.remove(id);
   }
 
-  @Delete('purchase/delete/one/:id')
+  @Delete(removePurchase.path)
   removePurchase(@Param('id', ParseUUIDPipe) id: string) {
     return this.suppliesService.removePurchase(id);
   }
 
-  @Delete('consumption/delete/one/:id')
+  @Delete(removeConsumption.path)
   removeConsumption(@Param('id', ParseUUIDPipe) id: string) {
     return this.suppliesService.removeConsumption(id);
   }

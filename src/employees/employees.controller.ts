@@ -18,23 +18,23 @@ import { Employee } from './entities/employee.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
 
 export const pathsEmployeesController: PathsController = {
-  create: {
+  createEmployee: {
     path: 'create',
     name: 'crear empleado',
   },
-  getAll: {
+  findAllEmployees: {
     path: 'all',
     name: 'obtener todos los empleados',
   },
-  getAllPendingPayments: {
+  findAllEmployeesWithPendingPayments: {
     path: 'pending-payments/all',
     name: 'obtener todos los empleados con pagos pendientes',
   },
-  getOneEmployeePendingPayments: {
+  findOneEmployeeWithPendingPayments: {
     path: 'pending-payments/one/:id',
     name: 'obtener los pagos pendientes de 1 empleado',
   },
-  getOne: {
+  findOneEmployee: {
     path: 'one/:id',
     name: 'obtener 1 empleado',
   },
@@ -42,11 +42,21 @@ export const pathsEmployeesController: PathsController = {
     path: 'update/one/:id',
     name: 'actualizar 1 empleado',
   },
-  deleteEmployee: {
-    path: 'delete/one/:id',
+  removeEmployee: {
+    path: 'remove/one/:id',
     name: 'eliminar 1 empleado',
   },
 };
+
+const {
+  createEmployee,
+  findAllEmployees,
+  findAllEmployeesWithPendingPayments,
+  findOneEmployeeWithPendingPayments,
+  findOneEmployee,
+  updateEmployee,
+  removeEmployee,
+} = pathsEmployeesController;
 
 @ApiTags('Employees')
 @Controller('employees')
@@ -54,7 +64,7 @@ export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
 
   // Crear empleado
-  @Post('create')
+  @Post(createEmployee.path)
   // Documentación
   @ApiOperation({ summary: 'Crear un nuevo empleado' })
   @ApiResponse({
@@ -70,7 +80,7 @@ export class EmployeesController {
   }
 
   // Obtener todos los clientes
-  @Get('all')
+  @Get(findAllEmployees.path)
   // Documentación
   @ApiOperation({ summary: 'Obtener todos los empleados' })
   @ApiResponse({
@@ -85,7 +95,7 @@ export class EmployeesController {
   }
 
   // Obtener todos los pagos pendientes de los clientes
-  @Get('pending-payments/all')
+  @Get(findAllEmployeesWithPendingPayments.path)
   // Documentación
   @ApiOperation({ summary: 'Obtener todos los empleados con pagos pendientes' })
   @ApiResponse({
@@ -99,7 +109,7 @@ export class EmployeesController {
   }
 
   // Obtener información de 1 empleado
-  @Get('one/:id')
+  @Get(findOneEmployee.path)
   // Documentación
   @ApiOperation({ summary: 'Obtener un empleado por su ID' })
   @ApiResponse({
@@ -116,7 +126,7 @@ export class EmployeesController {
   }
 
   // Obtener los pagos pendientes de 1 empleado
-  @Get('pending-payments/one/:id')
+  @Get(findOneEmployeeWithPendingPayments.path)
   // Documentación
   @ApiOperation({
     summary: 'Obtener un empleado con pagos pendientes por su ID',
@@ -134,7 +144,7 @@ export class EmployeesController {
   }
 
   // Actualizar la información del empleado
-  @Patch('update/one/:id')
+  @Patch(updateEmployee.path)
   // Documentación
   @ApiOperation({ summary: 'Actualizar los datos de un empleado' })
   @ApiResponse({ status: 200, description: 'Empleado actualizado' })
@@ -150,7 +160,7 @@ export class EmployeesController {
   }
 
   // Eliminar 1 empleado
-  @Delete('delete/one/:id')
+  @Delete(removeEmployee.path)
   // Documentación
   @ApiOperation({ summary: 'Eliminar un empleado' })
   @ApiResponse({ status: 200, description: 'Empleado eliminado' })

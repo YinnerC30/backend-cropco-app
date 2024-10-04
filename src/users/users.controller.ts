@@ -21,18 +21,31 @@ import { UpdateUserActionsDto } from './dto/update-user-actions.dto';
 
 export const pathsUsersController: PathsController = {
   createUser: { path: 'create', name: 'crear usuario' },
-  getAll: { path: 'all', name: 'obtener todos los usuarios' },
-  getOneUser: { path: 'one/:id', name: 'obtener 1 usuario' },
+  findAllUsers: { path: 'all', name: 'obtener todos los usuarios' },
+  findOneUser: { path: 'one/:id', name: 'obtener 1 usuario' },
   updateUser: { path: 'update/one/:id', name: 'actualizar 1 usuario' },
-  deleteUser: { path: 'delete/one/:id', name: 'eliminar 1 usuario' },
+  removeUser: { path: 'remove/one/:id', name: 'eliminar 1 usuario' },
+  updateActions: {
+    path: 'update/actions/one/:id',
+    name: 'actualizar acciones de 1 usuario',
+  },
 };
+
+const {
+  createUser,
+  findAllUsers,
+  findOneUser,
+  updateUser,
+  removeUser,
+  updateActions,
+} = pathsUsersController;
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get('all')
+  @Get(findAllUsers.path)
   @ApiResponse({
     status: 200,
     description: 'Lista de todos los usuarios',
@@ -43,7 +56,7 @@ export class UsersController {
     return this.usersService.findAll(queryParams);
   }
 
-  @Post('create')
+  @Post(createUser.path)
   @ApiResponse({
     status: 201,
     description: 'Usuario creado exitosamente',
@@ -53,7 +66,7 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Get('one/:id')
+  @Get(findOneUser.path)
   @ApiResponse({
     status: 200,
     description: 'Detalle de un usuario encontrado por ID',
@@ -63,7 +76,7 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
-  @Patch('update/one/:id')
+  @Patch(updateUser.path)
   @ApiResponse({
     status: 200,
     description: 'Usuario actualizado exitosamente',
@@ -76,7 +89,7 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @Delete('delete/one/:id')
+  @Delete(removeUser.path)
   @ApiResponse({
     status: 200,
     description: 'Usuario eliminado exitosamente',
@@ -85,11 +98,11 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
-  @Patch('update/actions/:id')
+  @Patch(updateActions.path)
   updateActions(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserActionsDto: UpdateUserActionsDto,
   ) {
-    return this.usersService.updateActions(updateUserActionsDto);
+    return this.usersService.updateActions(id,updateUserActionsDto);
   }
 }

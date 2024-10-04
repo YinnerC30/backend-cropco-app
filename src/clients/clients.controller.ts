@@ -26,24 +26,32 @@ import { Client } from './entities/client.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
 
 export const pathsClientsController: PathsController = {
-  create: { path: 'create', name: 'crear cliente' },
-  findAll: {
+  createClient: { path: 'create', name: 'crear cliente' },
+  findAllClients: {
     path: 'all',
     name: 'obtener todos los clientes',
   },
-  findOne: {
+  findOneClient: {
     path: 'one/:id',
     name: 'obtener 1 cliente',
   },
-  update: {
+  updateClient: {
     path: 'update/one/:id',
     name: 'actualizar 1 cliente',
   },
-  remove: {
-    path: 'delete/one/:id',
+  removeClient: {
+    path: 'remove/one/:id',
     name: 'eliminar 1 cliente',
   },
 };
+
+const {
+  createClient,
+  findAllClients,
+  findOneClient,
+  updateClient,
+  removeClient,
+} = pathsClientsController;
 
 @ApiTags('Clients')
 @Controller('clients')
@@ -51,7 +59,7 @@ export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
   // Crear cliente
-  @Post(pathsClientsController.create.path)
+  @Post(createClient.path)
   // Documentación
   @ApiOperation({ summary: 'Crear un nuevo cliente' })
   @ApiBody({ type: CreateClientDto })
@@ -70,7 +78,7 @@ export class ClientsController {
   }
 
   // Obtener todos los clientes
-  @Get(pathsClientsController.findAll.path)
+  @Get(findAllClients.path)
   // Documentación
   @ApiOperation({ summary: 'Obtener una lista de todos los clientes' })
   @ApiResponse({
@@ -85,7 +93,7 @@ export class ClientsController {
   }
 
   // Obtener información de 1 cliente
-  @Get(pathsClientsController.findOne.path)
+  @Get(findOneClient.path)
   // Documentación
   @ApiOperation({
     summary: 'Obtener la información de un cliente en especifico',
@@ -108,7 +116,7 @@ export class ClientsController {
   }
 
   // Actualizar información de 1 cliente
-  @Patch(pathsClientsController.update.path)
+  @Patch(updateClient.path)
   // Documentación
   @ApiOperation({ summary: 'Actualizar los detalles de un cliente específico' })
   @ApiBody({ type: CreateClientDto })
@@ -136,7 +144,7 @@ export class ClientsController {
   }
 
   // Eliminar información de 1 cliente
-  @Delete(pathsClientsController.remove.path)
+  @Delete(removeClient.path)
   // Documentación
   @ApiOperation({ summary: 'Eliminar un cliente específico' })
   @ApiParam({

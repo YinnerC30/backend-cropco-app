@@ -7,10 +7,6 @@ import { DeepPartial } from 'typeorm';
 import { UserActionDto } from './user-action.dto';
 
 export class UpdateUserActionsDto {
-  @ValidateNested()
-  @Type(() => ValidateUUID)
-  user: DeepPartial<User>;
-
   @IsArray()
   @ArrayNotEmpty()
   @ValidateNested()

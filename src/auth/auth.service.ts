@@ -20,6 +20,7 @@ import { pathsSuppliesController } from 'src/supplies/supplies.controller';
 import { pathsUsersController } from 'src/users/users.controller';
 import { pathsWorksController } from 'src/work/work.controller';
 import { ModuleActions } from './entities/module-actions.entity';
+import { pathsAuthController } from './auth.controller';
 
 @Injectable()
 export class AuthService {
@@ -159,6 +160,10 @@ export class AuthService {
   // TODO: Modificar paths en el frontend 😒
   async createModuleWithActions() {
     const modules = {
+      authentication: {
+        paths: pathsAuthController,
+      },
+
       clients: {
         paths: pathsClientsController,
       },

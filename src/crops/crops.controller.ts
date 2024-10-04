@@ -25,35 +25,45 @@ import { Crop } from './entities/crop.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
 
 export const pathsCropsController: PathsController = {
-  create: {
+  createCrop: {
     path: 'create',
     name: 'crear cultivo',
   },
-  getAll: {
+  findAllCrops: {
     path: 'all',
     name: 'obtener todos los cultivos',
   },
-  getOne: {
+  findOneCrop: {
     path: 'one/:id',
     name: 'obtener 1 cultivo',
   },
-  withHarvest: {
-    path: '/with-harvest',
+  findAllCropsWithHarvest: {
+    path: 'with-harvest/all',
     name: 'obtener solo cultivos con cosechas',
   },
-  withWork: {
-    path: '/with-work',
+  findAllCropsWithWork: {
+    path: 'with-work/all',
     name: 'obtener solo cultivos con trabajos realizados',
   },
   updateCrop: {
     path: 'update/one/:id',
     name: 'actualizar 1 cultivo',
   },
-  deleteCrop: {
-    path: 'delete/one/:id',
+  removeCrop: {
+    path: 'remove/one/:id',
     name: 'eliminar 1 cultivo',
   },
 };
+
+const {
+  createCrop,
+  findAllCrops,
+  findOneCrop,
+  findAllCropsWithHarvest,
+  findAllCropsWithWork,
+  updateCrop,
+  removeCrop,
+} = pathsCropsController;
 
 @ApiTags('Crops')
 @Controller('crops')
@@ -63,7 +73,7 @@ export class CropsController {
 
   // Crear cultivo
 
-  @Post('create')
+  @Post(createCrop.path)
   // Documentación
   @ApiOperation({ summary: 'Crear un nuevo cultivo' })
   @ApiCreatedResponse({ description: 'Cultivo creado', type: Crop })
@@ -78,7 +88,7 @@ export class CropsController {
   }
 
   // Obtener todos los cultivos
-  @Get('all')
+  @Get(findAllCrops.path)
   // Documentación
   @ApiOperation({ summary: 'Obtener una lista de todos los cultivos' })
   @ApiResponse({
@@ -94,18 +104,18 @@ export class CropsController {
     return this.cropsService.findAll(queryParams);
   }
 
-  @Get('/with-harvest')
+  @Get(findAllCropsWithHarvest.path)
   findAllWithHarvest(@Query() queryParams: QueryParams) {
     return this.cropsService.findAllWithHarvest(queryParams);
   }
 
-  @Get('/with-work')
+  @Get(findAllCropsWithWork.path)
   findAllWithWork(@Query() queryParams: QueryParams) {
     return this.cropsService.findAllWithWork(queryParams);
   }
 
   // Obtener 1 cultivo
-  @Get('one/:id')
+  @Get(findOneCrop.path)
   // Documentación
   @ApiOperation({ summary: 'Obtener los detalles de un cultivo específico' })
   @ApiResponse({
@@ -124,7 +134,7 @@ export class CropsController {
   }
 
   // Actualización de 1 cultivo
-  @Patch('update/one/:id')
+  @Patch(updateCrop.path)
   // Documentación
   @ApiOperation({ summary: 'Actualizar los detalles de un cultivo específico' })
   @ApiResponse({
@@ -147,7 +157,7 @@ export class CropsController {
   }
 
   // Eliminación de 1 cultivo
-  @Delete('delete/one/:id')
+  @Delete(removeCrop.path)
   // Documentación
   @ApiOperation({ summary: 'Eliminar un cultivo específico' })
   @ApiResponse({ status: 200, description: 'Cultivo eliminado con éxito' })

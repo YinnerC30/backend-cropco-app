@@ -23,17 +23,20 @@ import { PathsController } from 'src/common/interfaces/PathsController';
 
 export const pathsPaymentsController: PathsController = {
   createPayment: { path: 'create', name: 'crear pago' },
-  getAll: { path: 'all', name: 'obtener todos los pagos' },
-  getOnePayment: { path: 'one/:id', name: 'obtener 1 pago' },
-  deletePayment: { path: 'delete/one/:id', name: 'eliminar 1 pago' },
+  findAllPayments: { path: 'all', name: 'obtener todos los pagos' },
+  findOnePayment: { path: 'one/:id', name: 'obtener 1 pago' },
+  removePayment: { path: 'remove/one/:id', name: 'eliminar 1 pago' },
 };
+
+const { createPayment, findAllPayments, findOnePayment, removePayment } =
+  pathsPaymentsController;
 
 @ApiTags('Payments')
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
-  @Post('create')
+  @Post(createPayment.path)
   @ApiOperation({ summary: 'Create a new payment' })
   @ApiResponse({
     status: 201,
@@ -44,7 +47,7 @@ export class PaymentsController {
     return this.paymentsService.create(createPaymentDto);
   }
 
-  @Get('all')
+  @Get(findAllPayments.path)
   @ApiOperation({ summary: 'Get all payments' })
   @ApiResponse({ status: 200, description: 'Return all payments.' })
   @ApiQuery({ type: QueryParams })
@@ -52,7 +55,7 @@ export class PaymentsController {
     return this.paymentsService.findAll(queryParams);
   }
 
-  @Get('one/:id')
+  @Get(findOnePayment.path)
   @ApiOperation({ summary: 'Get a payment by id' })
   @ApiResponse({ status: 200, description: 'Return the payment.' })
   @ApiResponse({ status: 404, description: 'Payment not found.' })
@@ -61,7 +64,7 @@ export class PaymentsController {
     return this.paymentsService.findOne(id);
   }
 
-  @Delete('delete/one/:id')
+  @Delete(removePayment.path)
   @ApiOperation({ summary: 'Delete a payment' })
   @ApiResponse({
     status: 200,

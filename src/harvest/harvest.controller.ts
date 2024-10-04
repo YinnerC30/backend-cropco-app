@@ -26,25 +26,25 @@ export const pathsHarvestsController: PathsController = {
     path: 'processed/create',
     name: 'crear cosecha procesada',
   },
-  getAll: { path: 'all', name: 'obtener todas las cosechas' },
-  getAllHarvestProcessed: {
+  findAllHarvests: { path: 'all', name: 'obtener todas las cosechas' },
+  findAllHarvestsProcessed: {
     path: 'processed/all',
     name: 'obtener todas las cosechas procesadas',
   },
-  getAllStock: {
+  findAllCropsStock: {
     path: 'stock/all',
     name: 'obtener el stock de todos los cultivos',
   },
-  getAllPendingPayments: {
+  findAllHarvestsWithPendingPayments: {
     path: 'pending-payments/all',
     name: 'obtener todas las cosechas con pagos pendientes',
   },
-  getOneEmployeePendingPayments: {
+  findOneEmployeeWithPendingPayments: {
     path: 'pending-payments/one/:id',
     name: 'obtener los pagos pendientes de cosecha de 1 empleado',
   },
-  getOneHarvest: { path: 'one/:id', name: 'obtener 1 cosecha' },
-  getOneHarvestProcessed: {
+  findOneHarvest: { path: 'one/:id', name: 'obtener 1 cosecha' },
+  findOneHarvestProcessed: {
     path: 'processed/one/:id',
     name: 'obtener 1 cosecha procesada',
   },
@@ -53,19 +53,35 @@ export const pathsHarvestsController: PathsController = {
     path: 'processed/update/one/:id',
     name: 'actualizar 1 cosecha procesada',
   },
-  deleteHarvest: { path: 'delete/one/:id', name: 'eliminar 1 cosecha' },
-  deleteHarvestProcessed: {
-    path: 'processed/delete/:id',
+  removeHarvest: { path: 'remove/one/:id', name: 'eliminar 1 cosecha' },
+  removeHarvestProcessed: {
+    path: 'processed/remove/:id',
     name: 'eliminar 1 cosecha procesada',
   },
 };
+
+const {
+  createHarvest,
+  createHarvestProcessed,
+  findAllHarvests,
+  findAllHarvestsProcessed,
+  findAllCropsStock,
+  findAllHarvestsWithPendingPayments,
+  findOneEmployeeWithPendingPayments,
+  findOneHarvest,
+  findOneHarvestProcessed,
+  updateHarvest,
+  updateHarvestProcessed,
+  removeHarvest,
+  removeHarvestProcessed,
+} = pathsHarvestsController;
 
 @ApiTags('Harvests')
 @Controller('harvest')
 export class HarvestController {
   constructor(private readonly harvestService: HarvestService) {}
 
-  @Post('create')
+  @Post(createHarvest.path)
   @ApiResponse({
     status: 201,
     description: 'La cosecha ha sido creada',
@@ -80,7 +96,7 @@ export class HarvestController {
     return this.harvestService.create(createHarvestDto);
   }
 
-  @Post('processed/create')
+  @Post(createHarvestProcessed.path)
   @ApiResponse({
     status: 201,
     description: 'Registro de cosecha procesado ha sido guardado',
@@ -109,7 +125,7 @@ export class HarvestController {
     return this.harvestService.deleteAllHarvest();
   }
 
-  @Get('all')
+  @Get(findAllHarvests.path)
   @ApiResponse({
     status: 200,
     description: 'Se han obtenido todos los registros de cosecha',
@@ -120,7 +136,7 @@ export class HarvestController {
     return this.harvestService.findAll(queryParams);
   }
 
-  @Get('stock/all')
+  @Get(findAllCropsStock.path)
   @ApiResponse({
     status: 200,
     description: 'Se han obtenido todas las cosechas con su respectivo Stock',
@@ -130,14 +146,14 @@ export class HarvestController {
     return this.harvestService.findAllHarvestStock(queryParams);
   }
 
-  @Get('processed/all')
+  @Get(findAllHarvestsProcessed.path)
   @ApiResponse({ status: 200, description: 'List of all processed harvests' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   findAllHarvestProcessed(@Query() queryParams: QueryParams) {
     return this.harvestService.findAllHarvestProcessed(queryParams);
   }
 
-  @Get('one/:id')
+  @Get(findOneHarvest.path)
   @ApiResponse({ status: 200, description: 'Found harvest by ID' })
   @ApiResponse({ status: 404, description: 'Harvest not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
@@ -145,7 +161,7 @@ export class HarvestController {
     return this.harvestService.findOne(id);
   }
 
-  @Get('processed/one/:id')
+  @Get(findOneHarvestProcessed.path)
   @ApiResponse({ status: 200, description: 'Found processed harvest by ID' })
   @ApiResponse({ status: 404, description: 'Processed harvest not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
@@ -153,7 +169,7 @@ export class HarvestController {
     return this.harvestService.findOneHarvestProcessed(id);
   }
 
-  @Patch('update/one/:id')
+  @Patch(updateHarvest.path)
   @ApiResponse({ status: 200, description: 'Harvest updated' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Harvest not found' })
@@ -165,7 +181,7 @@ export class HarvestController {
     return this.harvestService.update(id, updateHarvestDto);
   }
 
-  @Patch('processed/update/one/:id')
+  @Patch(updateHarvestProcessed.path)
   @ApiResponse({ status: 200, description: 'Processed harvest updated' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Processed harvest not found' })
@@ -180,7 +196,7 @@ export class HarvestController {
     );
   }
 
-  @Delete('delete/one/:id')
+  @Delete(removeHarvest.path)
   @ApiResponse({ status: 200, description: 'Harvest deleted' })
   @ApiResponse({ status: 404, description: 'Harvest not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
@@ -188,7 +204,7 @@ export class HarvestController {
     return this.harvestService.remove(id);
   }
 
-  @Delete('processed/delete/one/:id')
+  @Delete(removeHarvestProcessed.path)
   @ApiResponse({ status: 200, description: 'Processed harvest deleted' })
   @ApiResponse({ status: 404, description: 'Processed harvest not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })

@@ -10,33 +10,36 @@ import {
   Query,
 } from '@nestjs/common';
 import {
-  ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import { QueryParams } from 'src/common/dto/QueryParams';
+import { PathsController } from 'src/common/interfaces/PathsController';
 import { CreateSaleDto } from './dto/create-sale.dto';
+import { QueryParamsSale } from './dto/query-params-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
 import { SalesService } from './sales.service';
-import { QueryParamsSale } from './dto/query-params-sale.dto';
-import { PathsController } from 'src/common/interfaces/PathsController';
 
 export const pathsSalesController: PathsController = {
   createSale: { path: 'create', name: 'crear venta' },
-  getAll: { path: 'all', name: 'obtener todas las ventas' },
-  getOneSale: { path: 'one/:id', name: 'obtener 1 venta' },
+  findAllSales: { path: 'all', name: 'obtener todas las ventas' },
+  findOneSale: { path: 'one/:id', name: 'obtener 1 venta' },
   updateSale: { path: 'update/one/:id', name: 'actualizar 1 venta' },
-  deleteSale: { path: 'delete/one/:id', name: 'eliminar 1 venta' },
+  removeSale: { path: 'remove/one/:id', name: 'eliminar 1 venta' },
 };
+
+const { createSale, findAllSales, findOneSale, updateSale, removeSale } =
+  pathsSalesController;
 
 @ApiTags('Sales')
 @Controller('sales')
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
-  @Post('create')
+  @Post(createSale.path)
   @ApiOperation({ summary: 'Create a new sale' })
   @ApiResponse({
     status: 201,
@@ -47,7 +50,7 @@ export class SalesController {
     return this.salesService.create(createSaleDto);
   }
 
-  @Get('all')
+  @Get(findAllSales.path)
   @ApiOperation({ summary: 'Get all sales' })
   @ApiResponse({ status: 200, description: 'Return all sales.' })
   @ApiQuery({ type: QueryParams })
@@ -55,7 +58,7 @@ export class SalesController {
     return this.salesService.findAll(queryParams);
   }
 
-  @Get('one/:id')
+  @Get(findOneSale.path)
   @ApiOperation({ summary: 'Get a sale by id' })
   @ApiResponse({ status: 200, description: 'Return the sale.' })
   @ApiResponse({ status: 404, description: 'Sale not found.' })
@@ -64,7 +67,7 @@ export class SalesController {
     return this.salesService.findOne(id);
   }
 
-  @Patch('update/one/:id')
+  @Patch(updateSale.path)
   @ApiOperation({ summary: 'Update a sale' })
   @ApiResponse({
     status: 200,
@@ -80,7 +83,7 @@ export class SalesController {
     return this.salesService.update(id, updateSaleDto);
   }
 
-  @Delete('delete/one/:id')
+  @Delete(removeSale.path)
   @ApiOperation({ summary: 'Delete a sale' })
   @ApiResponse({
     status: 200,

@@ -21,6 +21,9 @@ export class ModuleActions {
   @Column({ type: 'varchar', default: 'http://localhost' })
   path_endpoint: string;
 
+  @Column({ type: 'boolean', default: false })
+  is_visible: boolean;
+
   @ManyToOne(() => Module, (module) => module.actions, {
     onDelete: 'CASCADE',
   })

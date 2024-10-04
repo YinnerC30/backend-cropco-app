@@ -1,14 +1,23 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { ILike, Repository } from 'typeorm';
+import { DataSource, Equal, ILike, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { hashPassword } from './helpers/encrypt-password';
 import { AuthService } from 'src/auth/auth.service';
 import { UpdateUserActionsDto } from './dto/update-user-actions.dto';
+import { UserActions } from './entities/user-actions.entity';
+import { UserActionDto } from './dto/user-action.dto';
+import { ModuleActions } from 'src/auth/entities/module-actions.entity';
+import { Module } from 'src/auth/entities/module.entity';
 
 @Injectable()
 export class UsersService {
@@ -18,6 +27,17 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+
+    @InjectRepository(UserActions)
+    private readonly userActionsRepository: Repository<UserActions>,
+
+    @InjectRepository(Module)
+    private readonly modulesRepository: Repository<Module>,
+
+    @InjectRepository(ModuleActions)
+    private readonly moduleActionsRepository: Repository<ModuleActions>,
+
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -65,10 +85,63 @@ export class UsersService {
   }
 
   async findOne(id: string) {
-    const user = await this.usersRepository.findOneBy({ id });
-
+    const user = await this.usersRepository.findOne({
+      where: { id },
+    });
     if (!user) throw new NotFoundException(`User with id: ${id} not found`);
-    return user;
+
+    // const userActions = await this.modulesRepository.find({
+    //   select: {
+    //     id: true,
+    //     name: true,
+    //     actions: {
+    //       id: true,
+    //       is_visible: true,
+    //       name: true,
+    //       path_endpoint: true,
+    //       users_actions: false,
+    //     },
+    //   },
+    //   where: {
+    //     actions: {
+    //       users_actions: {
+    //         user: Equal(id),
+    //       },
+    //     },
+    //   },
+    //   relations: {
+    //     actions: {
+    //       users_actions: true,
+    //     },
+    //   },
+    // });
+    const userActions = await this.modulesRepository.find({
+      select: {
+        name: true,
+        actions: {
+          id: true,
+          name: true,
+          path_endpoint: true,
+        },
+      },
+      relations: {
+        actions: true,
+      },
+      where: {
+        actions: {
+          users_actions: {
+            user: {
+              id,
+            },
+          },
+        },
+      },
+    })
+
+    return {
+      ...user,
+      modules: userActions,
+    };
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
@@ -81,8 +154,8 @@ export class UsersService {
   }
 
   async remove(id: string) {
-    const user = await this.findOne(id);
-    await this.usersRepository.remove(user);
+    const { modules, ...user } = await this.findOne(id);
+    await this.usersRepository.remove(user as User);
   }
 
   async deleteAllUsers() {
@@ -93,7 +166,43 @@ export class UsersService {
     }
   }
 
-  async updateActions(updateUserActionsDto: UpdateUserActionsDto) {
-    console.log(updateUserActionsDto);
+  async updateActions(id: string, updateUserActionsDto: UpdateUserActionsDto) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      await this.findOne(id);
+
+      await queryRunner.manager.delete(UserActions, {
+        user: id,
+      });
+
+      for (const action of updateUserActionsDto.actions) {
+        const moduleAction = await queryRunner.manager.findOne(ModuleActions, {
+          where: { id: action.id },
+        });
+
+        if (!moduleAction) {
+          throw new BadRequestException(
+            `Module Action with Id ${action.id} not exist`,
+          );
+        }
+
+        const userActionEntity = queryRunner.manager.create(UserActions, {
+          action: { id: action.id },
+          user: { id },
+        });
+
+        await queryRunner.manager.save(UserActions, userActionEntity);
+      }
+
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.handleDBExceptions(error, this.logger);
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

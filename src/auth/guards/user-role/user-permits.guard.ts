@@ -24,12 +24,12 @@ export class UserPermitsGuard implements CanActivate {
     const req = context.switchToHttp().getRequest();
 
     // Obtener usuario
-    const userRequest = req.user as User;
+    const userRequest = req.user as User as any;
     // Obtener path solicitado
     const pathEndPoint = req.route.path;
 
     // Validar si el usuario tiene acceso a esa ruta
-    const { actions: modulesUser } = userRequest;
+    const { modules: modulesUser } = userRequest;
 
     const actionsUser = modulesUser.map((item: any) => item.actions).flat(1);
     const resultValidation = actionsUser.some(
