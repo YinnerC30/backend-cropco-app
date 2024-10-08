@@ -30,7 +30,7 @@ export const pathsSuppliesController: PathsController = {
   },
   createConsumption: {
     path: 'consumption/create',
-    name: 'crear compra de suplementos',
+    name: 'crear consumo de suplementos',
   },
   findAllSupplies: { path: 'all', name: 'obtener todos los suplementos' },
   findAllStock: {

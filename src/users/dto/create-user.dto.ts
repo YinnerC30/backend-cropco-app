@@ -1,5 +1,14 @@
-import { IsEmail, IsString, MaxLength } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsEmail,
+  IsString,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { UserActionDto } from './user-action.dto';
+import { Type } from 'class-transformer';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -43,4 +52,9 @@ export class CreateUserDto {
   @IsString()
   @MaxLength(10)
   cell_phone_number: string;
+
+  @IsArray()
+  @ValidateNested()
+  @Type(() => UserActionDto)
+  actions: UserActionDto[];
 }

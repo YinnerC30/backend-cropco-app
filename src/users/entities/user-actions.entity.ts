@@ -20,6 +20,7 @@ export class UserActions {
   @ManyToOne(
     () => ModuleActions,
     (moduleActions) => moduleActions.users_actions,
+    { onDelete: 'CASCADE' },
   )
   action: ModuleActions;
 }

@@ -48,8 +48,36 @@ export class AuthService {
     if (!bcrypt.compareSync(password, user.password))
       throw new UnauthorizedException('Credentials are not valid (password)');
 
+    const userPermits = await this.modulesRepository.find({
+      select: {
+        name: true,
+        label: true,
+        actions: {
+          id: true,
+          name: true,
+          path_endpoint: true,
+        },
+      },
+      relations: {
+        actions: true,
+      },
+      where: {
+        actions: {
+          users_actions: {
+            user: {
+              id: user.id,
+            },
+          },
+        },
+      },
+    });
+
     delete user.password;
-    return { ...user, token: this.getJwtToken({ id: user.id }) };
+    return {
+      ...user,
+      modules: userPermits,
+      token: this.getJwtToken({ id: user.id }),
+    };
   }
 
   private getJwtToken(payload: JwtPayload) {
@@ -161,43 +189,59 @@ export class AuthService {
   async createModuleWithActions() {
     const modules = {
       authentication: {
+        label: 'autenticación',
         paths: pathsAuthController,
       },
 
       clients: {
+        label: 'clientes',
         paths: pathsClientsController,
       },
       crops: {
+        label: 'cultivos',
         paths: pathsCropsController,
       },
       employees: {
+        label: 'empleados',
         paths: pathsEmployeesController,
       },
       harvests: {
+        label: 'cosechas',
         paths: pathsHarvestsController,
       },
       payments: {
+        label: 'pagos',
         paths: pathsPaymentsController,
       },
       sales: {
+        label: 'ventas',
         paths: pathsSalesController,
       },
       suppliers: {
+        label: 'proveedores',
         paths: pathsSuppliersController,
       },
       supplies: {
+        label: 'insumos',
         paths: pathsSuppliesController,
       },
       users: {
+        label: 'usuarios',
         paths: pathsUsersController,
       },
       works: {
+        label: 'trabajos',
         paths: pathsWorksController,
       },
     };
 
+    await this.modulesRepository.delete({});
+
     for (const nameModule of Object.keys(modules)) {
-      const modelEntity = this.modulesRepository.create({ name: nameModule });
+      const modelEntity = this.modulesRepository.create({
+        name: nameModule,
+        label: modules[nameModule].label,
+      });
 
       const pathList = Object.keys(modules[nameModule].paths).map(
         (key) => modules[nameModule].paths[key],
@@ -205,12 +249,16 @@ export class AuthService {
 
       modelEntity.actions = pathList.map(({ path, name }: any) =>
         this.moduleActionsRepository.create({
-          name: name.trim().split(' ').join('-'),
+          name: name.trim(),
           path_endpoint: path,
         }),
       );
 
       await this.modulesRepository.save(modelEntity);
     }
+  }
+
+  async findAllModules() {
+    return await this.modulesRepository.find({ relations: { actions: true } });
   }
 }

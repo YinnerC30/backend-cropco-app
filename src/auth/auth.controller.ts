@@ -1,12 +1,10 @@
 import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { User } from 'src/users/entities/user.entity';
+import { PathsController } from 'src/common/interfaces/PathsController';
 import { AuthService } from './auth.service';
 import { Auth } from './decorators/auth.decorator';
-import { GetUser } from './decorators/get-user.decorator';
-import { LoginUserDto } from './dto/login-user.dto';
 import { CheckAuthStatusDto } from './dto/check-status.dto';
-import { PathsController } from 'src/common/interfaces/PathsController';
+import { LoginUserDto } from './dto/login-user.dto';
 
 export const pathsAuthController: PathsController = {
   login: { path: 'login', name: 'login usuario' },
@@ -18,9 +16,23 @@ export const pathsAuthController: PathsController = {
     path: 'check-status',
     name: 'verificar estado del token',
   },
+  createModuleActions: {
+    path: 'module-actions/create',
+    name: 'crear acciones de los modulos',
+  },
+  findAllModules: {
+    path: 'modules/all',
+    name: 'obtener todos los modulos del sistema',
+  },
 };
 
-const { login, renewToken, checkAuthStatus } = pathsAuthController;
+const {
+  login,
+  renewToken,
+  checkAuthStatus,
+  findAllModules,
+  createModuleActions,
+} = pathsAuthController;
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -43,28 +55,13 @@ export class AuthController {
   checkAuthStatus(@Body() token: CheckAuthStatusDto) {
     return this.authService.checkAuthStatus(token);
   }
-  @Get('module-actions')
+  @Get(createModuleActions.path)
   createModuleWithActions() {
     return this.authService.createModuleWithActions();
   }
 
-  // @Get('permits')
-  // getAllPermits() {
-  //   return this.authService.getAllPermits();
-  // }
-  // @Get('module-permits')
-  // getModulePermits() {
-  //   return this.authService.getModulePermits();
-  // }
-
-  // @Get('user-permits')
-  // getUserPermits() {
-  //   return this.authService.getUserPermits();
-  // }
-
-  // @Get('demo')
-  // @Auth()
-  // getDemo() {
-  //   return { ok: true };
-  // }
+  @Get(findAllModules.path)
+  findAllModules() {
+    return this.authService.findAllModules();
+  }
 }

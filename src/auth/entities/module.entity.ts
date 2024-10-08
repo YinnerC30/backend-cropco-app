@@ -6,11 +6,15 @@ export class Module {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true, })
+  @Column({ type: 'varchar', length: 100, unique: true })
   name: string;
+
+  @Column({ type: 'varchar', length: 100, unique: true })
+  label: string;
 
   @OneToMany(() => ModuleActions, (actionsModule) => actionsModule.module, {
     cascade: true,
+    onDelete: 'CASCADE',
   })
   actions: ModuleActions[];
 }

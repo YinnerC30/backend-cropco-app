@@ -5,19 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryParams } from 'src/common/dto/QueryParams';
-import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { DataSource, Equal, ILike, Repository } from 'typeorm';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
-import { hashPassword } from './helpers/encrypt-password';
-import { AuthService } from 'src/auth/auth.service';
-import { UpdateUserActionsDto } from './dto/update-user-actions.dto';
-import { UserActions } from './entities/user-actions.entity';
-import { UserActionDto } from './dto/user-action.dto';
 import { ModuleActions } from 'src/auth/entities/module-actions.entity';
 import { Module } from 'src/auth/entities/module.entity';
+import { QueryParams } from 'src/common/dto/QueryParams';
+import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { DataSource, ILike, Repository } from 'typeorm';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserActionsDto } from './dto/update-user-actions.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserActions } from './entities/user-actions.entity';
+import { User } from './entities/user.entity';
+import { hashPassword } from './helpers/encrypt-password';
 
 @Injectable()
 export class UsersService {
@@ -44,7 +42,17 @@ export class UsersService {
     try {
       const user = this.usersRepository.create(createUserDto);
       user.password = await hashPassword(user.password);
-      await this.usersRepository.save(user);
+
+      const { id } = await this.usersRepository.save(user);
+
+      const actionsEntity = createUserDto.actions.map((act: any) => {
+        return this.userActionsRepository.create({ action: act, user: { id } });
+      });
+
+      for (const element of actionsEntity) {
+        await this.userActionsRepository.save(element);
+      }
+
       return user;
     } catch (error) {
       this.handleDBExceptions(error);
@@ -136,7 +144,7 @@ export class UsersService {
           },
         },
       },
-    })
+    });
 
     return {
       ...user,
@@ -147,7 +155,24 @@ export class UsersService {
   async update(id: string, updateUserDto: UpdateUserDto) {
     await this.findOne(id);
     try {
-      await this.usersRepository.update(id, updateUserDto);
+      const { actions, ...rest } = updateUserDto;
+      rest.password = await hashPassword(rest.password);
+
+      await this.usersRepository.update(id, rest);
+
+      // Acciones
+
+      await this.userActionsRepository.delete({ user: { id } });
+
+      const actionsEntity = updateUserDto.actions.map((act: any) => {
+        return this.userActionsRepository.create({ action: act, user: { id } });
+      });
+
+      for (const element of actionsEntity) {
+        await this.userActionsRepository.save(element);
+      }
+
+      return await this.findOne(id);
     } catch (error) {
       this.handleDBExceptions(error);
     }

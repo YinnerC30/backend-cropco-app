@@ -67,7 +67,7 @@ const {
 
 @ApiTags('Crops')
 @Controller('crops')
-@Auth()
+// @Auth()
 export class CropsController {
   constructor(private readonly cropsService: CropsService) {}
 
