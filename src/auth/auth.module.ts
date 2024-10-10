@@ -29,12 +29,18 @@ import { UserActions } from 'src/users/entities/user-actions.entity';
         return {
           secret: configService.get('JWT_SECRET'),
           signOptions: {
-            expiresIn: '6h',
+            expiresIn: '30s',
           },
         };
       },
     }),
-    TypeOrmModule.forFeature([Role, ModuleCropco, ModuleActions, User, UserActions]),
+    TypeOrmModule.forFeature([
+      Role,
+      ModuleCropco,
+      ModuleActions,
+      User,
+      UserActions,
+    ]),
   ],
   exports: [JwtStrategy, PassportModule, JwtModule, TypeOrmModule],
 })

@@ -13,7 +13,7 @@ export class UserActions {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User, (user) => user.actions)
+  @ManyToOne(() => User, (user) => user.actions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 

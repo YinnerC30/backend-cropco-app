@@ -103,6 +103,6 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserActionsDto: UpdateUserActionsDto,
   ) {
-    return this.usersService.updateActions(id,updateUserActionsDto);
+    return this.usersService.updateActions(id, updateUserActionsDto);
   }
 }

@@ -161,16 +161,18 @@ export class UsersService {
       await this.usersRepository.update(id, rest);
 
       // Acciones
-
       await this.userActionsRepository.delete({ user: { id } });
 
       const actionsEntity = updateUserDto.actions.map((act: any) => {
         return this.userActionsRepository.create({ action: act, user: { id } });
       });
 
+      let arrayPromises = [];
       for (const element of actionsEntity) {
-        await this.userActionsRepository.save(element);
+        arrayPromises.push(this.userActionsRepository.save(element));
       }
+
+      await Promise.all(arrayPromises);
 
       return await this.findOne(id);
     } catch (error) {

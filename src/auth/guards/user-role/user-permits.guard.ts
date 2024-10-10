@@ -31,10 +31,13 @@ export class UserPermitsGuard implements CanActivate {
     // Validar si el usuario tiene acceso a esa ruta
     const { modules: modulesUser } = userRequest;
 
-    const actionsUser = modulesUser.map((item: any) => item.actions).flat(1);
-    const resultValidation = actionsUser.some(
-      (item) => item.path_endpoint === pathEndPoint,
-    );
+    const actionsUser = modulesUser
+      .map((item: any) => item.actions.map((i: any) => i.path_endpoint))
+      .flat(1);
+
+    console.log(actionsUser, pathEndPoint);
+
+    const resultValidation = actionsUser.includes(pathEndPoint);
 
     if (resultValidation) return true;
 

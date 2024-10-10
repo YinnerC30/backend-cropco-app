@@ -14,7 +14,6 @@ export class Module {
 
   @OneToMany(() => ModuleActions, (actionsModule) => actionsModule.module, {
     cascade: true,
-    onDelete: 'CASCADE',
   })
   actions: ModuleActions[];
 }

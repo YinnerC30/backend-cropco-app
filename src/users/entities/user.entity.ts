@@ -40,7 +40,9 @@ export class User extends PersonalInformation {
   @Column('bool', { default: false })
   is_active: boolean;
 
-  @OneToMany(() => UserActions, (userActions) => userActions.user)
+  @OneToMany(() => UserActions, (userActions) => userActions.user, {
+    cascade: true,
+  })
   actions: UserActions[];
 
   @BeforeInsert()

@@ -40,7 +40,7 @@ export class AuthService {
     const { password, email } = loginUserDto;
     const user = await this.usersRepository.findOne({
       where: { email },
-      select: { email: true, password: true, id: true },
+      select: { email: true, password: true, id: true, first_name: true },
     });
     if (!user)
       throw new UnauthorizedException('Credentials are not valid (email)');
@@ -188,7 +188,7 @@ export class AuthService {
   // TODO: Modificar paths en el frontend 😒
   async createModuleWithActions() {
     const modules = {
-      authentication: {
+      auth: {
         label: 'autenticación',
         paths: pathsAuthController,
       },
@@ -243,9 +243,13 @@ export class AuthService {
         label: modules[nameModule].label,
       });
 
-      const pathList = Object.keys(modules[nameModule].paths).map(
-        (key) => modules[nameModule].paths[key],
-      );
+      const pathList = Object.keys(modules[nameModule].paths).map((key) => {
+        const element = modules[nameModule].paths[key];
+        return {
+          ...element,
+          path: `/${nameModule}/${element.path}`,
+        };
+      });
 
       modelEntity.actions = pathList.map(({ path, name }: any) =>
         this.moduleActionsRepository.create({
