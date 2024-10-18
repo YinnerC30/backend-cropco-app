@@ -24,11 +24,11 @@ import { UpdateSaleDto } from './dto/update-sale.dto';
 import { SalesService } from './sales.service';
 
 export const pathsSalesController: PathsController = {
-  createSale: { path: 'create', name: 'crear venta' },
-  findAllSales: { path: 'all', name: 'obtener todas las ventas' },
-  findOneSale: { path: 'one/:id', name: 'obtener 1 venta' },
-  updateSale: { path: 'update/one/:id', name: 'actualizar 1 venta' },
-  removeSale: { path: 'remove/one/:id', name: 'eliminar 1 venta' },
+  createSale: { path: 'create', description: 'crear venta' },
+  findAllSales: { path: 'all', description: 'obtener todas las ventas' },
+  findOneSale: { path: 'one/:id', description: 'obtener 1 venta' },
+  updateSale: { path: 'update/one/:id', description: 'actualizar 1 venta' },
+  removeSale: { path: 'remove/one/:id', description: 'eliminar 1 venta' },
 };
 
 const { createSale, findAllSales, findOneSale, updateSale, removeSale } =

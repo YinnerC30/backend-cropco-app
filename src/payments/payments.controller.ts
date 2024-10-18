@@ -22,10 +22,10 @@ import { QueryParamsPayment } from './dto/query-params-payment.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 
 export const pathsPaymentsController: PathsController = {
-  createPayment: { path: 'create', name: 'crear pago' },
-  findAllPayments: { path: 'all', name: 'obtener todos los pagos' },
-  findOnePayment: { path: 'one/:id', name: 'obtener 1 pago' },
-  removePayment: { path: 'remove/one/:id', name: 'eliminar 1 pago' },
+  createPayment: { path: 'create', description: 'crear pago' },
+  findAllPayments: { path: 'all', description: 'obtener todos los pagos' },
+  findOnePayment: { path: 'one/:id', description: 'obtener 1 pago' },
+  removePayment: { path: 'remove/one/:id', description: 'eliminar 1 pago' },
 };
 
 const { createPayment, findAllPayments, findOnePayment, removePayment } =

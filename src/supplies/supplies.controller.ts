@@ -23,48 +23,48 @@ import { QueryParamsConsumption } from './dto/query-params-consumption.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 
 export const pathsSuppliesController: PathsController = {
-  createSupply: { path: 'create', name: 'crear un suplemento' },
+  createSupply: { path: 'create', description: 'crear un suplemento' },
   createPurchase: {
     path: 'purchase/create',
-    name: 'crear compra de suplementos',
+    description: 'crear compra de suplementos',
   },
   createConsumption: {
     path: 'consumption/create',
-    name: 'crear consumo de suplementos',
+    description: 'crear consumo de suplementos',
   },
-  findAllSupplies: { path: 'all', name: 'obtener todos los suplementos' },
+  findAllSupplies: { path: 'all', description: 'obtener todos los suplementos' },
   findAllStock: {
     path: 'stock/all',
-    name: 'obtener el stock de todos los suplementos',
+    description: 'obtener el stock de todos los suplementos',
   },
-  findAllPurchase: { path: 'purchase/all', name: 'obtener todas las compras' },
+  findAllPurchase: { path: 'purchase/all', description: 'obtener todas las compras' },
   findAllConsumption: {
     path: 'consumption/all',
-    name: 'obtener todos los consumos de suplementos',
+    description: 'obtener todos los consumos de suplementos',
   },
-  findOneSupply: { path: 'one/:id', name: 'obtener 1 suplemento' },
-  findOnePurchase: { path: 'purchase/one/:id', name: 'obtener 1 compra' },
+  findOneSupply: { path: 'one/:id', description: 'obtener 1 suplemento' },
+  findOnePurchase: { path: 'purchase/one/:id', description: 'obtener 1 compra' },
   findOneConsumption: {
     path: 'consumption/one/:id',
-    name: 'obtener 1 consumo',
+    description: 'obtener 1 consumo',
   },
-  updateSupply: { path: 'update/one/:id', name: 'actualizar suplemento' },
+  updateSupply: { path: 'update/one/:id', description: 'actualizar suplemento' },
   updatePurchase: {
     path: 'purchase/update/one/:id',
-    name: 'actualizar 1 compra',
+    description: 'actualizar 1 compra',
   },
   updateConsumption: {
     path: 'consumption/update/one/:id',
-    name: 'actualizar 1 consumo',
+    description: 'actualizar 1 consumo',
   },
-  removeSupply: { path: 'remove/one/:id', name: 'eliminar 1 suplemento' },
+  removeSupply: { path: 'remove/one/:id', description: 'eliminar 1 suplemento' },
   removePurchase: {
     path: 'purchase/remove/one/:id',
-    name: 'eliminar 1 compra',
+    description: 'eliminar 1 compra',
   },
   removeConsumption: {
     path: 'consumption/remove/one/:id',
-    name: 'eliminar 1 consumo',
+    description: 'eliminar 1 consumo',
   },
 };
 

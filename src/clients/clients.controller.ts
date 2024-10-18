@@ -26,22 +26,22 @@ import { Client } from './entities/client.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
 
 export const pathsClientsController: PathsController = {
-  createClient: { path: 'create', name: 'crear cliente' },
+  createClient: { path: 'create', description: 'crear cliente' },
   findAllClients: {
     path: 'all',
-    name: 'obtener todos los clientes',
+    description: 'obtener todos los clientes',
   },
   findOneClient: {
     path: 'one/:id',
-    name: 'obtener 1 cliente',
+    description: 'obtener 1 cliente',
   },
   updateClient: {
     path: 'update/one/:id',
-    name: 'actualizar 1 cliente',
+    description: 'actualizar 1 cliente',
   },
   removeClient: {
     path: 'remove/one/:id',
-    name: 'eliminar 1 cliente',
+    description: 'eliminar 1 cliente',
   },
 };
 

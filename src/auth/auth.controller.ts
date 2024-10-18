@@ -1,4 +1,12 @@
-import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { AuthService } from './auth.service';
@@ -7,22 +15,26 @@ import { CheckAuthStatusDto } from './dto/check-status.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 
 export const pathsAuthController: PathsController = {
-  login: { path: 'login', name: 'login usuario' },
+  login: { path: 'login', description: 'login usuario' },
   renewToken: {
     path: 'renew-token',
-    name: 'renovar jwt del usuario',
+    description: 'renovar jwt del usuario',
   },
   checkAuthStatus: {
     path: 'check-status',
-    name: 'verificar estado del token',
+    description: 'verificar estado del token',
   },
   createModuleActions: {
     path: 'module-actions/create',
-    name: 'crear acciones de los modulos',
+    description: 'crear acciones de los modulos',
   },
   findAllModules: {
     path: 'modules/all',
-    name: 'obtener todos los modulos del sistema',
+    description: 'obtener todos los modulos del sistema',
+  },
+  findOneModule: {
+    path: 'modules/one/:name',
+    description: 'obtener un modulo del sistema',
   },
 };
 
@@ -32,6 +44,7 @@ const {
   checkAuthStatus,
   findAllModules,
   createModuleActions,
+  findOneModule,
 } = pathsAuthController;
 
 @ApiTags('Authentication')
@@ -63,5 +76,10 @@ export class AuthController {
   @Get(findAllModules.path)
   findAllModules() {
     return this.authService.findAllModules();
+  }
+
+  @Get(findOneModule.path)
+  findOneModule(@Param('name') name: string) {
+    return this.authService.findOneModule(name);
   }
 }

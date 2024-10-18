@@ -20,15 +20,36 @@ import { PathsController } from 'src/common/interfaces/PathsController';
 import { UpdateUserActionsDto } from './dto/update-user-actions.dto';
 
 export const pathsUsersController: PathsController = {
-  createUser: { path: 'create', name: 'crear usuario' },
-  findAllUsers: { path: 'all', name: 'obtener todos los usuarios' },
-  findOneUser: { path: 'one/:id', name: 'obtener 1 usuario' },
-  updateUser: { path: 'update/one/:id', name: 'actualizar 1 usuario' },
-  removeUser: { path: 'remove/one/:id', name: 'eliminar 1 usuario' },
-  updateActions: {
-    path: 'update/actions/one/:id',
-    name: 'actualizar acciones de 1 usuario',
+  createUser: {
+    path: 'create',
+    description: 'crear usuario',
+    name: 'create_user',
   },
+  findAllUsers: {
+    path: 'all',
+    description: 'obtener todos los usuarios',
+    name: 'find_all_users',
+  },
+  findOneUser: {
+    path: 'one/:id',
+    description: 'obtener 1 usuario',
+    name: 'find_one_user',
+  },
+  updateUser: {
+    path: 'update/one/:id',
+    description: 'actualizar 1 usuario',
+    name: 'update_one_user',
+  },
+  removeUser: {
+    path: 'remove/one/:id',
+    description: 'eliminar 1 usuario',
+    name: 'remove_one_user',
+  },
+  // updateActions: {
+  //   path: 'update/actions/one/:id',
+  //   description: 'actualizar acciones de 1 usuario',
+  //   name: 'update_actions_one_user',
+  // },
 };
 
 const {
@@ -98,11 +119,11 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
-  @Patch(updateActions.path)
-  updateActions(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateUserActionsDto: UpdateUserActionsDto,
-  ) {
-    return this.usersService.updateActions(id, updateUserActionsDto);
-  }
+  // @Patch(updateActions.path)
+  // updateActions(
+  //   @Param('id', ParseUUIDPipe) id: string,
+  //   @Body() updateUserActionsDto: UpdateUserActionsDto,
+  // ) {
+  //   return this.usersService.updateActions(id, updateUserActionsDto);
+  // }
 }

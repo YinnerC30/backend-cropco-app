@@ -34,7 +34,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         name: true,
         actions: {
           id: true,
-          name: true,
+          description: true,
           path_endpoint: true,
         },
       },

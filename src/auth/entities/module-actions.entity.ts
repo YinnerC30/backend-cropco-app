@@ -15,8 +15,11 @@ export class ModuleActions {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', default: 'none' })
   name: string;
+
+  @Column({ type: 'varchar' })
+  description: string;
 
   @Column({ type: 'varchar', default: 'http://localhost' })
   path_endpoint: string;

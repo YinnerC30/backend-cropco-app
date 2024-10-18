@@ -18,11 +18,11 @@ import { QueryParamsWork } from './dto/query-params-work.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 
 export const pathsWorksController: PathsController = {
-  createWork: { path: 'create', name: 'crear trabajo' },
-  findAllWorks: { path: 'all', name: 'obtener todos los trabajos' },
-  findOneWork: { path: 'one/:id', name: 'obtener 1 trabajo' },
-  updateWork: { path: 'update/:id', name: 'actualizar 1 trabajo' },
-  removeWork: { path: 'remove/:id', name: 'eliminar 1 trabajo' },
+  createWork: { path: 'create', description: 'crear trabajo' },
+  findAllWorks: { path: 'all', description: 'obtener todos los trabajos' },
+  findOneWork: { path: 'one/:id', description: 'obtener 1 trabajo' },
+  updateWork: { path: 'update/:id', description: 'actualizar 1 trabajo' },
+  removeWork: { path: 'remove/:id', description: 'eliminar 1 trabajo' },
 };
 
 const { createWork, findAllWorks, findOneWork, updateWork, removeWork } =

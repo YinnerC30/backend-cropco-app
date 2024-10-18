@@ -21,42 +21,42 @@ import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 
 export const pathsHarvestsController: PathsController = {
-  createHarvest: { path: 'create', name: 'crear cosecha' },
+  createHarvest: { path: 'create', description: 'crear cosecha' },
   createHarvestProcessed: {
     path: 'processed/create',
-    name: 'crear cosecha procesada',
+    description: 'crear cosecha procesada',
   },
-  findAllHarvests: { path: 'all', name: 'obtener todas las cosechas' },
+  findAllHarvests: { path: 'all', description: 'obtener todas las cosechas' },
   findAllHarvestsProcessed: {
     path: 'processed/all',
-    name: 'obtener todas las cosechas procesadas',
+    description: 'obtener todas las cosechas procesadas',
   },
   findAllCropsStock: {
     path: 'stock/all',
-    name: 'obtener el stock de todos los cultivos',
+    description: 'obtener el stock de todos los cultivos',
   },
   findAllHarvestsWithPendingPayments: {
     path: 'pending-payments/all',
-    name: 'obtener todas las cosechas con pagos pendientes',
+    description: 'obtener todas las cosechas con pagos pendientes',
   },
   findOneEmployeeWithPendingPayments: {
     path: 'pending-payments/one/:id',
-    name: 'obtener los pagos pendientes de cosecha de 1 empleado',
+    description: 'obtener los pagos pendientes de cosecha de 1 empleado',
   },
-  findOneHarvest: { path: 'one/:id', name: 'obtener 1 cosecha' },
+  findOneHarvest: { path: 'one/:id', description: 'obtener 1 cosecha' },
   findOneHarvestProcessed: {
     path: 'processed/one/:id',
-    name: 'obtener 1 cosecha procesada',
+    description: 'obtener 1 cosecha procesada',
   },
-  updateHarvest: { path: 'update/one/:id', name: 'actualizar 1 cosecha' },
+  updateHarvest: { path: 'update/one/:id', description: 'actualizar 1 cosecha' },
   updateHarvestProcessed: {
     path: 'processed/update/one/:id',
-    name: 'actualizar 1 cosecha procesada',
+    description: 'actualizar 1 cosecha procesada',
   },
-  removeHarvest: { path: 'remove/one/:id', name: 'eliminar 1 cosecha' },
+  removeHarvest: { path: 'remove/one/:id', description: 'eliminar 1 cosecha' },
   removeHarvestProcessed: {
     path: 'processed/remove/:id',
-    name: 'eliminar 1 cosecha procesada',
+    description: 'eliminar 1 cosecha procesada',
   },
 };
 

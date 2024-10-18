@@ -128,7 +128,7 @@ export class UsersService {
         name: true,
         actions: {
           id: true,
-          name: true,
+          description: true,
           path_endpoint: true,
         },
       },

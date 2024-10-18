@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
@@ -54,7 +58,7 @@ export class AuthService {
         label: true,
         actions: {
           id: true,
-          name: true,
+          description: true,
           path_endpoint: true,
         },
       },
@@ -152,7 +156,7 @@ export class AuthService {
         name: true,
         actions: {
           id: true,
-          name: true,
+          description: true,
         },
       },
       relations: {
@@ -251,9 +255,10 @@ export class AuthService {
         };
       });
 
-      modelEntity.actions = pathList.map(({ path, name }: any) =>
+      modelEntity.actions = pathList.map(({ path, description, name }: any) =>
         this.moduleActionsRepository.create({
-          name: name.trim(),
+          name: name,
+          description: description.trim(),
           path_endpoint: path,
         }),
       );
@@ -264,5 +269,19 @@ export class AuthService {
 
   async findAllModules() {
     return await this.modulesRepository.find({ relations: { actions: true } });
+  }
+  async findOneModule(name: string) {
+    const module = await this.modulesRepository.findOne({
+      where: {
+        name: name,
+      },
+      relations: { actions: true },
+    });
+
+    if (!module) {
+      throw new NotFoundException(`Module with name: ${name} not found`);
+    }
+
+    return module;
   }
 }

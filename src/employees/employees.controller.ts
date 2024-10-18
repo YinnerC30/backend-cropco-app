@@ -20,31 +20,31 @@ import { PathsController } from 'src/common/interfaces/PathsController';
 export const pathsEmployeesController: PathsController = {
   createEmployee: {
     path: 'create',
-    name: 'crear empleado',
+    description: 'crear empleado',
   },
   findAllEmployees: {
     path: 'all',
-    name: 'obtener todos los empleados',
+    description: 'obtener todos los empleados',
   },
   findAllEmployeesWithPendingPayments: {
     path: 'pending-payments/all',
-    name: 'obtener todos los empleados con pagos pendientes',
+    description: 'obtener todos los empleados con pagos pendientes',
   },
   findOneEmployeeWithPendingPayments: {
     path: 'pending-payments/one/:id',
-    name: 'obtener los pagos pendientes de 1 empleado',
+    description: 'obtener los pagos pendientes de 1 empleado',
   },
   findOneEmployee: {
     path: 'one/:id',
-    name: 'obtener 1 empleado',
+    description: 'obtener 1 empleado',
   },
   updateEmployee: {
     path: 'update/one/:id',
-    name: 'actualizar 1 empleado',
+    description: 'actualizar 1 empleado',
   },
   removeEmployee: {
     path: 'remove/one/:id',
-    name: 'eliminar 1 empleado',
+    description: 'eliminar 1 empleado',
   },
 };
 
