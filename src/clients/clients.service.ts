@@ -6,6 +6,9 @@ import { ILike, Repository } from 'typeorm';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
+import { PrinterService } from 'src/printer/printer.service';
+import { getHelloWorldReport } from './reports/hello-world.report';
+import { getClientsReport } from './reports/get-all-clients.report';
 
 @Injectable()
 export class ClientsService {
@@ -15,6 +18,7 @@ export class ClientsService {
   constructor(
     @InjectRepository(Client)
     private readonly clientRepository: Repository<Client>,
+    private readonly printerService: PrinterService,
   ) {}
 
   async create(createClientDto: CreateClientDto) {
@@ -89,5 +93,19 @@ export class ClientsService {
     } catch (error) {
       this.handleDBExceptions(error);
     }
+  }
+
+  async exportTest() {
+    const docDefinition = getHelloWorldReport({
+      name: 'Yinner Chilito',
+    });
+    const doc = this.printerService.createPdf(docDefinition);
+    return doc;
+  }
+  async exportAllClients() {
+    const clients = await this.clientRepository.find();
+    const docDefinition = getClientsReport({ clients });
+
+    return this.printerService.createPdf(docDefinition);
   }
 }

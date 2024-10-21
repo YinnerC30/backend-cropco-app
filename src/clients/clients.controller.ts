@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -24,6 +25,7 @@ import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
+import { Response } from 'express';
 
 export const pathsClientsController: PathsController = {
   createClient: { path: 'create', description: 'crear cliente' },
@@ -57,6 +59,25 @@ const {
 @Controller('clients')
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
+
+  @Get('export/test')
+  async exportTest(@Res() response: Response) {
+    const pdfDoc = await this.clientsService.exportTest();
+    console.log(pdfDoc);
+    response.setHeader('Content-Type', 'application/pdf');
+    pdfDoc.info.Title = 'Mi primer PDF';
+    pdfDoc.pipe(response);
+    pdfDoc.end();
+  }
+
+  @Get('export/all')
+  async exportAllClients(@Res() response: Response) {
+    const pdfDoc = await this.clientsService.exportAllClients();
+    response.setHeader('Content-Type', 'application/pdf');
+    pdfDoc.info.Title = 'Listado de clientes';
+    pdfDoc.pipe(response);
+    pdfDoc.end();
+  }
 
   // Crear cliente
   @Post(createClient.path)
