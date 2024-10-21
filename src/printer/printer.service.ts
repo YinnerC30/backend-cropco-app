@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import PdfPrinter from 'pdfmake';
 import { BufferOptions, TDocumentDefinitions } from 'pdfmake/interfaces';
-import { getHelloWorldReport } from './reports/hello-world.report';
+
 
 const fonts = {
   Roboto: {
@@ -21,13 +21,5 @@ export class PrinterService {
     options: BufferOptions = {},
   ): PDFKit.PDFDocument {
     return this.printer.createPdfKitDocument(docDefinition, options);
-  }
-
-  test() {
-    const docDefinition = getHelloWorldReport({
-      name: 'Fernando Herrera',
-    });
-    const doc = this.createPdf(docDefinition);
-    return doc;
   }
 }

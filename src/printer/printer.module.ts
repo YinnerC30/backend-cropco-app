@@ -1,11 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { PrinterService } from './printer.service';
-
-import { PrinterController } from './printer.controller';
-
+@Global()
 @Module({
   providers: [PrinterService],
   exports: [PrinterService],
-  controllers: [PrinterController],
 })
 export class PrinterModule {}
