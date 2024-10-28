@@ -189,7 +189,6 @@ export class AuthService {
     return { userPermits1, userPermits2 };
   }
 
-  // TODO: Modificar paths en el frontend 😒
   async createModuleWithActions() {
     const modules = {
       auth: {

@@ -21,6 +21,7 @@ import { WorkService } from 'src/work/work.service';
 import { DataSource, DeepPartial } from 'typeorm';
 import { UsersService } from './../users/users.service';
 import { initialData } from './data/seed-data';
+// import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class SeedService {
@@ -45,10 +46,12 @@ export class SeedService {
     private readonly workService: WorkService,
     private readonly salesService: SalesService,
     private readonly paymentsService: PaymentsService,
+    // private readonly authService: AuthService,
   ) {}
 
   async runSeed() {
     await this.deleteTables();
+    // await this.authService.createModuleWithActions();
     await this.insertNewUsers();
     await this.insertNewClients();
     await this.insertNewSuppliers();
@@ -62,6 +65,10 @@ export class SeedService {
     // await this.insertNewWork();
     // await this.insertNewSales();
     // await this.insertNewPayments();
+
+    console.log({
+      msg: 'Seed ejecutado...',
+    });
 
     return 'SEED EXECUTED';
   }
@@ -86,9 +93,9 @@ export class SeedService {
 
     const insertPromises = [];
 
-    /* Users.forEach((user) => {
-      insertPromises.push(this.usersService.create(user));
-    }); */
+    Users.forEach((user) => {
+      insertPromises.push(this.usersService.create({ ...user, actions: [] }));
+    });
 
     await Promise.all(insertPromises);
 

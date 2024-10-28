@@ -16,6 +16,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserActions } from './entities/user-actions.entity';
 import { User } from './entities/user.entity';
 import { hashPassword } from './helpers/encrypt-password';
+import { RemoveBulkUsersDto } from './dto/remove-bulk-users.dto';
 
 @Injectable()
 export class UsersService {
@@ -156,7 +157,6 @@ export class UsersService {
     await this.findOne(id);
     try {
       const { actions, ...rest } = updateUserDto;
-      rest.password = await hashPassword(rest.password);
 
       await this.usersRepository.update(id, rest);
 
@@ -183,6 +183,12 @@ export class UsersService {
   async remove(id: string) {
     const { modules, ...user } = await this.findOne(id);
     await this.usersRepository.remove(user as User);
+  }
+
+  async removeBulk(removeBulkUsersDto: RemoveBulkUsersDto) {
+    for (const { id } of removeBulkUsersDto.userIds) {
+      await this.remove(id);
+    }
   }
 
   async deleteAllUsers() {

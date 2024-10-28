@@ -10,14 +10,15 @@ import {
   Query,
 } from '@nestjs/common';
 
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { QueryParams } from 'src/common/dto/QueryParams';
+import { PathsController } from 'src/common/interfaces/PathsController';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UsersService } from './users.service';
-import { QueryParams } from 'src/common/dto/QueryParams';
-import { ApiTags, ApiResponse } from '@nestjs/swagger';
 import { User } from './entities/user.entity';
-import { PathsController } from 'src/common/interfaces/PathsController';
-import { UpdateUserActionsDto } from './dto/update-user-actions.dto';
+import { UsersService } from './users.service';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { RemoveBulkUsersDto } from './dto/remove-bulk-users.dto';
 
 export const pathsUsersController: PathsController = {
   createUser: {
@@ -45,11 +46,11 @@ export const pathsUsersController: PathsController = {
     description: 'eliminar 1 usuario',
     name: 'remove_one_user',
   },
-  // updateActions: {
-  //   path: 'update/actions/one/:id',
-  //   description: 'actualizar acciones de 1 usuario',
-  //   name: 'update_actions_one_user',
-  // },
+  removeUsers: {
+    path: 'remove/bulk',
+    description: 'eliminar varios usuarios',
+    name: 'remove_bulk_users',
+  },
 };
 
 const {
@@ -58,9 +59,10 @@ const {
   findOneUser,
   updateUser,
   removeUser,
-  updateActions,
+  removeUsers,
 } = pathsUsersController;
 
+// @Auth()
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
@@ -119,11 +121,12 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
-  // @Patch(updateActions.path)
-  // updateActions(
-  //   @Param('id', ParseUUIDPipe) id: string,
-  //   @Body() updateUserActionsDto: UpdateUserActionsDto,
-  // ) {
-  //   return this.usersService.updateActions(id, updateUserActionsDto);
-  // }
+  @Delete(removeUsers.path)
+  @ApiResponse({
+    status: 200,
+    description: 'Usuarios eliminados exitosamente',
+  })
+  removeBulk(@Body() removeBulkUsersDto: RemoveBulkUsersDto) {
+    return this.usersService.removeBulk(removeBulkUsersDto);
+  }
 }

@@ -70,7 +70,7 @@ export class ClientsController {
     pdfDoc.end();
   }
 
-  @Get('export/all')
+  @Get('export/all/pdf')
   async exportAllClients(@Res() response: Response) {
     const pdfDoc = await this.clientsService.exportAllClients();
     response.setHeader('Content-Type', 'application/pdf');
