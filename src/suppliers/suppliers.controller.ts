@@ -23,11 +23,31 @@ import { QueryParams } from 'src/common/dto/QueryParams';
 import { PathsController } from 'src/common/interfaces/PathsController';
 
 export const pathsSuppliersController: PathsController = {
-  createSupplier: { path: 'create', description: 'crear proveedor' },
-  findAllSuppliers: { path: 'all', description: 'obtener todos los proveedores' },
-  findOneSupplier: { path: 'one/:id', description: 'obtener 1 proveedor' },
-  updateSupplier: { path: 'update/one/:id', description: 'actualizar 1 proveedor' },
-  removeSupplier: { path: 'remove/one/:id', description: 'eliminar 1 proveedor' },
+  createSupplier: {
+    path: 'create',
+    description: 'crear proveedor',
+    name: 'create_supplier',
+  },
+  findAllSuppliers: {
+    path: 'all',
+    description: 'obtener todos los proveedores',
+    name: 'find_all_suppliers',
+  },
+  findOneSupplier: {
+    path: 'one/:id',
+    description: 'obtener 1 proveedor',
+    name: 'find_one_supplier',
+  },
+  updateSupplier: {
+    path: 'update/one/:id',
+    description: 'actualizar 1 proveedor',
+    name: 'update_one_supplier',
+  },
+  removeSupplier: {
+    path: 'remove/one/:id',
+    description: 'eliminar 1 proveedor',
+    name: 'remove_one_supplier',
+  },
 };
 
 const {

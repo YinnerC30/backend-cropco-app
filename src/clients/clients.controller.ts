@@ -28,22 +28,30 @@ import { PathsController } from 'src/common/interfaces/PathsController';
 import { Response } from 'express';
 
 export const pathsClientsController: PathsController = {
-  createClient: { path: 'create', description: 'crear cliente' },
+  createClient: {
+    path: 'create',
+    description: 'crear cliente',
+    name: 'create_client',
+  },
   findAllClients: {
     path: 'all',
     description: 'obtener todos los clientes',
+    name: 'find_all_clients',
   },
   findOneClient: {
     path: 'one/:id',
     description: 'obtener 1 cliente',
+    name: 'find_one_client',
   },
   updateClient: {
     path: 'update/one/:id',
     description: 'actualizar 1 cliente',
+    name: 'update_one_client',
   },
   removeClient: {
     path: 'remove/one/:id',
     description: 'eliminar 1 cliente',
+    name: 'remove_one_client',
   },
 };
 

@@ -60,6 +60,7 @@ export class AuthService {
           id: true,
           description: true,
           path_endpoint: true,
+          name: true,
         },
       },
       relations: {

@@ -28,30 +28,37 @@ export const pathsCropsController: PathsController = {
   createCrop: {
     path: 'create',
     description: 'crear cultivo',
+    name: 'create_crop',
   },
   findAllCrops: {
     path: 'all',
     description: 'obtener todos los cultivos',
+    name: 'find_all_crops',
   },
   findOneCrop: {
     path: 'one/:id',
     description: 'obtener 1 cultivo',
+    name: 'find_one_crop',
   },
   findAllCropsWithHarvest: {
     path: 'with-harvest/all',
     description: 'obtener solo cultivos con cosechas',
+    name: 'find_all_crops_with_harvest',
   },
   findAllCropsWithWork: {
     path: 'with-work/all',
     description: 'obtener solo cultivos con trabajos realizados',
+    name: 'find_all_crops_with_work',
   },
   updateCrop: {
     path: 'update/one/:id',
     description: 'actualizar 1 cultivo',
+    name: 'update_one_crop',
   },
   removeCrop: {
     path: 'remove/one/:id',
     description: 'eliminar 1 cultivo',
+    name: 'remove_one_crop',
   },
 };
 

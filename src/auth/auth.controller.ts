@@ -15,26 +15,31 @@ import { CheckAuthStatusDto } from './dto/check-status.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 
 export const pathsAuthController: PathsController = {
-  login: { path: 'login', description: 'login usuario' },
+  login: { path: 'login', description: 'login usuario', name: 'login_user' },
   renewToken: {
     path: 'renew-token',
     description: 'renovar jwt del usuario',
+    name: 'renew_token',
   },
   checkAuthStatus: {
     path: 'check-status',
     description: 'verificar estado del token',
+    name: 'check_status_token',
   },
   createModuleActions: {
     path: 'module-actions/create',
     description: 'crear acciones de los modulos',
+    name: 'create_module_actions',
   },
   findAllModules: {
     path: 'modules/all',
     description: 'obtener todos los modulos del sistema',
+    name: 'find_all_modules',
   },
   findOneModule: {
     path: 'modules/one/:name',
     description: 'obtener un modulo del sistema',
+    name: 'find_one_module',
   },
 };
 
