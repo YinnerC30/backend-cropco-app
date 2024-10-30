@@ -99,31 +99,6 @@ export class UsersService {
     });
     if (!user) throw new NotFoundException(`User with id: ${id} not found`);
 
-    // const userActions = await this.modulesRepository.find({
-    //   select: {
-    //     id: true,
-    //     name: true,
-    //     actions: {
-    //       id: true,
-    //       is_visible: true,
-    //       name: true,
-    //       path_endpoint: true,
-    //       users_actions: false,
-    //     },
-    //   },
-    //   where: {
-    //     actions: {
-    //       users_actions: {
-    //         user: Equal(id),
-    //       },
-    //     },
-    //   },
-    //   relations: {
-    //     actions: {
-    //       users_actions: true,
-    //     },
-    //   },
-    // });
     const userActions = await this.modulesRepository.find({
       select: {
         name: true,
@@ -131,6 +106,7 @@ export class UsersService {
           id: true,
           description: true,
           path_endpoint: true,
+          name: true,
         },
       },
       relations: {
