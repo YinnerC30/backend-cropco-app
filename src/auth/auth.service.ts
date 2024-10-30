@@ -25,6 +25,8 @@ import { pathsUsersController } from 'src/users/users.controller';
 import { pathsWorksController } from 'src/work/work.controller';
 import { ModuleActions } from './entities/module-actions.entity';
 import { pathsAuthController } from './auth.controller';
+import { UsersService } from 'src/users/users.service';
+import { UserActionDto } from 'src/users/dto/user-action.dto';
 
 @Injectable()
 export class AuthService {
@@ -38,14 +40,28 @@ export class AuthService {
     @InjectRepository(ModuleActions)
     private readonly moduleActionsRepository: Repository<ModuleActions>,
     private readonly jwtService: JwtService,
+    private readonly userService: UsersService,
   ) {}
 
   async login(loginUserDto: LoginUserDto) {
     const { password, email } = loginUserDto;
     const user = await this.usersRepository.findOne({
       where: { email },
-      select: { email: true, password: true, id: true, first_name: true },
+      select: {
+        email: true,
+        password: true,
+        id: true,
+        first_name: true,
+        is_active: true,
+      },
     });
+
+    if (!user.is_active) {
+      throw new UnauthorizedException(
+        `User ${user.first_name} is inactive, talk with administrator`,
+      );
+    }
+
     if (!user)
       throw new UnauthorizedException('Credentials are not valid (email)');
 
@@ -283,5 +299,19 @@ export class AuthService {
     }
 
     return module;
+  }
+
+  async convertToAdmin(id: string) {
+    const { modules, ...user } = await this.userService.findOne(id);
+
+    const actions = (await this.moduleActionsRepository.find({
+      select: {
+        id: true,
+      },
+    })) as UserActionDto[];
+
+    return await this.userService.update(id, { ...user, actions });
+
+    
   }
 }

@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
 } from '@nestjs/common';
@@ -41,6 +42,11 @@ export const pathsAuthController: PathsController = {
     description: 'obtener un modulo del sistema',
     name: 'find_one_module',
   },
+  convertToAdmin: {
+    path: 'convert-to-admin/one/:id',
+    description: 'otorgar todos los permisos al usuario',
+    name: 'convert_to_admin',
+  },
 };
 
 const {
@@ -50,6 +56,7 @@ const {
   findAllModules,
   createModuleActions,
   findOneModule,
+  convertToAdmin,
 } = pathsAuthController;
 
 @ApiTags('Authentication')
@@ -86,5 +93,10 @@ export class AuthController {
   @Get(findOneModule.path)
   findOneModule(@Param('name') name: string) {
     return this.authService.findOneModule(name);
+  }
+
+  @Get(convertToAdmin.path)
+  convertToAdmin(@Param('id', ParseUUIDPipe) id: string) {
+    return this.authService.convertToAdmin(id);
   }
 }

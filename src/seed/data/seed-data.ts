@@ -34,6 +34,7 @@ export interface User {
   email: string;
   password: string;
   cell_phone_number: string;
+  is_active?: boolean;
 }
 export interface Employee {
   first_name: string;
@@ -143,6 +144,7 @@ export const initialData: Seed = {
       email: 'yinnerchilito@example.com',
       password: '123456',
       cell_phone_number: '3001234567',
+      is_active: true,
     },
     {
       first_name: 'Juan',

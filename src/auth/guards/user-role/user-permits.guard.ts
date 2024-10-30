@@ -6,13 +6,8 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Observable } from 'rxjs';
-import { ModuleActions } from 'src/auth/entities/module-actions.entity';
-import { Module } from 'src/auth/entities/module.entity';
-import { UserActions } from 'src/users/entities/user-actions.entity';
 import { User } from 'src/users/entities/user.entity';
-import { Repository } from 'typeorm';
 
 @Injectable()
 export class UserPermitsGuard implements CanActivate {
