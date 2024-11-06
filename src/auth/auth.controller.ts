@@ -5,14 +5,13 @@ import {
   HttpCode,
   Param,
   ParseUUIDPipe,
-  Post,
-  Query,
+  Post
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { AuthService } from './auth.service';
 import { Auth } from './decorators/auth.decorator';
-import { CheckAuthStatusDto } from './dto/check-status.dto';
+import { GetToken } from './decorators/get-token.headers.decorator';
 import { LoginUserDto } from './dto/login-user.dto';
 
 export const pathsAuthController: PathsController = {
@@ -72,12 +71,12 @@ export class AuthController {
   @Post(renewToken.path)
   @Auth()
   @HttpCode(200)
-  renewToken(@Body() token: CheckAuthStatusDto) {
+  renewToken(@GetToken() token: string) {
     return this.authService.renewToken(token);
   }
 
   @Post(checkAuthStatus.path)
-  checkAuthStatus(@Body() token: CheckAuthStatusDto) {
+  checkAuthStatus(@GetToken() token: string) {
     return this.authService.checkAuthStatus(token);
   }
   @Get(createModuleActions.path)

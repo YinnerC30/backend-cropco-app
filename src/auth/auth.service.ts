@@ -106,7 +106,7 @@ export class AuthService {
     return token;
   }
 
-  async renewToken({ token }: CheckAuthStatusDto) {
+  async renewToken(token: string) {
     const { id } = this.jwtService.verify(token);
     const newToken = this.jwtService.sign({ id });
     return {
@@ -114,7 +114,7 @@ export class AuthService {
     };
   }
 
-  async checkAuthStatus({ token }: CheckAuthStatusDto) {
+  async checkAuthStatus(token: string) {
     try {
       this.jwtService.verify(token);
       return {
@@ -311,7 +311,5 @@ export class AuthService {
     })) as UserActionDto[];
 
     return await this.userService.update(id, { ...user, actions });
-
-    
   }
 }
