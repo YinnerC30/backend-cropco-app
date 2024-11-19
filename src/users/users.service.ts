@@ -17,6 +17,8 @@ import { UserActions } from './entities/user-actions.entity';
 import { User } from './entities/user.entity';
 import { hashPassword } from './helpers/encrypt-password';
 import { RemoveBulkUsersDto } from './dto/remove-bulk-users.dto';
+import * as generator from 'generate-password';
+import { generatePassword } from './helpers/generate-password';
 
 @Injectable()
 export class UsersService {
@@ -213,5 +215,21 @@ export class UsersService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async resetPassword(id: string) {
+    await this.findOne(id);
+
+    const password = generatePassword();
+    const encryptPassword = await hashPassword(password);
+
+    await this.usersRepository.update(
+      {
+        id,
+      },
+      { password: encryptPassword },
+    );
+
+    return { password };
   }
 }

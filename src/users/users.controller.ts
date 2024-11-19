@@ -51,6 +51,11 @@ export const pathsUsersController: PathsController = {
     description: 'eliminar varios usuarios',
     name: 'remove_bulk_users',
   },
+  resetPassword: {
+    path: 'reset-password/one/:id',
+    description: 'restablecimiento de contraseña',
+    name: 'reset_password_user',
+  },
 };
 
 const {
@@ -60,9 +65,10 @@ const {
   updateUser,
   removeUser,
   removeUsers,
+  resetPassword,
 } = pathsUsersController;
 
-@Auth()
+// @Auth()
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
@@ -128,5 +134,10 @@ export class UsersController {
   })
   removeBulk(@Body() removeBulkUsersDto: RemoveBulkUsersDto) {
     return this.usersService.removeBulk(removeBulkUsersDto);
+  }
+
+  @Patch(resetPassword.path)
+  resetPassword(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.resetPassword(id);
   }
 }
