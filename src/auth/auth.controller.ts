@@ -5,7 +5,8 @@ import {
   HttpCode,
   Param,
   ParseUUIDPipe,
-  Post
+  Patch,
+  Post,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { PathsController } from 'src/common/interfaces/PathsController';
@@ -68,14 +69,15 @@ export class AuthController {
     return this.authService.login(loginUserDto);
   }
 
-  @Post(renewToken.path)
+  @Patch(renewToken.path)
   @Auth()
   @HttpCode(200)
   renewToken(@GetToken() token: string) {
     return this.authService.renewToken(token);
   }
 
-  @Post(checkAuthStatus.path)
+  @Get(checkAuthStatus.path)
+  @Auth()
   checkAuthStatus(@GetToken() token: string) {
     return this.authService.checkAuthStatus(token);
   }

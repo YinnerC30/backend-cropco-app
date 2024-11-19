@@ -2,6 +2,7 @@ import {
   createParamDecorator,
   ExecutionContext,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 export const GetToken = createParamDecorator(
@@ -11,13 +12,13 @@ export const GetToken = createParamDecorator(
       request.headers['authorization'] || request.headers['Authorization'];
 
     if (!authorization)
-      throw new ForbiddenException('User not authorized for this action');
+      throw new UnauthorizedException('Token not found in request');
 
     // El encabezado de autorización debería comenzar con 'Bearer '
     const [bearer, token] = authorization.split(' ');
 
     if (bearer !== 'Bearer' || !token)
-      throw new ForbiddenException('User not authorized for this action');
+      throw new UnauthorizedException('Token not found in request');
 
     return token;
   },
