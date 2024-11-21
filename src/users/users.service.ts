@@ -10,15 +10,16 @@ import { Module } from 'src/auth/entities/module.entity';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 import { DataSource, ILike, Repository } from 'typeorm';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { RemoveBulkUsersDto } from './dto/remove-bulk-users.dto';
 import { UpdateUserActionsDto } from './dto/update-user-actions.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserActions } from './entities/user-actions.entity';
 import { User } from './entities/user.entity';
 import { hashPassword } from './helpers/encrypt-password';
-import { RemoveBulkUsersDto } from './dto/remove-bulk-users.dto';
-import * as generator from 'generate-password';
 import { generatePassword } from './helpers/generate-password';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -95,8 +96,17 @@ export class UsersService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, showPassword = false) {
     const user = await this.usersRepository.findOne({
+      select: {
+        id: true,
+        cell_phone_number: true,
+        email: true,
+        first_name: true,
+        last_name: true,
+        is_active: true,
+        password: showPassword,
+      },
       where: { id },
     });
     if (!user) throw new NotFoundException(`User with id: ${id} not found`);
@@ -217,19 +227,31 @@ export class UsersService {
     }
   }
 
-  async resetPassword(id: string) {
-    await this.findOne(id);
-
-    const password = generatePassword();
-    const encryptPassword = await hashPassword(password);
-
+  async updatePassword(userId: string, newPassword: string) {
     await this.usersRepository.update(
       {
-        id,
+        id: userId,
       },
-      { password: encryptPassword },
+      { password: newPassword },
     );
+  }
 
+  async resetPassword(id: string) {
+    await this.findOne(id);
+    const password = generatePassword();
+    const encryptPassword = await hashPassword(password);
+    await this.updatePassword(id, encryptPassword);
     return { password };
+  }
+
+  async changePassword(id: string, changePasswordDto: ChangePasswordDto) {
+    const { old_password, new_password } = changePasswordDto;
+    const user = await this.findOne(id, true);
+    const valid_password = bcrypt.compareSync(old_password, user.password);
+    if (!valid_password) {
+      throw new BadRequestException('Old password incorrect, retry');
+    }
+    const encryptPassword = await hashPassword(new_password);
+    await this.updatePassword(id, encryptPassword);
   }
 }

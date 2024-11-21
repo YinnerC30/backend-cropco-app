@@ -19,6 +19,7 @@ import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { RemoveBulkUsersDto } from './dto/remove-bulk-users.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 export const pathsUsersController: PathsController = {
   createUser: {
@@ -56,6 +57,11 @@ export const pathsUsersController: PathsController = {
     description: 'restablecimiento de contraseña',
     name: 'reset_password_user',
   },
+  changePassword: {
+    path: 'change-password/one/:id',
+    description: 'cambio de contraseña',
+    name: 'change_password_user',
+  },
 };
 
 const {
@@ -66,6 +72,7 @@ const {
   removeUser,
   removeUsers,
   resetPassword,
+  changePassword,
 } = pathsUsersController;
 
 // @Auth()
@@ -139,5 +146,13 @@ export class UsersController {
   @Patch(resetPassword.path)
   resetPassword(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.resetPassword(id);
+  }
+
+  @Patch(changePassword.path)
+  changePassword(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return this.usersService.changePassword(id, changePasswordDto);
   }
 }
