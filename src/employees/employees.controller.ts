@@ -16,6 +16,7 @@ import { EmployeesService } from './employees.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Employee } from './entities/employee.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 export const pathsEmployeesController: PathsController = {
   createEmployee: {
@@ -53,6 +54,11 @@ export const pathsEmployeesController: PathsController = {
     description: 'eliminar 1 empleado',
     name: 'remove_one_employee',
   },
+  removeEmployees: {
+    path: 'remove/bulk',
+    description: 'eliminar varios empleados',
+    name: 'remove_bulk_employees',
+  },
 };
 
 const {
@@ -63,6 +69,7 @@ const {
   findOneEmployee,
   updateEmployee,
   removeEmployee,
+  removeEmployees,
 } = pathsEmployeesController;
 
 @ApiTags('Employees')
@@ -177,5 +184,14 @@ export class EmployeesController {
   // Método
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.employeesService.remove(id);
+  }
+
+  @Delete(removeEmployees.path)
+  @ApiResponse({
+    status: 200,
+    description: 'Empleados eliminados exitosamente',
+  })
+  removeBulk(@Body() removeBulkEmployeesDto: RemoveBulkRecordsDto<Employee>) {
+    return this.employeesService.removeBulk(removeBulkEmployeesDto);
   }
 }

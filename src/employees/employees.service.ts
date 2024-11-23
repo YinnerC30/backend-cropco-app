@@ -9,6 +9,7 @@ import { Employee } from './entities/employee.entity';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { WorkDetails } from 'src/work/entities/work-details.entity';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 @Injectable()
 export class EmployeesService {
@@ -161,6 +162,12 @@ export class EmployeesService {
   async remove(id: string) {
     const employee = await this.findOne(id);
     await this.employeeRepository.remove(employee);
+  }
+
+  async removeBulk(removeBulkEmployeesDto: RemoveBulkRecordsDto<Employee>) {
+    for (const { id } of removeBulkEmployeesDto.recordsIds) {
+      await this.remove(id);
+    }
   }
 
   async deleteAllEmployees() {

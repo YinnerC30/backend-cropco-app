@@ -20,6 +20,7 @@ import { UsersService } from './users.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { RemoveBulkUsersDto } from './dto/remove-bulk-users.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 export const pathsUsersController: PathsController = {
   createUser: {
@@ -139,7 +140,7 @@ export class UsersController {
     status: 200,
     description: 'Usuarios eliminados exitosamente',
   })
-  removeBulk(@Body() removeBulkUsersDto: RemoveBulkUsersDto) {
+  removeBulk(@Body() removeBulkUsersDto: RemoveBulkRecordsDto<User>) {
     return this.usersService.removeBulk(removeBulkUsersDto);
   }
 

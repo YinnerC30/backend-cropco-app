@@ -20,6 +20,7 @@ import { User } from './entities/user.entity';
 import { hashPassword } from './helpers/encrypt-password';
 import { generatePassword } from './helpers/generate-password';
 import * as bcrypt from 'bcrypt';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 @Injectable()
 export class UsersService {
@@ -173,8 +174,8 @@ export class UsersService {
     await this.usersRepository.remove(user as User);
   }
 
-  async removeBulk(removeBulkUsersDto: RemoveBulkUsersDto) {
-    for (const { id } of removeBulkUsersDto.userIds) {
+  async removeBulk(removeBulkUsersDto: RemoveBulkRecordsDto<User>) {
+    for (const { id } of removeBulkUsersDto.recordsIds) {
       await this.remove(id);
     }
   }
