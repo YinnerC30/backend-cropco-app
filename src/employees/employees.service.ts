@@ -10,6 +10,8 @@ import { QueryParams } from 'src/common/dto/QueryParams';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { WorkDetails } from 'src/work/entities/work-details.entity';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { PrinterService } from 'src/printer/printer.service';
+import { getEmploymentLetterByIdReport } from './reports/employment-letter-by-id.report';
 
 @Injectable()
 export class EmployeesService {
@@ -19,9 +21,26 @@ export class EmployeesService {
   constructor(
     @InjectRepository(Employee)
     private readonly employeeRepository: Repository<Employee>,
-
     private readonly dataSource: DataSource,
+    private readonly printerService: PrinterService,
   ) {}
+
+  async findOneCertification(id: string) {
+    const employee = await this.findOne(id);
+
+    const docDefinition = getEmploymentLetterByIdReport({
+      employerName: 'Sofonias',
+      employerPosition: 'Gerente de RRHH',
+      employeeName: employee.first_name,
+      employeePosition: 'Jornalero',
+      employeeStartDate: new Date(),
+      employeeHours: 48,
+      employeeWorkSchedule: 'Lunes a Viernes',
+      employerCompany: 'Cropco Corp.',
+    });
+    const doc = this.printerService.createPdf(docDefinition);
+    return doc;
+  }
 
   async create(createEmployeeDto: CreateEmployeeDto) {
     try {

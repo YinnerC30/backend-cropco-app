@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
@@ -17,6 +18,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Employee } from './entities/employee.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { Response as ResponseExpress } from 'express';
 
 export const pathsEmployeesController: PathsController = {
   createEmployee: {
@@ -59,6 +61,11 @@ export const pathsEmployeesController: PathsController = {
     description: 'eliminar varios empleados',
     name: 'remove_bulk_employees',
   },
+  findCertification: {
+    path: 'find/certification/one/:id',
+    description: 'obtener certificación de empleo',
+    name: 'find_certification_employee',
+  },
 };
 
 const {
@@ -70,12 +77,26 @@ const {
   updateEmployee,
   removeEmployee,
   removeEmployees,
+  findCertification,
 } = pathsEmployeesController;
 
 @ApiTags('Employees')
 @Controller('employees')
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
+
+  @Get(findCertification.path)
+  async createCertification(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() response: ResponseExpress,
+  ) {
+    const pdfDoc = await this.employeesService.findOneCertification(id);
+    response.setHeader('Content-Type', 'application/pdf');
+    pdfDoc.info.Title = 'Employment-Letter';
+    pdfDoc.pipe(response);
+    pdfDoc.end();
+    return;
+  }
 
   // Crear empleado
   @Post(createEmployee.path)
