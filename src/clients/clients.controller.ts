@@ -26,6 +26,7 @@ import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { Response } from 'express';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 export const pathsClientsController: PathsController = {
   createClient: {
@@ -53,6 +54,11 @@ export const pathsClientsController: PathsController = {
     description: 'eliminar 1 cliente',
     name: 'remove_one_client',
   },
+  removeClients: {
+    path: 'remove/bulk',
+    description: 'eliminar varios clientes',
+    name: 'remove_bulk_clients',
+  },
 };
 
 const {
@@ -61,6 +67,7 @@ const {
   findOneClient,
   updateClient,
   removeClient,
+  removeClients,
 } = pathsClientsController;
 
 @ApiTags('Clients')
@@ -187,5 +194,14 @@ export class ClientsController {
   @ApiResponse({ status: 404, description: 'Cliente no encontrado.' })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.clientsService.remove(id);
+  }
+
+  @Delete(removeClients.path)
+  @ApiResponse({
+    status: 200,
+    description: 'Empleados eliminados exitosamente',
+  })
+  removeBulk(@Body() removeBulkClientsDto: RemoveBulkRecordsDto<Client>) {
+    return this.clientsService.removeBulk(removeBulkClientsDto);
   }
 }

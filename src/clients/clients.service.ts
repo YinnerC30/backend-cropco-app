@@ -9,6 +9,7 @@ import { Client } from './entities/client.entity';
 import { PrinterService } from 'src/printer/printer.service';
 import { getHelloWorldReport } from './reports/hello-world.report';
 import { getClientsReport } from './reports/get-all-clients.report';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 @Injectable()
 export class ClientsService {
@@ -107,5 +108,11 @@ export class ClientsService {
     const docDefinition = getClientsReport({ clients });
 
     return this.printerService.createPdf(docDefinition);
+  }
+
+  async removeBulk(removeBulkClientsDto: RemoveBulkRecordsDto<Client>) {
+    for (const { id } of removeBulkClientsDto.recordsIds) {
+      await this.remove(id);
+    }
   }
 }
