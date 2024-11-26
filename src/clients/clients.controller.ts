@@ -27,6 +27,7 @@ import { Client } from './entities/client.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { Response } from 'express';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 export const pathsClientsController: PathsController = {
   createClient: {
@@ -59,6 +60,11 @@ export const pathsClientsController: PathsController = {
     description: 'eliminar varios clientes',
     name: 'remove_bulk_clients',
   },
+  exportClients: {
+    path: 'export/all/pdf',
+    description: 'exportar clientes a PDF',
+    name: 'export_clients_pdf',
+  },
 };
 
 const {
@@ -68,8 +74,10 @@ const {
   updateClient,
   removeClient,
   removeClients,
+  exportClients,
 } = pathsClientsController;
 
+@Auth()
 @ApiTags('Clients')
 @Controller('clients')
 export class ClientsController {
@@ -85,7 +93,7 @@ export class ClientsController {
     pdfDoc.end();
   }
 
-  @Get('export/all/pdf')
+  @Get(exportClients.path)
   async exportAllClients(@Res() response: Response) {
     const pdfDoc = await this.clientsService.exportAllClients();
     response.setHeader('Content-Type', 'application/pdf');
