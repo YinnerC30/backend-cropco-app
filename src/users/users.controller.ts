@@ -76,7 +76,7 @@ const {
   changePassword,
 } = pathsUsersController;
 
-// @Auth()
+@Auth()
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {

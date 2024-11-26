@@ -19,6 +19,7 @@ import { Employee } from './entities/employee.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Response as ResponseExpress } from 'express';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 export const pathsEmployeesController: PathsController = {
   createEmployee: {
@@ -80,6 +81,7 @@ const {
   findCertification,
 } = pathsEmployeesController;
 
+@Auth()
 @ApiTags('Employees')
 @Controller('employees')
 export class EmployeesController {
