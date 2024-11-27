@@ -6,6 +6,7 @@ import { ILike, IsNull, Not, Repository } from 'typeorm';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 @Injectable()
 export class CropsService {
@@ -140,6 +141,12 @@ export class CropsService {
       await this.cropRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
+    }
+  }
+
+  async removeBulk(removeBulkCropsDto: RemoveBulkRecordsDto<Crop>) {
+    for (const { id } of removeBulkCropsDto.recordsIds) {
+      await this.remove(id);
     }
   }
 }

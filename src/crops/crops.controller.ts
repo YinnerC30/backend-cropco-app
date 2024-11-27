@@ -23,6 +23,7 @@ import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 export const pathsCropsController: PathsController = {
   createCrop: {
@@ -60,6 +61,11 @@ export const pathsCropsController: PathsController = {
     description: 'eliminar 1 cultivo',
     name: 'remove_one_crop',
   },
+  removeCrops: {
+    path: 'remove/bulk',
+    description: 'eliminar varios cultivos',
+    name: 'remove_bulk_crops',
+  },
 };
 
 const {
@@ -70,6 +76,7 @@ const {
   findAllCropsWithWork,
   updateCrop,
   removeCrop,
+  removeCrops,
 } = pathsCropsController;
 
 @ApiTags('Crops')
@@ -176,5 +183,14 @@ export class CropsController {
   // Método
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.cropsService.remove(id);
+  }
+
+  @Delete(removeCrops.path)
+  @ApiResponse({
+    status: 200,
+    description: 'Empleados eliminados exitosamente',
+  })
+  removeBulk(@Body() removeBulkCropsDto: RemoveBulkRecordsDto<Crop>) {
+    return this.cropsService.removeBulk(removeBulkCropsDto);
   }
 }
