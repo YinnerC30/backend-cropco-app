@@ -21,6 +21,9 @@ import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { SuppliersService } from './suppliers.service';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { PathsController } from 'src/common/interfaces/PathsController';
+import { Supplier } from './entities/supplier.entity';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 export const pathsSuppliersController: PathsController = {
   createSupplier: {
@@ -48,6 +51,11 @@ export const pathsSuppliersController: PathsController = {
     description: 'eliminar 1 proveedor',
     name: 'remove_one_supplier',
   },
+  removeSuppliers: {
+    path: 'remove/bulk',
+    description: 'eliminar varios proveedores',
+    name: 'remove_bulk_suppliers',
+  },
 };
 
 const {
@@ -56,8 +64,10 @@ const {
   findOneSupplier,
   updateSupplier,
   removeSupplier,
+  removeSuppliers,
 } = pathsSuppliersController;
 
+@Auth()
 @ApiTags('Suppliers')
 @Controller('suppliers')
 export class SuppliersController {
@@ -117,5 +127,14 @@ export class SuppliersController {
   @ApiParam({ name: 'id', type: 'string', description: 'Supplier id' })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.suppliersService.remove(id);
+  }
+
+  @Delete(removeSuppliers.path)
+  @ApiResponse({
+    status: 200,
+    description: 'Empleados eliminados exitosamente',
+  })
+  removeBulk(@Body() removeBulkSuppliersDto: RemoveBulkRecordsDto<Supplier>) {
+    return this.suppliersService.removeBulk(removeBulkSuppliersDto);
   }
 }

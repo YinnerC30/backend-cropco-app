@@ -6,6 +6,7 @@ import { ILike, Repository } from 'typeorm';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { Supplier } from './entities/supplier.entity';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 @Injectable()
 export class SuppliersService {
@@ -93,6 +94,12 @@ export class SuppliersService {
       await this.supplierRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
+    }
+  }
+
+  async removeBulk(removeBulkSuppliersDto: RemoveBulkRecordsDto<Supplier>) {
+    for (const { id } of removeBulkSuppliersDto.recordsIds) {
+      await this.remove(id);
     }
   }
 }
