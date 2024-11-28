@@ -17,10 +17,12 @@ import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.
 import { UpdateSuppliesPurchaseDto } from './dto/update-supplies-purchase.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
 import { SuppliesService } from './supplies.service';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { QueryParamsShopping } from './dto/query-params-shopping.dto';
 import { QueryParamsConsumption } from './dto/query-params-consumption.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
+import { Supply } from './entities';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 export const pathsSuppliesController: PathsController = {
   createSupply: {
@@ -93,6 +95,11 @@ export const pathsSuppliesController: PathsController = {
     description: 'eliminar 1 suplemento',
     name: 'remove_one_supply',
   },
+  removeSupplies: {
+    path: 'remove/bulk',
+    description: 'eliminar varios suministros',
+    name: 'remove_bulk_supplies',
+  },
   removePurchase: {
     path: 'purchase/remove/one/:id',
     description: 'eliminar 1 compra',
@@ -122,6 +129,7 @@ const {
   removeSupply,
   removePurchase,
   removeConsumption,
+  removeSupplies
 } = pathsSuppliesController;
 
 @ApiTags('Supplies')
@@ -220,5 +228,14 @@ export class SuppliesController {
   @Delete(removeConsumption.path)
   removeConsumption(@Param('id', ParseUUIDPipe) id: string) {
     return this.suppliesService.removeConsumption(id);
+  }
+
+  @Delete(removeSupplies.path)
+  @ApiResponse({
+    status: 200,
+    description: 'Suministros eliminados exitosamente',
+  })
+  removeBulk(@Body() removeBulkSuppliesDto: RemoveBulkRecordsDto<Supply>) {
+    return this.suppliesService.removeBulk(removeBulkSuppliesDto);
   }
 }

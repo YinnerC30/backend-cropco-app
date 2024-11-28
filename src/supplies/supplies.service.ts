@@ -30,6 +30,7 @@ import { InsufficientSupplyStockException } from './exceptions/insufficient-supp
 import { Condition } from './interfaces/condition.interface';
 import { QueryParamsShopping } from './dto/query-params-shopping.dto';
 import { QueryParamsConsumption } from './dto/query-params-consumption.dto';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 @Injectable()
 export class SuppliesService {
@@ -749,6 +750,12 @@ export class SuppliesService {
       await this.suppliesConsumptionRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
+    }
+  }
+
+  async removeBulk(removeBulkSuppliesDto: RemoveBulkRecordsDto<Supply>) {
+    for (const { id } of removeBulkSuppliesDto.recordsIds) {
+      await this.remove(id);
     }
   }
 }
