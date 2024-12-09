@@ -32,6 +32,9 @@ import { HarvestStock } from './entities/harvest-stock.entity';
 import { InsufficientHarvestStockException } from './exceptions/insufficient-harvest-stock';
 import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
 import { ValidateUUID } from '../common/dto/ValidateUUID.dto';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
+import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 
 @Injectable()
 export class HarvestService {
@@ -83,14 +86,20 @@ export class HarvestService {
     const {
       limit = 10,
       offset = 0,
-      search = '',
+
       crop = '',
-      after_date = '',
-      before_date = '',
-      minor_total = 0,
-      major_total = 0,
-      minor_value_pay = 0,
-      major_value_pay = 0,
+
+      filter_by_date = false,
+      type_filter_date,
+      date,
+
+      filter_by_total = false,
+      type_filter_total,
+      total,
+
+      filter_by_value_pay = false,
+      type_filter_value_pay,
+      value_pay,
     } = queryParams;
 
     const queryBuilder = this.harvestRepository
@@ -104,27 +113,30 @@ export class HarvestService {
       queryBuilder.andWhere('crop.id = :cropId', { cropId: crop });
     }
 
-    if (before_date.length > 0) {
-      queryBuilder.andWhere('harvest.date < :before_date', { before_date });
+    if (filter_by_date) {
+      const operation = TypeFilterDate.AFTER == type_filter_date ? '>' : '<';
+      queryBuilder.andWhere(`harvest.date ${operation} :date`, { date });
     }
 
-    if (after_date.length > 0) {
-      queryBuilder.andWhere('harvest.date > :after_date', { after_date });
+    if (filter_by_total) {
+      const operation =
+        TypeFilterNumber.MAX == type_filter_total
+          ? '>'
+          : TypeFilterNumber.EQUAL == type_filter_total
+            ? '='
+            : '<';
+      queryBuilder.andWhere(`harvest.total ${operation} :total`, { total });
     }
-    if (minor_total != 0) {
-      queryBuilder.andWhere('harvest.total < :minor_total', { minor_total });
-    }
-    if (major_total != 0) {
-      queryBuilder.andWhere('harvest.total > :major_total', { major_total });
-    }
-    if (minor_value_pay != 0) {
-      queryBuilder.andWhere('harvest.value_pay < :minor_value_pay', {
-        minor_value_pay,
-      });
-    }
-    if (major_value_pay != 0) {
-      queryBuilder.andWhere('harvest.value_pay > :major_value_pay', {
-        major_value_pay,
+
+    if (filter_by_value_pay) {
+      const operation =
+        TypeFilterNumber.MAX == type_filter_value_pay
+          ? '>'
+          : TypeFilterNumber.EQUAL == type_filter_value_pay
+            ? '='
+            : '<';
+      queryBuilder.andWhere(`harvest.value_pay ${operation} :value_pay`, {
+        value_pay,
       });
     }
 
@@ -417,6 +429,7 @@ export class HarvestService {
         harvest: true,
       },
     });
+    console.log(harvestProcessed);
     if (!harvestProcessed)
       throw new NotFoundException(`Harvest processed with id: ${id} not found`);
     return harvestProcessed;
@@ -493,6 +506,13 @@ export class HarvestService {
       this.handleDBExceptions(error);
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  async removeBulk(removeBulkHarvestsDto: RemoveBulkRecordsDto<Harvest>) {
+    console.log(removeBulkHarvestsDto);
+    for (const { id } of removeBulkHarvestsDto.recordsIds) {
+      await this.remove(id);
     }
   }
 }

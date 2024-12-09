@@ -19,6 +19,7 @@ import { ApiTags, ApiResponse } from '@nestjs/swagger';
 import { Harvest } from './entities/harvest.entity';
 import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 export const pathsHarvestsController: PathsController = {
   createHarvest: {
@@ -81,8 +82,13 @@ export const pathsHarvestsController: PathsController = {
     description: 'eliminar 1 cosecha',
     name: 'remove_one_harvest',
   },
+  removeHarvests: {
+    path: 'remove/bulk',
+    description: 'eliminar varias cosechas',
+    name: 'remove_bulk_harvests',
+  },
   removeHarvestProcessed: {
-    path: 'processed/remove/:id',
+    path: 'processed/remove/one/:id',
     description: 'eliminar 1 cosecha procesada',
     name: 'remove_one_harvest_processed',
   },
@@ -102,6 +108,7 @@ const {
   updateHarvestProcessed,
   removeHarvest,
   removeHarvestProcessed,
+  removeHarvests,
 } = pathsHarvestsController;
 
 @ApiTags('Harvests')
@@ -238,5 +245,10 @@ export class HarvestController {
   @ApiResponse({ status: 500, description: 'Internal server error' })
   removeHarvestProcessed(@Param('id', ParseUUIDPipe) id: string) {
     return this.harvestService.removeHarvestProcessed(id);
+  }
+
+  @Delete(removeHarvests.path)
+  removeBulk(@Body() removeBulkHarvestsDto: RemoveBulkRecordsDto<Harvest>) {
+    return this.harvestService.removeBulk(removeBulkHarvestsDto);
   }
 }

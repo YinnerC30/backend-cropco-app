@@ -30,8 +30,6 @@ export class UserPermitsGuard implements CanActivate {
       .map((item: any) => item.actions.map((i: any) => i.path_endpoint))
       .flat(1);
 
-    console.log(actionsUser, pathEndPoint);
-
     const resultValidation = actionsUser.includes(pathEndPoint);
 
     if (resultValidation) return true;
