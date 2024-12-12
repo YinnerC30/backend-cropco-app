@@ -20,6 +20,7 @@ import { Harvest } from './entities/harvest.entity';
 import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 export const pathsHarvestsController: PathsController = {
   createHarvest: {
@@ -35,12 +36,12 @@ export const pathsHarvestsController: PathsController = {
   findAllHarvests: {
     path: 'all',
     description: 'obtener todas las cosechas',
-    name: 'find_all_harvest',
+    name: 'find_all_harvests',
   },
   findAllHarvestsProcessed: {
     path: 'processed/all',
     description: 'obtener todas las cosechas procesadas',
-    name: 'find_all_harvest_processed',
+    name: 'find_all_harvests_processed',
   },
   findAllCropsStock: {
     path: 'stock/all',
@@ -50,7 +51,7 @@ export const pathsHarvestsController: PathsController = {
   findAllHarvestsWithPendingPayments: {
     path: 'pending-payments/all',
     description: 'obtener todas las cosechas con pagos pendientes',
-    name: 'find_all_harvest_with_pending_payments',
+    name: 'find_all_harvests_with_pending_payments',
   },
   findOneEmployeeWithPendingPayments: {
     path: 'pending-payments/one/:id',
@@ -111,8 +112,9 @@ const {
   removeHarvests,
 } = pathsHarvestsController;
 
+@Auth()
 @ApiTags('Harvests')
-@Controller('harvest')
+@Controller('harvests')
 export class HarvestController {
   constructor(private readonly harvestService: HarvestService) {}
 

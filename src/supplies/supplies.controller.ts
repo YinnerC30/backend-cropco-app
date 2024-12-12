@@ -23,6 +23,7 @@ import { QueryParamsConsumption } from './dto/query-params-consumption.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { Supply } from './entities';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 export const pathsSuppliesController: PathsController = {
   createSupply: {
@@ -129,9 +130,10 @@ const {
   removeSupply,
   removePurchase,
   removeConsumption,
-  removeSupplies
+  removeSupplies,
 } = pathsSuppliesController;
 
+@Auth()
 @ApiTags('Supplies')
 @Controller('supplies')
 export class SuppliesController {
