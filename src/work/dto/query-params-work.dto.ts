@@ -1,26 +1,43 @@
-import { IsDateString, IsInt, IsOptional } from 'class-validator';
+import {
+  IsBooleanString,
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { Type } from 'class-transformer';
+import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
+import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 
 export class QueryParamsWork extends QueryParams {
   @IsOptional()
+  @IsString()
   crop?: string;
 
   @IsOptional()
-  @IsDateString()
-  after_date: string;
+  @IsBooleanString()
+  filter_by_date?: boolean;
+
+  @IsOptional()
+  @IsEnum(TypeFilterDate)
+  type_filter_date?: TypeFilterDate;
 
   @IsOptional()
   @IsDateString()
-  before_date: string;
+  date?: string;
+
+  @IsOptional()
+  @IsBooleanString()
+  filter_by_total?: boolean;
+
+  @IsOptional()
+  @IsEnum(TypeFilterNumber)
+  type_filter_total?: TypeFilterNumber;
 
   @IsOptional()
   @Type(() => Number) // Transformará el valor a un número
   @IsInt()
-  minor_total: number;
-
-  @IsOptional()
-  @Type(() => Number) // Transformará el valor a un número
-  @IsInt()
-  major_total: number;
+  total?: number;
 }

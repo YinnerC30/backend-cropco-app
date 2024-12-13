@@ -10,6 +10,9 @@ import { WorkDetailsDto } from './dto/work-details.dto';
 import { WorkDetails } from './entities/work-details.entity';
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
 import { QueryParamsWork } from './dto/query-params-work.dto';
+import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
+import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 @Injectable()
 export class WorkService {
@@ -50,12 +53,16 @@ export class WorkService {
     const {
       limit = 10,
       offset = 0,
-      search = '',
+
       crop = '',
-      after_date = '',
-      before_date = '',
-      minor_total = 0,
-      major_total = 0,
+
+      filter_by_date = false,
+      type_filter_date,
+      date,
+
+      filter_by_total = false,
+      type_filter_total,
+      total,
     } = queryParams;
     const queryBuilder = this.workRepository
       .createQueryBuilder('work')
@@ -68,18 +75,19 @@ export class WorkService {
       queryBuilder.andWhere('crop.id = :cropId', { cropId: crop });
     }
 
-    if (before_date.length > 0) {
-      queryBuilder.andWhere('work.date < :before_date', { before_date });
+    if (filter_by_date) {
+      const operation = TypeFilterDate.AFTER == type_filter_date ? '>' : '<';
+      queryBuilder.andWhere(`work.date ${operation} :date`, { date });
     }
 
-    if (after_date.length > 0) {
-      queryBuilder.andWhere('work.date > :after_date', { after_date });
-    }
-    if (minor_total != 0) {
-      queryBuilder.andWhere('work.total < :minor_total', { minor_total });
-    }
-    if (major_total != 0) {
-      queryBuilder.andWhere('work.total > :major_total', { major_total });
+    if (filter_by_total) {
+      const operation =
+        TypeFilterNumber.MAX == type_filter_total
+          ? '>'
+          : TypeFilterNumber.EQUAL == type_filter_total
+            ? '='
+            : '<';
+      queryBuilder.andWhere(`work.total ${operation} :total`, { total });
     }
 
     const [works, count] = await queryBuilder.getManyAndCount();
@@ -169,6 +177,13 @@ export class WorkService {
       await this.workRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
+    }
+  }
+
+  async removeBulk(removeBulkWorksDto: RemoveBulkRecordsDto<Work>) {
+    console.log(removeBulkWorksDto);
+    for (const { id } of removeBulkWorksDto.recordsIds) {
+      await this.remove(id);
     }
   }
 }

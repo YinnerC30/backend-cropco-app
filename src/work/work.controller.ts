@@ -16,6 +16,9 @@ import { WorkService } from './work.service';
 import { ApiTags } from '@nestjs/swagger';
 import { QueryParamsWork } from './dto/query-params-work.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { Work } from './entities/work.entity';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 export const pathsWorksController: PathsController = {
   createWork: {
@@ -34,20 +37,32 @@ export const pathsWorksController: PathsController = {
     name: 'find_one_work',
   },
   updateWork: {
-    path: 'update/:id',
+    path: 'update/one/:id',
     description: 'actualizar 1 trabajo',
     name: 'update_one_work',
   },
   removeWork: {
-    path: 'remove/:id',
+    path: 'remove/one/:id',
     description: 'eliminar 1 trabajo',
     name: 'remove_one_work',
   },
+  removeWorks: {
+    path: 'remove/bulk',
+    description: 'eliminar varios trabajos',
+    name: 'remove_bulk_works',
+  },
 };
 
-const { createWork, findAllWorks, findOneWork, updateWork, removeWork } =
-  pathsWorksController;
+const {
+  createWork,
+  findAllWorks,
+  findOneWork,
+  updateWork,
+  removeWork,
+  removeWorks,
+} = pathsWorksController;
 
+@Auth()
 @ApiTags('Works')
 @Controller('works')
 export class WorkController {
@@ -78,5 +93,10 @@ export class WorkController {
   @Delete(removeWork.path)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.workService.remove(id);
+  }
+
+  @Delete(removeWorks.path)
+  removeBulk(@Body() removeBulkWorksDto: RemoveBulkRecordsDto<Work>) {
+    return this.workService.removeBulk(removeBulkWorksDto);
   }
 }
