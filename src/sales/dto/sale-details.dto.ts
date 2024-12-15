@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsInt,
   IsOptional,
   IsPositive,
@@ -14,6 +15,10 @@ import { Type } from 'class-transformer';
 import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
 
 export class SaleDetailsDto {
+  @IsUUID(4)
+  @IsOptional()
+  id: string;
+
   @ApiProperty({
     example: 5,
     description: 'Cantidad de items en este detalle de venta',
@@ -54,4 +59,11 @@ export class SaleDetailsDto {
   @ValidateNested()
   @Type(() => ValidateUUID)
   client: DeepPartial<Client>;
+
+  @ApiProperty({
+    example: false,
+    description: 'Indica si la venta es a crédito',
+  })
+  @IsBoolean()
+  is_receivable: boolean;
 }

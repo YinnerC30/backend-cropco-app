@@ -12,12 +12,14 @@ export const handleDBExceptions = (error: any, logger: Logger) => {
   if (error.code === '23503') throw new BadRequestException(error.detail);
   if (error.code === '23505') throw new BadRequestException(error.detail);
 
-  if (error instanceof BadRequestException || error instanceof NotFoundException) {
+  if (
+    error instanceof BadRequestException ||
+    error instanceof NotFoundException
+  ) {
     throw error;
   }
 
-  if (error instanceof InsufficientHarvestStockException)
-    throw new InsufficientHarvestStockException();
+  if (error instanceof InsufficientHarvestStockException) throw error;
 
   if (error instanceof InsufficientSupplyStockException)
     throw new InsufficientSupplyStockException();

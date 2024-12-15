@@ -58,4 +58,14 @@ export class SaleDetails {
     onDelete: 'CASCADE',
   })
   client: Client;
+
+  @ApiProperty({
+    example: false,
+    description: 'Indica si la venta es a crédito',
+  })
+  @Column({
+    type: 'bool',
+    default: false,
+  })
+  is_receivable: boolean;
 }

@@ -39,15 +39,6 @@ export class Sale {
   total: number;
 
   @ApiProperty({
-    example: false,
-    description: 'Indica si la venta es a crédito',
-  })
-  @Column({
-    type: 'bool',
-  })
-  is_receivable: boolean;
-
-  @ApiProperty({
     type: () => [SaleDetails],
     description: 'Detalles de los items incluidos en la venta',
   })

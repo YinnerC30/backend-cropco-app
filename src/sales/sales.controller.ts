@@ -22,6 +22,8 @@ import { CreateSaleDto } from './dto/create-sale.dto';
 import { QueryParamsSale } from './dto/query-params-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
 import { SalesService } from './sales.service';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { Sale } from './entities/sale.entity';
 
 export const pathsSalesController: PathsController = {
   createSale: {
@@ -49,10 +51,21 @@ export const pathsSalesController: PathsController = {
     description: 'eliminar 1 venta',
     name: 'remove_one_sale',
   },
+  removeSales: {
+    path: 'remove/bulk',
+    description: 'eliminar varias ventas',
+    name: 'remove_bulk_sales',
+  },
 };
 
-const { createSale, findAllSales, findOneSale, updateSale, removeSale } =
-  pathsSalesController;
+const {
+  createSale,
+  findAllSales,
+  findOneSale,
+  updateSale,
+  removeSale,
+  removeSales,
+} = pathsSalesController;
 
 @ApiTags('Sales')
 @Controller('sales')
@@ -113,5 +126,10 @@ export class SalesController {
   @ApiParam({ name: 'id', type: 'string', description: 'Sale id' })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.salesService.remove(id);
+  }
+
+  @Delete(removeSales.path)
+  removeBulk(@Body() removeBulkSalesDto: RemoveBulkRecordsDto<Sale>) {
+    return this.salesService.removeBulk(removeBulkSalesDto);
   }
 }

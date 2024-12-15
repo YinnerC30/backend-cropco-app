@@ -35,12 +35,7 @@ export class CreateSaleDto {
   @IsPositive()
   total: number;
 
-  @ApiProperty({
-    example: false,
-    description: 'Indica si la venta es a crédito',
-  })
-  @IsBoolean()
-  is_receivable: boolean;
+  
 
   @ApiProperty({
     type: [SaleDetailsDto],

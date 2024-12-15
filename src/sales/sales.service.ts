@@ -12,6 +12,9 @@ import { UpdateSaleDto } from './dto/update-sale.dto';
 import { SaleDetails } from './entities/sale-details.entity';
 import { Sale } from './entities/sale.entity';
 import { QueryParamsSale } from './dto/query-params-sale.dto';
+import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
+import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 @Injectable()
 export class SalesService {
@@ -62,15 +65,21 @@ export class SalesService {
     const {
       limit = 10,
       offset = 0,
-      // is_receivable = false,
-      after_date = '',
-      before_date = '',
-      minor_total = 0,
-      major_total = 0,
-      minor_quantity = 0,
-      major_quantity = 0,
+
+      filter_by_date = false,
+      type_filter_date,
+      date,
+
+      filter_by_total = false,
+      type_filter_total,
+      total,
+
+      filter_by_quantity = false,
+      type_filter_quantity,
+      quantity,
+
       filter_by_is_receivable = false,
-      is_receivable = false,
+      is_receivable,
     } = queryParams;
 
     const queryBuilder = this.saleRepository
@@ -79,50 +88,36 @@ export class SalesService {
       .take(limit)
       .skip(offset * limit);
 
-    // Agregar condiciones opcionales a la consulta
-    const conditions = [
-      {
-        condition: before_date,
-        query: 'sale.date < :before_date',
-        params: { before_date },
-      },
-      {
-        condition: after_date,
-        query: 'sale.date > :after_date',
-        params: { after_date },
-      },
-      {
-        condition: minor_total,
-        query: 'sale.total < :minor_total',
-        params: { minor_total },
-      },
-      {
-        condition: major_total,
-        query: 'sale.total > :major_total',
-        params: { major_total },
-      },
-      {
-        condition: minor_quantity,
-        query: 'sale.quantity < :minor_quantity',
-        params: { minor_quantity },
-      },
-      {
-        condition: major_quantity,
-        query: 'sale.quantity > :major_quantity',
-        params: { major_quantity },
-      },
-      {
-        condition: filter_by_is_receivable,
-        query: 'sale.is_receivable = :is_receivable',
-        params: { is_receivable },
-      },
-    ];
+    if (filter_by_date) {
+      const operation = TypeFilterDate.AFTER == type_filter_date ? '>' : '<';
+      queryBuilder.andWhere(`sale.date ${operation} :date`, { date });
+    }
 
-    conditions.forEach(({ condition, query, params }) => {
-      if (condition) {
-        queryBuilder.andWhere(query, params);
-      }
-    });
+    if (filter_by_total) {
+      const operation =
+        TypeFilterNumber.MAX == type_filter_total
+          ? '>'
+          : TypeFilterNumber.EQUAL == type_filter_total
+            ? '='
+            : '<';
+      queryBuilder.andWhere(`sale.total ${operation} :total`, { total });
+    }
+    if (filter_by_quantity) {
+      const operation =
+        TypeFilterNumber.MAX == type_filter_quantity
+          ? '>'
+          : TypeFilterNumber.EQUAL == type_filter_quantity
+            ? '='
+            : '<';
+      queryBuilder.andWhere(`sale.quantity ${operation} :quantity`, {
+        quantity,
+      });
+    }
+    if (filter_by_is_receivable) {
+      queryBuilder.andWhere(`sale.is_receivable = :is_receivable`, {
+        is_receivable,
+      });
+    }
 
     const [sales, count] = await queryBuilder.getManyAndCount();
 
@@ -162,49 +157,62 @@ export class SalesService {
       const oldDetails: SaleDetails[] = sale.details;
       const newDetails: SaleDetailsDto[] = details;
 
-      const oldIDsCrop: string[] = oldDetails.map((record) => record.crop.id);
-      const newIDsCrop: string[] = newDetails.map((record) =>
-        new String(record.crop.id).toString(),
+      const oldIDsHarvestDetails: string[] = oldDetails.map(
+        (record) => record.id,
+      );
+      const newIDsHarvestDetails: string[] = newDetails.map((record) =>
+        new String(record.id).toString(),
       );
 
+      // FIX: Se envia varias veces el crop.id, hay que tomar en cuenta el ID del registro mejor
       const { toCreate, toUpdate, toDelete } = organizeIDsToUpdateEntity(
-        newIDsCrop,
-        oldIDsCrop,
+        newIDsHarvestDetails,
+        oldIDsHarvestDetails,
       );
 
-      for (const cropId of toDelete) {
-        const oldData = oldDetails.find((record) => record.crop.id === cropId);
+      for (const harvestDetailId of toDelete) {
+        const oldData = oldDetails.find(
+          (record) => record.id === harvestDetailId,
+        );
         await this.harvestService.updateStock(
           queryRunner,
-          cropId,
+          oldData.crop.id,
           oldData.quantity,
           true,
         );
       }
 
-      for (const cropId of toUpdate) {
-        const oldData = oldDetails.find((record) => record.crop.id === cropId);
+      for (const harvestDetailId of toUpdate) {
+        const oldData = oldDetails.find(
+          (record) => record.id === harvestDetailId,
+        );
+
         await this.harvestService.updateStock(
           queryRunner,
-          cropId,
+          oldData.crop.id,
           oldData.quantity,
           true,
         );
 
-        const newData = newDetails.find((record) => record.crop.id === cropId);
+        const newData = newDetails.find(
+          (record) => record.id === harvestDetailId,
+        );
+
         await this.harvestService.updateStock(
           queryRunner,
-          cropId,
+          newData.crop.id,
           newData.quantity,
           false,
         );
       }
 
-      for (const cropId of toCreate) {
-        const newData = newDetails.find((record) => record.crop.id === cropId);
+      for (const harvestDetailId of toCreate) {
+        const newData = newDetails.find(
+          (record) => record.id === harvestDetailId,
+        );
         await this.harvestService.updateStock(
           queryRunner,
-          cropId,
+          newData.crop.id,
           newData.quantity,
           false,
         );
@@ -212,8 +220,9 @@ export class SalesService {
 
       await queryRunner.manager.delete(SaleDetails, { sale: id });
 
-      sale.details = [...toCreate, ...toUpdate].map((cropId) => {
-        const data = newDetails.find((record) => record.crop.id === cropId);
+      sale.details = [...toCreate, ...toUpdate].map((harvestDetailId) => {
+        const data = newDetails.find((record) => record.id === harvestDetailId);
+        console.log(data);
         return queryRunner.manager.create(SaleDetails, data);
       });
 
@@ -259,6 +268,12 @@ export class SalesService {
       await this.saleRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
+    }
+  }
+
+  async removeBulk(removeBulkSalesDto: RemoveBulkRecordsDto<Sale>) {
+    for (const { id } of removeBulkSalesDto.recordsIds) {
+      await this.remove(id);
     }
   }
 }

@@ -296,6 +296,7 @@ export class HarvestService {
     total: number,
     increment = true,
   ) {
+    console.log(cropId, total, increment);
     const recordHarvestCropStock = await queryRunner.manager
       .getRepository(HarvestStock)
       .findOne({
@@ -322,7 +323,11 @@ export class HarvestService {
     const amountActually = recordHarvestCropStock?.total ?? 0;
     if (amountActually < total) {
       // await queryRunner.rollbackTransaction();
-      throw new InsufficientHarvestStockException();
+      console.log(amountActually);
+      throw new InsufficientHarvestStockException(
+        amountActually,
+        recordHarvestCropStock.crop.name,
+      );
     }
     await queryRunner.manager.decrement(
       HarvestStock,
