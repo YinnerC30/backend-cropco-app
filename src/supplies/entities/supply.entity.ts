@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { SuppliesConsumptionDetails } from './supplies-consumption-details.entity';
-import { SuppliesPurchaseDetails } from './supplies-purchase-details.entity';
+import { SuppliesShoppingDetails } from './supplies-shopping-details.entity';
 import { SuppliesStock } from './supplies-stock.entity';
 
 export type UnitOfMeasure = 'GRAMOS' | 'MILILITROS';
@@ -31,11 +31,11 @@ export class Supply {
   // External relations
 
   @OneToMany(
-    () => SuppliesPurchaseDetails,
-    (purchase_details) => purchase_details.supply,
+    () => SuppliesShoppingDetails,
+    (shopping_details) => shopping_details.supply,
     { cascade: true },
   )
-  purchase_details: SuppliesPurchaseDetails[];
+  shopping_details: SuppliesShoppingDetails[];
 
   @OneToOne(() => SuppliesStock, (stock) => stock.supply, { cascade: true })
   stock: SuppliesStock;

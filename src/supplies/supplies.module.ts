@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SuppliesConsumptionDetails } from './entities/supplies-consumption-details.entity';
 import { SuppliesConsumption } from './entities/supplies-consumption.entity';
-import { SuppliesPurchaseDetails } from './entities/supplies-purchase-details.entity';
-import { SuppliesPurchase } from './entities/supplies-purchase.entity';
+import { SuppliesShoppingDetails } from './entities/supplies-shopping-details.entity';
+import { SuppliesShopping } from './entities/supplies-shopping.entity';
 import { SuppliesStock } from './entities/supplies-stock.entity';
 import { Supply } from './entities/supply.entity';
 import { SuppliesController } from './supplies.controller';
@@ -13,8 +13,8 @@ import { SuppliesService } from './supplies.service';
   imports: [
     TypeOrmModule.forFeature([
       Supply,
-      SuppliesPurchase,
-      SuppliesPurchaseDetails,
+      SuppliesShopping,
+      SuppliesShoppingDetails,
       SuppliesStock,
       SuppliesConsumption,
       SuppliesConsumptionDetails,

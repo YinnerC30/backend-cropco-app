@@ -65,7 +65,7 @@ export class SuppliersService {
     const supplier = await this.supplierRepository.findOne({
       where: { id },
       relations: {
-        supplies_purchase_details: {
+        supplies_shopping_details: {
           supply: true,
         },
       },

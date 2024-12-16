@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PersonalInformation } from '../../common/entities/personal-information.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { SuppliesPurchaseDetails } from 'src/supplies/entities/supplies-purchase-details.entity';
+import { SuppliesShoppingDetails } from 'src/supplies/entities/supplies-shopping-details.entity';
 
 @Entity({ name: 'suppliers' })
 export class Supplier extends PersonalInformation {
@@ -30,14 +30,14 @@ export class Supplier extends PersonalInformation {
   address: string;
 
   @ApiProperty({
-    type: () => [SuppliesPurchaseDetails],
+    type: () => [SuppliesShoppingDetails],
     description:
       'Detalles de las compras de suministros realizadas a este proveedor',
   })
   @OneToMany(
-    () => SuppliesPurchaseDetails,
-    (supplies_purchase_details) => supplies_purchase_details.supplier,
+    () => SuppliesShoppingDetails,
+    (supplies_shopping_details) => supplies_shopping_details.supplier,
     { cascade: true },
   )
-  supplies_purchase_details: SuppliesPurchaseDetails[];
+  supplies_shopping_details: SuppliesShoppingDetails[];
 }

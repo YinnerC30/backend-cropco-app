@@ -6,10 +6,10 @@ import {
   IsPositive,
   ValidateNested,
 } from 'class-validator';
-import { PurchaseSuppliesDetailsDto } from './purchase-supplies-details.dto';
+import { ShoppingSuppliesDetailsDto } from './shopping-supplies-details.dto';
 import { Type } from 'class-transformer';
 
-export class CreatePurchaseSuppliesDto {
+export class CreateShoppingSuppliesDto {
   @IsDateString()
   date: string;
   @IsInt()
@@ -18,6 +18,6 @@ export class CreatePurchaseSuppliesDto {
 
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => PurchaseSuppliesDetailsDto)
-  details: PurchaseSuppliesDetailsDto[];
+  @Type(() => ShoppingSuppliesDetailsDto)
+  details: ShoppingSuppliesDetailsDto[];
 }

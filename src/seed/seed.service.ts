@@ -13,7 +13,7 @@ import { CreateSaleDto } from 'src/sales/dto/create-sale.dto';
 import { SalesService } from 'src/sales/sales.service';
 import { SuppliersService } from 'src/suppliers/suppliers.service';
 import { CreateConsumptionSuppliesDto } from 'src/supplies/dto/create-consumption-supplies.dto';
-import { CreatePurchaseSuppliesDto } from 'src/supplies/dto/create-purchase-supplies.dto';
+import { CreateShoppingSuppliesDto } from 'src/supplies/dto/create-shopping-supplies.dto';
 import { SuppliesService } from 'src/supplies/supplies.service';
 import { CreateWorkDto } from 'src/work/dto/create-work.dto';
 import { Work } from 'src/work/entities/work.entity';
@@ -60,7 +60,7 @@ export class SeedService {
     await this.insertNewCrops();
     await this.insertNewHarvests();
     await this.insertNewHarvestsProcessed();
-    await this.insertNewPurchaseSupplies();
+    await this.insertNewShoppingSupplies();
     // await this.insertNewConsumptionSupplies();
     // await this.insertNewWork();
     // await this.insertNewSales();
@@ -77,7 +77,7 @@ export class SeedService {
     await this.usersService.deleteAllUsers();
     await this.clientsService.deleteAllClients();
     await this.suppliesService.deleteAllStockSupplies();
-    await this.suppliesService.deleteAllPurchaseSupplies();
+    await this.suppliesService.deleteAllShoppingSupplies();
     await this.suppliersService.deleteAllSupplier();
     await this.suppliesService.deleteAllConsumptionSupplies();
     await this.suppliesService.deleteAllSupplies();
@@ -253,16 +253,16 @@ export class SeedService {
 
     return true;
   }
-  private async insertNewPurchaseSupplies() {
+  private async insertNewShoppingSupplies() {
     const [supply1, supply2, supply3] = this.suppliesIds;
     const [supplier1] = this.suppliersIds;
 
-    const initialPurchase: any = initialData.purchaseSupplies[0];
+    const initialShopping: any = initialData.shoppingSupplies[0];
 
-    const { details, ...rest } = initialPurchase;
+    const { details, ...rest } = initialShopping;
 
     for (let index = 0; index < 3; index++) {
-      const objectToCreate: CreatePurchaseSuppliesDto = {
+      const objectToCreate: CreateShoppingSuppliesDto = {
         ...rest,
         details: [
           {
@@ -283,7 +283,7 @@ export class SeedService {
         ],
       };
 
-      await this.suppliesService.createPurchase(objectToCreate);
+      await this.suppliesService.createShopping(objectToCreate);
     }
 
     return true;

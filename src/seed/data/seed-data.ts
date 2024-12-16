@@ -10,7 +10,7 @@ export interface Seed {
   supplies: Supply[];
   harvests: Harvest[];
   harvestProcessed: HarvestProcessed[];
-  purchaseSupplies: PurchaseSupplies[];
+  shoppingSupplies: ShoppingSupplies[];
   consumptionSupplies: ConsumptionSupplies[];
   works: Work[];
   sales: Sale[];
@@ -100,13 +100,13 @@ export interface HarvestDetail {
   value_pay: number;
 }
 
-export interface PurchaseSupplies {
+export interface ShoppingSupplies {
   date: string;
   total: number;
-  details: PurchaseSuppliesDetails[];
+  details: ShoppingSuppliesDetails[];
 }
 
-export interface PurchaseSuppliesDetails {
+export interface ShoppingSuppliesDetails {
   amount: number;
   total: number;
 }
@@ -882,7 +882,7 @@ export const initialData: Seed = {
       total: 1500,
     },
   ],
-  purchaseSupplies: [
+  shoppingSupplies: [
     {
       date: '2024-06-23',
       total: 500000,

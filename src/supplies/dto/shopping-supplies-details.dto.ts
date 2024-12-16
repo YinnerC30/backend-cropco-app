@@ -8,14 +8,18 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { SuppliesPurchase } from '../entities/supplies-purchase.entity';
+import { SuppliesShopping } from '../entities/supplies-shopping.entity';
 import { Type } from 'class-transformer';
 import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
 
-export class PurchaseSuppliesDetailsDto {
+export class ShoppingSuppliesDetailsDto {
+  @IsUUID(4)
+  @IsOptional()
+  id: string;
+
   @ValidateNested()
   @Type(() => ValidateUUID)
-  purchase: DeepPartial<SuppliesPurchase>;
+  shopping: DeepPartial<SuppliesShopping>;
 
   @ValidateNested()
   @Type(() => ValidateUUID)
