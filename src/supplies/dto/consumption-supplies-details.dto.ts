@@ -12,6 +12,10 @@ import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
 import { Type } from 'class-transformer';
 
 export class ConsumptionSuppliesDetailsDto {
+  @IsUUID(4)
+  @IsOptional()
+  id: string;
+  
   @ValidateNested()
   @Type(() => ValidateUUID)
   consumption: DeepPartial<SuppliesConsumption>;

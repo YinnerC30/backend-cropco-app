@@ -193,6 +193,10 @@ export class SuppliesService {
     amount: number,
     increment = true,
   ) {
+    const supply = await this.supplyRepository.findOne({
+      where: { id: supplyId },
+    });
+
     const recordSupplyStock = await queryRunner.manager
       .getRepository(SuppliesStock)
       .createQueryBuilder('supplyStock')
@@ -220,7 +224,7 @@ export class SuppliesService {
     const amountActually = recordSupplyStock?.amount || 0;
 
     if (amountActually < amount) {
-      throw new InsufficientSupplyStockException();
+      throw new InsufficientSupplyStockException(amountActually, supply?.name);
     }
 
     await queryRunner.manager.decrement(
@@ -648,59 +652,68 @@ export class SuppliesService {
       const newDetails: ConsumptionSuppliesDetailsDto[] =
         updateSuppliesConsumptionDto.details;
 
-      const oldIDsSupplies: string[] = oldDetails.map(
-        (record: SuppliesConsumptionDetails) => record.supply.id,
+      const oldIDsConsumptionDetails: string[] = oldDetails.map(
+        (record: SuppliesConsumptionDetails) => record.id,
       );
-      const newIDsSupplies: string[] = newDetails.map((record) =>
-        new String(record.supply.id).toString(),
+      const newIDsConsumptionDetails: string[] = newDetails.map((record) =>
+        new String(record.id).toString(),
       );
 
       const { toCreate, toUpdate, toDelete } = organizeIDsToUpdateEntity(
-        newIDsSupplies,
-        oldIDsSupplies,
+        newIDsConsumptionDetails,
+        oldIDsConsumptionDetails,
       );
 
-      for (const supply of toDelete) {
+      for (const detailId of toDelete) {
         const oldRecordData: SuppliesConsumptionDetails = oldDetails.find(
-          (record: SuppliesConsumptionDetails) => record.supply.id === supply,
+          (record: SuppliesConsumptionDetails) => record.id === detailId,
         );
 
         await this.removeConsumptionDetails(queryRunner, {
-          consumption: id,
-          supply,
+          id: detailId,
         });
 
-        await this.updateStock(queryRunner, supply, oldRecordData.amount, true);
+        await this.updateStock(
+          queryRunner,
+          oldRecordData.supply.id,
+          oldRecordData.amount,
+          true,
+        );
       }
 
-      for (const supply of toUpdate) {
+      for (const detailId of toUpdate) {
         const oldRecordData: SuppliesConsumptionDetails = oldDetails.find(
-          (record: SuppliesConsumptionDetails) => record.supply.id === supply,
-        );
-
-        await this.updateStock(queryRunner, supply, oldRecordData.amount, true);
-
-        const newRecordData = newDetails.find(
-          (record) => record.supply.id === supply,
+          (record: SuppliesConsumptionDetails) => record.id === detailId,
         );
 
         await this.updateStock(
           queryRunner,
-          supply,
+          oldRecordData.supply.id,
+          oldRecordData.amount,
+          true,
+        );
+
+        const newRecordData = newDetails.find(
+          (record) => record.id === detailId,
+        );
+
+        await this.updateStock(
+          queryRunner,
+          newRecordData.supply.id,
           newRecordData.amount,
           false,
         );
 
         await this.updateConsumptionDetails(
           queryRunner,
-          { consumption: id, supply },
+          { id: detailId },
           { ...newRecordData },
         );
       }
 
-      for (const supply of toCreate) {
+      for (const detailId of toCreate) {
         const newRecordData = newDetails.find(
-          (record) => record.supply.id === supply,
+          (record) => record.id === detailId,
         );
 
         await this.createConsumptionDetails(queryRunner, {
@@ -710,7 +723,7 @@ export class SuppliesService {
 
         await this.updateStock(
           queryRunner,
-          supply,
+          newRecordData.supply.id,
           newRecordData.amount,
           false,
         );

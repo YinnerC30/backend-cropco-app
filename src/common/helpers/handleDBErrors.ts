@@ -22,7 +22,7 @@ export const handleDBExceptions = (error: any, logger: Logger) => {
   if (error instanceof InsufficientHarvestStockException) throw error;
 
   if (error instanceof InsufficientSupplyStockException)
-    throw new InsufficientSupplyStockException();
+    throw error;
 
   if (error instanceof UpdateValuesMissingError)
     throw new BadRequestException('No values in the object');
