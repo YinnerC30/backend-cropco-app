@@ -43,6 +43,10 @@ export class PaymentsService {
       const record = await queryRunner.manager
         .getRepository(HarvestDetails)
         .findOne({ where: { id: `${id}` } });
+      console.log(record);
+      if (!record) {
+        throw new BadRequestException('No existe el harvestdetail');
+      }
       totalValuePayHarvest.push(record.value_pay);
     }
 

@@ -589,8 +589,9 @@ export class SuppliesService {
       limit = 10,
       offset = 0,
       search = '',
-      after_date = '',
-      before_date = '',
+      filter_by_date = false,
+      type_filter_date,
+      date,
     } = queryParams;
 
     const queryBuilder = this.suppliesConsumptionRepository
@@ -599,15 +600,10 @@ export class SuppliesService {
       .take(limit)
       .skip(offset * limit);
 
-    if (before_date.length > 0) {
-      queryBuilder.andWhere('supplies_consumption.date < :before_date', {
-        before_date,
-      });
-    }
-
-    if (after_date.length > 0) {
-      queryBuilder.andWhere('supplies_consumption.date > :after_date', {
-        after_date,
+    if (filter_by_date) {
+      const operation = TypeFilterDate.AFTER == type_filter_date ? '>' : '<';
+      queryBuilder.andWhere(`supplies_consumption.date ${operation} :date`, {
+        date,
       });
     }
 
