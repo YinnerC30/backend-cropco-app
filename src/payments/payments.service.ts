@@ -17,6 +17,9 @@ import { PaymentHarvest } from './entities/payment-harvest.entity';
 import { PaymentWork } from './entities/payment-work.entity';
 import { MethodOfPayment, Payment } from './entities/payment.entity';
 import { QueryParamsPayment } from './dto/query-params-payment.dto';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
+import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 
 @Injectable()
 export class PaymentsService {
@@ -113,13 +116,18 @@ export class PaymentsService {
     const {
       limit = 10,
       offset = 0,
-      after_date = '',
-      before_date = '',
-      major_total = 0,
-      minor_total = 0,
+
+      employee = '',
+
+      filter_by_date = false,
+      type_filter_date,
+      date,
+
+      filter_by_total = false,
+      type_filter_total,
+      total,
       filter_by_method_of_payment = false,
       method_of_payment = MethodOfPayment.EFECTIVO,
-      employee = '',
     } = queryParams;
 
     const queryBuilder = this.paymentRepository
@@ -135,18 +143,19 @@ export class PaymentsService {
       });
     }
 
-    if (before_date.length > 0) {
-      queryBuilder.andWhere('payment.date < :before_date', { before_date });
+    if (filter_by_date) {
+      const operation = TypeFilterDate.AFTER == type_filter_date ? '>' : '<';
+      queryBuilder.andWhere(`payment.date ${operation} :date`, { date });
     }
 
-    if (after_date.length > 0) {
-      queryBuilder.andWhere('payment.date > :after_date', { after_date });
-    }
-    if (minor_total != 0) {
-      queryBuilder.andWhere('payment.total < :minor_total', { minor_total });
-    }
-    if (major_total != 0) {
-      queryBuilder.andWhere('payment.total > :major_total', { major_total });
+    if (filter_by_total) {
+      const operation =
+        TypeFilterNumber.MAX == type_filter_total
+          ? '>'
+          : TypeFilterNumber.EQUAL == type_filter_total
+            ? '='
+            : '<';
+      queryBuilder.andWhere(`payment.total ${operation} :total`, { total });
     }
 
     if (filter_by_method_of_payment) {
@@ -225,4 +234,12 @@ export class PaymentsService {
       await queryRunner.release();
     }
   }
+
+  async removeBulk(removeBulkPaymentsDto: RemoveBulkRecordsDto<Payment>) {
+    for (const { id } of removeBulkPaymentsDto.recordsIds) {
+      await this.remove(id);
+    }
+  }
+
+  // TODO: Generar factura en PDF
 }

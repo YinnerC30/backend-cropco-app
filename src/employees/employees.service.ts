@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { DataSource, ILike, Repository } from 'typeorm';
+import { DataSource, ILike, Not, Repository, IsNull } from 'typeorm';
 
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
@@ -128,6 +128,25 @@ export class EmployeesService {
         },
       ],
     });
+
+    return {
+      rowCount: employees.length,
+      rows: employees,
+    };
+  }
+
+  async findAllEmployeesWithPaymentsMade() {
+    const employees = await this.employeeRepository
+      .createQueryBuilder('employee')
+      .leftJoinAndSelect('employee.payments', 'payments')
+      .where('payments.id IS NOT NULL') // Filtrar solo empleados con pagos
+      .select([
+        'employee.id',
+        'employee.first_name',
+        'employee.last_name',
+        'payments', // Si quieres incluir información de los pagos
+      ])
+      .getMany();
 
     return {
       rowCount: employees.length,

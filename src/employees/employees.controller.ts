@@ -37,6 +37,11 @@ export const pathsEmployeesController: PathsController = {
     description: 'obtener todos los empleados con pagos pendientes',
     name: 'find_all_employees_with_pending_payments',
   },
+  findAllEmployeesWithPaymentsMade: {
+    path: 'made-payments/all',
+    description: 'obtener todos los empleados con pagos efectuados',
+    name: 'find_all_employees_with_made_payments',
+  },
   findOneEmployeeWithPendingPayments: {
     path: 'pending-payments/one/:id',
     description: 'obtener los pagos pendientes de 1 empleado',
@@ -73,6 +78,7 @@ const {
   createEmployee,
   findAllEmployees,
   findAllEmployeesWithPendingPayments,
+  findAllEmployeesWithPaymentsMade,
   findOneEmployeeWithPendingPayments,
   findOneEmployee,
   updateEmployee,
@@ -143,6 +149,19 @@ export class EmployeesController {
   // Método
   findAllEmployeeWithPaymentsPending(@Query() queryParams: QueryParams) {
     return this.employeesService.findAllEmployeesWithPaymentsPending();
+  }
+  // Obtener todos los pagos pendientes de los clientes
+  @Get(findAllEmployeesWithPaymentsMade.path)
+  // Documentación
+  @ApiOperation({ summary: 'Obtener todos los empleados con pagos efectuados' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de empleados con pagos efectuados obtenida', //TODO: Pendiente por implementar objeto devuelto en la respuesta
+  })
+  @ApiResponse({ status: 500, description: 'Error interno del servidor' })
+  // Método
+  findAllEmployeeWithPaymentsMade(@Query() queryParams: QueryParams) {
+    return this.employeesService.findAllEmployeesWithPaymentsMade();
   }
 
   // Obtener información de 1 empleado

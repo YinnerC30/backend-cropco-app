@@ -1,6 +1,8 @@
 import {
   IsBoolean,
+  IsBooleanString,
   IsDateString,
+  IsEnum,
   IsIn,
   IsInt,
   IsOptional,
@@ -8,18 +10,24 @@ import {
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { Transform, Type } from 'class-transformer';
 import { MethodOfPayment } from '../entities/payment.entity';
+import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
+import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 
 export class QueryParamsPayment extends QueryParams {
   @IsOptional()
   employee?: string;
 
   @IsOptional()
-  @IsDateString()
-  after_date: string;
+  @IsBooleanString()
+  filter_by_date?: boolean;
+
+  @IsOptional()
+  @IsEnum(TypeFilterDate)
+  type_filter_date?: TypeFilterDate;
 
   @IsOptional()
   @IsDateString()
-  before_date: string;
+  date?: string;
 
   @IsOptional()
   @IsBoolean()
@@ -35,12 +43,15 @@ export class QueryParamsPayment extends QueryParams {
   method_of_payment: MethodOfPayment;
 
   @IsOptional()
-  @Type(() => Number) // Transformará el valor a un número
-  @IsInt()
-  minor_total: number;
+  @IsBooleanString()
+  filter_by_total?: boolean;
+
+  @IsOptional()
+  @IsEnum(TypeFilterNumber)
+  type_filter_total?: TypeFilterNumber;
 
   @IsOptional()
   @Type(() => Number) // Transformará el valor a un número
   @IsInt()
-  major_total: number;
+  total?: number;
 }

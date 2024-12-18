@@ -20,6 +20,9 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentsService } from './payments.service';
 import { QueryParamsPayment } from './dto/query-params-payment.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
+import { Payment } from './entities/payment.entity';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 export const pathsPaymentsController: PathsController = {
   createPayment: {
@@ -42,11 +45,22 @@ export const pathsPaymentsController: PathsController = {
     description: 'eliminar 1 pago',
     name: 'remove_one_payment',
   },
+  removePayments: {
+    path: 'remove/bulk',
+    description: 'eliminar varios pagos',
+    name: 'remove_bulk_payments',
+  },
 };
 
-const { createPayment, findAllPayments, findOnePayment, removePayment } =
-  pathsPaymentsController;
+const {
+  createPayment,
+  findAllPayments,
+  findOnePayment,
+  removePayment,
+  removePayments,
+} = pathsPaymentsController;
 
+@Auth()
 @ApiTags('Payments')
 @Controller('payments')
 export class PaymentsController {
@@ -90,5 +104,14 @@ export class PaymentsController {
   @ApiParam({ name: 'id', type: 'string', description: 'Payment id' })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.paymentsService.remove(id);
+  }
+
+  @Delete(removePayments.path)
+  @ApiResponse({
+    status: 200,
+    description: 'Pagos eliminados exitosamente',
+  })
+  removeBulk(@Body() removeBulkPaymentsDto: RemoveBulkRecordsDto<Payment>) {
+    return this.paymentsService.removeBulk(removeBulkPaymentsDto);
   }
 }
