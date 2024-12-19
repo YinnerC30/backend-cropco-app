@@ -10,17 +10,15 @@ import {
   Query,
 } from '@nestjs/common';
 
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 import { QueryParams } from 'src/common/dto/QueryParams';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
-import { Auth } from 'src/auth/decorators/auth.decorator';
-import { RemoveBulkUsersDto } from './dto/remove-bulk-users.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 export const pathsUsersController: PathsController = {
   createUser: {
@@ -77,48 +75,26 @@ const {
 } = pathsUsersController;
 
 @Auth()
-@ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get(findAllUsers.path)
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de todos los usuarios',
-    type: User,
-    isArray: true,
-  })
   findAll(@Query() queryParams: QueryParams) {
     return this.usersService.findAll(queryParams);
   }
 
   @Post(createUser.path)
-  @ApiResponse({
-    status: 201,
-    description: 'Usuario creado exitosamente',
-    type: User,
-  })
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
   @Get(findOneUser.path)
-  @ApiResponse({
-    status: 200,
-    description: 'Detalle de un usuario encontrado por ID',
-    type: User,
-  })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.findOne(id);
   }
 
   @Patch(updateUser.path)
-  @ApiResponse({
-    status: 200,
-    description: 'Usuario actualizado exitosamente',
-    type: User,
-  })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -127,19 +103,11 @@ export class UsersController {
   }
 
   @Delete(removeUser.path)
-  @ApiResponse({
-    status: 200,
-    description: 'Usuario eliminado exitosamente',
-  })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.remove(id);
   }
 
   @Delete(removeUsers.path)
-  @ApiResponse({
-    status: 200,
-    description: 'Usuarios eliminados exitosamente',
-  })
   removeBulk(@Body() removeBulkUsersDto: RemoveBulkRecordsDto<User>) {
     return this.usersService.removeBulk(removeBulkUsersDto);
   }

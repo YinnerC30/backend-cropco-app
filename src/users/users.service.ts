@@ -21,6 +21,7 @@ import { hashPassword } from './helpers/encrypt-password';
 import { generatePassword } from './helpers/generate-password';
 import * as bcrypt from 'bcrypt';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { ResponseGetAllRecords } from 'src/common/interfaces/ResponseGetAllRecords';
 
 @Injectable()
 export class UsersService {
@@ -43,7 +44,7 @@ export class UsersService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     try {
       const user = this.usersRepository.create(createUserDto);
       user.password = await hashPassword(user.password);
@@ -64,7 +65,9 @@ export class UsersService {
     }
   }
 
-  async findAll(queryParams: QueryParams) {
+  async findAll(
+    queryParams: QueryParams,
+  ): Promise<ResponseGetAllRecords<User>> {
     const { search = '', limit = 10, offset = 0 } = queryParams;
 
     const users = await this.usersRepository.find({
@@ -97,7 +100,10 @@ export class UsersService {
     };
   }
 
-  async findOne(id: string, showPassword = false) {
+  async findOne(
+    id: string,
+    showPassword = false,
+  ): Promise<Partial<User> & { modules: Module[] }> {
     const user = await this.usersRepository.findOne({
       select: {
         id: true,
@@ -142,7 +148,10 @@ export class UsersService {
     };
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<Partial<User> & { modules: Module[] }> {
     await this.findOne(id);
     try {
       const { actions, ...rest } = updateUserDto;
@@ -169,12 +178,14 @@ export class UsersService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<void> {
     const { modules, ...user } = await this.findOne(id);
     await this.usersRepository.remove(user as User);
   }
 
-  async removeBulk(removeBulkUsersDto: RemoveBulkRecordsDto<User>) {
+  async removeBulk(
+    removeBulkUsersDto: RemoveBulkRecordsDto<User>,
+  ): Promise<void> {
     for (const { id } of removeBulkUsersDto.recordsIds) {
       await this.remove(id);
     }
@@ -188,7 +199,10 @@ export class UsersService {
     }
   }
 
-  async updateActions(id: string, updateUserActionsDto: UpdateUserActionsDto) {
+  async updateActions(
+    id: string,
+    updateUserActionsDto: UpdateUserActionsDto,
+  ): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -228,7 +242,7 @@ export class UsersService {
     }
   }
 
-  async updatePassword(userId: string, newPassword: string) {
+  async updatePassword(userId: string, newPassword: string): Promise<void> {
     await this.usersRepository.update(
       {
         id: userId,
@@ -237,7 +251,7 @@ export class UsersService {
     );
   }
 
-  async resetPassword(id: string) {
+  async resetPassword(id: string): Promise<{ password: string }> {
     await this.findOne(id);
     const password = generatePassword();
     const encryptPassword = await hashPassword(password);
@@ -245,7 +259,10 @@ export class UsersService {
     return { password };
   }
 
-  async changePassword(id: string, changePasswordDto: ChangePasswordDto) {
+  async changePassword(
+    id: string,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<void> {
     const { old_password, new_password } = changePasswordDto;
     const user = await this.findOne(id, true);
     const valid_password = bcrypt.compareSync(old_password, user.password);
