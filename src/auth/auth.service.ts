@@ -43,7 +43,9 @@ export class AuthService {
     private readonly userService: UsersService,
   ) {}
 
-  async login(loginUserDto: LoginUserDto) {
+  async login(
+    loginUserDto: LoginUserDto,
+  ): Promise<Partial<User> & { modules: Module[] } & { token: string }> {
     const { password, email } = loginUserDto;
     const user = await this.usersRepository.findOne({
       where: { email },
@@ -101,12 +103,12 @@ export class AuthService {
     };
   }
 
-  private getJwtToken(payload: JwtPayload) {
+  private getJwtToken(payload: JwtPayload): string {
     const token = this.jwtService.sign(payload);
     return token;
   }
 
-  async renewToken(token: string) {
+  async renewToken(token: string): Promise<{ token: string }> {
     const { id } = this.jwtService.verify(token);
     const newToken = this.jwtService.sign({ id });
     return {
@@ -114,7 +116,9 @@ export class AuthService {
     };
   }
 
-  async checkAuthStatus(token: string) {
+  async checkAuthStatus(
+    token: string,
+  ): Promise<{ message: string; statusCode: number }> {
     try {
       this.jwtService.verify(token);
       return {
@@ -206,7 +210,7 @@ export class AuthService {
     return { userPermits1, userPermits2 };
   }
 
-  async createModuleWithActions() {
+  async createModuleWithActions(): Promise<void> {
     const modules = {
       auth: {
         label: 'autenticación',
@@ -283,10 +287,10 @@ export class AuthService {
     }
   }
 
-  async findAllModules() {
+  async findAllModules(): Promise<Module[]> {
     return await this.modulesRepository.find({ relations: { actions: true } });
   }
-  async findOneModule(name: string) {
+  async findOneModule(name: string): Promise<Module> {
     const module = await this.modulesRepository.findOne({
       where: {
         name: name,
@@ -301,7 +305,9 @@ export class AuthService {
     return module;
   }
 
-  async convertToAdmin(id: string) {
+  async convertToAdmin(
+    id: string,
+  ): Promise<Partial<User> & { modules: Module[] }> {
     const { modules, ...user } = await this.userService.findOne(id);
 
     const actions = (await this.moduleActionsRepository.find({
