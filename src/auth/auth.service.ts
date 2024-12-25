@@ -58,14 +58,14 @@ export class AuthService {
       },
     });
 
+    if (!user)
+      throw new UnauthorizedException('Credentials are not valid (email)');
+
     if (!user.is_active) {
       throw new UnauthorizedException(
         `User ${user.first_name} is inactive, talk with administrator`,
       );
     }
-
-    if (!user)
-      throw new UnauthorizedException('Credentials are not valid (email)');
 
     if (!bcrypt.compareSync(password, user.password))
       throw new UnauthorizedException('Credentials are not valid (password)');
