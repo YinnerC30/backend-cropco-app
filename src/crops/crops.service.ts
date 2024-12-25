@@ -30,7 +30,7 @@ export class CropsService {
 
   async findAll(queryParams: QueryParams) {
     const {
-      search = '',
+      query = '',
       limit = 10,
       offset = 0,
       allRecords = false,
@@ -39,7 +39,7 @@ export class CropsService {
     let crops;
 
     const searchCondition = {
-      name: ILike(`${search}%`),
+      name: ILike(`${query}%`),
     };
 
     if (allRecords === true) {
@@ -61,7 +61,7 @@ export class CropsService {
     }
 
     const count =
-      search.length === 0 ? await this.cropRepository.count() : crops.length;
+      query.length === 0 ? await this.cropRepository.count() : crops.length;
 
     return {
       rowCount: count,

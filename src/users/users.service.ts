@@ -68,15 +68,15 @@ export class UsersService {
   async findAll(
     queryParams: QueryParams,
   ): Promise<ResponseGetAllRecords<User>> {
-    const { search = '', limit = 10, offset = 0 } = queryParams;
+    const { query = '', limit = 10, offset = 0 } = queryParams;
 
     const users = await this.usersRepository.find({
       where: [
         {
-          first_name: ILike(`${search}%`),
+          first_name: ILike(`${query}%`),
         },
         {
-          email: ILike(`${search}%`),
+          email: ILike(`${query}%`),
         },
       ],
       order: {
@@ -87,7 +87,7 @@ export class UsersService {
     });
 
     let count: number;
-    if (search.length === 0) {
+    if (query.length === 0) {
       count = await this.usersRepository.count();
     } else {
       count = users.length;

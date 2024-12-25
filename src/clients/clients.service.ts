@@ -33,7 +33,7 @@ export class ClientsService {
   }
 
   async findAll(queryParams: QueryParams) {
-    const { search = '', limit = 10, offset = 0 } = queryParams;
+    const { query: search = '', limit = 10, offset = 0 } = queryParams;
 
     const clients = await this.clientRepository.find({
       where: [

@@ -53,5 +53,5 @@ export class QueryParams {
   })
   @IsOptional()
   @IsString()
-  search?: string;
+  query?: string;
 }

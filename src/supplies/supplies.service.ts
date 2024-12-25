@@ -67,7 +67,7 @@ export class SuppliesService {
 
   async findAll(queryParams: QueryParams) {
     const {
-      search = '',
+      query: search = '',
       limit = 10,
       offset = 0,
       allRecords = false,
@@ -152,7 +152,7 @@ export class SuppliesService {
   }
 
   async findAllSuppliesStock(queryParams: QueryParams) {
-    const { limit = 10, offset = 0, search = '' } = queryParams;
+    const { limit = 10, offset = 0, query: search = '' } = queryParams;
 
     const suppliesStock = await this.suppliesStockRepository.find({
       relations: {
@@ -588,7 +588,7 @@ export class SuppliesService {
     const {
       limit = 10,
       offset = 0,
-      search = '',
+      query: search = '',
       filter_by_date = false,
       type_filter_date,
       date,

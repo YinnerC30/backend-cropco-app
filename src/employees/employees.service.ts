@@ -54,22 +54,22 @@ export class EmployeesService {
 
   async findAll(queryParams: QueryParams) {
     const {
-      search = '',
+      query = '',
       limit = 10,
       offset = 0,
       allRecords = false,
     } = queryParams;
 
-    let employees;
+    let employees: Employee[];
 
     if (allRecords === true) {
       employees = await this.employeeRepository.find({
         where: [
           {
-            first_name: ILike(`${search}%`),
+            first_name: ILike(`${query}%`),
           },
           {
-            email: ILike(`${search}%`),
+            email: ILike(`${query}%`),
           },
         ],
         order: {
@@ -80,10 +80,10 @@ export class EmployeesService {
       employees = await this.employeeRepository.find({
         where: [
           {
-            first_name: ILike(`${search}%`),
+            first_name: ILike(`${query}%`),
           },
           {
-            email: ILike(`${search}%`),
+            email: ILike(`${query}%`),
           },
         ],
         order: {
@@ -95,7 +95,7 @@ export class EmployeesService {
     }
 
     let count: number;
-    if (search.length === 0) {
+    if (query.length === 0) {
       count = await this.employeeRepository.count();
     } else {
       count = employees.length;
