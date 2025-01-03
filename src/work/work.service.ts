@@ -103,7 +103,7 @@ export class WorkService {
   }
 
   async findOne(id: string) {
-    const work: any = await this.workRepository.find({
+    const work = await this.workRepository.findOne({
       where: { id },
       relations: { crop: true, details: { employee: true } },
     });
@@ -113,7 +113,7 @@ export class WorkService {
   }
 
   async update(id: string, updateWorkDto: UpdateWorkDto) {
-    const [work] = await this.findOne(id);
+    const work = await this.findOne(id);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();

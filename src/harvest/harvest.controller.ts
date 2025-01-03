@@ -179,15 +179,15 @@ export class HarvestController {
     description: 'Se han obtenido todas las cosechas con su respectivo Stock',
   })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  findAllHarvestStock(@Query() queryParams: QueryParams) {
-    return this.harvestService.findAllHarvestStock(queryParams);
+  findAllHarvestStock() {
+    return this.harvestService.findAllHarvestStock();
   }
 
   @Get(findAllHarvestsProcessed.path)
   @ApiResponse({ status: 200, description: 'List of all processed harvests' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  findAllHarvestProcessed(@Query() queryParams: QueryParams) {
-    return this.harvestService.findAllHarvestProcessed(queryParams);
+  findAllHarvestProcessed() {
+    return this.harvestService.findAllHarvestProcessed();
   }
 
   @Get(findOneHarvest.path)

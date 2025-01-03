@@ -10,6 +10,7 @@ import {
   Equal,
   ILike,
   Like,
+  MoreThan,
   QueryRunner,
   Repository,
 } from 'typeorm';
@@ -268,11 +269,8 @@ export class HarvestService {
     }
   }
 
-  async findAllHarvestStock(queryParams: QueryParams) {
-    const { limit = 10, offset = 0 } = queryParams;
+  async findAllHarvestStock() {
     const harvestStock = await this.harvestStockRepository.find({
-      take: limit,
-      skip: offset,
       relations: {
         crop: true,
       },
@@ -286,7 +284,7 @@ export class HarvestService {
         name: item.crop.name,
         stock: item.total,
       })),
-      pageCount: Math.ceil(count / limit),
+      pageCount: count > 0 ? 1 : 0,
     };
   }
 
@@ -398,14 +396,11 @@ export class HarvestService {
     }
   }
 
-  async findAllHarvestProcessed(queryParams: QueryParams) {
-    const { limit = 10, offset = 0 } = queryParams;
+  async findAllHarvestProcessed() {
     const harvestProcessed = await this.harvestProcessedRepository.find({
       order: {
         date: 'ASC',
       },
-      take: limit,
-      skip: offset,
       relations: {
         crop: true,
         harvest: true,
@@ -420,7 +415,7 @@ export class HarvestService {
         crop: item.crop.name,
         harvest: item.harvest.date,
       })),
-      pageCount: Math.ceil(count / limit),
+      pageCount: count > 0 ? 1 : 0,
     };
   }
 

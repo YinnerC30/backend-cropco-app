@@ -5,7 +5,10 @@ interface PropertiesObject {
   namesPropertiesToSum: string[];
 }
 
-export const validateTotalInArray = (data: any, config: PropertiesObject) => {
+export const validateTotalInArray = (
+  data: any,
+  config: PropertiesObject,
+): boolean => {
   const array = data[config.propertyNameArray];
 
   const arrayValid = config.namesPropertiesToSum.map((prop) => {
@@ -16,5 +19,6 @@ export const validateTotalInArray = (data: any, config: PropertiesObject) => {
   if (arrayValid.some((value) => !value)) {
     throw new BadRequestException('Total in array is not correct.');
   }
-};
 
+  return arrayValid.every((value) => value);
+};
