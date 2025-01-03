@@ -146,7 +146,7 @@ export class SalesService {
 
   async update(id: string, updateSaleDto: UpdateSaleDto) {
     const sale: Sale = await this.findOne(id);
-    
+
     validateTotalInArray(updateSaleDto, {
       propertyNameArray: 'details',
       namesPropertiesToSum: ['total'],
@@ -226,7 +226,6 @@ export class SalesService {
 
       sale.details = [...toCreate, ...toUpdate].map((harvestDetailId) => {
         const data = newDetails.find((record) => record.id === harvestDetailId);
-        console.log(data);
         return queryRunner.manager.create(SaleDetails, data);
       });
 

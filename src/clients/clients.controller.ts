@@ -86,7 +86,7 @@ export class ClientsController {
   @Get('export/test')
   async exportTest(@Res() response: Response) {
     const pdfDoc = await this.clientsService.exportTest();
-    console.log(pdfDoc);
+    
     response.setHeader('Content-Type', 'application/pdf');
     pdfDoc.info.Title = 'Mi primer PDF';
     pdfDoc.pipe(response);

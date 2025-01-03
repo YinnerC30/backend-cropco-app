@@ -294,7 +294,6 @@ export class HarvestService {
     total: number,
     increment = true,
   ) {
-    console.log(cropId, total, increment);
     const recordHarvestCropStock = await queryRunner.manager
       .getRepository(HarvestStock)
       .findOne({
@@ -320,8 +319,6 @@ export class HarvestService {
     }
     const amountActually = recordHarvestCropStock?.total ?? 0;
     if (amountActually < total) {
-      // await queryRunner.rollbackTransaction();
-      console.log(amountActually);
       throw new InsufficientHarvestStockException(
         amountActually,
         recordHarvestCropStock.crop.name,
@@ -338,7 +335,7 @@ export class HarvestService {
   async validateTotalProcessed(
     queryRunner: QueryRunner,
     dto: CreateHarvestDto | UpdateHarvestDto | any,
-    actualAmount,
+    actualAmount: number,
   ) {
     const harvest = await queryRunner.manager
       .createQueryBuilder(Harvest, 'harvest')
@@ -429,7 +426,6 @@ export class HarvestService {
         harvest: true,
       },
     });
-    console.log(harvestProcessed);
     if (!harvestProcessed)
       throw new NotFoundException(`Harvest processed with id: ${id} not found`);
     return harvestProcessed;
@@ -510,7 +506,6 @@ export class HarvestService {
   }
 
   async removeBulk(removeBulkHarvestsDto: RemoveBulkRecordsDto<Harvest>) {
-    console.log(removeBulkHarvestsDto);
     for (const { id } of removeBulkHarvestsDto.recordsIds) {
       await this.remove(id);
     }

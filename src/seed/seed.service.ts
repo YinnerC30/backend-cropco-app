@@ -66,10 +66,6 @@ export class SeedService {
     // await this.insertNewSales();
     // await this.insertNewPayments();
 
-    console.log({
-      msg: 'Seed ejecutado...',
-    });
-
     return 'SEED EXECUTED';
   }
 

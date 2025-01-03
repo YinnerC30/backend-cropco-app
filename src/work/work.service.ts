@@ -181,7 +181,6 @@ export class WorkService {
   }
 
   async removeBulk(removeBulkWorksDto: RemoveBulkRecordsDto<Work>) {
-    console.log(removeBulkWorksDto);
     for (const { id } of removeBulkWorksDto.recordsIds) {
       await this.remove(id);
     }
