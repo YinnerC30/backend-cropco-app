@@ -106,6 +106,8 @@ export class HarvestService {
     const queryBuilder = this.harvestRepository
       .createQueryBuilder('harvest')
       .leftJoinAndSelect('harvest.crop', 'crop')
+      .leftJoinAndSelect('harvest.details', 'details')
+      .leftJoinAndSelect('details.employee', 'employee')
       .orderBy('harvest.date', 'DESC')
       .take(limit)
       .skip(offset * limit);
