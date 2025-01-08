@@ -36,6 +36,7 @@ import { ValidateUUID } from '../common/dto/ValidateUUID.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
+import { off } from 'process';
 
 @Injectable()
 export class HarvestService {
@@ -295,6 +296,7 @@ export class HarvestService {
   }
 
   async remove(id: string) {
+    // TODO: eliminar stock de harvestprocessed
     const harvest: Harvest = await this.findOne(id);
 
     const queryRunner = this.dataSource.createQueryRunner();

@@ -21,7 +21,7 @@ import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { QueryParamsShopping } from './dto/query-params-shopping.dto';
 import { QueryParamsConsumption } from './dto/query-params-consumption.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
-import { SuppliesShopping, Supply } from './entities';
+import { SuppliesConsumption, SuppliesShopping, Supply } from './entities';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 
@@ -116,6 +116,11 @@ export const pathsSuppliesController: PathsController = {
     description: 'eliminar varias compras',
     name: 'remove_bulk_supplies_shopping',
   },
+  removeBulkConsumptions: {
+    path: 'consumption/remove/bulk',
+    description: 'eliminar varios consumos',
+    name: 'remove_bulk_supplies_consumption',
+  },
 };
 
 const {
@@ -137,6 +142,7 @@ const {
   removeConsumption,
   removeSupplies,
   removeBulkShopping,
+  removeBulkConsumptions,
 } = pathsSuppliesController;
 
 @Auth()
@@ -255,5 +261,15 @@ export class SuppliesController {
     @Body() removeBulkShoppingDto: RemoveBulkRecordsDto<SuppliesShopping>,
   ) {
     return this.suppliesService.removeBulkShopping(removeBulkShoppingDto);
+  }
+  @Delete(removeBulkConsumptions.path)
+  @ApiResponse({
+    status: 200,
+    description: 'Compras eliminadas exitosamente',
+  })
+  removeBulkConsumption(
+    @Body() removeBulkConsumptionDto: RemoveBulkRecordsDto<SuppliesConsumption>,
+  ) {
+    return this.suppliesService.removeBulkConsumption(removeBulkConsumptionDto);
   }
 }

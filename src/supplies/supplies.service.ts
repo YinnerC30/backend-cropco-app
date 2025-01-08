@@ -158,9 +158,6 @@ export class SuppliesService {
       relations: {
         supply: true,
       },
-      where: {
-        amount: MoreThan(0),
-      },
       order: {
         amount: 'ASC',
       },
@@ -784,6 +781,14 @@ export class SuppliesService {
   ) {
     for (const { id } of removeBulkShoppingDto.recordsIds) {
       await this.removeShopping(id);
+    }
+  }
+
+  async removeBulkConsumption(
+    removeBulkConsumptionDto: RemoveBulkRecordsDto<SuppliesConsumption>,
+  ) {
+    for (const { id } of removeBulkConsumptionDto.recordsIds) {
+      await this.removeConsumption(id);
     }
   }
 }
