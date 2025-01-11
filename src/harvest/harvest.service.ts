@@ -211,7 +211,9 @@ export class HarvestService {
       relations: {
         details: { employee: true, payments_harvest: true },
         crop: true,
-        processed: true,
+        processed: {
+          crop: true,
+        },
       },
     });
 
@@ -304,6 +306,17 @@ export class HarvestService {
     await queryRunner.startTransaction();
 
     try {
+      for (const harvestProcessed of harvest.processed) {
+        await queryRunner.manager.remove(harvestProcessed);
+        const { crop } = harvestProcessed;
+        await this.updateStock(
+          queryRunner,
+          crop.id,
+          harvestProcessed.total,
+          false,
+        );
+      }
+
       await queryRunner.manager.remove(Harvest, harvest);
 
       await queryRunner.commitTransaction();

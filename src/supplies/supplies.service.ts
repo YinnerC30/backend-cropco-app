@@ -8,7 +8,15 @@ import { ShoppingSuppliesDetailsDto } from './dto/shopping-supplies-details.dto'
 import { UpdateSuppliesShoppingDto } from './dto/update-supplies-shopping.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
 
-import { DataSource, ILike, MoreThan, QueryRunner, Repository } from 'typeorm';
+import {
+  DataSource,
+  ILike,
+  IsNull,
+  MoreThan,
+  Not,
+  QueryRunner,
+  Repository,
+} from 'typeorm';
 
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -84,6 +92,9 @@ export class SuppliesService {
             brand: ILike(`${search}%`),
           },
         ],
+        relations: {
+          stock: true,
+        },
         order: {
           name: 'ASC',
         },
@@ -98,6 +109,9 @@ export class SuppliesService {
             brand: ILike(`${search}%`),
           },
         ],
+        relations: {
+          stock: true,
+        },
         order: {
           name: 'ASC',
         },
@@ -155,6 +169,9 @@ export class SuppliesService {
     const { limit = 10, offset = 0, query: search = '' } = queryParams;
 
     const suppliesStock = await this.suppliesStockRepository.find({
+      where: {
+        supply: Not(IsNull()),
+      },
       relations: {
         supply: true,
       },
