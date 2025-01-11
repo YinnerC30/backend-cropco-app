@@ -37,6 +37,7 @@ import { PrinterModule } from './printer/printer.module';
         };
       },
     }),
+    AuthModule,
     ClientsModule,
     CommonModule,
     CropsModule,
@@ -49,7 +50,7 @@ import { PrinterModule } from './printer/printer.module';
     WorkModule,
     SalesModule,
     PaymentsModule,
-    AuthModule,
+
     PrinterModule,
   ],
 })

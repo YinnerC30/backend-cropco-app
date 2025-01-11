@@ -24,6 +24,7 @@ import { UpdateSaleDto } from './dto/update-sale.dto';
 import { SalesService } from './sales.service';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Sale } from './entities/sale.entity';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 export const pathsSalesController: PathsController = {
   createSale: {
@@ -67,6 +68,7 @@ const {
   removeSales,
 } = pathsSalesController;
 
+@Auth()
 @ApiTags('Sales')
 @Controller('sales')
 export class SalesController {

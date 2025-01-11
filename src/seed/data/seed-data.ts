@@ -75,9 +75,13 @@ export interface Supply {
 export interface Work {
   date: string;
   description: string;
-  value_pay: number;
-  employee?: string;
-  crop?: string;
+  total: number;
+  crop?: { id: string; [key: string]: any };
+  details?: {
+    employee?: Partial<Employee>;
+    value_pay: boolean;
+    payment_is_pending: true;
+  };
 }
 
 export interface Harvest {
@@ -922,17 +926,18 @@ export const initialData: Seed = {
     {
       date: '2023-02-06',
       description: 'Ninguna por el momento',
-      value_pay: 35000,
+      total: 35000,
+
     },
     {
       date: '2023-02-06',
       description: 'Ninguna por el momento',
-      value_pay: 35000,
+      total: 35000,
     },
     {
       date: '2023-02-06',
       description: 'Ninguna por el momento',
-      value_pay: 35000,
+      total: 35000,
     },
   ],
   sales: [

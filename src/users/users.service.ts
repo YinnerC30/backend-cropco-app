@@ -38,8 +38,8 @@ export class UsersService {
     @InjectRepository(Module)
     private readonly modulesRepository: Repository<Module>,
 
-    @InjectRepository(ModuleActions)
-    private readonly moduleActionsRepository: Repository<ModuleActions>,
+    // @InjectRepository(ModuleActions)
+    // private readonly moduleActionsRepository: Repository<ModuleActions>,
 
     private readonly dataSource: DataSource,
   ) {}

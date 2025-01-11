@@ -79,9 +79,9 @@ const {
   removeCrops,
 } = pathsCropsController;
 
+@Auth()
 @ApiTags('Crops')
 @Controller('crops')
-// @Auth()
 export class CropsController {
   constructor(private readonly cropsService: CropsService) {}
 

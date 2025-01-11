@@ -318,4 +318,28 @@ export class AuthService {
 
     return await this.userService.update(id, { ...user, actions });
   }
+
+  async convertToAdminUserSeed(): Promise<
+    Partial<User> & { modules: Module[] }
+  > {
+    const data = {
+      first_name: 'demo name',
+      last_name: 'demo lastname',
+      email: 'demouser@example.com',
+      password: '123456',
+      cell_phone_number: '3001234567',
+      is_active: true,
+      actions: [],
+    };
+
+    const user = await this.userService.create(data);
+
+    const actions = (await this.moduleActionsRepository.find({
+      select: {
+        id: true,
+      },
+    })) as UserActionDto[];
+
+    return await this.userService.update(user.id, { ...user, actions });
+  }
 }

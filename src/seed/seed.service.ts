@@ -21,6 +21,8 @@ import { WorkService } from 'src/work/work.service';
 import { DataSource, DeepPartial } from 'typeorm';
 import { UsersService } from './../users/users.service';
 import { initialData } from './data/seed-data';
+import { AuthService } from 'src/auth/auth.service';
+import { WorkDetailsDto } from 'src/work/dto/work-details.dto';
 // import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
@@ -35,7 +37,6 @@ export class SeedService {
   private worksIds = [];
 
   constructor(
-    private dataSource: DataSource,
     private readonly usersService: UsersService,
     private readonly cropsService: CropsService,
     private readonly employeesService: EmployeesService,
@@ -46,12 +47,13 @@ export class SeedService {
     private readonly workService: WorkService,
     private readonly salesService: SalesService,
     private readonly paymentsService: PaymentsService,
-    // private readonly authService: AuthService,
+    private readonly authService: AuthService,
   ) {}
 
   async runSeed() {
     await this.deleteTables();
-    // await this.authService.createModuleWithActions();
+    await this.authService.createModuleWithActions();
+    await this.authService.convertToAdminUserSeed();
     await this.insertNewUsers();
     await this.insertNewClients();
     await this.insertNewSuppliers();
@@ -61,8 +63,8 @@ export class SeedService {
     await this.insertNewHarvests();
     await this.insertNewHarvestsProcessed();
     await this.insertNewShoppingSupplies();
+    await this.insertNewWork();
     // await this.insertNewConsumptionSupplies();
-    // await this.insertNewWork();
     // await this.insertNewSales();
     // await this.insertNewPayments();
 
@@ -321,25 +323,30 @@ export class SeedService {
   }
 
   private async insertNewWork() {
-    // const [crop1, crop2, crop3] = this.cropIds;
-    // const crops = [crop1, crop2, crop3];
+    const [crop1, crop2, crop3] = this.cropIds;
+    const crops = [crop1, crop2, crop3];
 
-    // const [employee1, employee2, employee3]: DeepPartial<Employee>[] =
-    //   this.employeeIds;
-    // const employees = [employee1, employee2, employee3];
+    const [employee1, employee2, employee3]: string[] = this.employeeIds;
+    const employees = [employee1, employee2, employee3];
 
-    // const works = initialData.works;
-    // const insertPromises = [];
-    // works.forEach((work, index) => {
-    //   const recordToCreate: CreateWorkDto = {
-    //     ...work,
-    //     crop: crops[index],
-    //     employee: employees[index],
-    //   };
-    //   insertPromises.push(this.workService.create(recordToCreate));
-    // });
-    // const result = await Promise.all(insertPromises);
-    // this.worksIds = result.map((work: Work) => new String(work.id).toString());
+    const works = initialData.works;
+    const insertPromises = [];
+    works.forEach((work, index) => {
+      const recordToCreate: CreateWorkDto = {
+        ...work,
+        crop: { id: crops[index] },
+        details: [
+          {
+            employee: { id: employees[index] },
+            value_pay: 35000,
+            payment_is_pending: true,
+          },
+        ] as WorkDetailsDto[],
+      };
+      insertPromises.push(this.workService.create(recordToCreate));
+    });
+    const result = await Promise.all(insertPromises);
+    this.worksIds = result.map((work: Work) => new String(work.id).toString());
 
     return true;
   }

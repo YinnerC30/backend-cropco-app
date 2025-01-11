@@ -13,6 +13,7 @@ import { SuppliesModule } from 'src/supplies/supplies.module';
 import { WorkModule } from 'src/work/work.module';
 import { SeedController } from './seed.controller';
 import { SeedService } from './seed.service';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   controllers: [SeedController],
@@ -28,6 +29,7 @@ import { SeedService } from './seed.service';
     WorkModule,
     SalesModule,
     PaymentsModule,
+    AuthModule,
   ],
 })
 export class SeedModule {}

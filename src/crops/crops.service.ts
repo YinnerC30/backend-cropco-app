@@ -48,12 +48,18 @@ export class CropsService {
         order: {
           name: 'ASC',
         },
+        relations: {
+          harvests_stock: true,
+        }
       });
     } else {
       crops = await this.cropRepository.find({
         where: [searchCondition],
         order: {
           name: 'ASC',
+        },
+        relations: {
+          harvests_stock: true,
         },
         take: limit,
         skip: offset * limit,
