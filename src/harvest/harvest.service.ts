@@ -165,7 +165,7 @@ export class HarvestService {
 
     if (filter_by_date) {
       const operation = TypeFilterDate.AFTER == type_filter_date ? '>' : '<';
-      queryBuilder.andWhere(`harvests.date ${operation} :date`, { date });
+      queryBuilder.andWhere(`subquery.date ${operation} :date`, { date });
     }
 
     if (filter_by_total) {
@@ -175,7 +175,7 @@ export class HarvestService {
           : TypeFilterNumber.EQUAL == type_filter_total
             ? '='
             : '<';
-      queryBuilder.andWhere(`harvests.total ${operation} :total`, { total });
+      queryBuilder.andWhere(`subquery.total ${operation} :total`, { total });
     }
 
     if (filter_by_value_pay) {
@@ -185,7 +185,7 @@ export class HarvestService {
           : TypeFilterNumber.EQUAL == type_filter_value_pay
             ? '='
             : '<';
-      queryBuilder.andWhere(`harvests.value_pay ${operation} :value_pay`, {
+      queryBuilder.andWhere(`subquery.value_pay ${operation} :value_pay`, {
         value_pay,
       });
     }
