@@ -54,6 +54,7 @@ export class AuthService {
         password: true,
         id: true,
         first_name: true,
+        last_name: true,
         is_active: true,
       },
     });
