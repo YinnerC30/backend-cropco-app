@@ -272,4 +272,9 @@ export class UsersService {
     const encryptPassword = await hashPassword(new_password);
     await this.updatePassword(id, encryptPassword);
   }
+
+  async toggleStatusUser(id: string): Promise<void> {
+    const user = await this.findOne(id);
+    await this.usersRepository.update(user.id, { is_active: !user.is_active });
+  }
 }

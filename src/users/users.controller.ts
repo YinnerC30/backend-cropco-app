@@ -61,6 +61,11 @@ export const pathsUsersController: PathsController = {
     description: 'cambio de contraseña',
     name: 'change_password_user',
   },
+  toggleStatusUser: {
+    path: 'toggle-status/one/:id',
+    description: 'cambio de estado de usuario',
+    name: 'toggle_status_user',
+  },
 };
 
 const {
@@ -72,6 +77,7 @@ const {
   removeUsers,
   resetPassword,
   changePassword,
+  toggleStatusUser,
 } = pathsUsersController;
 
 @Auth()
@@ -100,6 +106,11 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
   ) {
     return this.usersService.update(id, updateUserDto);
+  }
+
+  @Patch(toggleStatusUser.path)
+  toggleStatusUser(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.toggleStatusUser(id);
   }
 
   @Delete(removeUser.path)
