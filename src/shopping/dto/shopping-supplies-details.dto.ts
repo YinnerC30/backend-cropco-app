@@ -1,5 +1,5 @@
 import { Supplier } from 'src/suppliers/entities/supplier.entity';
-import { Supply } from '../entities/supply.entity';
+
 import { DeepPartial } from 'typeorm';
 import {
   IsInt,
@@ -11,6 +11,7 @@ import {
 import { SuppliesShopping } from '../entities/supplies-shopping.entity';
 import { Type } from 'class-transformer';
 import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { Supply } from 'src/supplies/entities';
 
 export class ShoppingSuppliesDetailsDto {
   @IsUUID(4)

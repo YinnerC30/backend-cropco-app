@@ -1,0 +1,104 @@
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { ApiResponse } from '@nestjs/swagger';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { PathsController } from 'src/common/interfaces/PathsController';
+
+import { CreateShoppingSuppliesDto } from './dto/create-shopping-supplies.dto';
+import { QueryParamsShopping } from './dto/query-params-shopping.dto';
+import { UpdateSuppliesShoppingDto } from './dto/update-supplies-shopping.dto';
+import { SuppliesShopping } from './entities';
+import { ShoppingService } from './shopping.service';
+
+export const pathsShoppingController: PathsController = {
+
+  createShopping: {
+    path: 'create',
+    description: 'crear compra de suplementos',
+    name: 'create_supply_shopping',
+  },
+
+
+
+  findAllShopping: {
+    path: 'all',
+    description: 'obtener todas las compras',
+    name: 'find_all_supplies_shopping',
+  },
+
+
+  findOneShopping: {
+    path: 'one/:id',
+    description: 'obtener 1 compra',
+    name: 'find_one_supplies_shopping',
+  },
+
+
+  updateShopping: {
+    path: 'update/one/:id',
+    description: 'actualizar 1 compra',
+    name: 'update_one_supplies_shopping',
+  },
+
+
+
+  removeShopping: {
+    path: 'remove/one/:id',
+    description: 'eliminar 1 compra',
+    name: 'remove_one_supplies_shopping',
+  },
+
+  removeBulkShopping: {
+    path: 'remove/bulk',
+    description: 'eliminar varias compras',
+    name: 'remove_bulk_supplies_shopping',
+  },
+
+};
+
+const {
+  createShopping,
+  findAllShopping,
+  findOneShopping,
+  updateShopping,
+  removeShopping,
+  removeBulkShopping,
+} = pathsShoppingController;
+
+@Controller('shopping')
+export class ShoppingController {
+  constructor(private readonly shoppingService: ShoppingService) { }
+
+  @Get(findAllShopping.path)
+  findAllShopping(@Query() queryParams: QueryParamsShopping) {
+    return this.shoppingService.findAllShopping(queryParams);
+  }
+  @Get(findOneShopping.path)
+  findOneShopping(@Param('id', ParseUUIDPipe) id: string) {
+    return this.shoppingService.findOneShopping(id);
+  }
+  @Post(createShopping.path)
+  shopping(@Body() createShoppingSuppliesDto: CreateShoppingSuppliesDto) {
+    return this.shoppingService.createShopping(createShoppingSuppliesDto);
+  }
+  @Patch(updateShopping.path)
+  updateShopping(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateSuppliesShoppingDto: UpdateSuppliesShoppingDto,
+  ) {
+    return this.shoppingService.updateShopping(id, updateSuppliesShoppingDto);
+  }
+  @Delete(removeShopping.path)
+  removeShopping(@Param('id', ParseUUIDPipe) id: string) {
+    return this.shoppingService.removeShopping(id);
+  }
+  @Delete(removeBulkShopping.path)
+  @ApiResponse({
+    status: 200,
+    description: 'Compras eliminadas exitosamente',
+  })
+  removeBulkShopping(
+    @Body() removeBulkShoppingDto: RemoveBulkRecordsDto<SuppliesShopping>,
+  ) {
+    return this.shoppingService.removeBulkShopping(removeBulkShoppingDto);
+  }
+}

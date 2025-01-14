@@ -16,7 +16,9 @@ import { SuppliersService } from 'src/suppliers/suppliers.service';
 import { AuthService } from 'src/auth/auth.service';
 import { ConsumptionsService } from 'src/consumptions/consumptions.service';
 import { CreateConsumptionSuppliesDto } from 'src/consumptions/dto/create-consumption-supplies.dto';
-import { CreateShoppingSuppliesDto } from 'src/supplies/dto/create-shopping-supplies.dto';
+
+import { CreateShoppingSuppliesDto } from 'src/shopping/dto/create-shopping-supplies.dto';
+import { ShoppingService } from 'src/shopping/shopping.service';
 import { SuppliesService } from 'src/supplies/supplies.service';
 import { CreateWorkDto } from 'src/work/dto/create-work.dto';
 import { WorkDetailsDto } from 'src/work/dto/work-details.dto';
@@ -46,12 +48,12 @@ export class SeedService {
     private readonly suppliersService: SuppliersService,
     private readonly suppliesService: SuppliesService,
     private readonly consumptionsService: ConsumptionsService,
+    private readonly shoppingService: ShoppingService,
     private readonly harvestsService: HarvestService,
     private readonly workService: WorkService,
     private readonly salesService: SalesService,
     private readonly paymentsService: PaymentsService,
     private readonly authService: AuthService,
-
   ) {}
 
   async runSeed() {
@@ -78,10 +80,10 @@ export class SeedService {
   private async deleteTables() {
     await this.usersService.deleteAllUsers();
     await this.clientsService.deleteAllClients();
-    // await this.suppliesService.deleteAllStockSupplies();
-    await this.suppliesService.deleteAllShoppingSupplies();
+    await this.suppliesService.deleteAllStockSupplies();
+    await this.shoppingService.deleteAllShoppingSupplies();
     await this.suppliersService.deleteAllSupplier();
-    // await this.suppliesService.deleteAllConsumptionSupplies();
+    await this.consumptionsService.deleteAllConsumptionSupplies();
     await this.suppliesService.deleteAllSupplies();
     await this.harvestsService.deleteAllHarvest();
     await this.workService.deleteAllWork();
@@ -285,7 +287,7 @@ export class SeedService {
         ],
       };
 
-      await this.suppliesService.createShopping(objectToCreate);
+      await this.shoppingService.createShopping(objectToCreate);
     }
 
     return true;

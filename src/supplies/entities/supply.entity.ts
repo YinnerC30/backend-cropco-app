@@ -7,8 +7,9 @@ import {
 } from 'typeorm';
 
 import { SuppliesConsumptionDetails } from 'src/consumptions/entities/supplies-consumption-details.entity';
-import { SuppliesShoppingDetails } from './supplies-shopping-details.entity';
+
 import { SuppliesStock } from './supplies-stock.entity';
+import { SuppliesShoppingDetails } from 'src/shopping/entities';
 
 
 export type UnitOfMeasure = 'GRAMOS' | 'MILILITROS';

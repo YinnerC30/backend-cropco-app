@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PersonalInformation } from '../../common/entities/personal-information.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { SuppliesShoppingDetails } from 'src/supplies/entities/supplies-shopping-details.entity';
+import { SuppliesShoppingDetails } from 'src/shopping/entities';
+
 
 @Entity({ name: 'suppliers' })
 export class Supplier extends PersonalInformation {

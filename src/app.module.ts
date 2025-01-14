@@ -16,6 +16,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { AuthModule } from './auth/auth.module';
 import { PrinterModule } from './printer/printer.module';
 import { ConsumptionsModule } from './consumptions/consumptions.module';
+import { ShoppingModule } from './shopping/shopping.module';
 
 @Module({
   imports: [
@@ -55,6 +56,8 @@ import { ConsumptionsModule } from './consumptions/consumptions.module';
     PrinterModule,
 
     ConsumptionsModule,
+
+    ShoppingModule,
   ],
 })
 export class AppModule {}

@@ -28,6 +28,7 @@ import { pathsAuthController } from './auth.controller';
 import { UsersService } from 'src/users/users.service';
 import { UserActionDto } from 'src/users/dto/user-action.dto';
 import { pathsConsumptionController } from 'src/consumptions/consumptions.controller';
+import { pathsShoppingController } from 'src/shopping/shopping.controller';
 
 @Injectable()
 export class AuthService {
@@ -42,7 +43,7 @@ export class AuthService {
     private readonly moduleActionsRepository: Repository<ModuleActions>,
     private readonly jwtService: JwtService,
     private readonly userService: UsersService,
-  ) { }
+  ) {}
 
   async login(
     loginUserDto: LoginUserDto,
@@ -254,6 +255,10 @@ export class AuthService {
       consumptions: {
         label: 'consumos',
         paths: pathsConsumptionController,
+      },
+      shopping: {
+        label: 'compras',
+        paths: pathsShoppingController,
       },
       users: {
         label: 'usuarios',
