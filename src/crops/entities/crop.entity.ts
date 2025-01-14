@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { SuppliesConsumptionDetails } from 'src/consumptions/entities/supplies-consumption-details.entity';
 import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity';
 import { HarvestStock } from 'src/harvest/entities/harvest-stock.entity';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
 import { SaleDetails } from 'src/sales/entities/sale-details.entity';
-import { SuppliesConsumptionDetails } from 'src/supplies/entities/supplies-consumption-details.entity';
+
 import { Work } from 'src/work/entities/work.entity';
 import {
   Column,

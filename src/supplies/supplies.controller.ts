@@ -9,21 +9,18 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 import { QueryParams } from 'src/common/dto/QueryParams';
-import { CreateConsumptionSuppliesDto } from './dto/create-consumption-supplies.dto';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { PathsController } from 'src/common/interfaces/PathsController';
 import { CreateShoppingSuppliesDto } from './dto/create-shopping-supplies.dto';
 import { CreateSupplyDto } from './dto/create-supply.dto';
-import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.dto';
+import { QueryParamsShopping } from './dto/query-params-shopping.dto';
 import { UpdateSuppliesShoppingDto } from './dto/update-supplies-shopping.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
+import { SuppliesShopping, Supply } from './entities';
 import { SuppliesService } from './supplies.service';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import { QueryParamsShopping } from './dto/query-params-shopping.dto';
-import { QueryParamsConsumption } from './dto/query-params-consumption.dto';
-import { PathsController } from 'src/common/interfaces/PathsController';
-import { SuppliesConsumption, SuppliesShopping, Supply } from './entities';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { Auth } from 'src/auth/decorators/auth.decorator';
 
 export const pathsSuppliesController: PathsController = {
   createSupply: {
@@ -126,30 +123,24 @@ export const pathsSuppliesController: PathsController = {
 const {
   createSupply,
   createShopping,
-  createConsumption,
   findAllSupplies,
-  findAllStock,
   findAllShopping,
-  findAllConsumption,
   findOneSupply,
   findOneShopping,
-  findOneConsumption,
   updateSupply,
   updateShopping,
-  updateConsumption,
   removeSupply,
   removeShopping,
-  removeConsumption,
   removeSupplies,
   removeBulkShopping,
-  removeBulkConsumptions,
+  findAllStock,
 } = pathsSuppliesController;
 
 @Auth()
 @ApiTags('Supplies')
 @Controller('supplies')
 export class SuppliesController {
-  constructor(private readonly suppliesService: SuppliesService) {}
+  constructor(private readonly suppliesService: SuppliesService) { }
 
   @Get(findAllSupplies.path)
   findAll(@Query() queryParams: QueryParams) {
@@ -165,10 +156,7 @@ export class SuppliesController {
   findAllShopping(@Query() queryParams: QueryParamsShopping) {
     return this.suppliesService.findAllShopping(queryParams);
   }
-  @Get(findAllConsumption.path)
-  findAllConsumptions(@Query() queryParams: QueryParamsConsumption) {
-    return this.suppliesService.findAllConsumptions(queryParams);
-  }
+
 
   @Get(findOneSupply.path)
   findOne(@Param('id', ParseUUIDPipe) id: string) {
@@ -180,10 +168,7 @@ export class SuppliesController {
     return this.suppliesService.findOneShopping(id);
   }
 
-  @Get(findOneConsumption.path)
-  findOneConsumption(@Param('id', ParseUUIDPipe) id: string) {
-    return this.suppliesService.findOneConsumption(id);
-  }
+
 
   @Post(createSupply.path)
   create(@Body() createSupplyDto: CreateSupplyDto) {
@@ -195,12 +180,7 @@ export class SuppliesController {
     return this.suppliesService.createShopping(createShoppingSuppliesDto);
   }
 
-  @Post(createConsumption.path)
-  consumption(
-    @Body() createConsumptionSuppliesDto: CreateConsumptionSuppliesDto,
-  ) {
-    return this.suppliesService.createConsumption(createConsumptionSuppliesDto);
-  }
+
 
   @Patch(updateSupply.path)
   update(
@@ -218,16 +198,7 @@ export class SuppliesController {
     return this.suppliesService.updateShopping(id, updateSuppliesShoppingDto);
   }
 
-  @Patch(updateConsumption.path)
-  updateConsumption(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateSuppliesConsumptionDto: UpdateSuppliesConsumptionDto,
-  ) {
-    return this.suppliesService.updateConsumption(
-      id,
-      updateSuppliesConsumptionDto,
-    );
-  }
+
 
   @Delete(removeSupply.path)
   remove(@Param('id', ParseUUIDPipe) id: string) {
@@ -239,10 +210,7 @@ export class SuppliesController {
     return this.suppliesService.removeShopping(id);
   }
 
-  @Delete(removeConsumption.path)
-  removeConsumption(@Param('id', ParseUUIDPipe) id: string) {
-    return this.suppliesService.removeConsumption(id);
-  }
+
 
   @Delete(removeSupplies.path)
   @ApiResponse({
@@ -262,14 +230,5 @@ export class SuppliesController {
   ) {
     return this.suppliesService.removeBulkShopping(removeBulkShoppingDto);
   }
-  @Delete(removeBulkConsumptions.path)
-  @ApiResponse({
-    status: 200,
-    description: 'Compras eliminadas exitosamente',
-  })
-  removeBulkConsumption(
-    @Body() removeBulkConsumptionDto: RemoveBulkRecordsDto<SuppliesConsumption>,
-  ) {
-    return this.suppliesService.removeBulkConsumption(removeBulkConsumptionDto);
-  }
+
 }

@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { QueryParams } from 'src/common/dto/QueryParams';
-import { CreateConsumptionSuppliesDto } from './dto/create-consumption-supplies.dto';
+
 import { CreateShoppingSuppliesDto } from './dto/create-shopping-supplies.dto';
 import { CreateSupplyDto } from './dto/create-supply.dto';
 import { ShoppingSuppliesDetailsDto } from './dto/shopping-supplies-details.dto';
@@ -12,20 +12,17 @@ import {
   DataSource,
   ILike,
   IsNull,
-  MoreThan,
   Not,
   QueryRunner,
-  Repository,
+  Repository
 } from 'typeorm';
 
 import { InjectRepository } from '@nestjs/typeorm';
 
 import {
-  SuppliesConsumption,
-  SuppliesConsumptionDetails,
   SuppliesShopping,
   SuppliesShoppingDetails,
-  SuppliesStock,
+
   Supply,
 } from './entities/';
 
@@ -35,10 +32,11 @@ import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { ConsumptionSuppliesDetailsDto } from './dto/consumption-supplies-details.dto';
-import { QueryParamsConsumption } from './dto/query-params-consumption.dto';
+
+
 import { QueryParamsShopping } from './dto/query-params-shopping.dto';
-import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.dto';
+
+import { SuppliesStock } from 'src/supplies/entities/supplies-stock.entity';
 import { InsufficientSupplyStockException } from './exceptions/insufficient-supply-stock.exception';
 import { Condition } from './interfaces/condition.interface';
 
@@ -54,14 +52,14 @@ export class SuppliesService {
     private readonly suppliesShoppingRepository: Repository<SuppliesShopping>,
     @InjectRepository(SuppliesShoppingDetails)
     private readonly suppliesShoppingDetailsRepository: Repository<SuppliesShoppingDetails>,
-    @InjectRepository(SuppliesConsumption)
-    private readonly suppliesConsumptionRepository: Repository<SuppliesConsumption>,
-    @InjectRepository(SuppliesConsumptionDetails)
-    private readonly suppliesConsumptionDetailsRepository: Repository<SuppliesConsumptionDetails>,
+    // @InjectRepository(SuppliesConsumption)
+    // private readonly suppliesConsumptionRepository: Repository<SuppliesConsumption>,
+    // @InjectRepository(SuppliesConsumptionDetails)
+    // private readonly suppliesConsumptionDetailsRepository: Repository<SuppliesConsumptionDetails>,
     @InjectRepository(SuppliesStock)
     private readonly suppliesStockRepository: Repository<SuppliesStock>,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async create(createSupply: CreateSupplyDto) {
     try {
@@ -526,266 +524,17 @@ export class SuppliesService {
     }
   }
 
-  async createConsumptionDetails(
-    queryRunner: QueryRunner,
-    object: ConsumptionSuppliesDetailsDto,
-  ) {
-    const recordToSave = queryRunner.manager.create(
-      SuppliesConsumptionDetails,
-      object,
-    );
-    await queryRunner.manager.save(SuppliesConsumptionDetails, recordToSave);
-  }
 
-  async updateConsumptionDetails(
-    queryRunner: QueryRunner,
-    condition: Condition,
-    object: ConsumptionSuppliesDetailsDto,
-  ) {
-    await queryRunner.manager.update(
-      SuppliesConsumptionDetails,
-      condition,
-      object,
-    );
-  }
 
-  async removeConsumptionDetails(
-    queryRunner: QueryRunner,
-    condition: Condition,
-  ) {
-    await queryRunner.manager.delete(SuppliesConsumptionDetails, condition);
-  }
 
-  async createConsumption(
-    createConsumptionSuppliesDto: CreateConsumptionSuppliesDto,
-  ) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
 
-    try {
-      const { details, ...rest } = createConsumptionSuppliesDto;
 
-      let consumptionDetails: SuppliesConsumptionDetails[] = [];
 
-      for (const register of details) {
-        consumptionDetails.push(
-          queryRunner.manager.create(SuppliesConsumptionDetails, {
-            ...register,
-          }),
-        );
-      }
 
-      const consumption = queryRunner.manager.create(SuppliesConsumption, {
-        ...rest,
-      });
 
-      consumption.details = consumptionDetails;
 
-      await queryRunner.manager.save(consumption);
 
-      for (const item of details) {
-        await this.updateStock(queryRunner, item.supply.id, item.amount, false);
-      }
 
-      await queryRunner.commitTransaction();
-      await queryRunner.release();
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
-    } finally {
-      await queryRunner.release();
-    }
-  }
-
-  async findAllConsumptions(queryParams: QueryParamsConsumption) {
-    const {
-      limit = 10,
-      offset = 0,
-      query: search = '',
-      filter_by_date = false,
-      type_filter_date,
-      date,
-    } = queryParams;
-
-    const queryBuilder = this.suppliesConsumptionRepository
-      .createQueryBuilder('supplies_consumption')
-      .orderBy('supplies_consumption.date', 'DESC')
-      .take(limit)
-      .skip(offset * limit);
-
-    if (filter_by_date) {
-      const operation = TypeFilterDate.AFTER == type_filter_date ? '>' : '<';
-      queryBuilder.andWhere(`supplies_consumption.date ${operation} :date`, {
-        date,
-      });
-    }
-
-    const [consumptions, count] = await queryBuilder.getManyAndCount();
-
-    return {
-      rowCount: count,
-      rows: consumptions,
-      pageCount: Math.ceil(count / limit),
-    };
-  }
-
-  async findOneConsumption(id: string) {
-    const supplyConsumption = await this.suppliesConsumptionRepository.findOne({
-      where: { id },
-      relations: {
-        details: {
-          crop: true,
-          supply: true,
-        },
-      },
-    });
-    if (!supplyConsumption)
-      throw new NotFoundException(
-        `Supplies consumption with id: ${id} not found`,
-      );
-    return supplyConsumption;
-  }
-
-  async updateConsumption(
-    id: string,
-    updateSuppliesConsumptionDto: UpdateSuppliesConsumptionDto,
-  ) {
-    const consumption: SuppliesConsumption = await this.findOneConsumption(id);
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const oldDetails: SuppliesConsumptionDetails[] = consumption.details;
-      const newDetails: ConsumptionSuppliesDetailsDto[] =
-        updateSuppliesConsumptionDto.details;
-
-      const oldIDsConsumptionDetails: string[] = oldDetails.map(
-        (record: SuppliesConsumptionDetails) => record.id,
-      );
-      const newIDsConsumptionDetails: string[] = newDetails.map((record) =>
-        new String(record.id).toString(),
-      );
-
-      const { toCreate, toUpdate, toDelete } = organizeIDsToUpdateEntity(
-        newIDsConsumptionDetails,
-        oldIDsConsumptionDetails,
-      );
-
-      for (const detailId of toDelete) {
-        const oldRecordData: SuppliesConsumptionDetails = oldDetails.find(
-          (record: SuppliesConsumptionDetails) => record.id === detailId,
-        );
-
-        await this.removeConsumptionDetails(queryRunner, {
-          id: detailId,
-        });
-
-        await this.updateStock(
-          queryRunner,
-          oldRecordData.supply.id,
-          oldRecordData.amount,
-          true,
-        );
-      }
-
-      for (const detailId of toUpdate) {
-        const oldRecordData: SuppliesConsumptionDetails = oldDetails.find(
-          (record: SuppliesConsumptionDetails) => record.id === detailId,
-        );
-
-        await this.updateStock(
-          queryRunner,
-          oldRecordData.supply.id,
-          oldRecordData.amount,
-          true,
-        );
-
-        const newRecordData = newDetails.find(
-          (record) => record.id === detailId,
-        );
-
-        await this.updateStock(
-          queryRunner,
-          newRecordData.supply.id,
-          newRecordData.amount,
-          false,
-        );
-
-        await this.updateConsumptionDetails(
-          queryRunner,
-          { id: detailId },
-          { ...newRecordData },
-        );
-      }
-
-      for (const detailId of toCreate) {
-        const newRecordData = newDetails.find(
-          (record) => record.id === detailId,
-        );
-
-        await this.createConsumptionDetails(queryRunner, {
-          consumption: id,
-          ...newRecordData,
-        });
-
-        await this.updateStock(
-          queryRunner,
-          newRecordData.supply.id,
-          newRecordData.amount,
-          false,
-        );
-      }
-
-      const { details, ...rest } = updateSuppliesConsumptionDto;
-      await queryRunner.manager.update(SuppliesConsumption, { id }, rest);
-
-      await queryRunner.commitTransaction();
-      await queryRunner.release();
-    } catch (error) {
-      this.handleDBExceptions(error);
-    }
-  }
-
-  async removeConsumption(id: string) {
-    const consumptionSupply: SuppliesConsumption =
-      await this.findOneConsumption(id);
-
-    const { details } = consumptionSupply;
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      for (const record of details) {
-        await this.updateStock(
-          queryRunner,
-          record.supply.id,
-          record.amount,
-          true,
-        );
-      }
-      await queryRunner.manager.remove(consumptionSupply);
-
-      await queryRunner.commitTransaction();
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
-    } finally {
-      await queryRunner.release();
-    }
-  }
-
-  async deleteAllConsumptionSupplies() {
-    try {
-      await this.suppliesConsumptionRepository.delete({});
-    } catch (error) {
-      this.handleDBExceptions(error);
-    }
-  }
 
   async removeBulk(removeBulkSuppliesDto: RemoveBulkRecordsDto<Supply>) {
     for (const { id } of removeBulkSuppliesDto.recordsIds) {
@@ -801,11 +550,5 @@ export class SuppliesService {
     }
   }
 
-  async removeBulkConsumption(
-    removeBulkConsumptionDto: RemoveBulkRecordsDto<SuppliesConsumption>,
-  ) {
-    for (const { id } of removeBulkConsumptionDto.recordsIds) {
-      await this.removeConsumption(id);
-    }
-  }
+
 }

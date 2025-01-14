@@ -5,9 +5,11 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { SuppliesConsumptionDetails } from './supplies-consumption-details.entity';
+
+import { SuppliesConsumptionDetails } from 'src/consumptions/entities/supplies-consumption-details.entity';
 import { SuppliesShoppingDetails } from './supplies-shopping-details.entity';
 import { SuppliesStock } from './supplies-stock.entity';
+
 
 export type UnitOfMeasure = 'GRAMOS' | 'MILILITROS';
 

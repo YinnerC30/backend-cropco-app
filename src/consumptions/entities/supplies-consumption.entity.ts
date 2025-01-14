@@ -1,5 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { SuppliesConsumptionDetails } from '.';
+import { SuppliesConsumptionDetails } from './supplies-consumption-details.entity';
+
 
 @Entity({ name: 'supplies_consumption' })
 export class SuppliesConsumption {

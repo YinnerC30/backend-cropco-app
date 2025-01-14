@@ -1,4 +1,4 @@
-import { Supply, SuppliesConsumption } from '../entities/index';
+
 import { DeepPartial } from 'typeorm';
 import {
   IsInt,
@@ -10,6 +10,8 @@ import {
 import { Crop } from 'src/crops/entities/crop.entity';
 import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
 import { Type } from 'class-transformer';
+import { SuppliesConsumption } from '../entities/supplies-consumption.entity';
+import { Supply } from 'src/supplies/entities/supply.entity';
 
 export class ConsumptionSuppliesDetailsDto {
   @IsUUID(4)

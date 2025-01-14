@@ -1,4 +1,5 @@
 import { Crop } from 'src/crops/entities/crop.entity';
+import { Supply } from 'src/supplies/entities';
 import {
   Column,
   Entity,
@@ -7,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { SuppliesConsumption } from './supplies-consumption.entity';
-import { Supply } from './supply.entity';
+
 
 @Entity({ name: 'supplies_consumption_details' })
 export class SuppliesConsumptionDetails {

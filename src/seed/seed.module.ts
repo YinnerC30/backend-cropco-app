@@ -14,6 +14,7 @@ import { WorkModule } from 'src/work/work.module';
 import { SeedController } from './seed.controller';
 import { SeedService } from './seed.service';
 import { AuthModule } from 'src/auth/auth.module';
+import { ConsumptionsModule } from 'src/consumptions/consumptions.module';
 
 @Module({
   controllers: [SeedController],
@@ -24,6 +25,7 @@ import { AuthModule } from 'src/auth/auth.module';
     EmployeesModule,
     ClientsModule,
     SuppliersModule,
+    ConsumptionsModule,
     SuppliesModule,
     HarvestModule,
     WorkModule,

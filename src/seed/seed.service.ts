@@ -12,17 +12,19 @@ import { PaymentsService } from 'src/payments/payments.service';
 import { CreateSaleDto } from 'src/sales/dto/create-sale.dto';
 import { SalesService } from 'src/sales/sales.service';
 import { SuppliersService } from 'src/suppliers/suppliers.service';
-import { CreateConsumptionSuppliesDto } from 'src/supplies/dto/create-consumption-supplies.dto';
+
+import { AuthService } from 'src/auth/auth.service';
+import { ConsumptionsService } from 'src/consumptions/consumptions.service';
+import { CreateConsumptionSuppliesDto } from 'src/consumptions/dto/create-consumption-supplies.dto';
 import { CreateShoppingSuppliesDto } from 'src/supplies/dto/create-shopping-supplies.dto';
 import { SuppliesService } from 'src/supplies/supplies.service';
 import { CreateWorkDto } from 'src/work/dto/create-work.dto';
+import { WorkDetailsDto } from 'src/work/dto/work-details.dto';
 import { Work } from 'src/work/entities/work.entity';
 import { WorkService } from 'src/work/work.service';
-import { DataSource, DeepPartial } from 'typeorm';
+import { DeepPartial } from 'typeorm';
 import { UsersService } from './../users/users.service';
 import { initialData } from './data/seed-data';
-import { AuthService } from 'src/auth/auth.service';
-import { WorkDetailsDto } from 'src/work/dto/work-details.dto';
 // import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
@@ -43,11 +45,13 @@ export class SeedService {
     private readonly clientsService: ClientsService,
     private readonly suppliersService: SuppliersService,
     private readonly suppliesService: SuppliesService,
+    private readonly consumptionsService: ConsumptionsService,
     private readonly harvestsService: HarvestService,
     private readonly workService: WorkService,
     private readonly salesService: SalesService,
     private readonly paymentsService: PaymentsService,
     private readonly authService: AuthService,
+
   ) {}
 
   async runSeed() {
@@ -74,10 +78,10 @@ export class SeedService {
   private async deleteTables() {
     await this.usersService.deleteAllUsers();
     await this.clientsService.deleteAllClients();
-    await this.suppliesService.deleteAllStockSupplies();
+    // await this.suppliesService.deleteAllStockSupplies();
     await this.suppliesService.deleteAllShoppingSupplies();
     await this.suppliersService.deleteAllSupplier();
-    await this.suppliesService.deleteAllConsumptionSupplies();
+    // await this.suppliesService.deleteAllConsumptionSupplies();
     await this.suppliesService.deleteAllSupplies();
     await this.harvestsService.deleteAllHarvest();
     await this.workService.deleteAllWork();
@@ -316,7 +320,7 @@ export class SeedService {
         ],
       };
 
-      await this.suppliesService.createConsumption(objectToCreate);
+      await this.consumptionsService.createConsumption(objectToCreate);
     }
 
     return true;

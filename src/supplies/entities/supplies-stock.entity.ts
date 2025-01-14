@@ -1,3 +1,4 @@
+import { Supply } from 'src/supplies/entities/supply.entity';
 import {
   Column,
   Entity,
@@ -5,14 +6,14 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Supply } from './supply.entity';
+
 
 @Entity({ name: 'supplies_stock' })
 export class SuppliesStock {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Supply, (supply) => supply.stock, {onDelete: 'CASCADE'})
+  @OneToOne(() => Supply, (supply) => supply.stock, { onDelete: 'CASCADE' })
   @JoinColumn()
   supply: Supply;
 

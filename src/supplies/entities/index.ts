@@ -1,5 +1,5 @@
-export * from './supplies-consumption-details.entity';
-export * from './supplies-consumption.entity';
+
+
 export * from './supplies-shopping-details.entity';
 export * from './supplies-shopping.entity';
 export * from './supplies-stock.entity';
