@@ -130,6 +130,7 @@ export class SalesService {
 
   async findOne(id: string) {
     const sale = await this.saleRepository.findOne({
+      withDeleted: true,
       where: {
         id,
       },

@@ -1,7 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Client } from 'src/clients/entities/client.entity';
 import { Crop } from 'src/crops/entities/crop.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Sale } from './sale.entity';
 
 @Entity({ name: 'sales_detail' })
@@ -68,4 +76,13 @@ export class SaleDetails {
     default: false,
   })
   is_receivable: boolean;
+
+  @CreateDateColumn()
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 }

@@ -1,10 +1,13 @@
 import { Crop } from 'src/crops/entities/crop.entity';
 import {
   Column,
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Harvest } from './harvest.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -58,4 +61,13 @@ export class HarvestProcessed {
   })
   @Column({ type: 'int4' })
   total: number;
+
+  @CreateDateColumn()
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 }

@@ -68,7 +68,7 @@ export class ClientsService {
   async findOne(id: string) {
     const client = await this.clientRepository.findOne({
       where: { id },
-      relations: { sales_detail: { crop: true, sale: true } },
+      relations: { sales_detail: { crop: true} },
     });
     if (!client) throw new NotFoundException(`Client with id: ${id} not found`);
     return client;
@@ -85,7 +85,7 @@ export class ClientsService {
 
   async remove(id: string) {
     const client = await this.findOne(id);
-    await this.clientRepository.remove(client);
+    await this.clientRepository.softRemove(client);
   }
 
   async deleteAllClients() {
