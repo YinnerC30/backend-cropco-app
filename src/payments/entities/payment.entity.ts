@@ -2,10 +2,13 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Employee } from 'src/employees/entities/employee.entity';
 import {
   Column,
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { PaymentHarvest } from './payment-harvest.entity';
 import { PaymentWork } from './payment-work.entity';
@@ -71,4 +74,13 @@ export class Payment {
     cascade: true,
   })
   payments_work: PaymentWork[];
+
+  @CreateDateColumn()
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 }

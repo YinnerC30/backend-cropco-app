@@ -68,8 +68,8 @@ export class SeedService {
     await this.insertNewCrops();
     await this.insertNewHarvests();
     await this.insertNewHarvestsProcessed();
-    await this.insertNewShoppingSupplies();
-    await this.insertNewWork();
+    // await this.insertNewShoppingSupplies();
+    // await this.insertNewWork();
     // await this.insertNewConsumptionSupplies();
     // await this.insertNewSales();
     // await this.insertNewPayments();

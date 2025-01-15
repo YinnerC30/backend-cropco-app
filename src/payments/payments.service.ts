@@ -30,8 +30,6 @@ export class PaymentsService {
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
     private readonly dataSource: DataSource,
-    private readonly harvestService: HarvestService,
-    private readonly workService: WorkService,
   ) {}
 
   async create(createPaymentDto: CreatePaymentDto) {
@@ -132,6 +130,7 @@ export class PaymentsService {
 
     const queryBuilder = this.paymentRepository
       .createQueryBuilder('payment')
+      .withDeleted()
       .leftJoinAndSelect('payment.employee', 'employee')
       .orderBy('payment.date', 'DESC')
       .take(limit)
@@ -175,6 +174,7 @@ export class PaymentsService {
 
   async findOne(id: string) {
     const payment = await this.paymentRepository.findOne({
+      withDeleted: true,
       where: {
         id,
       },

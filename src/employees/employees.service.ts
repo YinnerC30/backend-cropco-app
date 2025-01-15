@@ -155,6 +155,7 @@ export class EmployeesService {
   }
   async findOneEmployeeWithPaymentsPending(id: string) {
     const employee = await this.employeeRepository.findOne({
+      withDeleted: true,
       where: { id },
       relations: {
         harvests_detail: { harvest: true },
@@ -199,7 +200,7 @@ export class EmployeesService {
 
   async remove(id: string) {
     const employee = await this.findOne(id);
-    await this.employeeRepository.remove(employee);
+    await this.employeeRepository.softRemove(employee);
   }
 
   async removeBulk(removeBulkEmployeesDto: RemoveBulkRecordsDto<Employee>) {

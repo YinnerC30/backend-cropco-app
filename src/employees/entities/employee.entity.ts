@@ -1,7 +1,15 @@
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { Payment } from 'src/payments/entities/payment.entity';
 import { Work } from 'src/work/entities/work.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { PersonalInformation } from '../../common/entities/personal-information.entity';
 import { WorkDetails } from 'src/work/entities/work-details.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -57,4 +65,13 @@ export class Employee extends PersonalInformation {
   })
   @OneToMany(() => Payment, (payment) => payment.employee, { cascade: true })
   payments: Payment[];
+
+  @CreateDateColumn()
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 }

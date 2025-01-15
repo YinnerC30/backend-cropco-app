@@ -1,5 +1,14 @@
 import { Employee } from 'src/employees/entities/employee.entity';
-import { Column, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  ManyToOne,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Work } from './work.entity';
 import { PaymentWork } from 'src/payments/entities/payment-work.entity';
 
@@ -36,4 +45,13 @@ export class WorkDetails {
     cascade: true,
   })
   payments_work: PaymentWork;
+
+  @CreateDateColumn()
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 }

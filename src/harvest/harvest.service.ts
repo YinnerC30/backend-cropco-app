@@ -119,16 +119,17 @@ export class HarvestService {
         'subquery.crop as crop',
       ])
       .from((subQuery) => {
-        return subQuery
-          .select([
-            'harvests.id as id',
-            "TO_CHAR(harvests.date, 'YYYY-MM-DD') as date",
-            'harvests.total as total',
-            'harvests.value_pay as value_pay',
-            'harvests.observation as observation',
-          ])
-          .addSelect(
-            `COALESCE(JSON_AGG(
+        return (
+          subQuery
+            .select([
+              'harvests.id as id',
+              "TO_CHAR(harvests.date, 'YYYY-MM-DD') as date",
+              'harvests.total as total',
+              'harvests.value_pay as value_pay',
+              'harvests.observation as observation',
+            ])
+            .addSelect(
+              `COALESCE(JSON_AGG(
           JSONB_BUILD_OBJECT(
             'id', employee.id,
             'first_name', employee.first_name,
@@ -138,22 +139,24 @@ export class HarvestService {
             'address', employee.address
           )
         ) FILTER (WHERE employee.id IS NOT NULL), '[]')`,
-            'employees',
-          )
-          .addSelect(
-            `JSONB_BUILD_OBJECT(
+              'employees',
+            )
+            .addSelect(
+              `JSONB_BUILD_OBJECT(
           'id', crop.id,
           'name', crop.name,
           'description', crop.description
         )`,
-            'crop',
-          )
-          .from(Harvest, 'harvests')
-          .leftJoin('harvests.crop', 'crop')
-          .leftJoin('harvests.details', 'details')
-          .leftJoin('details.employee', 'employee')
-          .groupBy('harvests.id, crop.id, crop.name, crop.description')
-          .orderBy('harvests.date', 'DESC');
+              'crop',
+            )
+            .from(Harvest, 'harvests')
+            .withDeleted()
+            .leftJoin('harvests.crop', 'crop')
+            .leftJoin('harvests.details', 'details')
+            .leftJoin('details.employee', 'employee')
+            .groupBy('harvests.id, crop.id, crop.name, crop.description')
+            .orderBy('harvests.date', 'DESC')
+        );
       }, 'subquery')
       .distinctOn(['subquery.id'])
       .take(limit)
@@ -205,6 +208,7 @@ export class HarvestService {
 
   async findOne(id: string) {
     const harvest = await this.harvestRepository.findOne({
+      withDeleted: true,
       where: {
         id,
       },

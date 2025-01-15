@@ -104,6 +104,7 @@ export class WorkService {
 
   async findOne(id: string) {
     const work = await this.workRepository.findOne({
+      withDeleted: true,
       where: { id },
       relations: { crop: true, details: { employee: true } },
     });
