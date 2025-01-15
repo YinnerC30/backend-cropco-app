@@ -22,6 +22,7 @@ import { generatePassword } from './helpers/generate-password';
 import * as bcrypt from 'bcrypt';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { ResponseGetAllRecords } from 'src/common/interfaces/ResponseGetAllRecords';
+import { UserActionDto } from './dto/user-action.dto';
 
 @Injectable()
 export class UsersService {
@@ -71,6 +72,7 @@ export class UsersService {
     const { query = '', limit = 10, offset = 0 } = queryParams;
 
     const users = await this.usersRepository.find({
+      // withDeleted: true,
       where: [
         {
           first_name: ILike(`${query}%`),
@@ -115,6 +117,9 @@ export class UsersService {
         password: showPassword,
       },
       where: { id },
+      relations: {
+        actions: true,
+      },
     });
     if (!user) throw new NotFoundException(`User with id: ${id} not found`);
 
@@ -161,7 +166,7 @@ export class UsersService {
       // Acciones
       await this.userActionsRepository.delete({ user: { id } });
 
-      const actionsEntity = updateUserDto.actions.map((act: any) => {
+      const actionsEntity = updateUserDto.actions.map((act: UserActionDto) => {
         return this.userActionsRepository.create({ action: act, user: { id } });
       });
 
@@ -180,7 +185,7 @@ export class UsersService {
 
   async remove(id: string): Promise<void> {
     const { modules, ...user } = await this.findOne(id);
-    await this.usersRepository.remove(user as User);
+    await this.usersRepository.softRemove(user);
   }
 
   async removeBulk(

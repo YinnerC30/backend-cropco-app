@@ -2,9 +2,12 @@ import {
   BeforeInsert,
   BeforeUpdate,
   Column,
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { PersonalInformation } from '../../common/entities/personal-information.entity';
 import { UserActions } from './user-actions.entity';
@@ -30,6 +33,15 @@ export class User extends PersonalInformation {
     cascade: true,
   })
   actions: UserActions[];
+
+  @CreateDateColumn()
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 
   @BeforeInsert()
   checkFieldsBeforeInsert() {
