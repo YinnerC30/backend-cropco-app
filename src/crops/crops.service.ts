@@ -50,7 +50,7 @@ export class CropsService {
         },
         relations: {
           harvests_stock: true,
-        }
+        },
       });
     } else {
       crops = await this.cropRepository.find({
@@ -139,7 +139,7 @@ export class CropsService {
 
   async remove(id: string) {
     const crop = await this.findOne(id);
-    await this.cropRepository.remove(crop);
+    await this.cropRepository.softRemove(crop);
   }
 
   async deleteAllCrops() {

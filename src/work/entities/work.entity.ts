@@ -3,11 +3,14 @@ import { Employee } from 'src/employees/entities/employee.entity';
 import { PaymentWork } from 'src/payments/entities/payment-work.entity';
 import {
   Column,
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { WorkDetails } from './work-details.entity';
 
@@ -44,4 +47,14 @@ export class Work {
     cascade: true,
   })
   details: WorkDetails[];
+
+
+  @CreateDateColumn()
+    createdDate: Date;
+  
+    @UpdateDateColumn()
+    updatedDate: Date;
+  
+    @DeleteDateColumn()
+    deletedDate: Date;
 }

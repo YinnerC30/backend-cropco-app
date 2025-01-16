@@ -66,6 +66,7 @@ export class WorkService {
     } = queryParams;
     const queryBuilder = this.workRepository
       .createQueryBuilder('work')
+      .withDeleted()
       .leftJoinAndSelect('work.crop', 'crop')
       .orderBy('work.date', 'DESC')
       .take(limit)

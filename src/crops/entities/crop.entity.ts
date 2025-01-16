@@ -8,10 +8,13 @@ import { SaleDetails } from 'src/sales/entities/sale-details.entity';
 import { Work } from 'src/work/entities/work.entity';
 import {
   Column,
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 @Entity({ name: 'crops' })
@@ -116,4 +119,13 @@ export class Crop {
     cascade: true,
   })
   sales_detail: SaleDetails[];
+
+  @CreateDateColumn()
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 }

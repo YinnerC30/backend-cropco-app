@@ -466,6 +466,7 @@ export class HarvestService {
 
   async findAllHarvestProcessed() {
     const harvestProcessed = await this.harvestProcessedRepository.find({
+      withDeleted: true,
       order: {
         date: 'ASC',
       },

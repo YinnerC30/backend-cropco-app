@@ -90,6 +90,7 @@ export class ConsumptionsService {
 
     const queryBuilder = this.suppliesConsumptionRepository
       .createQueryBuilder('supplies_consumption')
+      .withDeleted()
       .orderBy('supplies_consumption.date', 'DESC')
       .take(limit)
       .skip(offset * limit);
@@ -112,6 +113,7 @@ export class ConsumptionsService {
 
   async findOneConsumption(id: string) {
     const supplyConsumption = await this.suppliesConsumptionRepository.findOne({
+      withDeleted: true,
       where: { id },
       relations: {
         details: {

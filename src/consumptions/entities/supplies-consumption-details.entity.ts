@@ -2,10 +2,13 @@ import { Crop } from 'src/crops/entities/crop.entity';
 import { Supply } from 'src/supplies/entities';
 import {
   Column,
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { SuppliesConsumption } from './supplies-consumption.entity';
 
@@ -38,4 +41,13 @@ export class SuppliesConsumptionDetails {
     type: 'int4',
   })
   amount: number;
+
+  @CreateDateColumn()
+    createdDate: Date;
+  
+    @UpdateDateColumn()
+    updatedDate: Date;
+  
+    @DeleteDateColumn()
+    deletedDate: Date;
 }
