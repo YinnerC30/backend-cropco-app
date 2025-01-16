@@ -79,10 +79,9 @@ export class HarvestDetails {
     description: 'Detalles de pagos asociados a estos detalles de la cosecha',
     type: () => PaymentHarvest,
   })
-  // TODO: Arreglar relación entre entidades, debe ser de uno a muchos, porque el empleado tendrá muchos pagos.
   @OneToOne(
     () => PaymentHarvest,
-    (payments_harvest) => payments_harvest.payment,
+    (payments_harvest) => payments_harvest.harvests_detail,
     { cascade: true },
   )
   payments_harvest: PaymentHarvest;

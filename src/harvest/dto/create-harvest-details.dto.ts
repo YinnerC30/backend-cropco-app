@@ -4,6 +4,7 @@ import {
   IsInt,
   IsOptional,
   IsPositive,
+  IsUUID,
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -13,6 +14,10 @@ import { DeepPartial } from 'typeorm';
 import { Harvest } from '../entities/harvest.entity';
 
 export class HarvestDetailsDto {
+  @IsOptional()
+  @IsUUID()
+  id: string;
+
   @ApiProperty({
     description: 'Empleado asociado a los detalles de la cosecha',
     type: () => ValidateUUID,

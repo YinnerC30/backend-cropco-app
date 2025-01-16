@@ -2,9 +2,9 @@ export const organizeIDsToUpdateEntity = (
   newIDs: string[],
   oldIDs: string[],
 ) => {
-  let toUpdate = [];
-  let toCreate = [];
-  let toDelete = [];
+  let toUpdate: string[] = [];
+  let toCreate: string[] = [];
+  let toDelete: string[] = [];
 
   newIDs.forEach((newID) => {
     if (oldIDs.includes(newID)) {

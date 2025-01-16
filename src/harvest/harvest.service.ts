@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
@@ -7,36 +8,29 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   DataSource,
-  Equal,
-  ILike,
-  Like,
-  MoreThan,
   QueryRunner,
-  Repository,
+  Repository
 } from 'typeorm';
 import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { HarvestDetails } from './entities/harvest-details.entity';
 import { Harvest } from './entities/harvest.entity';
 
-import { QueryParams } from 'src/common/dto/QueryParams';
 
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
 import { handleDBExceptions } from '../common/helpers/handleDBErrors';
 import { HarvestDetailsDto } from './dto/create-harvest-details.dto';
 
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
+import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 import { validateTotalInArray } from 'src/common/helpers/validTotalInArray';
 import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
+import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
 import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
 import { HarvestProcessed } from './entities/harvest-processed.entity';
 import { HarvestStock } from './entities/harvest-stock.entity';
 import { InsufficientHarvestStockException } from './exceptions/insufficient-harvest-stock';
-import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
-import { ValidateUUID } from '../common/dto/ValidateUUID.dto';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
-import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
-import { off } from 'process';
 
 @Injectable()
 export class HarvestService {
@@ -119,17 +113,16 @@ export class HarvestService {
         'subquery.crop as crop',
       ])
       .from((subQuery) => {
-        return (
-          subQuery
-            .select([
-              'harvests.id as id',
-              "TO_CHAR(harvests.date, 'YYYY-MM-DD') as date",
-              'harvests.total as total',
-              'harvests.value_pay as value_pay',
-              'harvests.observation as observation',
-            ])
-            .addSelect(
-              `COALESCE(JSON_AGG(
+        return subQuery
+          .select([
+            'harvests.id as id',
+            "TO_CHAR(harvests.date, 'YYYY-MM-DD') as date",
+            'harvests.total as total',
+            'harvests.value_pay as value_pay',
+            'harvests.observation as observation',
+          ])
+          .addSelect(
+            `COALESCE(JSON_AGG(
           JSONB_BUILD_OBJECT(
             'id', employee.id,
             'first_name', employee.first_name,
@@ -139,24 +132,23 @@ export class HarvestService {
             'address', employee.address
           )
         ) FILTER (WHERE employee.id IS NOT NULL), '[]')`,
-              'employees',
-            )
-            .addSelect(
-              `JSONB_BUILD_OBJECT(
+            'employees',
+          )
+          .addSelect(
+            `JSONB_BUILD_OBJECT(
           'id', crop.id,
           'name', crop.name,
           'description', crop.description
         )`,
-              'crop',
-            )
-            .from(Harvest, 'harvests')
-            .withDeleted()
-            .leftJoin('harvests.crop', 'crop')
-            .leftJoin('harvests.details', 'details')
-            .leftJoin('details.employee', 'employee')
-            .groupBy('harvests.id, crop.id, crop.name, crop.description')
-            .orderBy('harvests.date', 'DESC')
-        );
+            'crop',
+          )
+          .from(Harvest, 'harvests')
+          .withDeleted()
+          .leftJoin('harvests.crop', 'crop')
+          .leftJoin('harvests.details', 'details')
+          .leftJoin('details.employee', 'employee')
+          .groupBy('harvests.id, crop.id, crop.name, crop.description')
+          .orderBy('harvests.date', 'DESC');
       }, 'subquery')
       .distinctOn(['subquery.id'])
       .take(limit)
@@ -221,13 +213,13 @@ export class HarvestService {
       },
     });
 
+    if (!harvest)
+      throw new NotFoundException(`Harvest with id: ${id} not found`);
+
     const total_processed = harvest.processed.reduce(
       (accumulator, currentValue) => accumulator + currentValue.total,
       0,
     );
-
-    if (!harvest)
-      throw new NotFoundException(`Harvest with id: ${id} not found`);
     return { ...harvest, total_processed };
   }
 
@@ -245,40 +237,72 @@ export class HarvestService {
 
     try {
       const newHarvestDetails = updateHarvestDto.details;
-      const newIDsEmployees = newHarvestDetails.map((record) =>
-        new String(record.employee.id).toString(),
+      const newIDs = newHarvestDetails.map((record) =>
+        new String(record.id).toString(),
       );
       const oldHarvestDetails = harvest.details;
-      const oldIDsEmployees = oldHarvestDetails.map((record) =>
-        new String(record.employee.id).toString(),
+      const oldIDs = oldHarvestDetails.map((record) =>
+        new String(record.id).toString(),
       );
 
       const { toCreate, toDelete, toUpdate } = organizeIDsToUpdateEntity(
-        newIDsEmployees,
-        oldIDsEmployees,
+        newIDs,
+        oldIDs,
       );
 
-      for (const employeeId of toDelete) {
-        await queryRunner.manager.delete(HarvestDetails, {
-          harvest: id,
-          employee: employeeId,
-        });
+      for (const recordId of toDelete) {
+        const dataRecordOld = oldHarvestDetails.find(
+          (record) => record.id === recordId,
+        );
+
+        if (
+          dataRecordOld.deletedDate !== null ||
+          dataRecordOld.payment_is_pending === false
+        ) {
+          throw new BadRequestException(
+            'You cannot delete this record, it is linked to other records.',
+          );
+        } else {
+          await queryRunner.manager.delete(HarvestDetails, {
+            id: recordId,
+          });
+        }
       }
 
-      for (const employeeId of toUpdate) {
-        const dataRecord = newHarvestDetails.find(
-          (record) => record.employee.id === employeeId,
+      for (const recordId of toUpdate) {
+        const dataRecordNew = newHarvestDetails.find(
+          (record) => record.id === recordId,
         );
+        const dataRecordOld = oldHarvestDetails.find(
+          (record) => record.id === recordId,
+        );
+
+        const valuesAreDiferent =
+          dataRecordNew.total !== dataRecordOld.total ||
+          dataRecordNew.value_pay !== dataRecordOld.value_pay;
+
+        if (
+          (dataRecordOld.deletedDate !== null ||
+            dataRecordOld.payment_is_pending === false) &&
+          valuesAreDiferent
+        ) {
+          throw new BadRequestException(
+            'You cannot update this record, it is linked to other records.',
+          );
+        }
+
         await queryRunner.manager.update(
           HarvestDetails,
-          { harvest: id, employee: employeeId },
-          dataRecord,
+          {
+            id: recordId,
+          },
+          dataRecordNew,
         );
       }
 
-      for (const employeeId of toCreate) {
+      for (const recordId of toCreate) {
         const dataRecord = newHarvestDetails.find(
-          (record) => record.employee.id === employeeId,
+          (record) => record.id === recordId,
         );
 
         const recordToCreate = queryRunner.manager.create(HarvestDetails, {
@@ -302,8 +326,13 @@ export class HarvestService {
   }
 
   async remove(id: string) {
-    // TODO: eliminar stock de harvestprocessed
     const harvest: Harvest = await this.findOne(id);
+
+    if (harvest.details.some((item) => item.payments_harvest !== null)) {
+      throw new ConflictException(
+        'The record cannot be deleted because it has payments linked to it.',
+      );
+    }
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();

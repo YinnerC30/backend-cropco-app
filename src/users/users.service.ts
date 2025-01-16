@@ -184,8 +184,8 @@ export class UsersService {
   }
 
   async remove(id: string): Promise<void> {
-    const { modules, ...user } = await this.findOne(id);
-    await this.usersRepository.softRemove(user);
+    await this.findOne(id);
+    await this.usersRepository.delete(id);
   }
 
   async removeBulk(

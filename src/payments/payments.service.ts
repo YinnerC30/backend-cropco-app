@@ -46,7 +46,9 @@ export class PaymentsService {
         .findOne({ where: { id: `${id}` } });
 
       if (!record) {
-        throw new BadRequestException('No existe el harvestdetail');
+        throw new BadRequestException(
+          'No existe el registro de  harvest detail',
+        );
       }
       totalValuePayHarvest.push(record.value_pay);
     }
