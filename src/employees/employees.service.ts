@@ -1,16 +1,21 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { DataSource, ILike, Not, Repository, IsNull } from 'typeorm';
+import { DataSource, ILike, Repository } from 'typeorm';
 
+import { QueryParams } from 'src/common/dto/QueryParams';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
+import { PrinterService } from 'src/printer/printer.service';
+import { WorkDetails } from 'src/work/entities/work-details.entity';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { Employee } from './entities/employee.entity';
-import { QueryParams } from 'src/common/dto/QueryParams';
-import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
-import { WorkDetails } from 'src/work/entities/work-details.entity';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { PrinterService } from 'src/printer/printer.service';
 import { getEmploymentLetterByIdReport } from './reports/employment-letter-by-id.report';
 
 @Injectable()
@@ -200,6 +205,27 @@ export class EmployeesService {
 
   async remove(id: string) {
     const employee = await this.findOne(id);
+
+    if (
+      employee.harvests_detail.some(
+        (item: HarvestDetails) => item.payment_is_pending === true,
+      )
+    ) {
+      throw new ConflictException(
+        'Cannot remove employee with harvests pending payment',
+      );
+    }
+
+    if (
+      employee.works_detail.some(
+        (item: WorkDetails) => item.payment_is_pending === true,
+      )
+    ) {
+      throw new ConflictException(
+        'Cannot remove employee with works pending payment',
+      );
+    }
+
     await this.employeeRepository.softRemove(employee);
   }
 
