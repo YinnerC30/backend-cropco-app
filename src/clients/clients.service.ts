@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
@@ -68,7 +73,7 @@ export class ClientsService {
   async findOne(id: string) {
     const client = await this.clientRepository.findOne({
       where: { id },
-      relations: { sales_detail: { crop: true} },
+      relations: { sales_detail: { crop: true } },
     });
     if (!client) throw new NotFoundException(`Client with id: ${id} not found`);
     return client;
@@ -85,6 +90,13 @@ export class ClientsService {
 
   async remove(id: string) {
     const client = await this.findOne(id);
+
+    if (client.sales_detail.some((record) => record.is_receivable === true)) {
+      throw new ConflictException(
+        `The client ${client.first_name} ${client.last_name} has sales receivables`,
+      );
+    }
+
     await this.clientRepository.softRemove(client);
   }
 

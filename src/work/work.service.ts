@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
@@ -120,7 +125,7 @@ export class WorkService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const { details, ...rest } = updateWorkDto;
+      const { details, crop, ...rest } = updateWorkDto;
 
       const oldDetails: WorkDetails[] = work.details;
       const newDetails: WorkDetailsDto[] = details;
@@ -171,6 +176,12 @@ export class WorkService {
 
   async remove(id: string) {
     const work = await this.findOne(id);
+
+    if (work.details.some((item) => item.payments_work !== null)) {
+      throw new ConflictException(
+        'The record cannot be deleted because it has payments linked to it.',
+      );
+    }
     await this.workRepository.remove(work);
   }
 

@@ -48,13 +48,12 @@ export class Work {
   })
   details: WorkDetails[];
 
-
   @CreateDateColumn()
-    createdDate: Date;
-  
-    @UpdateDateColumn()
-    updatedDate: Date;
-  
-    @DeleteDateColumn()
-    deletedDate: Date;
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 }

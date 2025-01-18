@@ -308,7 +308,7 @@ export class HarvestService {
         await queryRunner.manager.save(recordToCreate);
       }
 
-      const { details, ...rest } = updateHarvestDto;
+      const { details, crop, ...rest } = updateHarvestDto;
       await queryRunner.manager.update(Harvest, { id }, rest);
 
       await queryRunner.commitTransaction();

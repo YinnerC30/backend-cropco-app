@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
@@ -139,6 +144,11 @@ export class CropsService {
 
   async remove(id: string) {
     const crop = await this.findOne(id);
+
+    if (crop.harvests_stock.total > 0) {
+      throw new ConflictException('Crop has stock available');
+    }
+
     await this.cropRepository.softRemove(crop);
   }
 
