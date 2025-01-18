@@ -6,16 +6,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  DataSource,
-  QueryRunner,
-  Repository
-} from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { HarvestDetails } from './entities/harvest-details.entity';
 import { Harvest } from './entities/harvest.entity';
-
 
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
 import { handleDBExceptions } from '../common/helpers/handleDBErrors';
@@ -327,6 +322,12 @@ export class HarvestService {
 
   async remove(id: string) {
     const harvest: Harvest = await this.findOne(id);
+
+    if (harvest.processed.length > 0) {
+      throw new ConflictException(
+        'The record cannot be deleted because it has processed records linked to it.',
+      );
+    }
 
     if (harvest.details.some((item) => item.payments_harvest !== null)) {
       throw new ConflictException(
