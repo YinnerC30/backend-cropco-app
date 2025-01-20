@@ -49,6 +49,7 @@ export class CropsService {
 
     if (allRecords === true) {
       crops = await this.cropRepository.find({
+        // withDeleted: true,
         where: [searchCondition],
         order: {
           name: 'ASC',
@@ -145,7 +146,7 @@ export class CropsService {
   async remove(id: string) {
     const crop = await this.findOne(id);
 
-    if (crop.harvests_stock.total > 0) {
+    if (crop.harvests_stock !== null && crop.harvests_stock.total > 0) {
       throw new ConflictException('Crop has stock available');
     }
 

@@ -1,4 +1,12 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { SuppliesShoppingDetails } from './supplies-shopping-details.entity';
 
 @Entity({ name: 'supplies_shopping' })
@@ -20,4 +28,13 @@ export class SuppliesShopping {
     cascade: true,
   })
   details: SuppliesShoppingDetails[];
+
+  @CreateDateColumn()
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 }

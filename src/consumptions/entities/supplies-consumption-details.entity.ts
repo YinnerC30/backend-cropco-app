@@ -12,7 +12,6 @@ import {
 } from 'typeorm';
 import { SuppliesConsumption } from './supplies-consumption.entity';
 
-
 @Entity({ name: 'supplies_consumption_details' })
 export class SuppliesConsumptionDetails {
   @PrimaryGeneratedColumn('uuid')
@@ -43,11 +42,11 @@ export class SuppliesConsumptionDetails {
   amount: number;
 
   @CreateDateColumn()
-    createdDate: Date;
-  
-    @UpdateDateColumn()
-    updatedDate: Date;
-  
-    @DeleteDateColumn()
-    deletedDate: Date;
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 }

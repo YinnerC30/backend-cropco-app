@@ -1,16 +1,18 @@
 import {
   Column,
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 import { SuppliesConsumptionDetails } from 'src/consumptions/entities/supplies-consumption-details.entity';
 
 import { SuppliesStock } from './supplies-stock.entity';
 import { SuppliesShoppingDetails } from 'src/shopping/entities';
-
 
 export type UnitOfMeasure = 'GRAMOS' | 'MILILITROS';
 
@@ -49,4 +51,13 @@ export class Supply {
     { cascade: true },
   )
   consumption_details: SuppliesConsumptionDetails[];
+
+  @CreateDateColumn()
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 }

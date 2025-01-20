@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { QueryParams } from 'src/common/dto/QueryParams';
 
@@ -130,7 +135,12 @@ export class SuppliesService {
 
   async remove(id: string) {
     const supply = await this.findOne(id);
-    await this.supplyRepository.remove(supply);
+
+    if (supply.stock !== null && supply.stock.amount > 0) {
+      throw new ConflictException('Supply has stock available');
+    }
+
+    await this.supplyRepository.softRemove(supply);
   }
 
   async deleteAllSupplies() {
@@ -184,6 +194,7 @@ export class SuppliesService {
     increment = true,
   ) {
     const supply = await this.supplyRepository.findOne({
+      // withDeleted: true,
       where: { id: supplyId },
     });
 
@@ -238,6 +249,4 @@ export class SuppliesService {
       await this.remove(id);
     }
   }
-
-  
 }

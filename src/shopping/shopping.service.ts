@@ -1,23 +1,29 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 
-
-import { DataSource, QueryRunner, Repository } from 'typeorm';
-import { SuppliesService } from 'src/supplies/supplies.service';
-import { SuppliesShopping, SuppliesShoppingDetails } from './entities';
 import { InjectRepository } from '@nestjs/typeorm';
-import { handleDBExceptions, organizeIDsToUpdateEntity } from 'src/common/helpers';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
+import {
+  handleDBExceptions,
+  organizeIDsToUpdateEntity,
+} from 'src/common/helpers';
+import { Condition } from 'src/supplies/interfaces/condition.interface';
+import { SuppliesService } from 'src/supplies/supplies.service';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { CreateShoppingSuppliesDto } from './dto/create-shopping-supplies.dto';
 import { QueryParamsShopping } from './dto/query-params-shopping.dto';
 import { ShoppingSuppliesDetailsDto } from './dto/shopping-supplies-details.dto';
 import { UpdateSuppliesShoppingDto } from './dto/update-supplies-shopping.dto';
-import { Condition } from 'src/supplies/interfaces/condition.interface';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { SuppliesShopping, SuppliesShoppingDetails } from './entities';
 
 @Injectable()
 export class ShoppingService {
-
   private readonly logger = new Logger('ConsumptionsService');
   private handleDBExceptions = (error: any, logger = this.logger) =>
     handleDBExceptions(error, logger);
@@ -30,9 +36,7 @@ export class ShoppingService {
     private readonly suppliesService: SuppliesService,
 
     private dataSource: DataSource,
-  ) { }
-
-
+  ) {}
 
   async createShoppingDetails(
     queryRunner: QueryRunner,
@@ -154,6 +158,7 @@ export class ShoppingService {
 
   async findOneShopping(id: string) {
     const supplyShopping = await this.suppliesShoppingRepository.findOne({
+      withDeleted: true,
       where: { id },
       relations: {
         details: {
@@ -199,16 +204,22 @@ export class ShoppingService {
           (record: SuppliesShoppingDetails) => record.id === detailId,
         );
 
-        await this.removeShoppingDetails(queryRunner, {
-          id: detailId,
-        });
+        if (oldRecordData.deletedDate !== null) {
+          throw new BadRequestException(
+            'You cannot delete this record, it is linked to other records.',
+          );
+        } else {
+          await this.removeShoppingDetails(queryRunner, {
+            id: detailId,
+          });
 
-        await this.suppliesService.updateStock(
-          queryRunner,
-          oldRecordData.supply.id,
-          oldRecordData.amount,
-          false,
-        );
+          await this.suppliesService.updateStock(
+            queryRunner,
+            oldRecordData.supply.id,
+            oldRecordData.amount,
+            false,
+          );
+        }
       }
 
       for (const detailId of toUpdate) {
@@ -216,6 +227,14 @@ export class ShoppingService {
           (record: SuppliesShoppingDetails) => record.id === detailId,
         );
 
+        if (oldRecordData.deletedDate !== null) {
+          continue;
+        }
+
+        const dataRecordNew = newDetails.find(
+          (record) => record.id === detailId,
+        );
+
         await this.suppliesService.updateStock(
           queryRunner,
           oldRecordData.supply.id,
@@ -223,21 +242,17 @@ export class ShoppingService {
           false,
         );
 
-        const newRecordData = newDetails.find(
-          (record) => record.id === detailId,
-        );
-
         await this.suppliesService.updateStock(
           queryRunner,
-          newRecordData.supply.id,
-          newRecordData.amount,
+          dataRecordNew.supply.id,
+          dataRecordNew.amount,
           true,
         );
 
         await this.updateShoppingDetails(
           queryRunner,
           { id: detailId },
-          { ...newRecordData },
+          { ...dataRecordNew },
         );
       }
 
@@ -281,10 +296,20 @@ export class ShoppingService {
 
     try {
       for (const record of details) {
+        if (record.supply.deletedDate !== null) {
+          continue;
+        }
+
         const { supply } = record;
-        await this.suppliesService.updateStock(queryRunner, supply.id, record.amount, false);
+
+        await this.suppliesService.updateStock(
+          queryRunner,
+          supply.id,
+          record.amount,
+          false,
+        );
       }
-      await queryRunner.manager.remove(shoppingSupply);
+      await queryRunner.manager.softRemove(shoppingSupply);
 
       await queryRunner.commitTransaction();
     } catch (error) {
@@ -296,18 +321,18 @@ export class ShoppingService {
   }
 
   async removeBulkShopping(
-      removeBulkShoppingDto: RemoveBulkRecordsDto<SuppliesShopping>,
-    ) {
-      for (const { id } of removeBulkShoppingDto.recordsIds) {
-        await this.removeShopping(id);
-      }
+    removeBulkShoppingDto: RemoveBulkRecordsDto<SuppliesShopping>,
+  ) {
+    for (const { id } of removeBulkShoppingDto.recordsIds) {
+      await this.removeShopping(id);
     }
+  }
 
-    async deleteAllShoppingSupplies() {
-      try {
-        await this.suppliesShoppingRepository.delete({});
-      } catch (error) {
-        this.handleDBExceptions(error);
-      }
+  async deleteAllShoppingSupplies() {
+    try {
+      await this.suppliesShoppingRepository.delete({});
+    } catch (error) {
+      this.handleDBExceptions(error);
     }
+  }
 }

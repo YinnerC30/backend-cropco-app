@@ -1,14 +1,16 @@
 import { Supplier } from 'src/suppliers/entities/supplier.entity';
 import {
   Column,
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { SuppliesShopping } from './supplies-shopping.entity';
 import { Supply } from 'src/supplies/entities';
-
 
 @Entity({ name: 'supplies_shopping_details' })
 export class SuppliesShoppingDetails {
@@ -44,4 +46,13 @@ export class SuppliesShoppingDetails {
     onDelete: 'CASCADE',
   })
   supplier: Supplier;
+
+  @CreateDateColumn()
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 }
