@@ -1,10 +1,17 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
-import { handleDBExceptions, organizeIDsToUpdateEntity } from 'src/common/helpers';
+import {
+  handleDBExceptions,
+  organizeIDsToUpdateEntity,
+} from 'src/common/helpers';
 
 import { Supply } from 'src/supplies/entities/supply.entity';
 import { Condition } from 'src/supplies/interfaces/condition.interface';
@@ -19,7 +26,6 @@ import { SuppliesConsumption } from './entities/supplies-consumption.entity';
 
 @Injectable()
 export class ConsumptionsService {
-
   private readonly logger = new Logger('ConsumptionsService');
   private handleDBExceptions = (error: any, logger = this.logger) =>
     handleDBExceptions(error, logger);
@@ -34,8 +40,7 @@ export class ConsumptionsService {
     private readonly suppliesService: SuppliesService,
 
     private dataSource: DataSource,
-  ) { }
-
+  ) {}
 
   async createConsumption(
     createConsumptionSuppliesDto: CreateConsumptionSuppliesDto,
@@ -66,7 +71,12 @@ export class ConsumptionsService {
       await queryRunner.manager.save(consumption);
 
       for (const item of details) {
-        await this.suppliesService.updateStock(queryRunner, item.supply.id, item.amount, false);
+        await this.suppliesService.updateStock(
+          queryRunner,
+          item.supply.id,
+          item.amount,
+          false,
+        );
       }
 
       await queryRunner.commitTransaction();
@@ -90,7 +100,6 @@ export class ConsumptionsService {
 
     const queryBuilder = this.suppliesConsumptionRepository
       .createQueryBuilder('supplies_consumption')
-      .withDeleted()
       .orderBy('supplies_consumption.date', 'DESC')
       .take(limit)
       .skip(offset * limit);
@@ -191,6 +200,12 @@ export class ConsumptionsService {
           (record: SuppliesConsumptionDetails) => record.id === detailId,
         );
 
+        if (oldRecordData.deletedDate !== null) {
+          throw new BadRequestException(
+            'You cannot delete this record, it is linked to other records.',
+          );
+        }
+
         await this.removeConsumptionDetails(queryRunner, {
           id: detailId,
         });
@@ -207,6 +222,10 @@ export class ConsumptionsService {
         const oldRecordData: SuppliesConsumptionDetails = oldDetails.find(
           (record: SuppliesConsumptionDetails) => record.id === detailId,
         );
+
+        if (oldRecordData.deletedDate !== null) {
+          continue;
+        }
 
         await this.suppliesService.updateStock(
           queryRunner,
@@ -273,6 +292,10 @@ export class ConsumptionsService {
 
     try {
       for (const record of details) {
+        if (record.supply.deletedDate !== null) {
+          continue;
+        }
+
         await this.suppliesService.updateStock(
           queryRunner,
           record.supply.id,
@@ -280,7 +303,7 @@ export class ConsumptionsService {
           true,
         );
       }
-      await queryRunner.manager.remove(consumptionSupply);
+      await queryRunner.manager.softRemove(consumptionSupply);
 
       await queryRunner.commitTransaction();
     } catch (error) {

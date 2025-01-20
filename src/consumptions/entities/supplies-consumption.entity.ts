@@ -1,6 +1,13 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { SuppliesConsumptionDetails } from './supplies-consumption-details.entity';
-
 
 @Entity({ name: 'supplies_consumption' })
 export class SuppliesConsumption {
@@ -18,4 +25,12 @@ export class SuppliesConsumption {
     { cascade: true },
   )
   details: SuppliesConsumptionDetails[];
+  @CreateDateColumn()
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 }

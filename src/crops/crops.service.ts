@@ -124,10 +124,15 @@ export class CropsService {
       .createQueryBuilder('crop')
       .leftJoinAndSelect('crop.harvests_stock', 'harvestsStock')
       .leftJoinAndSelect('crop.harvests', 'harvest', 'harvest.cropId = crop.id')
-      .select(['crop', 'harvestsStock', 'SUM(harvest.total) AS harvestsTotal'])
+      .leftJoinAndSelect(
+        'crop.supplies_consumption_details',
+        'supplies_consumption_details',
+      )
+      .select(['crop', 'harvestsStock', 'SUM(harvest.total) AS harvestsTotal', 'supplies_consumption_details'])
       .where('crop.id = :id', { id })
       .groupBy('crop.id')
       .addGroupBy('harvestsStock.id')
+      .addGroupBy('supplies_consumption_details.id')
       .getOne();
 
     if (!crop) throw new NotFoundException(`Crop with id: ${id} not found`);
