@@ -1,20 +1,24 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryParams } from 'src/common/dto/QueryParams';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
+import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
 import { validateTotalInArray } from 'src/common/helpers/validTotalInArray';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { DataSource, Repository } from 'typeorm';
 import { CreateSaleDto } from './dto/create-sale.dto';
+import { QueryParamsSale } from './dto/query-params-sale.dto';
 import { SaleDetailsDto } from './dto/sale-details.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
 import { SaleDetails } from './entities/sale-details.entity';
 import { Sale } from './entities/sale.entity';
-import { QueryParamsSale } from './dto/query-params-sale.dto';
-import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
-import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 @Injectable()
 export class SalesService {
@@ -169,28 +173,19 @@ export class SalesService {
         new String(record.id).toString(),
       );
 
-      // FIX: Se envia varias veces el crop.id, hay que tomar en cuenta el ID del registro mejor
       const { toCreate, toUpdate, toDelete } = organizeIDsToUpdateEntity(
         newIDsHarvestDetails,
         oldIDsHarvestDetails,
       );
 
-      for (const harvestDetailId of toDelete) {
-        const oldData = oldDetails.find(
-          (record) => record.id === harvestDetailId,
-        );
-        await this.harvestService.updateStock(
-          queryRunner,
-          oldData.crop.id,
-          oldData.quantity,
-          true,
-        );
-      }
+      for (const saleDetailId of toDelete) {
+        const oldData = oldDetails.find((record) => record.id === saleDetailId);
 
-      for (const harvestDetailId of toUpdate) {
-        const oldData = oldDetails.find(
-          (record) => record.id === harvestDetailId,
-        );
+        if (oldData.deletedDate !== null) {
+          throw new BadRequestException(
+            'You cannot delete this record, it is linked to other records.',
+          );
+        }
 
         await this.harvestService.updateStock(
           queryRunner,
@@ -199,9 +194,24 @@ export class SalesService {
           true,
         );
 
-        const newData = newDetails.find(
-          (record) => record.id === harvestDetailId,
+        await queryRunner.manager.delete(SaleDetails, { id: saleDetailId });
+      }
+
+      for (const saleDetailId of toUpdate) {
+        const oldData = oldDetails.find((record) => record.id === saleDetailId);
+
+        if (oldData.deletedDate !== null) {
+          continue;
+        }
+
+        await this.harvestService.updateStock(
+          queryRunner,
+          oldData.crop.id,
+          oldData.quantity,
+          true,
         );
+
+        const newData = newDetails.find((record) => record.id === saleDetailId);
 
         await this.harvestService.updateStock(
           queryRunner,
@@ -209,28 +219,30 @@ export class SalesService {
           newData.quantity,
           false,
         );
+
+        await queryRunner.manager.update(
+          SaleDetails,
+          { id: saleDetailId },
+          newData,
+        );
       }
 
-      for (const harvestDetailId of toCreate) {
-        const newData = newDetails.find(
-          (record) => record.id === harvestDetailId,
-        );
+      for (const saleDetailId of toCreate) {
+        const newData = newDetails.find((record) => record.id === saleDetailId);
+        console.log(newData);
         await this.harvestService.updateStock(
           queryRunner,
           newData.crop.id,
           newData.quantity,
           false,
         );
+        const record = queryRunner.manager.create(SaleDetails, {
+          sale: sale.id,
+          ...newData,
+        });
+        await queryRunner.manager.save(record);
       }
 
-      await queryRunner.manager.delete(SaleDetails, { sale: id });
-
-      sale.details = [...toCreate, ...toUpdate].map((harvestDetailId) => {
-        const data = newDetails.find((record) => record.id === harvestDetailId);
-        return queryRunner.manager.create(SaleDetails, data);
-      });
-
-      await queryRunner.manager.save(sale);
       await queryRunner.manager.update(Sale, { id }, rest);
 
       await queryRunner.commitTransaction();
@@ -249,6 +261,10 @@ export class SalesService {
     try {
       const { details } = sale;
       for (const item of details) {
+        if (item.crop.deletedDate !== null) {
+          continue;
+        }
+
         await this.harvestService.updateStock(
           queryRunner,
           item.crop.id,
