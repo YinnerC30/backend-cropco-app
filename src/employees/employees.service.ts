@@ -143,6 +143,7 @@ export class EmployeesService {
   async findAllEmployeesWithPaymentsMade() {
     const employees = await this.employeeRepository
       .createQueryBuilder('employee')
+      .withDeleted()
       .leftJoinAndSelect('employee.payments', 'payments')
       .where('payments.id IS NOT NULL') // Filtrar solo empleados con pagos
       .select([

@@ -84,6 +84,7 @@ export class CropsService {
   async findAllWithHarvest(queryParams: QueryParams) {
     const { limit = 10 } = queryParams;
     const [crops, count] = await this.cropRepository.findAndCount({
+      withDeleted: true,
       where: {
         harvests: {
           id: Not(IsNull()),
@@ -103,6 +104,7 @@ export class CropsService {
   async findAllWithWork(queryParams: QueryParams) {
     const { limit = 10 } = queryParams;
     const [crops, count] = await this.cropRepository.findAndCount({
+      withDeleted: true,
       where: {
         works: {
           id: Not(IsNull()),
