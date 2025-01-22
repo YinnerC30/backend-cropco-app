@@ -88,6 +88,10 @@ export class SalesService {
 
     const queryBuilder = this.saleRepository
       .createQueryBuilder('sale')
+      .withDeleted()
+      .leftJoinAndSelect('sale.details', 'details')
+      .leftJoinAndSelect('details.client', 'client')
+      .leftJoinAndSelect('details.crop', 'crop')
       .orderBy('sale.date', 'DESC')
       .take(limit)
       .skip(offset * limit);

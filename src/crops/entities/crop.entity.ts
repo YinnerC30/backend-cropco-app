@@ -115,7 +115,7 @@ export class Crop {
   @OneToMany(() => Work, (work) => work.crop, { cascade: true })
   works: Work[];
 
-  @OneToMany(() => SaleDetails, (saleDetails) => saleDetails.crop, {
+  @OneToMany(() => SaleDetails, (sales_detail) => sales_detail.crop, {
     cascade: true,
   })
   sales_detail: SaleDetails[];

@@ -100,6 +100,10 @@ export class ConsumptionsService {
 
     const queryBuilder = this.suppliesConsumptionRepository
       .createQueryBuilder('supplies_consumption')
+      .withDeleted()
+      .leftJoinAndSelect('supplies_consumption.details', 'details')
+      .leftJoinAndSelect('details.supply', 'supply')
+      .leftJoinAndSelect('details.crop', 'crop')
       .orderBy('supplies_consumption.date', 'DESC')
       .take(limit)
       .skip(offset * limit);

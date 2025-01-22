@@ -73,6 +73,8 @@ export class WorkService {
       .createQueryBuilder('work')
       .withDeleted()
       .leftJoinAndSelect('work.crop', 'crop')
+      .leftJoinAndSelect('work.details', 'details')
+      .leftJoinAndSelect('details.employee', 'employee')
       .orderBy('work.date', 'DESC')
       .take(limit)
       .skip(offset * limit);

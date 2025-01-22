@@ -124,6 +124,10 @@ export class ShoppingService {
 
     const queryBuilder = this.suppliesShoppingRepository
       .createQueryBuilder('supplies_shopping')
+      .withDeleted()
+      .leftJoinAndSelect('supplies_shopping.details', 'details')
+      .leftJoinAndSelect('details.supply', 'supply')
+      .leftJoinAndSelect('details.supplier', 'supplier')
       .orderBy('supplies_shopping.date', 'DESC')
       .take(limit)
       .skip(offset * limit);
