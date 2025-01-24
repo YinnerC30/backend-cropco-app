@@ -195,6 +195,20 @@ export class EmployeesService {
       rows: employees,
     };
   }
+  async findAllEmployeesWithWorks() {
+    const employees = await this.employeeRepository.find({
+      relations: {
+        harvests_detail: true,
+      },
+      where: {
+        works_detail: MoreThan(0),
+      },
+    });
+    return {
+      rowCount: employees.length,
+      rows: employees,
+    };
+  }
 
   async findOne(id: string) {
     const employee = await this.employeeRepository.findOne({

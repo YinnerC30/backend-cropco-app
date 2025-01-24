@@ -52,6 +52,11 @@ export const pathsEmployeesController: PathsController = {
     description: 'obtener los empleados con cosechas',
     name: 'find_all_employees_with_harvests',
   },
+  findAllEmployeesWithWorks: {
+    path: 'works/all',
+    description: 'obtener los empleados con trabajos',
+    name: 'find_all_employees_with_works',
+  },
   findOneEmployee: {
     path: 'one/:id',
     description: 'obtener 1 empleado',
@@ -91,6 +96,7 @@ const {
   removeEmployees,
   findCertification,
   findAllEmployeesWithHarvests,
+  findAllEmployeesWithWorks,
 } = pathsEmployeesController;
 
 @Auth()
@@ -246,5 +252,9 @@ export class EmployeesController {
   @Get(findAllEmployeesWithHarvests.path)
   findAllEmployeesWithHarvests() {
     return this.employeesService.findAllEmployeesWithHarvests();
+  }
+  @Get(findAllEmployeesWithWorks.path)
+  findAllEmployeesWithWorks() {
+    return this.employeesService.findAllEmployeesWithWorks();
   }
 }

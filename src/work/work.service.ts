@@ -68,6 +68,7 @@ export class WorkService {
       filter_by_total = false,
       type_filter_total,
       total,
+      employees = [],
     } = queryParams;
     const queryBuilder = this.workRepository
       .createQueryBuilder('work')
@@ -101,6 +102,12 @@ export class WorkService {
             ? '='
             : '<';
       queryBuilder.andWhere(`work.total ${operation} :total`, { total });
+    }
+
+    if (employees.length > 0) {
+      queryBuilder.andWhere('details.employee IN (:...employees)', {
+        employees,
+      });
     }
 
     const [works, count] = await queryBuilder.getManyAndCount();
