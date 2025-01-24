@@ -120,6 +120,8 @@ export class ShoppingService {
       filter_by_total = false,
       type_filter_total,
       total,
+      suppliers = [],
+      supplies = [],
     } = queryParams;
 
     const queryBuilder = this.suppliesShoppingRepository
@@ -153,6 +155,18 @@ export class ShoppingService {
             : '<';
       queryBuilder.andWhere(`supplies_shopping.total ${operation} :total`, {
         total,
+      });
+    }
+
+    if (suppliers.length > 0) {
+      queryBuilder.andWhere('details.supplier IN (:...suppliers)', {
+        suppliers,
+      });
+    }
+
+    if (supplies.length > 0) {
+      queryBuilder.andWhere('details.supply IN (:...supplies)', {
+        supplies,
       });
     }
 

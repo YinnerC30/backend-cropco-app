@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { ILike, Repository } from 'typeorm';
+import { ILike, MoreThan, Repository } from 'typeorm';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { Supplier } from './entities/supplier.entity';
@@ -59,6 +59,21 @@ export class SuppliersService {
       rows: suppliers,
       pageCount: Math.ceil(count / limit),
     };
+  }
+
+  async findAllSuppliersWithShopping() {
+    const suppliers = await this.supplierRepository.find({
+      where: {
+        supplies_shopping_details: MoreThan(0),
+      },
+      relations: {
+        supplies_shopping_details: true,
+      },
+    });
+    return {
+      rowCount: suppliers.length,
+      rows: suppliers,
+    }
   }
 
   async findOne(id: string) {

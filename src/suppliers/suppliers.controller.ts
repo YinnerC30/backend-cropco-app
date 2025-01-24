@@ -36,6 +36,11 @@ export const pathsSuppliersController: PathsController = {
     description: 'obtener todos los proveedores',
     name: 'find_all_suppliers',
   },
+  findAllSuppliersWithShopping: {
+    path: 'shopping/all',
+    description: 'obtener todos los proveedores con compras',
+    name: 'find_all_suppliers_with_shopping',
+  },
   findOneSupplier: {
     path: 'one/:id',
     description: 'obtener 1 proveedor',
@@ -65,6 +70,7 @@ const {
   updateSupplier,
   removeSupplier,
   removeSuppliers,
+  findAllSuppliersWithShopping
 } = pathsSuppliersController;
 
 @Auth()
@@ -90,6 +96,13 @@ export class SuppliersController {
   @ApiQuery({ type: QueryParams })
   findAll(@Query() queryParams: QueryParams) {
     return this.suppliersService.findAll(queryParams);
+  }
+  @Get(findAllSuppliersWithShopping.path)
+  
+  
+  
+  findAllSuppliersWithShopping() {
+    return this.suppliersService.findAllSuppliersWithShopping();
   }
 
   @Get(findOneSupplier.path)

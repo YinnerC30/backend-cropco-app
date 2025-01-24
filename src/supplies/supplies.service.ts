@@ -15,6 +15,7 @@ import {
   DataSource,
   ILike,
   IsNull,
+  MoreThan,
   Not,
   QueryRunner,
   Repository,
@@ -112,6 +113,21 @@ export class SuppliesService {
       rowCount: count,
       rows: supplies,
       pageCount: Math.ceil(count / limit),
+    };
+  }
+
+  async findAllSuppliesWithShopping() {
+    const supplies = await this.supplyRepository.find({
+      where: {
+        shopping_details: MoreThan(0),
+      },
+      relations: {
+        shopping_details: true,
+      },
+    });
+    return {
+      rowCount: supplies.length,
+      rows: supplies,
     };
   }
 
