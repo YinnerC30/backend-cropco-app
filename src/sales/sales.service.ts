@@ -84,6 +84,8 @@ export class SalesService {
 
       filter_by_is_receivable = false,
       is_receivable,
+      clients = [],
+      crops = [],
     } = queryParams;
 
     const queryBuilder = this.saleRepository
@@ -126,6 +128,18 @@ export class SalesService {
         quantity,
       });
     }
+
+    if (clients.length > 0) {
+      queryBuilder.andWhere('details.client IN (:...clients)', {
+        clients,
+      });
+    }
+    if (crops.length > 0) {
+      queryBuilder.andWhere('details.crop IN (:...crops)', {
+        crops,
+      });
+    }
+
     if (filter_by_is_receivable) {
       queryBuilder.andWhere(`sale.is_receivable = :is_receivable`, {
         is_receivable,

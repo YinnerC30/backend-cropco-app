@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { ILike, Repository } from 'typeorm';
+import { ILike, MoreThan, Repository } from 'typeorm';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
@@ -67,6 +67,22 @@ export class ClientsService {
       rowCount: count,
       rows: clients,
       pageCount: Math.ceil(count / limit),
+    };
+  }
+
+  async findAllClientWithSales() {
+    const clients = await this.clientRepository.find({
+      where: {
+        sales_detail: MoreThan(0),
+      },
+      relations: {
+        sales_detail: true,
+      },
+    });
+
+    return {
+      rowCount: clients.length,
+      rows: clients,
     };
   }
 

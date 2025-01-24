@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { ILike, IsNull, Not, Repository } from 'typeorm';
+import { ILike, IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
@@ -118,6 +118,21 @@ export class CropsService {
       rowCount: count,
       rows: crops,
       pageCount: Math.ceil(count / limit),
+    };
+  }
+  async findAllWithSales() {
+    const [crops, count] = await this.cropRepository.findAndCount({
+      withDeleted: true,
+      where: {
+        sales_detail: MoreThan(0),
+      },
+      relations: {
+        sales_detail: true,
+      },
+    });
+    return {
+      rowCount: count,
+      rows: crops,
     };
   }
 

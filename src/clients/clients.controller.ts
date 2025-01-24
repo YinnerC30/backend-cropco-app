@@ -40,6 +40,11 @@ export const pathsClientsController: PathsController = {
     description: 'obtener todos los clientes',
     name: 'find_all_clients',
   },
+  findAllClientsWithSales: {
+    path: 'sales/all',
+    description: 'obtener todos los clientes con ventas',
+    name: 'find_all_clients_with_sales',
+  },
   findOneClient: {
     path: 'one/:id',
     description: 'obtener 1 cliente',
@@ -70,6 +75,7 @@ export const pathsClientsController: PathsController = {
 const {
   createClient,
   findAllClients,
+  findAllClientsWithSales,
   findOneClient,
   updateClient,
   removeClient,
@@ -134,6 +140,11 @@ export class ClientsController {
   // Método
   findAll(@Query() queryParams: QueryParams) {
     return this.clientsService.findAll(queryParams);
+  }
+
+  @Get(findAllClientsWithSales.path)
+  findAllClientsWithSales() {
+    return this.clientsService.findAllClientWithSales();
   }
 
   // Obtener información de 1 cliente
