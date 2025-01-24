@@ -1,11 +1,13 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  IsArray,
   IsBooleanString,
   IsDateString,
   IsEnum,
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
 } from 'class-validator';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
@@ -53,4 +55,15 @@ export class QueryParamsHarvest extends QueryParams {
   @Type(() => Number) // Transformará el valor a un número
   @IsInt()
   value_pay?: number;
+
+  @IsOptional()
+  @IsArray()
+  @Transform(({ value }) => {
+    if (typeof value === 'string' && value.trim() === '') {
+      return undefined; // Convierte strings vacíos a undefined
+    }
+    return typeof value === 'string' ? value.split(',') : value; // Convierte strings separados por comas a un array
+  })
+  @IsUUID('4', { each: true }) // Valida que cada elemento del array sea un UUID v4
+  employees?: string[];
 }

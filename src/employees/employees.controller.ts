@@ -47,6 +47,11 @@ export const pathsEmployeesController: PathsController = {
     description: 'obtener los pagos pendientes de 1 empleado',
     name: 'find_one_employee_with_pending_payments',
   },
+  findAllEmployeesWithHarvests: {
+    path: 'harvests/all',
+    description: 'obtener los empleados con cosechas',
+    name: 'find_all_employees_with_harvests',
+  },
   findOneEmployee: {
     path: 'one/:id',
     description: 'obtener 1 empleado',
@@ -85,6 +90,7 @@ const {
   removeEmployee,
   removeEmployees,
   findCertification,
+  findAllEmployeesWithHarvests,
 } = pathsEmployeesController;
 
 @Auth()
@@ -235,5 +241,10 @@ export class EmployeesController {
   })
   removeBulk(@Body() removeBulkEmployeesDto: RemoveBulkRecordsDto<Employee>) {
     return this.employeesService.removeBulk(removeBulkEmployeesDto);
+  }
+
+  @Get(findAllEmployeesWithHarvests.path)
+  findAllEmployeesWithHarvests() {
+    return this.employeesService.findAllEmployeesWithHarvests();
   }
 }

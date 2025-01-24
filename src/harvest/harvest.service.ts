@@ -91,71 +91,35 @@ export class HarvestService {
       filter_by_value_pay = false,
       type_filter_value_pay,
       value_pay,
+
+      employees = [], // Array de IDs de empleados
     } = queryParams;
 
     let addedFilter =
-      !!crop || filter_by_date || filter_by_total || filter_by_value_pay;
+      !!crop ||
+      filter_by_date ||
+      filter_by_total ||
+      filter_by_value_pay ||
+      employees.length > 0;
+
 
     const queryBuilder = this.harvestRepository
-      .createQueryBuilder('harvests')
-      .select([
-        'subquery.id as id',
-        'subquery.date as date',
-        'subquery.total as total',
-        'subquery.value_pay as value_pay',
-        'subquery.observation as observation',
-        'subquery.employees as employees',
-        'subquery.crop as crop',
-      ])
-      .from((subQuery) => {
-        return subQuery
-          .select([
-            'harvests.id as id',
-            "TO_CHAR(harvests.date, 'YYYY-MM-DD') as date",
-            'harvests.total as total',
-            'harvests.value_pay as value_pay',
-            'harvests.observation as observation',
-          ])
-          .addSelect(
-            `COALESCE(JSON_AGG(
-          JSONB_BUILD_OBJECT(
-            'id', employee.id,
-            'first_name', employee.first_name,
-            'last_name', employee.last_name,
-            'email', employee.email,
-            'cell_phone_number', employee.cell_phone_number,
-            'address', employee.address
-          )
-        ) FILTER (WHERE employee.id IS NOT NULL), '[]')`,
-            'employees',
-          )
-          .addSelect(
-            `JSONB_BUILD_OBJECT(
-          'id', crop.id,
-          'name', crop.name,
-          'description', crop.description
-        )`,
-            'crop',
-          )
-          .from(Harvest, 'harvests')
-          .withDeleted()
-          .leftJoin('harvests.crop', 'crop')
-          .leftJoin('harvests.details', 'details')
-          .leftJoin('details.employee', 'employee')
-          .groupBy('harvests.id, crop.id, crop.name, crop.description')
-          .orderBy('harvests.date', 'DESC');
-      }, 'subquery')
-      .distinctOn(['subquery.id'])
+      .createQueryBuilder('harvest')
+      .withDeleted()
+      .leftJoinAndSelect('harvest.crop', 'crop')
+      .leftJoinAndSelect('harvest.details', 'details')
+      .leftJoinAndSelect('details.employee', 'employee')
+      .orderBy('harvest.date', 'DESC')
       .take(limit)
       .skip(offset * limit);
 
     if (crop.length > 0) {
-      queryBuilder.andWhere("subquery.crop->>'id' = :cropId", { cropId: crop });
+      queryBuilder.andWhere('harvest.crop = :cropId', { cropId: crop });
     }
 
     if (filter_by_date) {
       const operation = TypeFilterDate.AFTER == type_filter_date ? '>' : '<';
-      queryBuilder.andWhere(`subquery.date ${operation} :date`, { date });
+      queryBuilder.andWhere(`harvest.date ${operation} :date`, { date });
     }
 
     if (filter_by_total) {
@@ -165,7 +129,7 @@ export class HarvestService {
           : TypeFilterNumber.EQUAL == type_filter_total
             ? '='
             : '<';
-      queryBuilder.andWhere(`subquery.total ${operation} :total`, { total });
+      queryBuilder.andWhere(`harvest.total ${operation} :total`, { total });
     }
 
     if (filter_by_value_pay) {
@@ -175,12 +139,18 @@ export class HarvestService {
           : TypeFilterNumber.EQUAL == type_filter_value_pay
             ? '='
             : '<';
-      queryBuilder.andWhere(`subquery.value_pay ${operation} :value_pay`, {
+      queryBuilder.andWhere(`harvest.value_pay ${operation} :value_pay`, {
         value_pay,
       });
     }
 
-    const result = await queryBuilder.getRawMany();
+    if (employees.length > 0) {
+      queryBuilder.andWhere('details.employee IN (:...employees)', {
+        employees,
+      });
+    }
+
+    const result = await queryBuilder.getMany();
 
     const count = addedFilter
       ? result.length

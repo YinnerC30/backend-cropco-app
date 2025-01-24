@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { DataSource, ILike, Repository } from 'typeorm';
+import { DataSource, ILike, MoreThan, Repository } from 'typeorm';
 
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
@@ -178,6 +178,21 @@ export class EmployeesService {
       works_detail: employee.works_detail.filter(
         (item: WorkDetails) => item.payment_is_pending === true,
       ),
+    };
+  }
+
+  async findAllEmployeesWithHarvests() {
+    const employees = await this.employeeRepository.find({
+      relations: {
+        harvests_detail: true,
+      },
+      where: {
+        harvests_detail: MoreThan(0),
+      },
+    });
+    return {
+      rowCount: employees.length,
+      rows: employees,
     };
   }
 
