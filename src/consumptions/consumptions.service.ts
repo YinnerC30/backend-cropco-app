@@ -109,7 +109,12 @@ export class ConsumptionsService {
       .skip(offset * limit);
 
     if (filter_by_date) {
-      const operation = TypeFilterDate.AFTER == type_filter_date ? '>' : '<';
+      const operation =
+        TypeFilterDate.AFTER == type_filter_date
+          ? '>'
+          : TypeFilterDate.EQUAL == type_filter_date
+            ? '='
+            : '<';
       queryBuilder.andWhere(`supplies_consumption.date ${operation} :date`, {
         date,
       });

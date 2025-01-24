@@ -84,7 +84,12 @@ export class WorkService {
     }
 
     if (filter_by_date) {
-      const operation = TypeFilterDate.AFTER == type_filter_date ? '>' : '<';
+      const operation =
+        TypeFilterDate.AFTER == type_filter_date
+          ? '>'
+          : TypeFilterDate.EQUAL == type_filter_date
+            ? '='
+            : '<';
       queryBuilder.andWhere(`work.date ${operation} :date`, { date });
     }
 

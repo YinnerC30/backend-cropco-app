@@ -102,7 +102,6 @@ export class HarvestService {
       filter_by_value_pay ||
       employees.length > 0;
 
-
     const queryBuilder = this.harvestRepository
       .createQueryBuilder('harvest')
       .withDeleted()
@@ -118,7 +117,12 @@ export class HarvestService {
     }
 
     if (filter_by_date) {
-      const operation = TypeFilterDate.AFTER == type_filter_date ? '>' : '<';
+      const operation =
+        TypeFilterDate.AFTER == type_filter_date
+          ? '>'
+          : TypeFilterDate.EQUAL == type_filter_date
+            ? '='
+            : '<';
       queryBuilder.andWhere(`harvest.date ${operation} :date`, { date });
     }
 
