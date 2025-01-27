@@ -10,19 +10,18 @@ import {
   Query,
   Res,
 } from '@nestjs/common';
-import { QueryParams } from 'src/common/dto/QueryParams';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { PathsController } from 'src/common/interfaces/PathsController';
 import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
 import { CreateHarvestDto } from './dto/create-harvest.dto';
+import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
 import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
-import { HarvestService } from './harvest.service';
-import { ApiTags, ApiResponse } from '@nestjs/swagger';
 import { Harvest } from './entities/harvest.entity';
-import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
-import { PathsController } from 'src/common/interfaces/PathsController';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { Auth } from 'src/auth/decorators/auth.decorator';
-import { Response } from 'express';
+import { HarvestService } from './harvest.service';
 
 export const pathsHarvestsController: PathsController = {
   createHarvest: {
@@ -127,7 +126,7 @@ export class HarvestController {
   constructor(private readonly harvestService: HarvestService) {}
 
   @Get(exportHarvestToPDF.path)
-  async exportAllClients(
+  async exportHarvestToPDF(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() response: Response,
   ) {

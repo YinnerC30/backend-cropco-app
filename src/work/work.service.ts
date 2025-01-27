@@ -18,6 +18,8 @@ import { QueryParamsWork } from './dto/query-params-work.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { PrinterService } from 'src/printer/printer.service';
+import { getWorkReport } from './reports/get-work';
 
 @Injectable()
 export class WorkService {
@@ -28,6 +30,7 @@ export class WorkService {
     @InjectRepository(Work)
     private readonly workRepository: Repository<Work>,
     private readonly dataSource: DataSource,
+    private readonly printerService: PrinterService,
   ) {}
 
   async create(createWorkDto: CreateWorkDto) {
@@ -219,5 +222,13 @@ export class WorkService {
     for (const { id } of removeBulkWorksDto.recordsIds) {
       await this.remove(id);
     }
+  }
+
+  async exportWorkToPDF(id: string) {
+    const work = await this.findOne(id);
+
+    const docDefinition = getWorkReport({ data: work });
+
+    return this.printerService.createPdf(docDefinition);
   }
 }

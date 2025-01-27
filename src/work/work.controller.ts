@@ -8,17 +8,17 @@ import {
   Patch,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
-import { QueryParams } from 'src/common/dto/QueryParams';
-import { CreateWorkDto } from './dto/create-work.dto';
-import { UpdateWorkDto } from './dto/update-work.dto';
-import { WorkService } from './work.service';
 import { ApiTags } from '@nestjs/swagger';
-import { QueryParamsWork } from './dto/query-params-work.dto';
-import { PathsController } from 'src/common/interfaces/PathsController';
+import { Response } from 'express';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { PathsController } from 'src/common/interfaces/PathsController';
+import { CreateWorkDto } from './dto/create-work.dto';
+import { QueryParamsWork } from './dto/query-params-work.dto';
+import { UpdateWorkDto } from './dto/update-work.dto';
 import { Work } from './entities/work.entity';
-import { Auth } from 'src/auth/decorators/auth.decorator';
+import { WorkService } from './work.service';
 
 export const pathsWorksController: PathsController = {
   createWork: {
@@ -51,9 +51,15 @@ export const pathsWorksController: PathsController = {
     description: 'eliminar varios trabajos',
     name: 'remove_bulk_works',
   },
+  exportWorkToPDF: {
+    path: 'export/one/pdf/:id',
+    description: 'exportar trabajo a PDF',
+    name: 'export_work_to_pdf',
+  },
 };
 
 const {
+  exportWorkToPDF,
   createWork,
   findAllWorks,
   findOneWork,
@@ -62,7 +68,7 @@ const {
   removeWorks,
 } = pathsWorksController;
 
-@Auth()
+// @Auth()
 @ApiTags('Works')
 @Controller('works')
 export class WorkController {
@@ -80,6 +86,18 @@ export class WorkController {
   @Get(findOneWork.path)
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.workService.findOne(id);
+  }
+
+  @Get(exportWorkToPDF.path)
+  async exportWorkToPDF(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() response: Response,
+  ) {
+    const pdfDoc = await this.workService.exportWorkToPDF(id);
+    response.setHeader('Content-Type', 'application/pdf');
+    pdfDoc.info.Title = 'Registro de trabajo';
+    pdfDoc.pipe(response);
+    pdfDoc.end();
   }
 
   @Patch(updateWork.path)
