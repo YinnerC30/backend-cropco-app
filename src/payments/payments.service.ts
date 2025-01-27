@@ -20,6 +20,8 @@ import { QueryParamsPayment } from './dto/query-params-payment.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
+import { PrinterService } from 'src/printer/printer.service';
+import { getPaymentReport } from './reports/get-payment';
 
 @Injectable()
 export class PaymentsService {
@@ -30,6 +32,7 @@ export class PaymentsService {
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
     private readonly dataSource: DataSource,
+    private printerService: PrinterService,
   ) {}
 
   async create(createPaymentDto: CreatePaymentDto) {
@@ -249,4 +252,11 @@ export class PaymentsService {
   }
 
   // TODO: Generar factura en PDF
+  async exportPaymentToPDF(id: string) {
+    const payment = await this.findOne(id);
+
+    const docDefinition = getPaymentReport({ data: payment });
+
+    return this.printerService.createPdf(docDefinition);
+  }
 }

@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,6 +24,7 @@ import { PathsController } from 'src/common/interfaces/PathsController';
 import { Payment } from './entities/payment.entity';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { Response } from 'express';
 
 export const pathsPaymentsController: PathsController = {
   createPayment: {
@@ -50,6 +52,11 @@ export const pathsPaymentsController: PathsController = {
     description: 'eliminar varios pagos',
     name: 'remove_bulk_payments',
   },
+  exportPaymentToPDF: {
+    path: 'export/one/pdf/:id',
+    description: 'exportar pago a PDF',
+    name: 'export_payment_to_pdf',
+  },
 };
 
 const {
@@ -58,6 +65,7 @@ const {
   findOnePayment,
   removePayment,
   removePayments,
+  exportPaymentToPDF
 } = pathsPaymentsController;
 
 @Auth()
@@ -93,6 +101,18 @@ export class PaymentsController {
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.paymentsService.findOne(id);
   }
+
+  @Get(exportPaymentToPDF.path)
+    async exportWorkToPDF(
+      @Param('id', ParseUUIDPipe) id: string,
+      @Res() response: Response,
+    ) {
+      const pdfDoc = await this.paymentsService.exportPaymentToPDF(id);
+      response.setHeader('Content-Type', 'application/pdf');
+      pdfDoc.info.Title = 'Registro de pago';
+      pdfDoc.pipe(response);
+      pdfDoc.end();
+    }
 
   @Delete(removePayment.path)
   @ApiOperation({ summary: 'Delete a payment' })
