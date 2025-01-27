@@ -15,7 +15,7 @@ export const getHarvestReport = (
   const { title, subTitle, data } = options;
 
   return {
-    pageOrientation: 'landscape',
+    // pageOrientation: 'landscape',
     // header: headerSection({
     //   title: title ?? 'Reporte de Cosecha',
     //   subTitle: subTitle ?? 'No hay subtitulo',
@@ -30,10 +30,10 @@ export const getHarvestReport = (
       { text: 'Información General', style: 'subheader' },
       {
         table: {
-          widths: ['auto', '*'],
+          widths: ['auto', 'auto'],
           body: [
             ['ID', data.id],
-            ['Total', data.total],
+            ['Total', data.total + ' Kg'],
             ['Valor a Pagar', data.value_pay],
             ['Observaciones', data.observation || 'Ninguna'],
           ],
@@ -45,7 +45,7 @@ export const getHarvestReport = (
       { text: 'Información del Cultivo', style: 'subheader' },
       {
         table: {
-          widths: ['30%', '70%'],
+          widths: ['auto', 'auto'],
           body: [
             ['Nombre', data.crop.name],
             ['Descripción', data.crop.description],
@@ -63,7 +63,7 @@ export const getHarvestReport = (
       {
         table: {
           headerRows: 1,
-          widths: ['auto', '*', '*', 'auto', '*'],
+          widths: ['auto', 'auto', 'auto', 'auto', 'auto'],
           body: [
             ['Nombre', 'Email', 'Teléfono', 'Total', 'Pendiente'],
             ...data.details.map((detail) => [
@@ -79,11 +79,12 @@ export const getHarvestReport = (
       },
 
       // Procesos realizados
+
       { text: 'Procesos Realizados', style: 'subheader' },
       {
         table: {
           headerRows: 1,
-          widths: ['auto', '*', '*'],
+          widths: ['auto', 'auto', 'auto'],
           body: [
             ['ID', 'Fecha', 'Total'],
             ...data.processed.map((proc) => [proc.id, proc.date, proc.total]),
@@ -93,7 +94,10 @@ export const getHarvestReport = (
       },
 
       // Resumen
-      { text: `Total Procesado: ${data.total_processed}`, style: 'summary' },
+      {
+        text: `Total Procesado: ${data.total_processed + ' Kg'}`,
+        style: 'summary',
+      },
     ],
     styles: {
       header: { fontSize: 22, bold: true, margin: [0, 0, 0, 10] },

@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -25,6 +26,7 @@ import { SalesService } from './sales.service';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Sale } from './entities/sale.entity';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { Response } from 'express';
 
 export const pathsSalesController: PathsController = {
   createSale: {
@@ -57,6 +59,11 @@ export const pathsSalesController: PathsController = {
     description: 'eliminar varias ventas',
     name: 'remove_bulk_sales',
   },
+  exportSaleToPDF: {
+    path: 'export/one/pdf/:id',
+    description: 'exportar venta a PDF',
+    name: 'export_sale_to_pdf',
+  },
 };
 
 const {
@@ -66,6 +73,7 @@ const {
   updateSale,
   removeSale,
   removeSales,
+  exportSaleToPDF,
 } = pathsSalesController;
 
 @Auth()
@@ -83,6 +91,18 @@ export class SalesController {
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   create(@Body() createSaleDto: CreateSaleDto) {
     return this.salesService.create(createSaleDto);
+  }
+
+  @Get(exportSaleToPDF.path)
+  async exportWorkToPDF(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() response: Response,
+  ) {
+    const pdfDoc = await this.salesService.exportSaleToPDF(id);
+    response.setHeader('Content-Type', 'application/pdf');
+    pdfDoc.info.Title = 'Registro de venta';
+    pdfDoc.pipe(response);
+    pdfDoc.end();
   }
 
   @Get(findAllSales.path)

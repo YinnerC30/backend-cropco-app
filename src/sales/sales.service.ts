@@ -19,6 +19,8 @@ import { SaleDetailsDto } from './dto/sale-details.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
 import { SaleDetails } from './entities/sale-details.entity';
 import { Sale } from './entities/sale.entity';
+import { getSaleReport } from './reports/get-sale';
+import { PrinterService } from 'src/printer/printer.service';
 
 @Injectable()
 export class SalesService {
@@ -30,6 +32,7 @@ export class SalesService {
     private readonly saleRepository: Repository<Sale>,
     private readonly dataSource: DataSource,
     private readonly harvestService: HarvestService,
+    private readonly printerService: PrinterService,
   ) {}
 
   async create(createSaleDto: CreateSaleDto) {
@@ -334,5 +337,13 @@ export class SalesService {
     for (const { id } of removeBulkSalesDto.recordsIds) {
       await this.remove(id);
     }
+  }
+
+  async exportSaleToPDF(id: string) {
+    const sale = await this.findOne(id);
+
+    const docDefinition = getSaleReport({ data: sale });
+
+    return this.printerService.createPdf(docDefinition);
   }
 }

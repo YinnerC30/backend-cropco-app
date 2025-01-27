@@ -1,15 +1,15 @@
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { footerSection } from 'src/common/reports/sections/footer.section';
 import { headerSection } from 'src/common/reports/sections/header.section';
-import { Work } from '../entities/work.entity';
+import { Sale } from '../entities/sale.entity';
 
 interface ReportOptions {
   title?: string;
   subTitle?: string;
-  data: Work;
+  data: Sale;
 }
 
-export const getWorkReport = (options: ReportOptions): TDocumentDefinitions => {
+export const getSaleReport = (options: ReportOptions): TDocumentDefinitions => {
   const { title, subTitle, data } = options;
 
   return {
@@ -20,9 +20,10 @@ export const getWorkReport = (options: ReportOptions): TDocumentDefinitions => {
     // }),
     // footer: footerSection,
     // pageMargins: [40, 110, 40, 60],
+
     content: [
-      { text: 'Reporte de trabajo', style: 'header' },
-      { text: `Fecha del trabajo: ${data.date}`, margin: [0, 0, 0, 10] },
+      { text: 'Reporte de venta', style: 'header' },
+      { text: `Fecha del venta: ${data.date}`, margin: [0, 0, 0, 10] },
 
       // Información general
       { text: 'Información General', style: 'subheader' },
@@ -31,53 +32,43 @@ export const getWorkReport = (options: ReportOptions): TDocumentDefinitions => {
           widths: ['auto', 'auto'],
           body: [
             ['ID', data.id],
-            ['Total', data.total],
-            ['Descripción', data.description || 'Ninguna'],
+            ['Cantidad Total', data.quantity],
+            ['Total ($)', data.total],
           ],
         },
         margin: [0, 0, 0, 10],
       },
 
-      // Información del cultivo
-      { text: 'Información del Cultivo', style: 'subheader' },
-      {
-        table: {
-          widths: ['auto', 'auto'],
-          body: [
-            ['Nombre', data.crop.name],
-            ['Descripción', data.crop.description],
-            ['Unidades', data.crop.units],
-            ['Ubicación', data.crop.location],
-            ['Fecha de Creación', data.crop.date_of_creation],
-            ['Fecha de Terminación', data.crop.date_of_termination || 'N/A'],
-          ],
-        },
-        margin: [0, 0, 0, 10],
-      },
+      // Detalles
+      { text: 'Detalles', style: 'subheader' },
 
-      // Detalles de empleados
-      { text: 'Detalles de los Empleados', style: 'subheader' },
       {
         table: {
           headerRows: 1,
           widths: ['auto', 'auto', 'auto', 'auto', 'auto'],
           body: [
-            ['Nombre', 'Email', 'Teléfono', 'Valor a pagar', 'Pendiente'],
+            ['Nombre', 'Cultivo', 'Cantidad', 'Total', 'Pendiente de pago'],
             ...data.details.map((detail) => [
-              `${detail.employee.first_name} ${detail.employee.last_name}`,
-              detail.employee.email,
-              detail.employee.cell_phone_number,
-              detail.value_pay,
-              detail.payment_is_pending ? 'Sí' : 'No',
+              `${detail.client.first_name} ${detail.client.last_name}`,
+              detail.crop.name,
+              detail.quantity,
+              detail.total,
+              detail.is_receivable ? 'Sí' : 'No',
             ]),
           ],
         },
         margin: [0, 0, 0, 10],
       },
+
+      // Resumen
+      { text: 'Resumen', style: 'subheader' },
+      { text: `Cantidad Total: ${data.quantity}`, style: 'summary' },
+      { text: `Total Acumulado: ${data.total} $`, style: 'summary' },
     ],
     styles: {
       header: { fontSize: 22, bold: true, margin: [0, 0, 0, 10] },
       subheader: { fontSize: 16, bold: true, margin: [0, 10, 0, 5] },
+      subheaderSmall: { fontSize: 14, bold: true, margin: [0, 5, 0, 3] },
       summary: { fontSize: 14, italics: true, margin: [0, 10, 0, 0] },
     },
   };

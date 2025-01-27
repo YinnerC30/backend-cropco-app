@@ -19,6 +19,7 @@ import { QueryParamsWork } from './dto/query-params-work.dto';
 import { UpdateWorkDto } from './dto/update-work.dto';
 import { Work } from './entities/work.entity';
 import { WorkService } from './work.service';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 export const pathsWorksController: PathsController = {
   createWork: {
@@ -68,7 +69,7 @@ const {
   removeWorks,
 } = pathsWorksController;
 
-// @Auth()
+@Auth()
 @ApiTags('Works')
 @Controller('works')
 export class WorkController {
