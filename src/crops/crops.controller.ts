@@ -56,6 +56,11 @@ export const pathsCropsController: PathsController = {
     description: 'obtener solo cultivos con ventas realizadas',
     name: 'find_all_crops_with_sales',
   },
+  findAllCropsWithConsumptions: {
+    path: 'with-consumptions/all',
+    description: 'obtener solo cultivos con consumos vinculados',
+    name: 'find_all_crops_with_consumptions',
+  },
   updateCrop: {
     path: 'update/one/:id',
     description: 'actualizar 1 cultivo',
@@ -80,6 +85,7 @@ const {
   findAllCropsWithHarvest,
   findAllCropsWithWork,
   findAllCropsWithSales,
+  findAllCropsWithConsumptions,
   updateCrop,
   removeCrop,
   removeCrops,
@@ -130,8 +136,16 @@ export class CropsController {
   }
 
   @Get(findAllCropsWithSales.path)
-  findAllWithWork() {
+  findAllWithSales() {
     return this.cropsService.findAllWithSales();
+  }
+  @Get(findAllCropsWithWork.path)
+  findAllWithWork() {
+    return this.cropsService.findAllWithWork();
+  }
+  @Get(findAllCropsWithConsumptions.path)
+  findAllCropsWithConsumptions() {
+    return this.cropsService.findAllWithConsumptions();
   }
 
   // Obtener 1 cultivo

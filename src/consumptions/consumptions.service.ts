@@ -88,6 +88,7 @@ export class ConsumptionsService {
       await queryRunner.release();
     }
   }
+
   async findAllConsumptions(queryParams: QueryParamsConsumption) {
     const {
       limit = 10,
@@ -96,6 +97,8 @@ export class ConsumptionsService {
       filter_by_date = false,
       type_filter_date,
       date,
+      crops = [],
+      supplies = [],
     } = queryParams;
 
     const queryBuilder = this.suppliesConsumptionRepository
@@ -117,6 +120,34 @@ export class ConsumptionsService {
             : '<';
       queryBuilder.andWhere(`supplies_consumption.date ${operation} :date`, {
         date,
+      });
+    }
+
+    if (crops.length > 0) {
+      queryBuilder.andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('sc.id')
+          .from('supplies_consumption', 'sc')
+          .leftJoin('sc.details', 'd')
+          .leftJoin('d.crop', 'c')
+          .where('c.id IN (:...crops)', { crops })
+          .getQuery();
+        return 'supplies_consumption.id IN ' + subQuery;
+      });
+    }
+
+    if (supplies.length > 0) {
+      queryBuilder.andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('sc.id')
+          .from('supplies_consumption', 'sc')
+          .leftJoin('sc.details', 'd')
+          .leftJoin('d.supply', 's')
+          .where('s.id IN (:...supplies)', { supplies })
+          .getQuery();
+        return 'supplies_consumption.id IN ' + subQuery;
       });
     }
 

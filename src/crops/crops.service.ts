@@ -101,8 +101,7 @@ export class CropsService {
     };
   }
 
-  async findAllWithWork(queryParams: QueryParams) {
-    const { limit = 10 } = queryParams;
+  async findAllWithWork() {
     const [crops, count] = await this.cropRepository.findAndCount({
       withDeleted: true,
       where: {
@@ -117,7 +116,6 @@ export class CropsService {
     return {
       rowCount: count,
       rows: crops,
-      pageCount: Math.ceil(count / limit),
     };
   }
   async findAllWithSales() {
@@ -128,6 +126,23 @@ export class CropsService {
       },
       relations: {
         sales_detail: true,
+      },
+    });
+    return {
+      rowCount: count,
+      rows: crops,
+    };
+  }
+  async findAllWithConsumptions() {
+    const [crops, count] = await this.cropRepository.findAndCount({
+      withDeleted: true,
+      where: {
+        supplies_consumption_details: MoreThan(0),
+      },
+      relations: {
+        supplies_consumption_details: {
+          crop: true,
+        },
       },
     });
     return {

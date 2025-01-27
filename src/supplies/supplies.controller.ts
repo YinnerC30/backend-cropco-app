@@ -36,6 +36,11 @@ export const pathsSuppliesController: PathsController = {
     description: 'obtener todos los insumos con compras',
     name: 'find_all_supplies_with_shopping',
   },
+  findAllSuppliesWithConsumptions: {
+    path: 'consumptions/all',
+    description: 'obtener todos los insumos con consumos',
+    name: 'find_all_supplies_with_consumptions',
+  },
   findAllStock: {
     path: 'stock/all',
     description: 'obtener el stock de todos los suplementos',
@@ -75,6 +80,7 @@ const {
   removeSupplies,
   findAllStock,
   findAllSuppliesWithShopping,
+  findAllSuppliesWithConsumptions,
 } = pathsSuppliesController;
 
 @Auth()
@@ -90,6 +96,10 @@ export class SuppliesController {
   @Get(findAllSuppliesWithShopping.path)
   findAllSuppliesWithShopping() {
     return this.suppliesService.findAllSuppliesWithShopping();
+  }
+  @Get(findAllSuppliesWithConsumptions.path)
+  findAllSuppliesWithConsumptions() {
+    return this.suppliesService.findAllWithConsumptions();
   }
 
   @Get(findAllStock.path)

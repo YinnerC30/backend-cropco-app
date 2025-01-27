@@ -130,6 +130,20 @@ export class SuppliesService {
       rows: supplies,
     };
   }
+  async findAllWithConsumptions() {
+    const supplies = await this.supplyRepository.find({
+      where: {
+        consumption_details: MoreThan(0),
+      },
+      relations: {
+        consumption_details: true,
+      },
+    });
+    return {
+      rowCount: supplies.length,
+      rows: supplies,
+    };
+  }
 
   async findOne(id: string) {
     const supply = await this.supplyRepository.findOne({
