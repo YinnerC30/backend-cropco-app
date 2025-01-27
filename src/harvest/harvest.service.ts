@@ -26,6 +26,8 @@ import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
 import { HarvestProcessed } from './entities/harvest-processed.entity';
 import { HarvestStock } from './entities/harvest-stock.entity';
 import { InsufficientHarvestStockException } from './exceptions/insufficient-harvest-stock';
+import { PrinterService } from 'src/printer/printer.service';
+import { getHarvestReport } from './reports/get-harvest';
 
 @Injectable()
 export class HarvestService {
@@ -42,6 +44,7 @@ export class HarvestService {
     private readonly harvestStockRepository: Repository<HarvestStock>,
 
     private readonly dataSource: DataSource,
+    private readonly printerService: PrinterService,
   ) {}
 
   async create(createHarvestDto: CreateHarvestDto) {
@@ -593,5 +596,13 @@ export class HarvestService {
     for (const { id } of removeBulkHarvestsDto.recordsIds) {
       await this.remove(id);
     }
+  }
+
+  async exportHarvestToPDF(id: string) {
+    const harvest = await this.findOne(id);
+    console.log(harvest);
+    const docDefinition = getHarvestReport({ data: harvest });
+
+    return this.printerService.createPdf(docDefinition);
   }
 }

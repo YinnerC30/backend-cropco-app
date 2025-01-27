@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
@@ -21,6 +22,7 @@ import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { Response } from 'express';
 
 export const pathsHarvestsController: PathsController = {
   createHarvest: {
@@ -93,6 +95,11 @@ export const pathsHarvestsController: PathsController = {
     description: 'eliminar 1 cosecha procesada',
     name: 'remove_one_harvest_processed',
   },
+  exportHarvestToPDF: {
+    path: 'export/one/pdf/:id',
+    description: 'exportar cosecha a PDF',
+    name: 'export_harvest_to_pdf',
+  },
 };
 
 const {
@@ -110,6 +117,7 @@ const {
   removeHarvest,
   removeHarvestProcessed,
   removeHarvests,
+  exportHarvestToPDF,
 } = pathsHarvestsController;
 
 @Auth()
@@ -117,6 +125,18 @@ const {
 @Controller('harvests')
 export class HarvestController {
   constructor(private readonly harvestService: HarvestService) {}
+
+  @Get(exportHarvestToPDF.path)
+  async exportAllClients(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() response: Response,
+  ) {
+    const pdfDoc = await this.harvestService.exportHarvestToPDF(id);
+    response.setHeader('Content-Type', 'application/pdf');
+    pdfDoc.info.Title = 'Registro de cosecha';
+    pdfDoc.pipe(response);
+    pdfDoc.end();
+  }
 
   @Post(createHarvest.path)
   @ApiResponse({
