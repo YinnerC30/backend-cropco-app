@@ -17,8 +17,6 @@ export const getPaymentReport = (
 ): TDocumentDefinitions => {
   const { title, subTitle, data } = options;
 
-  console.log(data);
-
   return {
     // pageOrientation: 'landscape',
     // header: headerSection({
@@ -65,11 +63,12 @@ export const getPaymentReport = (
       {
         table: {
           headerRows: 1,
-          widths: ['auto', 'auto', 'auto'],
+          widths: ['auto', 'auto', 'auto', 'auto'],
           body: [
-            ['ID', 'Total', 'Valor a pagar'],
+            ['ID', 'Fecha', 'Total', 'Valor a pagar'],
             ...data.payments_harvest.map(({ harvests_detail }) => [
-              harvests_detail.id,
+              harvests_detail.harvest.id,
+              harvests_detail.harvest.date,
               FormatNumber(harvests_detail.total) + ' Kg',
               FormatMoneyValue(harvests_detail.value_pay),
             ]),
@@ -82,11 +81,12 @@ export const getPaymentReport = (
       {
         table: {
           headerRows: 1,
-          widths: ['auto', 'auto'],
+          widths: ['auto', 'auto', 'auto'],
           body: [
-            ['ID', 'Valor a pagar'],
+            ['ID', 'Fecha', 'Valor a pagar'],
             ...data.payments_work.map(({ works_detail }) => [
-              works_detail.id,
+              works_detail.work.id,
+              works_detail.work.date,
               FormatMoneyValue(works_detail.value_pay),
             ]),
           ],
