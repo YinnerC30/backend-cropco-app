@@ -105,8 +105,16 @@ export class WorkService {
     }
 
     if (employees.length > 0) {
-      queryBuilder.andWhere('details.employee IN (:...employees)', {
-        employees,
+      queryBuilder.andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('work.id')
+          .from('works', 'work')
+          .leftJoin('work.details', 'details')
+          .leftJoin('details.employee', 'employee')
+          .where('employee.id IN (:...employees)', { employees })
+          .getQuery();
+        return 'work.id IN ' + subQuery;
       });
     }
 

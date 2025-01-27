@@ -149,8 +149,16 @@ export class HarvestService {
     }
 
     if (employees.length > 0) {
-      queryBuilder.andWhere('details.employee IN (:...employees)', {
-        employees,
+      queryBuilder.andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('harvest.id')
+          .from('harvests', 'harvest')
+          .leftJoin('harvest.details', 'details')
+          .leftJoin('details.employee', 'employee')
+          .where('employee.id IN (:...employees)', { employees })
+          .getQuery();
+        return 'harvest.id IN ' + subQuery;
       });
     }
 

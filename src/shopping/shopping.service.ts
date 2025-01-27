@@ -159,14 +159,30 @@ export class ShoppingService {
     }
 
     if (suppliers.length > 0) {
-      queryBuilder.andWhere('details.supplier IN (:...suppliers)', {
-        suppliers,
+      queryBuilder.andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('sc.id')
+          .from('supplies_shopping', 'sc')
+          .leftJoin('sc.details', 'd')
+          .leftJoin('d.supplier', 's')
+          .where('s.id IN (:...suppliers)', { suppliers })
+          .getQuery();
+        return 'supplies_shopping.id IN ' + subQuery;
       });
     }
 
     if (supplies.length > 0) {
-      queryBuilder.andWhere('details.supply IN (:...supplies)', {
-        supplies,
+      queryBuilder.andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('sc.id')
+          .from('supplies_shopping', 'sc')
+          .leftJoin('sc.details', 'd')
+          .leftJoin('d.supply', 's')
+          .where('s.id IN (:...supplies)', { supplies })
+          .getQuery();
+        return 'supplies_shopping.id IN ' + subQuery;
       });
     }
 

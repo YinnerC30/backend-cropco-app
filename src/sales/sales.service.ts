@@ -130,13 +130,29 @@ export class SalesService {
     }
 
     if (clients.length > 0) {
-      queryBuilder.andWhere('details.client IN (:...clients)', {
-        clients,
+      queryBuilder.andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('sale.id')
+          .from('sales', 'sale')
+          .leftJoin('sale.details', 'details')
+          .leftJoin('details.client', 'client')
+          .where('client.id IN (:...clients)', { clients })
+          .getQuery();
+        return 'sale.id IN ' + subQuery;
       });
     }
     if (crops.length > 0) {
-      queryBuilder.andWhere('details.crop IN (:...crops)', {
-        crops,
+      queryBuilder.andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('sale.id')
+          .from('sales', 'sale')
+          .leftJoin('sale.details', 'details')
+          .leftJoin('details.crop', 'crop')
+          .where('crop.id IN (:...crops)', { crops })
+          .getQuery();
+        return 'sale.id IN ' + subQuery;
       });
     }
 
