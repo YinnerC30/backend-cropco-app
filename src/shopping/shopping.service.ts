@@ -21,6 +21,8 @@ import { QueryParamsShopping } from './dto/query-params-shopping.dto';
 import { ShoppingSuppliesDetailsDto } from './dto/shopping-supplies-details.dto';
 import { UpdateSuppliesShoppingDto } from './dto/update-supplies-shopping.dto';
 import { SuppliesShopping, SuppliesShoppingDetails } from './entities';
+import { PrinterService } from 'src/printer/printer.service';
+import { getShoppingReport } from './reports/get-shopping';
 
 @Injectable()
 export class ShoppingService {
@@ -36,6 +38,7 @@ export class ShoppingService {
     private readonly suppliesService: SuppliesService,
 
     private dataSource: DataSource,
+    private printerService: PrinterService,
   ) {}
 
   async createShoppingDetails(
@@ -373,5 +376,13 @@ export class ShoppingService {
     } catch (error) {
       this.handleDBExceptions(error);
     }
+  }
+
+  async exportShoppingToPDF(id: string) {
+    const shopping = await this.findOneShopping(id);
+
+    const docDefinition = getShoppingReport({ data: shopping });
+
+    return this.printerService.createPdf(docDefinition);
   }
 }

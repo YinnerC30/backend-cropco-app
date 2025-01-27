@@ -2,6 +2,8 @@ import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { footerSection } from 'src/common/reports/sections/footer.section';
 import { headerSection } from 'src/common/reports/sections/header.section';
 import { Work } from '../entities/work.entity';
+import { FormatMoneyValue } from 'src/common/helpers/formatMoneyValue';
+import { FormatNumber } from 'src/common/helpers/formatNumber';
 
 interface ReportOptions {
   title?: string;
@@ -31,7 +33,7 @@ export const getWorkReport = (options: ReportOptions): TDocumentDefinitions => {
           widths: ['auto', 'auto'],
           body: [
             ['ID', data.id],
-            ['Total', data.total],
+            ['Total', FormatMoneyValue(data.total)],
             ['Descripción', data.description || 'Ninguna'],
           ],
         },
@@ -46,7 +48,7 @@ export const getWorkReport = (options: ReportOptions): TDocumentDefinitions => {
           body: [
             ['Nombre', data.crop.name],
             ['Descripción', data.crop.description],
-            ['Unidades', data.crop.units],
+            ['Unidades', FormatNumber(data.crop.units)],
             ['Ubicación', data.crop.location],
             ['Fecha de Creación', data.crop.date_of_creation],
             ['Fecha de Terminación', data.crop.date_of_termination || 'N/A'],
@@ -67,7 +69,7 @@ export const getWorkReport = (options: ReportOptions): TDocumentDefinitions => {
               `${detail.employee.first_name} ${detail.employee.last_name}`,
               detail.employee.email,
               detail.employee.cell_phone_number,
-              detail.value_pay,
+              FormatMoneyValue(detail.value_pay),
               detail.payment_is_pending ? 'Sí' : 'No',
             ]),
           ],

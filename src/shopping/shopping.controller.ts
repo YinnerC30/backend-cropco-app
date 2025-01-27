@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  Res,
+} from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
@@ -8,16 +19,14 @@ import { QueryParamsShopping } from './dto/query-params-shopping.dto';
 import { UpdateSuppliesShoppingDto } from './dto/update-supplies-shopping.dto';
 import { SuppliesShopping } from './entities';
 import { ShoppingService } from './shopping.service';
+import { Response } from 'express';
 
 export const pathsShoppingController: PathsController = {
-
   createShopping: {
     path: 'create',
     description: 'crear compra de suplementos',
     name: 'create_supply_shopping',
   },
-
-
 
   findAllShopping: {
     path: 'all',
@@ -25,21 +34,17 @@ export const pathsShoppingController: PathsController = {
     name: 'find_all_supplies_shopping',
   },
 
-
   findOneShopping: {
     path: 'one/:id',
     description: 'obtener 1 compra',
     name: 'find_one_supplies_shopping',
   },
 
-
   updateShopping: {
     path: 'update/one/:id',
     description: 'actualizar 1 compra',
     name: 'update_one_supplies_shopping',
   },
-
-
 
   removeShopping: {
     path: 'remove/one/:id',
@@ -52,7 +57,11 @@ export const pathsShoppingController: PathsController = {
     description: 'eliminar varias compras',
     name: 'remove_bulk_supplies_shopping',
   },
-
+  exportShoppingToPDF: {
+    path: 'export/one/pdf/:id',
+    description: 'exportar compra a PDF',
+    name: 'export_shopping_to_pdf',
+  },
 };
 
 const {
@@ -62,11 +71,12 @@ const {
   updateShopping,
   removeShopping,
   removeBulkShopping,
+  exportShoppingToPDF,
 } = pathsShoppingController;
 
 @Controller('shopping')
 export class ShoppingController {
-  constructor(private readonly shoppingService: ShoppingService) { }
+  constructor(private readonly shoppingService: ShoppingService) {}
 
   @Get(findAllShopping.path)
   findAllShopping(@Query() queryParams: QueryParamsShopping) {
@@ -76,6 +86,19 @@ export class ShoppingController {
   findOneShopping(@Param('id', ParseUUIDPipe) id: string) {
     return this.shoppingService.findOneShopping(id);
   }
+
+  @Get(exportShoppingToPDF.path)
+  async exportShoppingToPDF(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() response: Response,
+  ) {
+    const pdfDoc = await this.shoppingService.exportShoppingToPDF(id);
+    response.setHeader('Content-Type', 'application/pdf');
+    pdfDoc.info.Title = 'Registro de compra';
+    pdfDoc.pipe(response);
+    pdfDoc.end();
+  }
+
   @Post(createShopping.path)
   shopping(@Body() createShoppingSuppliesDto: CreateShoppingSuppliesDto) {
     return this.shoppingService.createShopping(createShoppingSuppliesDto);

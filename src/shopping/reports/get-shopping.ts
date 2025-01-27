@@ -1,17 +1,19 @@
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { footerSection } from 'src/common/reports/sections/footer.section';
 import { headerSection } from 'src/common/reports/sections/header.section';
-import { Sale } from '../entities/sale.entity';
+import { SuppliesShopping } from '../entities';
 import { FormatMoneyValue } from 'src/common/helpers/formatMoneyValue';
 import { FormatNumber } from 'src/common/helpers/formatNumber';
 
 interface ReportOptions {
   title?: string;
   subTitle?: string;
-  data: Sale;
+  data: SuppliesShopping;
 }
 
-export const getSaleReport = (options: ReportOptions): TDocumentDefinitions => {
+export const getShoppingReport = (
+  options: ReportOptions,
+): TDocumentDefinitions => {
   const { title, subTitle, data } = options;
 
   return {
@@ -22,10 +24,9 @@ export const getSaleReport = (options: ReportOptions): TDocumentDefinitions => {
     // }),
     // footer: footerSection,
     // pageMargins: [40, 110, 40, 60],
-
     content: [
-      { text: 'Reporte de venta', style: 'header' },
-      { text: `Fecha del venta: ${data.date}`, margin: [0, 0, 0, 10] },
+      { text: 'Reporte de compra', style: 'header' },
+      { text: `Fecha de la compra: ${data.date}`, margin: [0, 0, 0, 10] },
 
       // Información general
       { text: 'Información General', style: 'subheader' },
@@ -34,49 +35,45 @@ export const getSaleReport = (options: ReportOptions): TDocumentDefinitions => {
           widths: ['auto', 'auto'],
           body: [
             ['ID', data.id],
-            ['Cantidad Total', FormatNumber(data.quantity)],
-            ['Total ($)', FormatMoneyValue(data.total)],
+            ['Total', FormatMoneyValue(data.total)],
           ],
         },
         margin: [0, 0, 0, 10],
       },
 
-      // Detalles
-      { text: 'Detalles', style: 'subheader' },
-
+      // Detalles de compras
+      { text: 'Detalles de las compras', style: 'subheader' },
       {
         table: {
           headerRows: 1,
-          widths: ['auto', 'auto', 'auto', 'auto', 'auto'],
+          widths: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
           body: [
-            ['Nombre', 'Cultivo', 'Cantidad', 'Total', 'Pendiente de pago'],
+            [
+              'Proveedor',
+              'Email',
+              'Insumo',
+              'Unidad de medida',
+              'Teléfono',
+              'Monto',
+              'Valor a pagar',
+            ],
             ...data.details.map((detail) => [
-              `${detail.client.first_name} ${detail.client.last_name}`,
-              detail.crop.name,
-              FormatNumber(detail.quantity),
+              `${detail.supplier.first_name} ${detail.supplier.last_name}`,
+              detail.supplier.email,
+              detail.supply.name,
+              detail.supply.unit_of_measure,
+              detail.supplier.cell_phone_number,
+              FormatNumber(detail.amount),
               FormatMoneyValue(detail.total),
-              detail.is_receivable ? 'Sí' : 'No',
             ]),
           ],
         },
         margin: [0, 0, 0, 10],
       },
-
-      // Resumen
-      { text: 'Resumen', style: 'subheader' },
-      {
-        text: `Cantidad Total: ${FormatNumber(data.quantity)}`,
-        style: 'summary',
-      },
-      {
-        text: `Total Acumulado: ${FormatMoneyValue(data.total)} $`,
-        style: 'summary',
-      },
     ],
     styles: {
       header: { fontSize: 22, bold: true, margin: [0, 0, 0, 10] },
       subheader: { fontSize: 16, bold: true, margin: [0, 10, 0, 5] },
-      subheaderSmall: { fontSize: 14, bold: true, margin: [0, 5, 0, 3] },
       summary: { fontSize: 14, italics: true, margin: [0, 10, 0, 0] },
     },
   };

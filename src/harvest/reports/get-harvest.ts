@@ -2,6 +2,8 @@ import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { footerSection } from 'src/common/reports/sections/footer.section';
 import { headerSection } from 'src/common/reports/sections/header.section';
 import { Harvest } from '../entities/harvest.entity';
+import { FormatNumber } from 'src/common/helpers/formatNumber';
+import { FormatMoneyValue } from 'src/common/helpers/formatMoneyValue';
 
 interface ReportOptions {
   title?: string;
@@ -33,8 +35,8 @@ export const getHarvestReport = (
           widths: ['auto', 'auto'],
           body: [
             ['ID', data.id],
-            ['Total', data.total + ' Kg'],
-            ['Valor a Pagar', data.value_pay],
+            ['Total', FormatNumber(data.total) + ' Kg'],
+            ['Valor a Pagar', FormatMoneyValue(data.value_pay)],
             ['Observaciones', data.observation || 'Ninguna'],
           ],
         },
@@ -49,7 +51,7 @@ export const getHarvestReport = (
           body: [
             ['Nombre', data.crop.name],
             ['Descripción', data.crop.description],
-            ['Unidades', data.crop.units],
+            ['Unidades', FormatNumber(data.crop.units)],
             ['Ubicación', data.crop.location],
             ['Fecha de Creación', data.crop.date_of_creation],
             ['Fecha de Terminación', data.crop.date_of_termination || 'N/A'],
@@ -63,14 +65,22 @@ export const getHarvestReport = (
       {
         table: {
           headerRows: 1,
-          widths: ['auto', 'auto', 'auto', 'auto', 'auto'],
+          widths: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
           body: [
-            ['Nombre', 'Email', 'Teléfono', 'Total', 'Pendiente'],
+            [
+              'Nombre',
+              'Email',
+              'Teléfono',
+              'Total',
+              'Valor a pagar',
+              'Pendiente',
+            ],
             ...data.details.map((detail) => [
               `${detail.employee.first_name} ${detail.employee.last_name}`,
               detail.employee.email,
               detail.employee.cell_phone_number,
-              detail.total,
+              FormatNumber(detail.total),
+              FormatMoneyValue(detail.value_pay),
               detail.payment_is_pending ? 'Sí' : 'No',
             ]),
           ],
@@ -87,7 +97,7 @@ export const getHarvestReport = (
           widths: ['auto', 'auto', 'auto'],
           body: [
             ['ID', 'Fecha', 'Total'],
-            ...data.processed.map((proc) => [proc.id, proc.date, proc.total]),
+            ...data.processed.map((proc) => [proc.id, proc.date, FormatNumber(proc.total)]),
           ],
         },
         margin: [0, 0, 0, 10],
@@ -95,7 +105,7 @@ export const getHarvestReport = (
 
       // Resumen
       {
-        text: `Total Procesado: ${data.total_processed + ' Kg'}`,
+        text: `Total Procesado: ${FormatNumber(data.total_processed) + ' Kg'}`,
         style: 'summary',
       },
     ],
