@@ -1,23 +1,20 @@
-import { PatternFill, TDocumentDefinitions } from 'pdfmake/interfaces';
+import { TDocumentDefinitions } from 'pdfmake/interfaces';
+import { formatDate } from 'src/common/helpers/formatDate';
 import { FormatMoneyValue } from 'src/common/helpers/formatMoneyValue';
 import { FormatNumber } from 'src/common/helpers/formatNumber';
-import { Harvest } from '../entities/harvest.entity';
-import { formatDate } from 'src/common/helpers/formatDate';
 import { footerSection } from 'src/common/reports/sections/footer.section';
 import { headerSection } from 'src/common/reports/sections/header.section';
-import { lineSeparator } from 'src/common/reports/sections/line-separator';
 import { MyStyles } from 'src/common/reports/sections/styles-dictionary';
+import { Harvest } from '../entities/harvest.entity';
 
 interface ReportOptions {
-  title?: string;
-  subTitle?: string;
   data: Harvest & { total_processed: number };
 }
 
 export const getHarvestReport = (
   options: ReportOptions,
 ): TDocumentDefinitions => {
-  const { title, subTitle, data } = options;
+  const { data } = options;
 
   const pathFrontend = process.env['HOST_FRONTED'] ?? 'http://localhost:5173';
 
@@ -47,7 +44,7 @@ export const getHarvestReport = (
 
       {
         text: [
-          'Observaciones:',
+          'Observaciones: ',
           {
             text: data.observation || 'Ninguna',
           },

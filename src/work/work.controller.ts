@@ -69,7 +69,7 @@ const {
   removeWorks,
 } = pathsWorksController;
 
-@Auth()
+// @Auth()
 @ApiTags('Works')
 @Controller('works')
 export class WorkController {

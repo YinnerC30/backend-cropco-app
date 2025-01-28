@@ -133,6 +133,9 @@ export class HarvestController {
     const pdfDoc = await this.harvestService.exportHarvestToPDF(id);
     response.setHeader('Content-Type', 'application/pdf');
     pdfDoc.info.Title = 'Registro de cosecha';
+    pdfDoc.info.Author = 'CropCo-System';
+    pdfDoc.info.Keywords = 'report-harvest';
+    pdfDoc.info.CreationDate = new Date();
     pdfDoc.pipe(response);
     pdfDoc.end();
   }
