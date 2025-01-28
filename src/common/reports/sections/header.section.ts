@@ -1,20 +1,20 @@
 import { Content } from 'pdfmake/interfaces';
 import { DateFormatter } from 'src/common/helpers';
+import { lineSeparator } from './line-separator';
 
-const logo: Content = {
-  image: 'src/assets/icon.png',
-  width: 100,
-  height: 100,
-  alignment: 'center',
-  margin: [0, 0, 0, 20],
-};
+// const logo: Content = {
+//   image: 'src/assets/icon.png',
+//   width: 50,
+//   height: 50,
+//   margin: [10, 10, 0, 0],
+// };
 
 const currentDate: Content = {
   text: DateFormatter.getDDMMMMYYYY(new Date()),
+  margin: [0, 0, 10, 0],
+  width: 150,
   alignment: 'right',
-  margin: [20, 30],
-  width: 100,
-  fontSize: 10,
+  fontSize: 12,
 };
 
 interface HeaderOptions {
@@ -27,7 +27,7 @@ interface HeaderOptions {
 export const headerSection = (options: HeaderOptions): Content => {
   const { title, subTitle, showLogo = true, showDate = true } = options;
 
-  const headerLogo: Content = showLogo ? logo : null;
+  // const headerLogo: Content = showLogo ? logo : null;
   const headerDate: Content = showDate ? currentDate : null;
 
   const headerSubTitle: Content = subTitle
@@ -37,7 +37,6 @@ export const headerSection = (options: HeaderOptions): Content => {
         margin: [0, 2, 0, 0],
         style: {
           fontSize: 16,
-          // bold: true,
         },
       }
     : null;
@@ -46,12 +45,16 @@ export const headerSection = (options: HeaderOptions): Content => {
     ? {
         stack: [
           {
+            width: 100,
             text: title,
             alignment: 'center',
             margin: [0, 15, 0, 0],
             style: {
+              fontSize: 25,
               bold: true,
-              fontSize: 22,
+              margin: [0, 0, 0, 5],
+              color: '#606C38', // Color verde
+              alignment: 'center',
             },
           },
           headerSubTitle,
@@ -59,7 +62,5 @@ export const headerSection = (options: HeaderOptions): Content => {
       }
     : null;
 
-  return {
-    columns: [headerLogo, headerTitle, headerDate],
-  };
+  return [headerTitle, headerDate, lineSeparator];
 };

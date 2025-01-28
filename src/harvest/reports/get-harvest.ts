@@ -3,6 +3,10 @@ import { FormatMoneyValue } from 'src/common/helpers/formatMoneyValue';
 import { FormatNumber } from 'src/common/helpers/formatNumber';
 import { Harvest } from '../entities/harvest.entity';
 import { formatDate } from 'src/common/helpers/formatDate';
+import { footerSection } from 'src/common/reports/sections/footer.section';
+import { headerSection } from 'src/common/reports/sections/header.section';
+import { lineSeparator } from 'src/common/reports/sections/line-separator';
+import { MyStyles } from 'src/common/reports/sections/styles-dictionary';
 
 interface ReportOptions {
   title?: string;
@@ -18,9 +22,12 @@ export const getHarvestReport = (
   const pathFrontend = process.env['HOST_FRONTED'] ?? 'http://localhost:5173';
 
   return {
+    header: headerSection({
+      title: 'Reporte de cosecha',
+    }),
+    footer: footerSection,
+    pageMargins: [40, 110, 40, 60],
     content: [
-      // Título del reporte
-      { text: 'Reporte de cosecha', style: 'header' },
       {
         text: [
           'Id: ',
@@ -34,7 +41,7 @@ export const getHarvestReport = (
       },
 
       {
-        text: `Fecha de registro: ${formatDate(data.date)}`,
+        text: `Fecha de la cosecha: ${formatDate(data.date)}`,
         style: 'subtitle',
       },
 
@@ -224,9 +231,9 @@ export const getHarvestReport = (
           ],
         },
         margin: [0, 0, 0, 10],
-        layout: {
-          fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f9fafb' : null), // Fondo gris para el encabezado
-        },
+        // layout: {
+        //   fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f9fafb' : null), // Fondo gris para el encabezado
+        // },
       },
 
       // Resumen final
@@ -241,57 +248,7 @@ export const getHarvestReport = (
       },
     ],
 
-    styles: {
-      header: {
-        fontSize: 25,
-        bold: true,
-        margin: [0, 0, 0, 10],
-        color: '#606C38', // Color verde
-        alignment: 'center',
-      },
-      subtitle: {
-        fontSize: 12,
-        lineHeight: 1.2,
-      },
-      subheader: {
-        fontSize: 16,
-        bold: true,
-        margin: [0, 10, 0, 5],
-        color: '#606C38',
-        decoration: 'underline',
-        lineHeight: 1.2,
-      },
-      summary: {
-        fontSize: 12,
-        margin: [0, 10, 0, 0],
-        color: '#1f2937',
-      },
-      boldText: {
-        fontSize: 12,
-        bold: true,
-        color: '#283618',
-      },
-      mutedText: {
-        fontSize: 12,
-        color: '#6b7280',
-      },
-      tableHeader: {
-        alignment: 'center',
-        fontSize: 12,
-        bold: true,
-        color: '#1f2937',
-        fillColor: '#FEFAE0',
-      },
-      tableCell: {
-        fontSize: 12,
-        color: '#1f2937',
-      },
-      link: {
-        fontSize: 12,
-        decoration: 'underline',
-        color: '#415a77',
-      },
-    },
+    styles: MyStyles,
     defaultStyle: {
       font: 'Roboto',
     },
