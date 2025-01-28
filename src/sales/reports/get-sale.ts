@@ -4,6 +4,9 @@ import { headerSection } from 'src/common/reports/sections/header.section';
 import { Sale } from '../entities/sale.entity';
 import { FormatMoneyValue } from 'src/common/helpers/formatMoneyValue';
 import { FormatNumber } from 'src/common/helpers/formatNumber';
+import { formatDate } from 'src/common/helpers/formatDate';
+import { MyStyles } from 'src/common/reports/sections/styles-dictionary';
+import { text } from 'stream/consumers';
 
 interface ReportOptions {
   title?: string;
@@ -14,30 +17,44 @@ interface ReportOptions {
 export const getSaleReport = (options: ReportOptions): TDocumentDefinitions => {
   const { title, subTitle, data } = options;
 
+  const pathFrontend = process.env['HOST_FRONTED'] ?? 'http://localhost:5173';
+
   return {
-    // pageOrientation: 'landscape',
-    // header: headerSection({
-    //   title: title ?? 'Reporte de Cosecha',
-    //   subTitle: subTitle ?? 'No hay subtitulo',
-    // }),
-    // footer: footerSection,
-    // pageMargins: [40, 110, 40, 60],
+    header: headerSection({
+      title: 'Reporte de venta',
+    }),
+    footer: footerSection,
+    pageMargins: [40, 110, 40, 60],
 
     content: [
-      { text: 'Reporte de venta', style: 'header' },
-      { text: `Fecha del venta: ${data.date}`, margin: [0, 0, 0, 10] },
+      {
+        text: [
+          'Id: ',
+          {
+            text: `${data.id}`,
+            link: `${pathFrontend}/app/home/sales/view/one/${data.id}`,
+            style: 'link',
+          },
+        ],
+        style: 'subtitle',
+      },
+
+      {
+        text: `Fecha de la venta: ${formatDate(data.date)}`,
+        style: 'subtitle',
+      },
 
       // Información general
-      { text: 'Información General', style: 'subheader' },
+      { text: 'Resumen', style: 'subheader' },
       {
         table: {
           widths: ['auto', 'auto'],
           body: [
-            ['ID', data.id],
-            ['Cantidad Total', FormatNumber(data.quantity)],
-            ['Total ($)', FormatMoneyValue(data.total)],
+            ['Cantidad vendida: ', FormatNumber(data.quantity) + ' Kg'],
+            ['Pago total: ', FormatMoneyValue(data.total)],
           ],
         },
+        layout: 'noBorders',
         margin: [0, 0, 0, 10],
       },
 
@@ -47,15 +64,46 @@ export const getSaleReport = (options: ReportOptions): TDocumentDefinitions => {
       {
         table: {
           headerRows: 1,
-          widths: ['auto', 'auto', 'auto', 'auto', 'auto'],
+          widths: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
           body: [
-            ['Nombre', 'Cultivo', 'Cantidad', 'Total', 'Pendiente de pago'],
+            [
+              { text: 'Id Cliente', style: 'tableHeader' },
+              { text: 'Cliente', style: 'tableHeader' },
+              { text: 'Cultivo', style: 'tableHeader' },
+              { text: 'Cantidad', style: 'tableHeader' },
+              { text: 'Valor a pagar', style: 'tableHeader' },
+              { text: 'Pendiente de pago', style: 'tableHeader' },
+            ],
             ...data.details.map((detail) => [
-              `${detail.client.first_name} ${detail.client.last_name}`,
-              detail.crop.name,
-              FormatNumber(detail.quantity),
-              FormatMoneyValue(detail.total),
-              detail.is_receivable ? 'Sí' : 'No',
+              {
+                text: detail.client.id,
+                link: `${pathFrontend}/app/home/clients/view/one/${detail.client.id}`,
+                style: ['tableCell', 'link'],
+              },
+              {
+                text: `${detail.client.first_name} ${detail.client.last_name}`,
+                style: 'tableCell',
+              },
+              {
+                text: `${detail.crop.name}`,
+                style: 'tableCell',
+              },
+              {
+                text: FormatNumber(detail.quantity),
+                style: 'tableCell',
+                alignment: 'center',
+              },
+              {
+                text: FormatMoneyValue(detail.total),
+                style: 'tableCell',
+                alignment: 'center',
+              },
+              {
+                text: detail.is_receivable ? 'Sí' : 'No',
+                alignment: 'center',
+                color: detail.is_receivable ? '#9e0059' : '#2a9d8f',
+                style: ['tableCell'],
+              },
             ]),
           ],
         },
@@ -63,21 +111,22 @@ export const getSaleReport = (options: ReportOptions): TDocumentDefinitions => {
       },
 
       // Resumen
-      { text: 'Resumen', style: 'subheader' },
+
       {
-        text: `Cantidad Total: ${FormatNumber(data.quantity)}`,
-        style: 'summary',
-      },
-      {
-        text: `Total Acumulado: ${FormatMoneyValue(data.total)} $`,
-        style: 'summary',
+        text: [
+          'Cantidad vendida: ',
+          {
+            text: `${FormatNumber(data.quantity) + ' Kg'}`,
+            style: 'boldText',
+          },
+          '\nTotal a pagar: ',
+          {
+            text: `${FormatMoneyValue(data.total)}`,
+            style: 'boldText',
+          },
+        ],
       },
     ],
-    styles: {
-      header: { fontSize: 22, bold: true, margin: [0, 0, 0, 10] },
-      subheader: { fontSize: 16, bold: true, margin: [0, 10, 0, 5] },
-      subheaderSmall: { fontSize: 14, bold: true, margin: [0, 5, 0, 3] },
-      summary: { fontSize: 14, italics: true, margin: [0, 10, 0, 0] },
-    },
+    styles: MyStyles,
   };
 };
