@@ -1,9 +1,8 @@
-import { TDocumentDefinitions } from 'pdfmake/interfaces';
-import { footerSection } from 'src/common/reports/sections/footer.section';
-import { headerSection } from 'src/common/reports/sections/header.section';
-import { Harvest } from '../entities/harvest.entity';
-import { FormatNumber } from 'src/common/helpers/formatNumber';
+import { PatternFill, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { FormatMoneyValue } from 'src/common/helpers/formatMoneyValue';
+import { FormatNumber } from 'src/common/helpers/formatNumber';
+import { Harvest } from '../entities/harvest.entity';
+import { formatDate } from 'src/common/helpers/formatDate';
 
 interface ReportOptions {
   title?: string;
@@ -16,103 +15,285 @@ export const getHarvestReport = (
 ): TDocumentDefinitions => {
   const { title, subTitle, data } = options;
 
-  return {
-    // pageOrientation: 'landscape',
-    // header: headerSection({
-    //   title: title ?? 'Reporte de Cosecha',
-    //   subTitle: subTitle ?? 'No hay subtitulo',
-    // }),
-    // footer: footerSection,
-    // pageMargins: [40, 110, 40, 60],
-    content: [
-      { text: 'Reporte General', style: 'header' },
-      { text: `Fecha del reporte: ${data.date}`, margin: [0, 0, 0, 10] },
+  const pathFrontend = process.env['HOST_FRONTED'] ?? 'http://localhost:5173';
 
-      // Información general
-      { text: 'Información General', style: 'subheader' },
+  return {
+    content: [
+      // Título del reporte
+      { text: 'Reporte de cosecha', style: 'header' },
       {
-        table: {
-          widths: ['auto', 'auto'],
-          body: [
-            ['ID', data.id],
-            ['Total', FormatNumber(data.total) + ' Kg'],
-            ['Valor a Pagar', FormatMoneyValue(data.value_pay)],
-            ['Observaciones', data.observation || 'Ninguna'],
-          ],
-        },
-        margin: [0, 0, 0, 10],
+        text: [
+          'Id: ',
+          {
+            text: `${data.id}`,
+            link: `${pathFrontend}/app/home/harvests/view/one/${data.id}`,
+            style: 'link',
+          },
+        ],
+        style: 'subtitle',
       },
 
-      // Información del cultivo
-      { text: 'Información del Cultivo', style: 'subheader' },
       {
-        table: {
-          widths: ['auto', 'auto'],
-          body: [
-            ['Nombre', data.crop.name],
-            ['Descripción', data.crop.description],
-            ['Unidades', FormatNumber(data.crop.units)],
-            ['Ubicación', data.crop.location],
-            ['Fecha de Creación', data.crop.date_of_creation],
-            ['Fecha de Terminación', data.crop.date_of_termination || 'N/A'],
-          ],
-        },
-        margin: [0, 0, 0, 10],
+        text: `Fecha de registro: ${formatDate(data.date)}`,
+        style: 'subtitle',
+      },
+
+      {
+        text: [
+          'Observaciones:',
+          {
+            text: data.observation || 'Ninguna',
+          },
+        ],
+        style: 'subtitle',
+      },
+
+      {
+        columns: [
+          // Columna 1: Resumen
+          {
+            width: 'auto', // Ancho de la columna
+            stack: [
+              { text: 'Resumen', style: 'subheader' },
+              {
+                table: {
+                  widths: ['auto', 'auto'],
+                  body: [
+                    [
+                      'Total cosechado:',
+                      {
+                        text: FormatNumber(data.total) + ' Kg',
+                        style: 'boldText',
+                      },
+                    ],
+                    [
+                      'Total Stock procesado:',
+                      {
+                        text: FormatNumber(data.total_processed) + ' Kg',
+                        style: 'boldText',
+                      },
+                    ],
+                    [
+                      'Valor a pagar:',
+                      {
+                        text: FormatMoneyValue(data.value_pay),
+                        style: 'boldText',
+                      },
+                    ],
+                  ],
+                },
+                margin: [0, 0, 0, 10],
+                layout: 'noBorders',
+              },
+            ],
+          },
+
+          // Columna 2: Información del cultivo
+          {
+            width: 'auto', // Ancho de la columna
+            stack: [
+              { text: 'Información del cultivo', style: 'subheader' },
+              {
+                table: {
+                  widths: ['auto', 'auto'],
+                  body: [
+                    [
+                      'Id:',
+                      {
+                        text: data.crop.id,
+                        style: ['boldText', 'link'],
+                        link: `${pathFrontend}/app/home/crops/view/one/${data.crop.id}`,
+                      },
+                    ],
+                    ['Nombre:', { text: data.crop.name, style: 'boldText' }],
+                    [
+                      'Unidades:',
+                      {
+                        text: FormatNumber(data.crop.units),
+                        style: 'boldText',
+                      },
+                    ],
+                    [
+                      'Ubicación:',
+                      { text: data.crop.location, style: 'boldText' },
+                    ],
+                    [
+                      'Fecha de creación:',
+                      { text: data.crop.date_of_creation, style: 'boldText' },
+                    ],
+                  ],
+                },
+                margin: [0, 0, 0, 10],
+                layout: 'noBorders',
+              },
+            ],
+          },
+        ],
+        columnGap: 20, // Espacio entre las columnas
       },
 
       // Detalles de empleados
-      { text: 'Detalles de los Empleados', style: 'subheader' },
+      { text: 'Detalles de la cosecha', style: 'subheader' },
       {
         table: {
           headerRows: 1,
-          widths: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+          widths: ['auto', 'auto', 'auto', 'auto', 'auto'],
           body: [
             [
-              'Nombre',
-              'Email',
-              'Teléfono',
-              'Total',
-              'Valor a pagar',
-              'Pendiente',
+              { text: 'Id Empleado', style: 'tableHeader' },
+              { text: 'Empleado', style: 'tableHeader' },
+              { text: 'Total cosechado', style: 'tableHeader' },
+              { text: 'Valor a pagar', style: 'tableHeader' },
+              { text: 'Pendiente de pago', style: 'tableHeader' },
             ],
             ...data.details.map((detail) => [
-              `${detail.employee.first_name} ${detail.employee.last_name}`,
-              detail.employee.email,
-              detail.employee.cell_phone_number,
-              FormatNumber(detail.total),
-              FormatMoneyValue(detail.value_pay),
-              detail.payment_is_pending ? 'Sí' : 'No',
+              {
+                text: detail.employee.id,
+                link: `${pathFrontend}/app/home/employees/view/one/${detail.employee.id}`,
+                style: ['tableCell', 'link'],
+              },
+              {
+                text: `${detail.employee.first_name} ${detail.employee.last_name}`,
+                style: 'tableCell',
+              },
+              {
+                text: FormatNumber(detail.total),
+                style: 'tableCell',
+                alignment: 'center',
+              },
+              {
+                text: FormatMoneyValue(detail.value_pay),
+                style: 'tableCell',
+                alignment: 'center',
+              },
+              {
+                text: detail.payment_is_pending ? 'Sí' : 'No',
+                alignment: 'center',
+                color: detail.payment_is_pending ? '#9e0059' : '#2a9d8f',
+                style: ['tableCell'],
+              },
             ]),
           ],
         },
         margin: [0, 0, 0, 10],
+        layout: {
+          fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f9fafb' : null), // Fondo gris para el encabezado
+        },
+      },
+
+      {
+        text: [
+          'Total cosechado: ',
+          {
+            text: `${FormatNumber(data.total) + ' Kg'}`,
+            style: 'boldText',
+          },
+          '\nTotal a pagar: ',
+          {
+            text: `${FormatMoneyValue(data.value_pay)}`,
+            style: 'boldText',
+          },
+        ],
       },
 
       // Procesos realizados
-
-      { text: 'Procesos Realizados', style: 'subheader' },
+      { text: 'Información sobre cosecha procesada', style: 'subheader' },
       {
         table: {
           headerRows: 1,
           widths: ['auto', 'auto', 'auto'],
           body: [
-            ['ID', 'Fecha', 'Total'],
-            ...data.processed.map((proc) => [proc.id, proc.date, FormatNumber(proc.total)]),
+            [
+              { text: 'Id', style: 'tableHeader' },
+              { text: 'Fecha', style: 'tableHeader' },
+              { text: 'Total', style: 'tableHeader' },
+            ],
+            ...data.processed.map((proc) => [
+              {
+                text: proc.id,
+                link: `${pathFrontend}/app/home/harvests/processed/view/${data.id}`,
+                style: ['tableCell', 'link'],
+              },
+              { text: formatDate(proc.date), style: 'tableCell' },
+              {
+                text: FormatNumber(proc.total),
+                style: 'tableCell',
+                alignment: 'center',
+              },
+            ]),
           ],
         },
         margin: [0, 0, 0, 10],
+        layout: {
+          fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f9fafb' : null), // Fondo gris para el encabezado
+        },
       },
 
-      // Resumen
+      // Resumen final
       {
-        text: `Total Procesado: ${FormatNumber(data.total_processed) + ' Kg'}`,
-        style: 'summary',
+        text: [
+          'Total de Stock procesado: ',
+          {
+            text: `${FormatNumber(data.total_processed) + ' Kg'}`,
+            style: 'boldText',
+          },
+        ],
       },
     ],
+
     styles: {
-      header: { fontSize: 22, bold: true, margin: [0, 0, 0, 10] },
-      subheader: { fontSize: 16, bold: true, margin: [0, 10, 0, 5] },
-      summary: { fontSize: 14, italics: true, margin: [0, 10, 0, 0] },
+      header: {
+        fontSize: 25,
+        bold: true,
+        margin: [0, 0, 0, 10],
+        color: '#606C38', // Color verde
+        alignment: 'center',
+      },
+      subtitle: {
+        fontSize: 12,
+        lineHeight: 1.2,
+      },
+      subheader: {
+        fontSize: 16,
+        bold: true,
+        margin: [0, 10, 0, 5],
+        color: '#606C38',
+        decoration: 'underline',
+        lineHeight: 1.2,
+      },
+      summary: {
+        fontSize: 12,
+        margin: [0, 10, 0, 0],
+        color: '#1f2937',
+      },
+      boldText: {
+        fontSize: 12,
+        bold: true,
+        color: '#283618',
+      },
+      mutedText: {
+        fontSize: 12,
+        color: '#6b7280',
+      },
+      tableHeader: {
+        alignment: 'center',
+        fontSize: 12,
+        bold: true,
+        color: '#1f2937',
+        fillColor: '#FEFAE0',
+      },
+      tableCell: {
+        fontSize: 12,
+        color: '#1f2937',
+      },
+      link: {
+        fontSize: 12,
+        decoration: 'underline',
+        color: '#415a77',
+      },
+    },
+    defaultStyle: {
+      font: 'Roboto',
     },
   };
 };

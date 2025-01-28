@@ -600,9 +600,7 @@ export class HarvestService {
 
   async exportHarvestToPDF(id: string) {
     const harvest = await this.findOne(id);
-    console.log(harvest);
     const docDefinition = getHarvestReport({ data: harvest });
-
     return this.printerService.createPdf(docDefinition);
   }
 }
