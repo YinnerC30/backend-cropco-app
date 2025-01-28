@@ -20,6 +20,7 @@ import { UpdateSuppliesShoppingDto } from './dto/update-supplies-shopping.dto';
 import { SuppliesShopping } from './entities';
 import { ShoppingService } from './shopping.service';
 import { Response } from 'express';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 export const pathsShoppingController: PathsController = {
   createShopping: {
@@ -74,6 +75,7 @@ const {
   exportShoppingToPDF,
 } = pathsShoppingController;
 
+@Auth()
 @Controller('shopping')
 export class ShoppingController {
   constructor(private readonly shoppingService: ShoppingService) {}
