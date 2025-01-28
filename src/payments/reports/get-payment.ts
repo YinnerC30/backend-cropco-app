@@ -5,6 +5,9 @@ import { headerSection } from 'src/common/reports/sections/header.section';
 import { FormatMoneyValue } from 'src/common/helpers/formatMoneyValue';
 import { FormatNumber } from 'src/common/helpers/formatNumber';
 import { Payment } from '../entities/payment.entity';
+import { formatDate } from 'src/common/helpers/formatDate';
+import { MyStyles } from 'src/common/reports/sections/styles-dictionary';
+import { text } from 'node:stream/consumers';
 
 interface ReportOptions {
   title?: string;
@@ -12,34 +15,54 @@ interface ReportOptions {
   data: Payment;
 }
 
+const pathFrontend = process.env['HOST_FRONTED'] ?? 'http://localhost:5173';
+
 export const getPaymentReport = (
   options: ReportOptions,
 ): TDocumentDefinitions => {
   const { title, subTitle, data } = options;
 
   return {
-    // pageOrientation: 'landscape',
-    // header: headerSection({
-    //   title: title ?? 'Reporte de Cosecha',
-    //   subTitle: subTitle ?? 'No hay subtitulo',
-    // }),
-    // footer: footerSection,
-    // pageMargins: [40, 110, 40, 60],
+    header: headerSection({
+      title: 'Reporte de pago',
+    }),
+    footer: footerSection,
+    pageMargins: [40, 110, 40, 60],
     content: [
-      { text: 'Reporte de pago', style: 'header' },
-      { text: `Fecha del trabajo: ${data.date}`, margin: [0, 0, 0, 10] },
+      {
+        text: [
+          'Id: ',
+          {
+            text: `${data.id}`,
+            link: `${pathFrontend}/app/home/payments/view/one/${data.id}`,
+            style: 'link',
+          },
+        ],
+        style: 'subtitle',
+      },
+
+      {
+        text: `Fecha del pago: ${formatDate(data.date)}`,
+        style: 'subtitle',
+      },
 
       // Información general
-      { text: 'Información General', style: 'subheader' },
+      { text: 'Resumen', style: 'subheader' },
       {
         table: {
           widths: ['auto', 'auto'],
           body: [
-            ['ID', data.id],
-            ['Total', FormatMoneyValue(data.total)],
-            ['Metodo de pago', data.method_of_payment],
+            [
+              'Total a pagar: ',
+              { text: FormatMoneyValue(data.total), style: 'boldText' },
+            ],
+            [
+              'Metodo de pago: ',
+              { text: data.method_of_payment, style: 'boldText' },
+            ],
           ],
         },
+        layout: 'noBorders',
         margin: [0, 0, 0, 10],
       },
 
@@ -49,55 +72,113 @@ export const getPaymentReport = (
         table: {
           widths: ['auto', 'auto'],
           body: [
-            ['Nombre(s)', data.employee.first_name],
-            ['Apellido(s)', data.employee.last_name],
-            ['Correo', data.employee.email],
-            ['Celular', data.employee.cell_phone_number],
+            [
+              'Nombre(s): ',
+              { text: data.employee.first_name, style: 'boldText' },
+            ],
+            [
+              'Apellido(s): ',
+              { text: data.employee.last_name, style: 'boldText' },
+            ],
+            ['Correo: ', { text: data.employee.email, style: 'boldText' }],
+            [
+              'Celular: ',
+              { text: data.employee.cell_phone_number, style: 'boldText' },
+            ],
           ],
         },
+        layout: 'noBorders',
         margin: [0, 0, 0, 10],
       },
 
       // Detalles de pagos - cosecha
-      { text: 'Detalles de los pagos - Cosecha', style: 'subheader' },
       {
-        table: {
-          headerRows: 1,
-          widths: ['auto', 'auto', 'auto', 'auto'],
-          body: [
-            ['ID', 'Fecha', 'Total', 'Valor a pagar'],
-            ...data.payments_harvest.map(({ harvests_detail }) => [
-              harvests_detail.harvest.id,
-              harvests_detail.harvest.date,
-              FormatNumber(harvests_detail.total) + ' Kg',
-              FormatMoneyValue(harvests_detail.value_pay),
-            ]),
-          ],
-        },
-        margin: [0, 0, 0, 10],
+        stack:
+          data.payments_harvest.length > 0
+            ? [
+                { text: 'Detalles de los pagos - Cosecha', style: 'subheader' },
+                {
+                  table: {
+                    headerRows: 1,
+                    widths: ['auto', 'auto', 'auto', 'auto'],
+                    body: [
+                      [
+                        { text: 'ID', style: 'tableHeader' },
+                        { text: 'Fecha', style: 'tableHeader' },
+                        { text: 'Total', style: 'tableHeader' },
+                        { text: 'Valor a pagar', style: 'tableHeader' },
+                      ],
+                      ...data.payments_harvest.map(({ harvests_detail }) => [
+                        {
+                          text: harvests_detail.harvest.id,
+                          link: `${pathFrontend}/app/home/harvests/view/one/${harvests_detail.harvest.id}`,
+                          style: 'link',
+                        },
+                        {
+                          text: formatDate(harvests_detail.harvest.date),
+                          style: 'tableCell',
+                        },
+                        {
+                          text: FormatNumber(harvests_detail.total) + ' Kg',
+                          style: 'tableCell',
+                          alignment: 'center',
+                        },
+                        {
+                          text: FormatMoneyValue(harvests_detail.value_pay),
+                          style: 'tableCell',
+                          alignment: 'center',
+                        },
+                      ]),
+                    ],
+                  },
+                  margin: [0, 0, 0, 10],
+                },
+              ]
+            : [{ text: '' }],
       },
+
       // Detalles de pagos - trabajo
-      { text: 'Detalles de los pagos - Trabajo', style: 'subheader' },
       {
-        table: {
-          headerRows: 1,
-          widths: ['auto', 'auto', 'auto'],
-          body: [
-            ['ID', 'Fecha', 'Valor a pagar'],
-            ...data.payments_work.map(({ works_detail }) => [
-              works_detail.work.id,
-              works_detail.work.date,
-              FormatMoneyValue(works_detail.value_pay),
-            ]),
-          ],
-        },
-        margin: [0, 0, 0, 10],
+        stack:
+          data.payments_work.length > 0
+            ? [
+                { text: 'Detalles de los pagos - Trabajo', style: 'subheader' },
+                {
+                  table: {
+                    headerRows: 1,
+                    widths: ['auto', 'auto', 'auto'],
+                    body: [
+                      [
+                        { text: 'ID', style: 'tableHeader' },
+                        { text: 'Fecha', style: 'tableHeader' },
+
+                        { text: 'Valor a pagar', style: 'tableHeader' },
+                      ],
+                      ...data.payments_work.map(({ works_detail }) => [
+                        {
+                          text: works_detail.work.id,
+                          link: `${pathFrontend}/app/home/works/view/one/${works_detail.work.id}`,
+                          style: 'link',
+                        },
+                        {
+                          text: formatDate(works_detail.work.date),
+                          style: 'tableCell',
+                        },
+
+                        {
+                          text: FormatMoneyValue(works_detail.value_pay),
+                          style: 'tableCell',
+                          alignment: 'center',
+                        },
+                      ]),
+                    ],
+                  },
+                  margin: [0, 0, 0, 10],
+                },
+              ]
+            : [{ text: '' }],
       },
     ],
-    styles: {
-      header: { fontSize: 22, bold: true, margin: [0, 0, 0, 10] },
-      subheader: { fontSize: 16, bold: true, margin: [0, 10, 0, 5] },
-      summary: { fontSize: 14, italics: true, margin: [0, 10, 0, 0] },
-    },
+    styles: MyStyles,
   };
 };
