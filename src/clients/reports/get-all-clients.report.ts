@@ -18,7 +18,6 @@ export const getClientsReport = (
     pageOrientation: 'landscape',
     header: headerSection({
       title: title ?? 'Reporte de Clientes',
-      subTitle: subTitle ?? 'Listado de los clientes',
     }),
     footer: footerSection,
     pageMargins: [40, 110, 40, 60],

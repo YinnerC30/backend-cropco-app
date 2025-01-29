@@ -28,6 +28,7 @@ import { PathsController } from 'src/common/interfaces/PathsController';
 import { Response } from 'express';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { QueryForYear } from 'src/common/dto/QueryForYear';
 
 export const pathsClientsController: PathsController = {
   createClient: {
@@ -70,6 +71,11 @@ export const pathsClientsController: PathsController = {
     description: 'exportar clientes a PDF',
     name: 'export_clients_pdf',
   },
+  findTopClientsInSales: {
+    path: 'find/top-clients-in-sales',
+    description: 'Obtener los 5 clientes con mayores ventas en el año',
+    name: 'find_top_clients_in_sales',
+  },
 };
 
 const {
@@ -81,6 +87,7 @@ const {
   removeClient,
   removeClients,
   exportClients,
+  findTopClientsInSales,
 } = pathsClientsController;
 
 @Auth()
@@ -89,10 +96,15 @@ const {
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
+  @Get(findTopClientsInSales.path)
+  async findTopClientsInSales(@Query() params: QueryForYear) {
+    return this.clientsService.findTopClientsInSales(params);
+  }
+
   @Get('export/test')
   async exportTest(@Res() response: Response) {
     const pdfDoc = await this.clientsService.exportTest();
-    
+
     response.setHeader('Content-Type', 'application/pdf');
     pdfDoc.info.Title = 'Mi primer PDF';
     pdfDoc.pipe(response);

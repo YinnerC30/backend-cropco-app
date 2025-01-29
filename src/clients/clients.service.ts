@@ -15,6 +15,7 @@ import { PrinterService } from 'src/printer/printer.service';
 import { getHelloWorldReport } from './reports/hello-world.report';
 import { getClientsReport } from './reports/get-all-clients.report';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { QueryForYear } from 'src/common/dto/QueryForYear';
 
 @Injectable()
 export class ClientsService {
@@ -142,5 +143,31 @@ export class ClientsService {
     for (const { id } of removeBulkClientsDto.recordsIds) {
       await this.remove(id);
     }
+  }
+
+  async findTopClientsInSales({
+    year = new Date().getFullYear(),
+  }: QueryForYear) {
+    const clients = await this.clientRepository
+      .createQueryBuilder('clients')
+      .leftJoin('clients.sales_detail', 'sales_detail')
+      .leftJoin('sales_detail.sale', 'sale')
+      .select([
+        'clients.id as id',
+        'clients.first_name as first_name',
+        'clients.last_name as last_name',
+        'CAST(SUM(sales_detail.total) AS INTEGER) AS total_sale',
+        'CAST(SUM(sales_detail.quantity) AS INTEGER) AS total_quantity',
+      ])
+      .where('EXTRACT(YEAR FROM sale.date) = :year', { year })
+      .groupBy('clients.id')
+      .having('SUM(sales_detail.total) > 0')
+      .orderBy('total_sale', 'DESC')
+      .limit(5)
+      .getRawMany();
+    return {
+      rowCount: clients.length,
+      rows: clients,
+    };
   }
 }
