@@ -20,6 +20,8 @@ import { PathsController } from 'src/common/interfaces/PathsController';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Response as ResponseExpress } from 'express';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { QueryTopEmployeesInHarvestDto } from './dto/query-top-employees-in-harvest';
+import { QueryTopEmployeesInWorkDto } from './dto/query-top-employees-in-work';
 
 export const pathsEmployeesController: PathsController = {
   createEmployee: {
@@ -119,12 +121,14 @@ export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
 
   @Get(findTopEmployeesInHarvests.path)
-  async findTopEmployeesInHarvests() {
-    return this.employeesService.findTopEmployeesInHarvests();
+  async findTopEmployeesInHarvests(
+    @Query() params: QueryTopEmployeesInHarvestDto,
+  ) {
+    return this.employeesService.findTopEmployeesInHarvests(params);
   }
   @Get(findTopEmployeesInWorks.path)
-  async findTopEmployeesInWorks() {
-    return this.employeesService.findTopEmployeesInWorks();
+  async findTopEmployeesInWorks(@Query() params: QueryTopEmployeesInWorkDto) {
+    return this.employeesService.findTopEmployeesInWorks(params);
   }
 
   @Get(findCertification.path)
