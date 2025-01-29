@@ -22,10 +22,17 @@ interface HeaderOptions {
   subTitle?: string;
   showLogo?: boolean;
   showDate?: boolean;
+  icon?: string;
 }
 
 export const headerSection = (options: HeaderOptions): Content => {
-  const { title, subTitle, showLogo = true, showDate = true } = options;
+  const {
+    title,
+    subTitle,
+    showLogo = true,
+    showDate = true,
+    icon = '',
+  } = options;
 
   // const headerLogo: Content = showLogo ? logo : null;
   const headerDate: Content = showDate ? currentDate : null;
@@ -41,26 +48,34 @@ export const headerSection = (options: HeaderOptions): Content => {
       }
     : null;
 
+  const headerIcon: Content = !icon
+    ? null
+    : {
+        svg: icon,
+        margin: [0, 20, 0, 0],
+        width: 40,
+        height: 40,
+      };
+
   const headerTitle: Content = title
     ? {
-        stack: [
+        columns: [
           {
-            width: 100,
+            width: 'auto',
             text: title,
-            alignment: 'center',
-            margin: [0, 15, 0, 0],
+
+            margin: [40, 20, 0, 0],
             style: {
               fontSize: 25,
               bold: true,
-              margin: [0, 0, 0, 5],
               color: '#606C38', // Color verde
-              alignment: 'center',
             },
           },
-          headerSubTitle,
+          headerIcon,
         ],
+        columnGap: 10,
       }
     : null;
 
-  return [headerTitle, headerDate, lineSeparator];
+  return [headerTitle, headerSubTitle, headerDate, lineSeparator];
 };
