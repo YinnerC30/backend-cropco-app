@@ -272,4 +272,57 @@ export class EmployeesService {
       this.handleDBExceptions(error);
     }
   }
+
+  // Graficos
+
+  async findTopEmployeesInHarvests() {
+    const year = 2025;
+    const employees = await this.employeeRepository
+      .createQueryBuilder('employees')
+      .leftJoin('employees.harvests_detail', 'harvests_detail')
+      .leftJoin('harvests_detail.harvest', 'harvest')
+      .select([
+        'employees.id',
+        'employees.first_name',
+        'employees.last_name',
+        'SUM(harvests_detail.total) AS total_harvests',
+      ])
+      .where('EXTRACT(YEAR FROM harvest.date) = :year', { year })
+      .groupBy('employees.id')
+      .having('SUM(harvests_detail.total) > 0')
+      .orderBy('total_harvests', 'DESC')
+      .limit(10)
+      .getRawMany();
+
+    return {
+      rowCount: employees.length,
+      rows: employees,
+    };
+  }
+  async findTopEmployeesInWorks() {
+    const year = 2025;
+    const employees = await this.employeeRepository
+      .createQueryBuilder('employees')
+      .leftJoin('employees.works_detail', 'works_detail')
+      .leftJoin('works_detail.work', 'work')
+      .select([
+        'employees.id',
+        'employees.first_name',
+        'employees.last_name',
+        'SUM(works_detail.value_pay) AS value_pay_works',
+        'COUNT(works_detail.id) AS total_works', // Conteo de registros en works_detail
+      ])
+      .where('EXTRACT(YEAR FROM work.date) = :year', { year })
+      .groupBy('employees.id')
+      .having('SUM(works_detail.value_pay) > 0')
+      .orderBy('total_works', 'DESC') // Primero ordena por total de trabajos
+      .addOrderBy('value_pay_works', 'DESC') // Luego por valor de pago
+      .limit(10)
+      .getRawMany();
+
+    return {
+      rowCount: employees.length,
+      rows: employees,
+    };
+  }
 }

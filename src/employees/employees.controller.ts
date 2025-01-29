@@ -82,6 +82,17 @@ export const pathsEmployeesController: PathsController = {
     description: 'obtener certificación de empleo',
     name: 'find_certification_employee',
   },
+  findTopEmployeesInHarvests: {
+    path: 'find/top-employees-in-harvests',
+    description: 'Obtener los 10 empleados con mayor cosechas',
+    name: 'find_top_employees_in_harvests',
+  },
+  findTopEmployeesInWorks: {
+    path: 'find/top-employees-in-works',
+    description:
+      'Obtener los 10 empleados con mayor participación en el trabajo',
+    name: 'find_top_employees_in_works',
+  },
 };
 
 const {
@@ -97,13 +108,24 @@ const {
   findCertification,
   findAllEmployeesWithHarvests,
   findAllEmployeesWithWorks,
+  findTopEmployeesInHarvests,
+  findTopEmployeesInWorks,
 } = pathsEmployeesController;
 
-@Auth()
+// @Auth()
 @ApiTags('Employees')
 @Controller('employees')
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
+
+  @Get(findTopEmployeesInHarvests.path)
+  async findTopEmployeesInHarvests() {
+    return this.employeesService.findTopEmployeesInHarvests();
+  }
+  @Get(findTopEmployeesInWorks.path)
+  async findTopEmployeesInWorks() {
+    return this.employeesService.findTopEmployeesInWorks();
+  }
 
   @Get(findCertification.path)
   async createCertification(
