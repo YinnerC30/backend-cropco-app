@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
@@ -12,6 +13,7 @@ import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { QueryForYear } from 'src/common/dto/QueryForYear';
 
 @Injectable()
 export class CropsService {
@@ -210,5 +212,30 @@ export class CropsService {
     for (const { id } of removeBulkCropsDto.recordsIds) {
       await this.remove(id);
     }
+  }
+
+  async findCountHarvestsAndTotalStock({
+    year = new Date().getFullYear(),
+  }: QueryForYear) {
+    const crops = await this.cropRepository
+      .createQueryBuilder('crops')
+      .leftJoin('crops.harvests', 'harvests')
+      .select([
+        'crops.id as id',
+        'crops.name as name',
+        'CAST(COUNT(harvests.id) AS INTEGER) AS total_harvests',
+        'CAST(SUM(harvests.total) AS INTEGER) AS total_stock',
+      ])
+      .where('EXTRACT(YEAR FROM harvests.date) = :year', { year })
+      .groupBy('crops.id')
+      .orderBy('total_harvests', 'DESC')
+      .addOrderBy('total_stock', 'DESC')
+      .limit(5)
+      .getRawMany();
+
+    return {
+      rowCount: crops.length,
+      rows: crops,
+    };
   }
 }

@@ -114,7 +114,7 @@ const {
   findTopEmployeesInWorks,
 } = pathsEmployeesController;
 
-// @Auth()
+@Auth()
 @ApiTags('Employees')
 @Controller('employees')
 export class EmployeesController {

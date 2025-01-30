@@ -24,6 +24,7 @@ import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { QueryForYear } from 'src/common/dto/QueryForYear';
 
 export const pathsCropsController: PathsController = {
   createCrop: {
@@ -76,6 +77,11 @@ export const pathsCropsController: PathsController = {
     description: 'eliminar varios cultivos',
     name: 'remove_bulk_crops',
   },
+  findCountHarvestsAndTotalStock: {
+    path: 'find/count-harvest-and-total-stock',
+    description: 'Cantidad de cosechas realizadas al cultivo y su stock total',
+    name: 'find_count_harvests_and_total_stock',
+  },
 };
 
 const {
@@ -89,6 +95,7 @@ const {
   updateCrop,
   removeCrop,
   removeCrops,
+  findCountHarvestsAndTotalStock,
 } = pathsCropsController;
 
 @Auth()
@@ -96,6 +103,11 @@ const {
 @Controller('crops')
 export class CropsController {
   constructor(private readonly cropsService: CropsService) {}
+
+  @Get(findCountHarvestsAndTotalStock.path)
+  async findCountHarvestsAndTotalStock(@Query() params: QueryForYear) {
+    return this.cropsService.findCountHarvestsAndTotalStock(params);
+  }
 
   // Crear cultivo
 

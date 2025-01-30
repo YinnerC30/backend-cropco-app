@@ -119,7 +119,7 @@ const {
   exportHarvestToPDF,
 } = pathsHarvestsController;
 
-// @Auth()
+@Auth()
 @ApiTags('Harvests')
 @Controller('harvests')
 export class HarvestController {

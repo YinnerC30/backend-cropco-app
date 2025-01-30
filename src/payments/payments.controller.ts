@@ -68,7 +68,7 @@ const {
   exportPaymentToPDF
 } = pathsPaymentsController;
 
-// @Auth()
+@Auth()
 @ApiTags('Payments')
 @Controller('payments')
 export class PaymentsController {
