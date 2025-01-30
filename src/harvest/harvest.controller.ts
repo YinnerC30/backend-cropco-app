@@ -18,6 +18,7 @@ import { PathsController } from 'src/common/interfaces/PathsController';
 import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
 import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
+import { QueryTotalHarvestsInYearDto } from './dto/query-total-harvests-year';
 import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { Harvest } from './entities/harvest.entity';
@@ -99,6 +100,11 @@ export const pathsHarvestsController: PathsController = {
     description: 'exportar cosecha a PDF',
     name: 'export_harvest_to_pdf',
   },
+  findTotalHarvestInYearAndPreviusYear: {
+    path: 'find/total-harvest-in-year',
+    description: 'Obtener el total de las cosechas por mes durante el año',
+    name: 'find_total_harvest_in_year',
+  },
 };
 
 const {
@@ -117,6 +123,7 @@ const {
   removeHarvestProcessed,
   removeHarvests,
   exportHarvestToPDF,
+  findTotalHarvestInYearAndPreviusYear,
 } = pathsHarvestsController;
 
 @Auth()
@@ -124,6 +131,11 @@ const {
 @Controller('harvests')
 export class HarvestController {
   constructor(private readonly harvestService: HarvestService) {}
+
+  @Get(findTotalHarvestInYearAndPreviusYear.path)
+  async findTotalHarvestInYearMe(@Query() params: QueryTotalHarvestsInYearDto) {
+    return this.harvestService.findTotalHarvestInYear(params);
+  }
 
   @Get(exportHarvestToPDF.path)
   async exportHarvestToPDF(

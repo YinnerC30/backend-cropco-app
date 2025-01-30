@@ -20,14 +20,31 @@ import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 import { validateTotalInArray } from 'src/common/helpers/validTotalInArray';
+import { PrinterService } from 'src/printer/printer.service';
 import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
 import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
+import { QueryTotalHarvestsInYearDto } from './dto/query-total-harvests-year';
 import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
 import { HarvestProcessed } from './entities/harvest-processed.entity';
 import { HarvestStock } from './entities/harvest-stock.entity';
 import { InsufficientHarvestStockException } from './exceptions/insufficient-harvest-stock';
-import { PrinterService } from 'src/printer/printer.service';
 import { getHarvestReport } from './reports/get-harvest';
+import { calculateGrowthHarvest } from './helpers/calculateGrowthHarvest';
+
+const monthNames = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+];
 
 @Injectable()
 export class HarvestService {
@@ -602,5 +619,212 @@ export class HarvestService {
     const harvest = await this.findOne(id);
     const docDefinition = getHarvestReport({ data: harvest });
     return this.printerService.createPdf(docDefinition);
+  }
+
+  // async findTotalHarvestInYear({ year = 2025 }: QueryForYear) {
+  //   const data = await this.harvestRepository
+  //     .createQueryBuilder('harvests')
+  //     .select([
+  //       'EXTRACT(MONTH FROM harvests.date) as month',
+  //       'SUM(harvests.total) as total',
+  //       'SUM(harvests.value_pay) as value_pay'
+  //     ])
+  //     .where('EXTRACT(YEAR FROM harvests.date) = :year', { year })
+  //     .groupBy('EXTRACT(MONTH FROM harvests.date)')
+  //     .orderBy('month', 'ASC')
+  //     .getRawMany();
+
+  //   const monthNames = [
+  //     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  //     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  //   ];
+
+  //   const formattedData = data.map(item => ({
+  //     month: monthNames[parseInt(item.month) - 1],
+  //     total: parseInt(item.total),
+  //     value_pay: parseInt(item.value_pay)
+  //   }));
+
+  //   return {
+  //     rowCount: formattedData.length,
+  //     rows: formattedData
+  //   };
+  // }
+
+  // async findTotalHarvestInYear({
+  //   year = 2025,
+  //   crop = '',
+  // }: QueryTotalHarvestsInYearDto) {
+  //   const previousYear = year - 1;
+
+  //   const queryBuilder1 = this.harvestRepository
+  //     .createQueryBuilder('harvests')
+  //     .leftJoin('harvests.crop', 'crop')
+  //     .select([
+  //       'EXTRACT(MONTH FROM harvests.date) as month',
+  //       'SUM(harvests.total) as total',
+  //       'SUM(harvests.value_pay) as value_pay',
+  //     ])
+  //     .where('EXTRACT(YEAR FROM harvests.date) = :year', { year })
+  //     .groupBy('EXTRACT(MONTH FROM harvests.date)')
+  //     .orderBy('month', 'ASC');
+
+  //   if (crop.length > 0) {
+  //     queryBuilder1.andWhere('crop.id = :id', { id: crop });
+  //   }
+
+  //   const data1 = await queryBuilder1.getRawMany();
+
+  //   // Crear un objeto para mapear fácilmente los datos existentes
+  //   const dataMap1 = new Map(
+  //     data1.map((item) => [
+  //       parseInt(item.month),
+  //       {
+  //         total: parseInt(item.total),
+  //         value_pay: parseInt(item.value_pay),
+  //       },
+  //     ]),
+  //   );
+
+  //   // Generar el array completo con todos los meses
+  //   const formattedData1 = monthNames.map((monthName, index) => {
+  //     const monthNumber = index + 1;
+  //     const monthData = dataMap1.get(monthNumber) || { total: 0, value_pay: 0 };
+
+  //     return {
+  //       month: monthName,
+  //       monthNumber: monthNumber,
+  //       total: monthData.total,
+  //       value_pay: monthData.value_pay,
+  //     };
+  //   });
+
+  //   const queryBuilder2 = this.harvestRepository
+  //     .createQueryBuilder('harvests')
+  //     .leftJoin('harvests.crop', 'crop')
+  //     .select([
+  //       'EXTRACT(MONTH FROM harvests.date) as month',
+  //       'SUM(harvests.total) as total',
+  //       'SUM(harvests.value_pay) as value_pay',
+  //     ])
+  //     .where('EXTRACT(YEAR FROM harvests.date) = :year', { year: previousYear })
+  //     .groupBy('EXTRACT(MONTH FROM harvests.date)')
+  //     .orderBy('month', 'ASC');
+
+  //   if (crop.length > 0) {
+  //     queryBuilder2.andWhere('crop.id = :id', { id: crop });
+  //   }
+
+  //   const data2 = await queryBuilder2.getRawMany();
+
+  //   // Array con todos los meses del año
+
+  //   // Crear un objeto para mapear fácilmente los datos existentes
+  //   const dataMap2 = new Map(
+  //     data2.map((item) => [
+  //       parseInt(item.month),
+  //       {
+  //         total: parseInt(item.total),
+  //         value_pay: parseInt(item.value_pay),
+  //       },
+  //     ]),
+  //   );
+
+  //   // Generar el array completo con todos los meses
+  //   const formattedData2 = monthNames.map((monthName, index) => {
+  //     const monthNumber = index + 1;
+  //     const monthData = dataMap2.get(monthNumber) || { total: 0, value_pay: 0 };
+
+  //     return {
+  //       month: monthName,
+  //       monthNumber: monthNumber,
+  //       total: monthData.total,
+  //       value_pay: monthData.value_pay,
+  //     };
+  //   });
+
+  //   const dataYears = [
+  //     { year: year, data: formattedData1 },
+  //     { year: previousYear, data: formattedData2 },
+  //   ];
+
+  //   const result = calculateGrowthHarvest({
+  //     years: dataYears,
+  //   });
+
+  //   return {
+  //     growth: result,
+  //     years: dataYears,
+  //   };
+  // }
+
+  async findTotalHarvestInYear({
+    year = 2025,
+    crop = '',
+  }: QueryTotalHarvestsInYearDto) {
+    const previousYear = year - 1;
+
+    const getHarvestData = async (year: number, cropId: string) => {
+      const queryBuilder = this.harvestRepository
+        .createQueryBuilder('harvest')
+        .leftJoin('harvest.crop', 'crop')
+        .select([
+          'EXTRACT(MONTH FROM harvest.date) as month',
+          'SUM(harvest.total) as total',
+          'SUM(harvest.value_pay) as value_pay',
+        ])
+        .where('EXTRACT(YEAR FROM harvest.date) = :year', { year })
+        .groupBy('EXTRACT(MONTH FROM harvest.date)')
+        .orderBy('month', 'ASC');
+
+      if (cropId) {
+        queryBuilder.andWhere('crop.id = :cropId', { cropId });
+      }
+
+      const rawData = await queryBuilder.getRawMany();
+
+      const dataMap = new Map(
+        rawData.map((item) => [
+          parseInt(item.month),
+          {
+            total: parseInt(item.total),
+            value_pay: parseInt(item.value_pay),
+          },
+        ]),
+      );
+
+      return monthNames.map((monthName, index) => {
+        const monthNumber = index + 1;
+        const monthData = dataMap.get(monthNumber) || {
+          total: 0,
+          value_pay: 0,
+        };
+
+        return {
+          month: monthName,
+          monthNumber,
+          total: monthData.total,
+          value_pay: monthData.value_pay,
+        };
+      });
+    };
+
+    const currentYearData = await getHarvestData(year, crop);
+    const previousYearData = await getHarvestData(previousYear, crop);
+
+    const harvestDataByYear = [
+      { year, data: currentYearData },
+      { year: previousYear, data: previousYearData },
+    ];
+
+    const growthResult = calculateGrowthHarvest({
+      last_year: { year: year, data: currentYearData },
+      previous_year: { year: previousYear, data: previousYearData },
+    });
+
+    return {
+      growth: growthResult,
+      years: harvestDataByYear,
+    };
   }
 }
