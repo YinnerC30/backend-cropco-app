@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsUUID, Min } from 'class-validator';
 
-export class QueryTotalWorksInYearDto {
+export class QueryTotalSalesInYearDto {
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
@@ -14,5 +14,5 @@ export class QueryTotalWorksInYearDto {
   
   @IsOptional()
   @IsUUID(4)
-  employee: string;
+  client: string;
 }

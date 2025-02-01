@@ -249,8 +249,8 @@ export class WorkService {
         .leftJoin('work.details', 'details')
         .leftJoin('details.employee', 'employee')
         .select([
-          'EXTRACT(MONTH FROM work.date) as month',
-          'SUM(work.total) as total',
+          'CAST(EXTRACT(MONTH FROM work.date) AS INTEGER) as month',
+          'CAST(SUM(DISTINCT work.total) AS INTEGER) as total',
           'COUNT(work) as quantity_works',
         ])
         .where('EXTRACT(YEAR FROM work.date) = :year', { year })
@@ -266,27 +266,33 @@ export class WorkService {
 
       const rawData = await queryBuilder.getRawMany();
 
-      const dataMap = new Map(
-        rawData.map((item) => [
-          parseInt(item.month),
-          {
-            quantity_works: parseInt(item.quantity_works),
-          },
-        ]),
+      const formatData = monthNamesES.map(
+        (monthName: string, index: number) => {
+          const monthNumber = index + 1;
+          const record = rawData.find((item) => {
+            return item.month === monthNumber;
+          });
+
+          if (!record) {
+            return {
+              month_name: monthName,
+              month_number: monthNumber,
+              total: 0,
+              quantity_works: 0,
+            };
+          }
+
+          delete record.month;
+
+          return {
+            ...record,
+            month_name: monthName,
+            month_number: monthNumber,
+          };
+        },
       );
 
-      return monthNamesES.map((monthName, index) => {
-        const monthNumber = index + 1;
-        const monthData = dataMap.get(monthNumber) || {
-          quantity_works: 0,
-        };
-
-        return {
-          month: monthName,
-          monthNumber,
-          quantity_works: monthData.quantity_works,
-        };
-      });
+      return formatData;
     };
 
     const currentYearData = await getWorkData(year, crop, employee);

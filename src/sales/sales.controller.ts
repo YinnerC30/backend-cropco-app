@@ -27,6 +27,7 @@ import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Sale } from './entities/sale.entity';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Response } from 'express';
+import { QueryTotalSalesInYearDto } from './dto/query-total-sales-year';
 
 export const pathsSalesController: PathsController = {
   createSale: {
@@ -89,7 +90,7 @@ export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
   @Get(findTotalSalesInYearAndPreviusYear.path)
-  async findTotalHarvestInYearMe(@Query() params: any) {
+  async findTotalHarvestInYearMe(@Query() params: QueryTotalSalesInYearDto) {
     return this.salesService.findTotalSalesInYear(params);
   }
 
