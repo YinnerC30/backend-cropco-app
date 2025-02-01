@@ -21,6 +21,7 @@ import { SaleDetails } from './entities/sale-details.entity';
 import { Sale } from './entities/sale.entity';
 import { getSaleReport } from './reports/get-sale';
 import { PrinterService } from 'src/printer/printer.service';
+import { monthNamesES } from 'src/common/utils/monthNamesEs';
 
 @Injectable()
 export class SalesService {
@@ -345,5 +346,81 @@ export class SalesService {
     const docDefinition = getSaleReport({ data: sale });
 
     return this.printerService.createPdf(docDefinition);
+  }
+
+  async findTotalSalesInYear({ year = 2025, crop = '', client = '' }: any) {
+    const previousYear = year - 1;
+
+    const getHarvestData = async (
+      year: number,
+      cropId: string,
+      clientId: string,
+    ) => {
+      const queryBuilder = this.saleRepository
+        .createQueryBuilder('sale')
+        .leftJoin('sale.details', 'details')
+        .leftJoin('details.crop', 'crop')
+        .leftJoin('details.client', 'client')
+        .select([
+          'EXTRACT(MONTH FROM sale.date) as month',
+          'SUM(sale.total) as total',
+          'SUM(sale.quantity) as quantity',
+        ])
+        .where('EXTRACT(YEAR FROM sale.date) = :year', { year })
+        .groupBy('EXTRACT(MONTH FROM sale.date)')
+        .orderBy('month', 'ASC');
+
+      if (cropId) {
+        queryBuilder.andWhere('crop.id = :cropId', { cropId });
+      }
+      if (clientId) {
+        queryBuilder.andWhere('client.id = :clientId', { clientId });
+      }
+
+      const rawData = await queryBuilder.getRawMany();
+
+      const dataMap = new Map(
+        rawData.map((item) => [
+          parseInt(item.month),
+          {
+            total: parseInt(item.total),
+            quantity: parseInt(item.quantity),
+          },
+        ]),
+      );
+
+      return monthNamesES.map((monthName, index) => {
+        const monthNumber = index + 1;
+        const monthData = dataMap.get(monthNumber) || {
+          total: 0,
+          quantity: 0,
+        };
+
+        return {
+          month: monthName,
+          monthNumber,
+          total: monthData.total,
+          quantity: monthData.quantity,
+        };
+      });
+    };
+
+    const currentYearData = await getHarvestData(year, crop, client);
+    const previousYearData = await getHarvestData(previousYear, crop, client);
+
+    const saleDataByYear = [
+      { year, data: currentYearData },
+      { year: previousYear, data: previousYearData },
+    ];
+
+    // const growthResult = calculateGrowthHarvest({
+    //   last_year: { year: year, data: currentYearData },
+    //   previous_year: { year: previousYear, data: previousYearData },
+    // });
+
+    return {
+      // growth: growthResult,
+      years: saleDataByYear,
+    };
   }
 }

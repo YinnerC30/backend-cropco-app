@@ -1,8 +1,5 @@
-import { BadRequestException } from '@nestjs/common';
-
 interface MonthData {
   month: string;
-  monthNumber: number;
   total: number;
   value_pay: number;
 }
@@ -22,7 +19,7 @@ export interface DataReturn {
   total_current: number;
   total_previous: number;
   diference: number;
-  is_increment: boolean;
+  status: 'increment' | 'decrement' | 'stable' | 'no-valid';
 }
 
 export function calculateGrowthHarvest({
@@ -45,13 +42,27 @@ export function calculateGrowthHarvest({
     0,
   );
 
-  if (totalPreviousYear === 0) {
-    throw new BadRequestException(
-      'No se puede calcular el crecimiento porque el total del año anterior es 0.',
-    );
+  if (totalLastYear === 0 && totalPreviousYear === 0) {
+    return {
+      growth_value: 0,
+      diference: 0,
+      status: 'no-valid',
+      total_current: 0,
+      total_previous: 0,
+    };
   }
 
   const diference = totalLastYear - totalPreviousYear;
+
+  if (totalPreviousYear === 0) {
+    return {
+      growth_value: 100,
+      diference: diference,
+      status: 'no-valid',
+      total_current: totalLastYear,
+      total_previous: totalPreviousYear,
+    };
+  }
 
   // Aplicamos la fórmula
   const growthValue = (diference / totalPreviousYear) * 100;
@@ -59,7 +70,8 @@ export function calculateGrowthHarvest({
   return {
     growth_value: growthValue,
     diference: diference,
-    is_increment: diference > 0,
+    status:
+      diference > 0 ? 'increment' : diference < 0 ? 'decrement' : 'stable',
     total_current: totalLastYear,
     total_previous: totalPreviousYear,
   };

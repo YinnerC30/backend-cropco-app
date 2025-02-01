@@ -30,21 +30,7 @@ import { HarvestStock } from './entities/harvest-stock.entity';
 import { InsufficientHarvestStockException } from './exceptions/insufficient-harvest-stock';
 import { getHarvestReport } from './reports/get-harvest';
 import { calculateGrowthHarvest } from './helpers/calculateGrowthHarvest';
-
-const monthNames = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
+import { monthNamesES } from 'src/common/utils/monthNamesEs';
 
 @Injectable()
 export class HarvestService {
@@ -621,59 +607,78 @@ export class HarvestService {
     return this.printerService.createPdf(docDefinition);
   }
 
-  async findTotalHarvestInYear({
-    year = 2025,
-    crop = '',
-  }: QueryTotalHarvestsInYearDto) {
-    const previousYear = year - 1;
+  async getHarvestDataForYear(
+    year: number,
+    cropId: string,
+    employeeId: string,
+  ) {
+    const queryBuilder = this.harvestRepository
+      .createQueryBuilder('harvest')
+      .leftJoin('harvest.crop', 'crop')
+      .leftJoin('harvest.details', 'details')
+      .leftJoin('details.employee', 'employee')
+      .select([
+        'CAST(EXTRACT(MONTH FROM harvest.date) AS INTEGER) as month',
+        'CAST(SUM(DISTINCT harvest.total) AS INTEGER) as total',
+        'CAST(SUM(DISTINCT harvest.value_pay) AS INTEGER) as value_pay',
+      ])
+      .where('EXTRACT(YEAR FROM harvest.date) = :year', { year })
+      .groupBy('EXTRACT(MONTH FROM harvest.date)')
+      .orderBy('month', 'ASC');
 
-    const getHarvestData = async (year: number, cropId: string) => {
-      const queryBuilder = this.harvestRepository
-        .createQueryBuilder('harvest')
-        .leftJoin('harvest.crop', 'crop')
-        .select([
-          'EXTRACT(MONTH FROM harvest.date) as month',
-          'SUM(harvest.total) as total',
-          'SUM(harvest.value_pay) as value_pay',
-        ])
-        .where('EXTRACT(YEAR FROM harvest.date) = :year', { year })
-        .groupBy('EXTRACT(MONTH FROM harvest.date)')
-        .orderBy('month', 'ASC');
+    if (cropId) {
+      queryBuilder.andWhere('crop.id = :cropId', { cropId });
+    }
+    if (employeeId) {
+      queryBuilder.andWhere('employee.id = :employeeId', { employeeId });
+    }
 
-      if (cropId) {
-        queryBuilder.andWhere('crop.id = :cropId', { cropId });
-      }
+    const rawData = await queryBuilder.getRawMany();
 
-      const rawData = await queryBuilder.getRawMany();
+    const formatData = monthNamesES.map((monthName: string, index: number) => {
+      const monthNumber = index + 1;
+      const record = rawData.find((item) => {
+        return item.month === monthNumber;
+      });
 
-      const dataMap = new Map(
-        rawData.map((item) => [
-          parseInt(item.month),
-          {
-            total: parseInt(item.total),
-            value_pay: parseInt(item.value_pay),
-          },
-        ]),
-      );
-
-      return monthNames.map((monthName, index) => {
-        const monthNumber = index + 1;
-        const monthData = dataMap.get(monthNumber) || {
+      if (!record) {
+        return {
+          month_name: monthName,
+          month_number: monthNumber,
           total: 0,
           value_pay: 0,
         };
+      }
 
-        return {
-          month: monthName,
-          monthNumber,
-          total: monthData.total,
-          value_pay: monthData.value_pay,
-        };
-      });
-    };
+      delete record.month;
 
-    const currentYearData = await getHarvestData(year, crop);
-    const previousYearData = await getHarvestData(previousYear, crop);
+      return {
+        ...record,
+        month_name: monthName,
+        month_number: monthNumber,
+      };
+    });
+
+    return formatData;
+  }
+
+  async findTotalHarvestInYear({
+    year = 2025,
+    crop = '',
+    employee = '',
+  }: QueryTotalHarvestsInYearDto) {
+    const previousYear = year - 1;
+
+    const currentYearData = await this.getHarvestDataForYear(
+      year,
+      crop,
+      employee,
+    );
+    const previousYearData = await this.getHarvestDataForYear(
+      previousYear,
+      crop,
+      employee,
+    );
 
     const harvestDataByYear = [
       { year, data: currentYearData },

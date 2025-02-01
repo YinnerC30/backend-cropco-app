@@ -11,4 +11,8 @@ export class QueryTotalWorksInYearDto {
   @IsOptional()
   @IsUUID(4)
   crop: string;
+  
+  @IsOptional()
+  @IsUUID(4)
+  employee: string;
 }

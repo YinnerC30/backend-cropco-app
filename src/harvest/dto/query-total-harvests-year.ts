@@ -5,10 +5,14 @@ export class QueryTotalHarvestsInYearDto {
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
-  @Min(2025)
+  @Min(2024)
   year: number;
 
   @IsOptional()
   @IsUUID(4)
   crop: string;
+
+  @IsOptional()
+  @IsUUID(4)
+  employee: string;
 }

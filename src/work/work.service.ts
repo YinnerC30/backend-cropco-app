@@ -5,37 +5,22 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryParams } from 'src/common/dto/QueryParams';
-import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { DataSource, Repository } from 'typeorm';
-import { CreateWorkDto } from './dto/create-work.dto';
-import type { UpdateWorkDto } from './dto/update-work.dto';
-import { Work } from './entities/work.entity';
-import { WorkDetailsDto } from './dto/work-details.dto';
-import { WorkDetails } from './entities/work-details.entity';
-import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
-import { QueryParamsWork } from './dto/query-params-work.dto';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
+import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { PrinterService } from 'src/printer/printer.service';
-import { getWorkReport } from './reports/get-work';
+import { DataSource, Repository } from 'typeorm';
+import { CreateWorkDto } from './dto/create-work.dto';
+import { QueryParamsWork } from './dto/query-params-work.dto';
 import { QueryTotalWorksInYearDto } from './dto/query-total-works-year';
-
-const monthNames = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
+import type { UpdateWorkDto } from './dto/update-work.dto';
+import { WorkDetailsDto } from './dto/work-details.dto';
+import { WorkDetails } from './entities/work-details.entity';
+import { Work } from './entities/work.entity';
+import { getWorkReport } from './reports/get-work';
 
 @Injectable()
 export class WorkService {
@@ -249,13 +234,20 @@ export class WorkService {
   async findTotalWorkInYear({
     year = 2025,
     crop = '',
+    employee = '',
   }: QueryTotalWorksInYearDto) {
     const previousYear = year - 1;
 
-    const getWorkData = async (year: number, cropId: string) => {
+    const getWorkData = async (
+      year: number,
+      cropId: string,
+      employeeId: string,
+    ) => {
       const queryBuilder = this.workRepository
         .createQueryBuilder('work')
         .leftJoin('work.crop', 'crop')
+        .leftJoin('work.details', 'details')
+        .leftJoin('details.employee', 'employee')
         .select([
           'EXTRACT(MONTH FROM work.date) as month',
           'SUM(work.total) as total',
@@ -267,6 +259,9 @@ export class WorkService {
 
       if (cropId) {
         queryBuilder.andWhere('crop.id = :cropId', { cropId });
+      }
+      if (employeeId) {
+        queryBuilder.andWhere('employee.id = :employeeId', { employeeId });
       }
 
       const rawData = await queryBuilder.getRawMany();
@@ -280,7 +275,7 @@ export class WorkService {
         ]),
       );
 
-      return monthNames.map((monthName, index) => {
+      return monthNamesES.map((monthName, index) => {
         const monthNumber = index + 1;
         const monthData = dataMap.get(monthNumber) || {
           quantity_works: 0,
@@ -294,8 +289,8 @@ export class WorkService {
       });
     };
 
-    const currentYearData = await getWorkData(year, crop);
-    const previousYearData = await getWorkData(previousYear, crop);
+    const currentYearData = await getWorkData(year, crop, employee);
+    const previousYearData = await getWorkData(previousYear, crop, employee);
 
     const workDataByYear = [
       { year, data: currentYearData },
