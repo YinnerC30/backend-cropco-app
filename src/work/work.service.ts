@@ -20,6 +20,22 @@ import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PrinterService } from 'src/printer/printer.service';
 import { getWorkReport } from './reports/get-work';
+import { QueryTotalWorksInYearDto } from './dto/query-total-works-year';
+
+const monthNames = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+];
 
 @Injectable()
 export class WorkService {
@@ -226,9 +242,68 @@ export class WorkService {
 
   async exportWorkToPDF(id: string) {
     const work = await this.findOne(id);
-
     const docDefinition = getWorkReport({ data: work });
-
     return this.printerService.createPdf(docDefinition);
+  }
+
+  async findTotalWorkInYear({
+    year = 2025,
+    crop = '',
+  }: QueryTotalWorksInYearDto) {
+    const previousYear = year - 1;
+
+    const getWorkData = async (year: number, cropId: string) => {
+      const queryBuilder = this.workRepository
+        .createQueryBuilder('work')
+        .leftJoin('work.crop', 'crop')
+        .select([
+          'EXTRACT(MONTH FROM work.date) as month',
+          'SUM(work.total) as total',
+          'COUNT(work) as quantity_works',
+        ])
+        .where('EXTRACT(YEAR FROM work.date) = :year', { year })
+        .groupBy('EXTRACT(MONTH FROM work.date)')
+        .orderBy('month', 'ASC');
+
+      if (cropId) {
+        queryBuilder.andWhere('crop.id = :cropId', { cropId });
+      }
+
+      const rawData = await queryBuilder.getRawMany();
+
+      const dataMap = new Map(
+        rawData.map((item) => [
+          parseInt(item.month),
+          {
+            quantity_works: parseInt(item.quantity_works),
+          },
+        ]),
+      );
+
+      return monthNames.map((monthName, index) => {
+        const monthNumber = index + 1;
+        const monthData = dataMap.get(monthNumber) || {
+          quantity_works: 0,
+        };
+
+        return {
+          month: monthName,
+          monthNumber,
+          quantity_works: monthData.quantity_works,
+        };
+      });
+    };
+
+    const currentYearData = await getWorkData(year, crop);
+    const previousYearData = await getWorkData(previousYear, crop);
+
+    const workDataByYear = [
+      { year, data: currentYearData },
+      { year: previousYear, data: previousYearData },
+    ];
+
+    return {
+      years: workDataByYear,
+    };
   }
 }
