@@ -45,11 +45,7 @@ export const pathsHarvestsController: PathsController = {
     description: 'obtener todas las cosechas procesadas',
     name: 'find_all_harvests_processed',
   },
-  findAllCropsStock: {
-    path: 'stock/all',
-    description: 'obtener el stock de todos los cultivos',
-    name: 'find_all_crops_stock',
-  },
+  
   findAllHarvestsWithPendingPayments: {
     path: 'pending-payments/all',
     description: 'obtener todas las cosechas con pagos pendientes',
@@ -194,15 +190,15 @@ export class HarvestController {
     return this.harvestService.findAll(queryParams);
   }
 
-  @Get(findAllCropsStock.path)
-  @ApiResponse({
-    status: 200,
-    description: 'Se han obtenido todas las cosechas con su respectivo Stock',
-  })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  findAllHarvestStock() {
-    return this.harvestService.findAllHarvestStock();
-  }
+  // @Get(findAllCropsStock.path)
+  // @ApiResponse({
+  //   status: 200,
+  //   description: 'Se han obtenido todas las cosechas con su respectivo Stock',
+  // })
+  // @ApiResponse({ status: 500, description: 'Internal server error' })
+  // findAllHarvestStock() {
+  //   return this.harvestService.findAllHarvestStock();
+  // }
 
   @Get(findAllHarvestsProcessed.path)
   @ApiResponse({ status: 200, description: 'List of all processed harvests' })

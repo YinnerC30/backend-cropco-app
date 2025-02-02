@@ -77,6 +77,11 @@ export const pathsCropsController: PathsController = {
     description: 'eliminar varios cultivos',
     name: 'remove_bulk_crops',
   },
+  findAllCropsStock: {
+    path: 'stock/all',
+    description: 'obtener el stock de todos los cultivos',
+    name: 'find_all_crops_stock',
+  },
 };
 
 const {
@@ -90,6 +95,7 @@ const {
   updateCrop,
   removeCrop,
   removeCrops,
+  findAllCropsStock,
 } = pathsCropsController;
 
 @Auth()
@@ -98,8 +104,17 @@ const {
 export class CropsController {
   constructor(private readonly cropsService: CropsService) {}
 
-  // Crear cultivo
+  @Get(findAllCropsStock.path)
+  @ApiResponse({
+    status: 200,
+    description: 'Se han obtenido todas las cosechas con su respectivo Stock',
+  })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  findAllHarvestStock() {
+    return this.cropsService.findAllCropsWithStock();
+  }
 
+  // Crear cultivo
   @Post(createCrop.path)
   // Documentación
   @ApiOperation({ summary: 'Crear un nuevo cultivo' })

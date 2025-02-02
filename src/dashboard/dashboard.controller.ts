@@ -117,7 +117,7 @@ export class DashboardController {
 
   @Get(findAllCropsStock.path)
   findAllHarvestStock() {
-    return this.harvestService.findAllHarvestStock();
+    return this.cropsService.findAllCropsWithStock();
   }
 
   // * Harvests

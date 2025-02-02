@@ -153,6 +153,31 @@ export class CropsService {
     };
   }
 
+  async findAllCropsWithStock() {
+    const crops = await this.cropRepository.find({
+      where: {
+        harvests_stock: {
+          total: MoreThan(0),
+        },
+      },
+      relations: {
+        harvests_stock: true,
+      },
+    });
+
+    return {
+      rowCount: crops.length,
+      rows: crops.map((item) => ({
+        id: item.id,
+        name: item.name,
+        stock: item.harvests_stock.total,
+      })),
+      pageCount: crops.length > 0 ? 1 : 0,
+    };
+
+    // return crops;
+  }
+
   async findOne(id: string) {
     const crop = await this.cropRepository
       .createQueryBuilder('crop')

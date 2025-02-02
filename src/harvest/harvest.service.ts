@@ -358,24 +358,24 @@ export class HarvestService {
     }
   }
 
-  async findAllHarvestStock() {
-    const harvestStock = await this.harvestStockRepository.find({
-      relations: {
-        crop: true,
-      },
-    });
-    let count: number = harvestStock.length;
+  // async findAllHarvestStock() {
+  //   const harvestStock = await this.harvestStockRepository.find({
+  //     relations: {
+  //       crop: true,
+  //     },
+  //   });
+  //   let count: number = harvestStock.length;
 
-    return {
-      rowCount: count,
-      rows: harvestStock.map((item) => ({
-        id: item.crop.id,
-        name: item.crop.name,
-        stock: item.total,
-      })),
-      pageCount: count > 0 ? 1 : 0,
-    };
-  }
+  //   return {
+  //     rowCount: count,
+  //     rows: harvestStock.map((item) => ({
+  //       id: item.crop.id,
+  //       name: item.crop.name,
+  //       stock: item.total,
+  //     })),
+  //     pageCount: count > 0 ? 1 : 0,
+  //   };
+  // }
 
   async updateStock(
     queryRunner: QueryRunner,
