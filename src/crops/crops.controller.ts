@@ -104,10 +104,10 @@ const {
 export class CropsController {
   constructor(private readonly cropsService: CropsService) {}
 
-  @Get(findCountHarvestsAndTotalStock.path)
-  async findCountHarvestsAndTotalStock(@Query() params: QueryForYear) {
-    return this.cropsService.findCountHarvestsAndTotalStock(params);
-  }
+  // @Get(findCountHarvestsAndTotalStock.path)
+  // async findCountHarvestsAndTotalStock(@Query() params: QueryForYear) {
+  //   return this.cropsService.findCountHarvestsAndTotalStock(params);
+  // }
 
   // Crear cultivo
 

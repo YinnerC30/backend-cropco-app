@@ -76,12 +76,12 @@ const {
 export class ConsumptionsController {
   constructor(private readonly consumptionsService: ConsumptionsService) {}
 
-  @Get(findTotalConsumptionsInYearAndPreviusYear.path)
-  async findTotalConsumptionsInYearAndPreviusYear(@Query() params: any) {
-    return this.consumptionsService.findTotalConsumptionsInYearAndPreviusYear(
-      params,
-    );
-  }
+  // @Get(findTotalConsumptionsInYearAndPreviusYear.path)
+  // async findTotalConsumptionsInYearAndPreviusYear(@Query() params: any) {
+  //   return this.consumptionsService.findTotalConsumptionsInYearAndPreviusYear(
+  //     params,
+  //   );
+  // }
 
   @Post(createConsumption.path)
   consumption(

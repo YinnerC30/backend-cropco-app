@@ -30,6 +30,7 @@ import { UsersService } from 'src/users/users.service';
 import { UserActionDto } from 'src/users/dto/user-action.dto';
 import { pathsConsumptionController } from 'src/consumptions/consumptions.controller';
 import { pathsShoppingController } from 'src/shopping/shopping.controller';
+import { pathsDashboardController } from 'src/dashboard/dashboard.controller';
 
 @Injectable()
 export class AuthService {
@@ -274,6 +275,10 @@ export class AuthService {
       works: {
         label: 'trabajos',
         paths: pathsWorksController,
+      },
+      dashboard: {
+        label: 'panel de control',
+        paths: pathsDashboardController,
       },
     };
 

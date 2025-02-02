@@ -96,10 +96,10 @@ const {
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
-  @Get(findTopClientsInSales.path)
-  async findTopClientsInSales(@Query() params: QueryForYear) {
-    return this.clientsService.findTopClientsInSales(params);
-  }
+  // @Get(findTopClientsInSales.path)
+  // async findTopClientsInSales(@Query() params: QueryForYear) {
+  //   return this.clientsService.findTopClientsInSales(params);
+  // }
 
   @Get('export/test')
   async exportTest(@Res() response: Response) {

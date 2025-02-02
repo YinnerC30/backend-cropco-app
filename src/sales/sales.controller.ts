@@ -89,10 +89,10 @@ const {
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
-  @Get(findTotalSalesInYearAndPreviusYear.path)
-  async findTotalHarvestInYearMe(@Query() params: QueryTotalSalesInYearDto) {
-    return this.salesService.findTotalSalesInYear(params);
-  }
+  // @Get(findTotalSalesInYearAndPreviusYear.path)
+  // async findTotalHarvestInYearMe(@Query() params: QueryTotalSalesInYearDto) {
+  //   return this.salesService.findTotalSalesInYear(params);
+  // }
 
   @Post(createSale.path)
   @ApiOperation({ summary: 'Create a new sale' })

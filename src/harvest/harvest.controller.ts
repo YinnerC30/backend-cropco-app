@@ -132,10 +132,10 @@ const {
 export class HarvestController {
   constructor(private readonly harvestService: HarvestService) {}
 
-  @Get(findTotalHarvestInYearAndPreviusYear.path)
-  async findTotalHarvestInYearMe(@Query() params: QueryTotalHarvestsInYearDto) {
-    return this.harvestService.findTotalHarvestInYear(params);
-  }
+  // @Get(findTotalHarvestInYearAndPreviusYear.path)
+  // async findTotalHarvestInYearMe(@Query() params: QueryTotalHarvestsInYearDto) {
+  //   return this.harvestService.findTotalHarvestInYear(params);
+  // }
 
   @Get(exportHarvestToPDF.path)
   async exportHarvestToPDF(

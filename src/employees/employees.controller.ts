@@ -120,16 +120,16 @@ const {
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
 
-  @Get(findTopEmployeesInHarvests.path)
-  async findTopEmployeesInHarvests(
-    @Query() params: QueryTopEmployeesInHarvestDto,
-  ) {
-    return this.employeesService.findTopEmployeesInHarvests(params);
-  }
-  @Get(findTopEmployeesInWorks.path)
-  async findTopEmployeesInWorks(@Query() params: QueryTopEmployeesInWorkDto) {
-    return this.employeesService.findTopEmployeesInWorks(params);
-  }
+  // @Get(findTopEmployeesInHarvests.path)
+  // async findTopEmployeesInHarvests(
+  //   @Query() params: QueryTopEmployeesInHarvestDto,
+  // ) {
+  //   return this.employeesService.findTopEmployeesInHarvests(params);
+  // }
+  // @Get(findTopEmployeesInWorks.path)
+  // async findTopEmployeesInWorks(@Query() params: QueryTopEmployeesInWorkDto) {
+  //   return this.employeesService.findTopEmployeesInWorks(params);
+  // }
 
   @Get(findCertification.path)
   async createCertification(
