@@ -10,18 +10,16 @@ import {
   Query,
   Res,
 } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Response as ResponseExpress } from 'express';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 import { QueryParams } from 'src/common/dto/QueryParams';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { PathsController } from 'src/common/interfaces/PathsController';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { EmployeesService } from './employees.service';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Employee } from './entities/employee.entity';
-import { PathsController } from 'src/common/interfaces/PathsController';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { Response as ResponseExpress } from 'express';
-import { Auth } from 'src/auth/decorators/auth.decorator';
-import { QueryTopEmployeesInHarvestDto } from './dto/query-top-employees-in-harvest';
-import { QueryTopEmployeesInWorkDto } from './dto/query-top-employees-in-work';
 
 export const pathsEmployeesController: PathsController = {
   createEmployee: {
@@ -119,17 +117,6 @@ const {
 @Controller('employees')
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
-
-  // @Get(findTopEmployeesInHarvests.path)
-  // async findTopEmployeesInHarvests(
-  //   @Query() params: QueryTopEmployeesInHarvestDto,
-  // ) {
-  //   return this.employeesService.findTopEmployeesInHarvests(params);
-  // }
-  // @Get(findTopEmployeesInWorks.path)
-  // async findTopEmployeesInWorks(@Query() params: QueryTopEmployeesInWorkDto) {
-  //   return this.employeesService.findTopEmployeesInWorks(params);
-  // }
 
   @Get(findCertification.path)
   async createCertification(

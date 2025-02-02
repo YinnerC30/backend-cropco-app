@@ -71,11 +71,6 @@ export const pathsClientsController: PathsController = {
     description: 'exportar clientes a PDF',
     name: 'export_clients_pdf',
   },
-  findTopClientsInSales: {
-    path: 'find/top-clients-in-sales',
-    description: 'Obtener los 5 clientes con mayores ventas en el año',
-    name: 'find_top_clients_in_sales',
-  },
 };
 
 const {
@@ -87,7 +82,6 @@ const {
   removeClient,
   removeClients,
   exportClients,
-  findTopClientsInSales,
 } = pathsClientsController;
 
 @Auth()
@@ -95,11 +89,6 @@ const {
 @Controller('clients')
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
-
-  // @Get(findTopClientsInSales.path)
-  // async findTopClientsInSales(@Query() params: QueryForYear) {
-  //   return this.clientsService.findTopClientsInSales(params);
-  // }
 
   @Get('export/test')
   async exportTest(@Res() response: Response) {

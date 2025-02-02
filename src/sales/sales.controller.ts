@@ -65,11 +65,6 @@ export const pathsSalesController: PathsController = {
     description: 'exportar venta a PDF',
     name: 'export_sale_to_pdf',
   },
-  findTotalSalesInYearAndPreviusYear: {
-    path: 'find/total-sales-in-year',
-    description: 'Obtener el total de las ventas por mes durante el año',
-    name: 'find_total_sales_in_year',
-  },
 };
 
 const {
@@ -80,7 +75,6 @@ const {
   removeSale,
   removeSales,
   exportSaleToPDF,
-  findTotalSalesInYearAndPreviusYear,
 } = pathsSalesController;
 
 @Auth()
@@ -88,11 +82,6 @@ const {
 @Controller('sales')
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
-
-  // @Get(findTotalSalesInYearAndPreviusYear.path)
-  // async findTotalHarvestInYearMe(@Query() params: QueryTotalSalesInYearDto) {
-  //   return this.salesService.findTotalSalesInYear(params);
-  // }
 
   @Post(createSale.path)
   @ApiOperation({ summary: 'Create a new sale' })

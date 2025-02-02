@@ -77,11 +77,6 @@ export const pathsCropsController: PathsController = {
     description: 'eliminar varios cultivos',
     name: 'remove_bulk_crops',
   },
-  findCountHarvestsAndTotalStock: {
-    path: 'find/count-harvest-and-total-stock',
-    description: 'Cantidad de cosechas realizadas al cultivo y su stock total',
-    name: 'find_count_harvests_and_total_stock',
-  },
 };
 
 const {
@@ -95,7 +90,6 @@ const {
   updateCrop,
   removeCrop,
   removeCrops,
-  findCountHarvestsAndTotalStock,
 } = pathsCropsController;
 
 @Auth()
@@ -103,11 +97,6 @@ const {
 @Controller('crops')
 export class CropsController {
   constructor(private readonly cropsService: CropsService) {}
-
-  // @Get(findCountHarvestsAndTotalStock.path)
-  // async findCountHarvestsAndTotalStock(@Query() params: QueryForYear) {
-  //   return this.cropsService.findCountHarvestsAndTotalStock(params);
-  // }
 
   // Crear cultivo
 

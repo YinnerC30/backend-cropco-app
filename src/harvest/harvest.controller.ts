@@ -100,11 +100,6 @@ export const pathsHarvestsController: PathsController = {
     description: 'exportar cosecha a PDF',
     name: 'export_harvest_to_pdf',
   },
-  findTotalHarvestInYearAndPreviusYear: {
-    path: 'find/total-harvest-in-year',
-    description: 'Obtener el total de las cosechas por mes durante el año',
-    name: 'find_total_harvest_in_year',
-  },
 };
 
 const {
@@ -113,8 +108,6 @@ const {
   findAllHarvests,
   findAllHarvestsProcessed,
   findAllCropsStock,
-  findAllHarvestsWithPendingPayments,
-  findOneEmployeeWithPendingPayments,
   findOneHarvest,
   findOneHarvestProcessed,
   updateHarvest,
@@ -123,7 +116,6 @@ const {
   removeHarvestProcessed,
   removeHarvests,
   exportHarvestToPDF,
-  findTotalHarvestInYearAndPreviusYear,
 } = pathsHarvestsController;
 
 @Auth()
@@ -131,11 +123,6 @@ const {
 @Controller('harvests')
 export class HarvestController {
   constructor(private readonly harvestService: HarvestService) {}
-
-  // @Get(findTotalHarvestInYearAndPreviusYear.path)
-  // async findTotalHarvestInYearMe(@Query() params: QueryTotalHarvestsInYearDto) {
-  //   return this.harvestService.findTotalHarvestInYear(params);
-  // }
 
   @Get(exportHarvestToPDF.path)
   async exportHarvestToPDF(

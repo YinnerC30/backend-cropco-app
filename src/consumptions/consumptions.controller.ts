@@ -55,11 +55,6 @@ export const pathsConsumptionController: PathsController = {
     description: 'eliminar varios consumos',
     name: 'remove_bulk_supplies_consumption',
   },
-  findTotalConsumptionsInYearAndPreviusYear: {
-    path: 'find/total-consumptions-in-year',
-    description: 'Obtener el total de los consumos por mes durante el año',
-    name: 'find_total_consumptions_in_year',
-  },
 };
 
 const {
@@ -69,19 +64,11 @@ const {
   updateConsumption,
   removeConsumption,
   removeBulkConsumptions,
-  findTotalConsumptionsInYearAndPreviusYear,
 } = pathsConsumptionController;
 @Auth()
 @Controller('consumptions')
 export class ConsumptionsController {
   constructor(private readonly consumptionsService: ConsumptionsService) {}
-
-  // @Get(findTotalConsumptionsInYearAndPreviusYear.path)
-  // async findTotalConsumptionsInYearAndPreviusYear(@Query() params: any) {
-  //   return this.consumptionsService.findTotalConsumptionsInYearAndPreviusYear(
-  //     params,
-  //   );
-  // }
 
   @Post(createConsumption.path)
   consumption(

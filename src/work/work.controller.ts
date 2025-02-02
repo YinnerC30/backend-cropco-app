@@ -58,11 +58,6 @@ export const pathsWorksController: PathsController = {
     description: 'exportar trabajo a PDF',
     name: 'export_work_to_pdf',
   },
-  findTotalWorkInYearAndPreviusYear: {
-    path: 'find/total-work-in-year',
-    description: 'Obtener el total de los trabajos por mes durante el año',
-    name: 'find_total_work_in_year',
-  },
 };
 
 const {
@@ -73,7 +68,6 @@ const {
   updateWork,
   removeWork,
   removeWorks,
-  findTotalWorkInYearAndPreviusYear,
 } = pathsWorksController;
 
 @Auth()
@@ -81,11 +75,6 @@ const {
 @Controller('works')
 export class WorkController {
   constructor(private readonly workService: WorkService) {}
-
-  @Get(findTotalWorkInYearAndPreviusYear.path)
-  async findTotalWorkInYearMe(@Query() params: QueryTotalWorksInYearDto) {
-    return this.workService.findTotalWorkInYear(params);
-  }
 
   @Post(createWork.path)
   create(@Body() createWorkDto: CreateWorkDto) {
