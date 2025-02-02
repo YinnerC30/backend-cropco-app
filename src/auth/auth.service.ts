@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -97,6 +98,12 @@ export class AuthService {
         },
       },
     });
+
+    if (userPermits.length === 0) {
+      throw new ForbiddenException(
+        `The user does not have enough permissions to access`,
+      );
+    }
 
     delete user.password;
     return {
