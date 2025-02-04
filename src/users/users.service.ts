@@ -5,24 +5,21 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ModuleActions } from 'src/auth/entities/module-actions.entity';
+import * as bcrypt from 'bcrypt';
 import { Module } from 'src/auth/entities/module.entity';
 import { QueryParams } from 'src/common/dto/QueryParams';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { ResponseGetAllRecords } from 'src/common/interfaces/ResponseGetAllRecords';
 import { DataSource, ILike, Repository } from 'typeorm';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
-import { RemoveBulkUsersDto } from './dto/remove-bulk-users.dto';
-import { UpdateUserActionsDto } from './dto/update-user-actions.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserActionDto } from './dto/user-action.dto';
 import { UserActions } from './entities/user-actions.entity';
 import { User } from './entities/user.entity';
 import { hashPassword } from './helpers/encrypt-password';
 import { generatePassword } from './helpers/generate-password';
-import * as bcrypt from 'bcrypt';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { ResponseGetAllRecords } from 'src/common/interfaces/ResponseGetAllRecords';
-import { UserActionDto } from './dto/user-action.dto';
 
 @Injectable()
 export class UsersService {
@@ -38,9 +35,6 @@ export class UsersService {
 
     @InjectRepository(Module)
     private readonly modulesRepository: Repository<Module>,
-
-    // @InjectRepository(ModuleActions)
-    // private readonly moduleActionsRepository: Repository<ModuleActions>,
 
     private readonly dataSource: DataSource,
   ) {}
@@ -72,7 +66,6 @@ export class UsersService {
     const { query = '', limit = 10, offset = 0 } = queryParams;
 
     const users = await this.usersRepository.find({
-      // withDeleted: true,
       where: [
         {
           first_name: ILike(`${query}%`),
@@ -201,49 +194,6 @@ export class UsersService {
       await this.usersRepository.delete({});
     } catch (error) {
       this.handleDBExceptions(error);
-    }
-  }
-
-  async updateActions(
-    id: string,
-    updateUserActionsDto: UpdateUserActionsDto,
-  ): Promise<void> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      await this.findOne(id);
-
-      await queryRunner.manager.delete(UserActions, {
-        user: id,
-      });
-
-      for (const action of updateUserActionsDto.actions) {
-        const moduleAction = await queryRunner.manager.findOne(ModuleActions, {
-          where: { id: action.id },
-        });
-
-        if (!moduleAction) {
-          throw new BadRequestException(
-            `Module Action with Id ${action.id} not exist`,
-          );
-        }
-
-        const userActionEntity = queryRunner.manager.create(UserActions, {
-          action: { id: action.id },
-          user: { id },
-        });
-
-        await queryRunner.manager.save(UserActions, userActionEntity);
-      }
-
-      await queryRunner.commitTransaction();
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error, this.logger);
-    } finally {
-      await queryRunner.release();
     }
   }
 
