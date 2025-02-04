@@ -145,82 +145,6 @@ export class AuthService {
     }
   }
 
-  async getAllPermits() {
-    const users = await this.usersRepository.find({
-      relations: {
-        actions: {
-          action: true,
-        },
-      },
-      order: {
-        first_name: 'ASC',
-      },
-      take: 3,
-    });
-
-    const roles = await this.rolesRepository.find({
-      relations: {
-        actions: true,
-      },
-    });
-
-    return {
-      users,
-      roles,
-    };
-  }
-
-  async getModulePermits() {
-    const modules = this.modulesRepository.find({
-      relations: {
-        actions: true,
-      },
-    });
-
-    return modules;
-  }
-
-  async getUserPermits() {
-    const idUser = '01410f6e-7dc0-4c53-9bfa-63fd187778d4';
-
-    const userPermits1 = await this.modulesRepository.find({
-      select: {
-        name: true,
-        actions: {
-          id: true,
-          description: true,
-        },
-      },
-      relations: {
-        actions: true,
-      },
-      where: {
-        actions: {
-          users_actions: {
-            user: {
-              id: idUser,
-            },
-          },
-        },
-      },
-    });
-
-    const userPermits2 = await this.usersRepository.find({
-      relations: {
-        actions: {
-          action: {
-            module: true,
-          },
-        },
-      },
-      where: {
-        id: idUser,
-      },
-    });
-
-    return { userPermits1, userPermits2 };
-  }
-
   async createModuleWithActions(): Promise<void> {
     const modules = {
       auth: {
@@ -312,20 +236,6 @@ export class AuthService {
 
   async findAllModules(): Promise<Module[]> {
     return await this.modulesRepository.find({ relations: { actions: true } });
-  }
-  async findOneModule(name: string): Promise<Module> {
-    const module = await this.modulesRepository.findOne({
-      where: {
-        name: name,
-      },
-      relations: { actions: true },
-    });
-
-    if (!module) {
-      throw new NotFoundException(`Module with name: ${name} not found`);
-    }
-
-    return module;
   }
 
   async convertToAdmin(

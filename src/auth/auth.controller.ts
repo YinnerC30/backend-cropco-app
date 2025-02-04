@@ -55,7 +55,6 @@ const {
   checkAuthStatus,
   findAllModules,
   createModuleActions,
-  findOneModule,
   convertToAdmin,
 } = pathsAuthController;
 
@@ -89,11 +88,6 @@ export class AuthController {
   @Get(findAllModules.path)
   findAllModules() {
     return this.authService.findAllModules();
-  }
-
-  @Get(findOneModule.path)
-  findOneModule(@Param('name') name: string) {
-    return this.authService.findOneModule(name);
   }
 
   @Get(convertToAdmin.path)
