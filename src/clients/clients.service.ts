@@ -130,7 +130,6 @@ export class ClientsService {
     const pdfDoc = await this.printerService.createPdf(docDefinition);
     pdfDoc.info.Title = 'Listado de clientes';
     return pdfDoc;
-    // return this.printerService.createPdf(docDefinition);
   }
 
   async removeBulk(removeBulkClientsDto: RemoveBulkRecordsDto<Client>) {
