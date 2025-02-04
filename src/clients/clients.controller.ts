@@ -84,7 +84,7 @@ const {
   exportClients,
 } = pathsClientsController;
 
-@Auth()
+// @Auth()
 @ApiTags('Clients')
 @Controller('clients')
 export class ClientsController {

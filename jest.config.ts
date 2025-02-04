@@ -1,4 +1,3 @@
-// filepath: /c:/Users/Usuario/Documents/cropco-project/backend-cropco-app/jest.config.ts
 import type { Config } from '@jest/types';
 
 const config: Config.InitialOptions = {
@@ -10,6 +9,10 @@ const config: Config.InitialOptions = {
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
   },
+  testMatch: [
+    '<rootDir>/src/**/*.spec.ts', // Unit tests (if you have them)
+    '<rootDir>/src/**/*.e2e-spec.ts', // E2E tests
+  ],
 };
 
 export default config;

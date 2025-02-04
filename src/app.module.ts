@@ -28,6 +28,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
+        console.log(__dirname + '/**/*.entity{.ts,.js}');
+
         return {
           type: 'postgres',
           host: configService.get<string>('DB_HOST'),
@@ -53,13 +55,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
     WorkModule,
     SalesModule,
     PaymentsModule,
-
     PrinterModule,
-
     ConsumptionsModule,
-
     ShoppingModule,
-
     DashboardModule,
   ],
 })
