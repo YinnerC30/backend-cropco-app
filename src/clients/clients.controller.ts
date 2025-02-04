@@ -90,21 +90,10 @@ const {
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
-  @Get('export/test')
-  async exportTest(@Res() response: Response) {
-    const pdfDoc = await this.clientsService.exportTest();
-
-    response.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.info.Title = 'Mi primer PDF';
-    pdfDoc.pipe(response);
-    pdfDoc.end();
-  }
-
   @Get(exportClients.path)
   async exportAllClients(@Res() response: Response) {
     const pdfDoc = await this.clientsService.exportAllClients();
     response.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.info.Title = 'Listado de clientes';
     pdfDoc.pipe(response);
     pdfDoc.end();
   }

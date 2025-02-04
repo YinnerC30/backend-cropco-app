@@ -5,17 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { QueryForYear } from 'src/common/dto/QueryForYear';
 import { QueryParams } from 'src/common/dto/QueryParams';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { PrinterService } from 'src/printer/printer.service';
 import { ILike, MoreThan, Repository } from 'typeorm';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
-import { PrinterService } from 'src/printer/printer.service';
-import { getHelloWorldReport } from './reports/hello-world.report';
 import { getClientsReport } from './reports/get-all-clients.report';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { QueryForYear } from 'src/common/dto/QueryForYear';
 
 @Injectable()
 export class ClientsService {
@@ -125,18 +124,13 @@ export class ClientsService {
     }
   }
 
-  async exportTest() {
-    const docDefinition = getHelloWorldReport({
-      name: 'Yinner Chilito',
-    });
-    const doc = this.printerService.createPdf(docDefinition);
-    return doc;
-  }
   async exportAllClients() {
     const clients = await this.clientRepository.find();
     const docDefinition = getClientsReport({ clients });
-
-    return this.printerService.createPdf(docDefinition);
+    const pdfDoc = await this.printerService.createPdf(docDefinition);
+    pdfDoc.info.Title = 'Listado de clientes';
+    return pdfDoc;
+    // return this.printerService.createPdf(docDefinition);
   }
 
   async removeBulk(removeBulkClientsDto: RemoveBulkRecordsDto<Client>) {
