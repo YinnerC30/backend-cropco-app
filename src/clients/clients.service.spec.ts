@@ -5,11 +5,13 @@ import { Client } from './entities/client.entity';
 import { PrinterService } from 'src/printer/printer.service';
 import { Repository } from 'typeorm';
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { TypeOrmErrorHandlerService } from 'src/common/services/typeorm-error-handler.service';
 
 describe('ClientsService', () => {
   let service: ClientsService;
   let clientRepository: Repository<Client>;
   let printerService: PrinterService;
+  let typeOrmErrorHandler: TypeOrmErrorHandlerService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -25,6 +27,12 @@ describe('ClientsService', () => {
             createPdf: jest.fn(),
           },
         },
+        {
+          provide: TypeOrmErrorHandlerService,
+          useValue: {
+            handle: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -33,6 +41,9 @@ describe('ClientsService', () => {
       getRepositoryToken(Client),
     );
     printerService = module.get<PrinterService>(PrinterService);
+    typeOrmErrorHandler = module.get<TypeOrmErrorHandlerService>(
+      TypeOrmErrorHandlerService,
+    );
   });
 
   it('should be defined', () => {

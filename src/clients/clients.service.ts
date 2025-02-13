@@ -15,16 +15,15 @@ import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
 import { getClientsReport } from './reports/get-all-clients.report';
+import { TypeOrmErrorHandlerService } from 'src/common/services/typeorm-error-handler.service';
 
 @Injectable()
 export class ClientsService {
-  private readonly logger = new Logger('ClientsService');
-  private handleDBExceptions = (error: any, logger = this.logger) =>
-    handleDBExceptions(error, logger);
   constructor(
     @InjectRepository(Client)
     private readonly clientRepository: Repository<Client>,
     private readonly printerService: PrinterService,
+    private readonly typeOrmErrorHandler: TypeOrmErrorHandlerService,
   ) {}
 
   async create(createClientDto: CreateClientDto) {
@@ -33,7 +32,7 @@ export class ClientsService {
       await this.clientRepository.save(client);
       return client;
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.typeOrmErrorHandler.handle(error);
     }
   }
 
@@ -100,7 +99,7 @@ export class ClientsService {
     try {
       await this.clientRepository.update(id, updateClientDto);
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.typeOrmErrorHandler.handle(error);
     }
   }
 
@@ -120,7 +119,7 @@ export class ClientsService {
     try {
       await this.clientRepository.delete({});
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.typeOrmErrorHandler.handle(error);
     }
   }
 
@@ -132,6 +131,7 @@ export class ClientsService {
     return pdfDoc;
   }
 
+  // TODO: Cambiar por transaction
   async removeBulk(removeBulkClientsDto: RemoveBulkRecordsDto<Client>) {
     for (const { id } of removeBulkClientsDto.recordsIds) {
       await this.remove(id);

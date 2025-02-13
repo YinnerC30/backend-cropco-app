@@ -5,11 +5,11 @@ import * as request from 'supertest';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import * as path from 'path';
 import { Repository } from 'typeorm';
 import { ClientsModule } from './clients.module';
 import { Client } from './entities/client.entity';
 import { CreateClientDto } from './dto/create-client.dto';
+import { CommonModule } from 'src/common/common.module';
 
 describe('ClientsController (e2e)', () => {
   let app: INestApplication;
@@ -39,6 +39,7 @@ describe('ClientsController (e2e)', () => {
             };
           },
         }),
+        CommonModule,
       ],
     }).compile();
 
@@ -57,11 +58,11 @@ describe('ClientsController (e2e)', () => {
   describe('/clients/create (POST)', () => {
     it('should create a new client', async () => {
       const createClientDto: CreateClientDto = {
-        first_name: 'eljajas',
-        email: 'eljajajs@example.com',
-        last_name: 'joa',
+        first_name: 'Daniel',
+        last_name: 'Gomez',
+        email: 'daniel@gmail.com',
         cell_phone_number: '3146652134',
-        address: 'sdfsdfsdfsdfsdfds',
+        address: 'Dirección de prueba...',
       };
       const response = await request
         .default(app.getHttpServer())
@@ -70,31 +71,7 @@ describe('ClientsController (e2e)', () => {
         .expect(201);
 
       expect(response.body).toMatchObject(createClientDto);
+      await clientRepository.delete({ id: response.body.id });
     });
   });
-
-  // describe('/clients (GET)', () => {
-  //   it('should return a list of clients', async () => {
-  //     // const createClientDto: CreateClientDto = {
-  //     //   first_name: 'John',
-  //     //   email: 'john@example.com',
-  //     //   last_name: 'Chilito',
-  //     //   cell_phone_number: '3146652134',
-  //     //   address: 'sdfsdfsdfsdfsdfds',
-  //     // };
-  //     // await clientRepository.save(createClientDto);
-
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/clients/all')
-  //       .expect(200);
-
-  //     // expect(response.body).toEqual(
-  //     //   expect.objectContaining({
-  //     //     rowCount: 1,
-  //     //     rows: [expect.objectContaining(createClientDto)],
-  //     //   }),
-  //     // );
-  //   });
-  // });
 });

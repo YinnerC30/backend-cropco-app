@@ -273,7 +273,6 @@ export class SalesService {
 
       for (const saleDetailId of toCreate) {
         const newData = newDetails.find((record) => record.id === saleDetailId);
-        console.log(newData);
         await this.harvestService.updateStock(
           queryRunner,
           newData.crop.id,
