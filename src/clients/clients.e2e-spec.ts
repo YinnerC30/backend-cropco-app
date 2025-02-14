@@ -53,14 +53,22 @@ describe('ClientsController (e2e)', () => {
     );
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     await clientRepository.delete({});
+  });
+
+  afterAll(async () => {
     await app.close();
   });
 
+  async function createTestClient(data: CreateClientDto) {
+    const client = clientRepository.create(data);
+    return await clientRepository.save(client);
+  }
+
   describe('/clients/create (POST)', () => {
     it('should create a new client', async () => {
-      const createClientDto: CreateClientDto = {
+      const data: CreateClientDto = {
         first_name: 'Daniel',
         last_name: 'Gomez',
         email: 'daniel@gmail.com',
@@ -70,38 +78,39 @@ describe('ClientsController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .post('/clients/create')
-        .send(createClientDto)
+        .send(data)
         .expect(201);
-      expect(response.body).toMatchObject(createClientDto);
+      expect(response.body).toMatchObject(data);
     });
   });
 
   describe('clients/all (GET)', () => {
     it('Should get all clients', async () => {
       // Crear clientes de prueba
-      const client1 = clientRepository.create({
-        first_name: 'John 2',
-        last_name: 'Doe',
-        email: 'john.doe2@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
-      await clientRepository.save(client1);
 
-      const client2 = clientRepository.create({
-        first_name: 'Jane 2',
-        last_name: 'Smith',
-        email: 'jane.smith2@example.com',
-        cell_phone_number: '3007890123',
-        address: '456 Elm St',
-      });
-      await clientRepository.save(client2);
+      await Promise.all([
+        createTestClient({
+          first_name: 'John 2',
+          last_name: 'Doe',
+          email: 'john.doe2@example.com',
+          cell_phone_number: '3007890123',
+          address: '123 Main St',
+        }),
+
+        createTestClient({
+          first_name: 'Jane 2',
+          last_name: 'Smith',
+          email: 'jane.smith2@example.com',
+          cell_phone_number: '3007890123',
+          address: '456 Elm St',
+        }),
+      ]);
 
       const response = await request
         .default(app.getHttpServer())
         .get('/clients/all')
         .expect(200);
-      expect(response.body.rows.length).toBeGreaterThan(1);
+      expect(response.body.rows.length).toEqual(2);
     });
   });
 
@@ -121,15 +130,13 @@ describe('ClientsController (e2e)', () => {
   describe('clients/one/:id (GET)', () => {
     it('Should get one client', async () => {
       // Crear un cliente de prueba
-      const clientDto = clientRepository.create({
+      const { id } = await createTestClient({
         first_name: 'John 3',
         last_name: 'Doe',
         email: 'john.doe3@example.com',
         cell_phone_number: '3007890123',
         address: '123 Main St',
       });
-
-      const { id } = await clientRepository.save(clientDto);
 
       const response = await request
         .default(app.getHttpServer())
@@ -141,16 +148,13 @@ describe('ClientsController (e2e)', () => {
 
   describe('clients/update/one/:id (PATCH)', () => {
     it('Should update one client', async () => {
-      const clientDto = clientRepository.create({
+      const { id } = await createTestClient({
         first_name: 'John 3.5',
         last_name: 'Doe',
         email: 'john.doe3.5@example.com',
         cell_phone_number: '3007890123',
         address: '123 Main St',
       });
-
-      const { id } = await clientRepository.save(clientDto);
-
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/clients/update/one/${id}`)
@@ -162,15 +166,13 @@ describe('ClientsController (e2e)', () => {
   });
   describe('clients/remove/one/:id (DELETE)', () => {
     it('Should delete one client', async () => {
-      const clientDto = clientRepository.create({
+      const { id } = await createTestClient({
         first_name: 'Ana 4.5',
         last_name: 'Doe',
         email: 'Ana.doe4.5@example.com',
         cell_phone_number: '3007890123',
         address: '123 Main St',
       });
-
-      const { id } = await clientRepository.save(clientDto);
 
       await request
         .default(app.getHttpServer())
@@ -197,60 +199,51 @@ describe('ClientsController (e2e)', () => {
 
   describe('clients/remove/bulk (DELETE)', () => {
     it('Should delete clients bulk', async () => {
-      await clientRepository.delete({});
       // Crear clientes de prueba
-      const client1 = clientRepository.create({
-        first_name: 'John 2',
-        last_name: 'Doe',
-        email: 'john.doefg2@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
-      const dataClient1 = await clientRepository.save(client1);
-
-      const client2 = clientRepository.create({
-        first_name: 'Jane4 2',
-        last_name: 'Smith',
-        email: 'jane.smith32@example.com',
-        cell_phone_number: '3007890123',
-        address: '456 Elm St',
-      });
-      const dataClient2 = await clientRepository.save(client2);
-
-      const client3 = clientRepository.create({
-        first_name: 'Jane 3',
-        last_name: 'Smith',
-        email: 'jane.smith35@example.com',
-        cell_phone_number: '3007890123',
-        address: '456 Elm St',
-      });
-      const dataClient3 = await clientRepository.save(client3);
+      const [client1, client2, client3] = await Promise.all([
+        createTestClient({
+          first_name: 'John 2',
+          last_name: 'Doe',
+          email: 'john.doefg2@example.com',
+          cell_phone_number: '3007890123',
+          address: '123 Main St',
+        }),
+        createTestClient({
+          first_name: 'Jane4 2',
+          last_name: 'Smith',
+          email: 'jane.smith32@example.com',
+          cell_phone_number: '3007890123',
+          address: '456 Elm St',
+        }),
+        createTestClient({
+          first_name: 'Jane 3',
+          last_name: 'Smith',
+          email: 'jane.smith35@example.com',
+          cell_phone_number: '3007890123',
+          address: '456 Elm St',
+        }),
+      ]);
 
       const bulkData: RemoveBulkRecordsDto<Client> = {
-        recordsIds: [{ id: dataClient1.id }, { id: dataClient2.id }],
+        recordsIds: [{ id: client1.id }, { id: client2.id }],
       };
 
       await request
         .default(app.getHttpServer())
-        .delete('/remove/bulk')
+        .delete('/clients/remove/bulk')
         .send(bulkData)
         .expect(200);
 
-      clientRepository
-        .findOne({ where: { id: dataClient1.id } })
-        .then((data) => {
-          expect(data).toBeUndefined();
-        });
-      clientRepository
-        .findOne({ where: { id: dataClient2.id } })
-        .then((data) => {
-          expect(data).toBeUndefined();
-        });
-      clientRepository
-        .findOne({ where: { id: dataClient3.id } })
-        .then((data) => {
-          expect(data).toBeDefined();
-        });
+      const [deletedClient1, deletedClient2, remainingClient3] =
+        await Promise.all([
+          clientRepository.findOne({ where: { id: client1.id } }),
+          clientRepository.findOne({ where: { id: client2.id } }),
+          clientRepository.findOne({ where: { id: client3.id } }),
+        ]);
+
+      expect(deletedClient1).toBeNull();
+      expect(deletedClient2).toBeNull();
+      expect(remainingClient3).toBeDefined();
     });
   });
 
