@@ -1,21 +1,19 @@
 import {
   ConflictException,
   Injectable,
-  Logger,
-  NotFoundException,
+  NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryForYear } from 'src/common/dto/QueryForYear';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { TypeOrmErrorHandlerService } from 'src/common/services/typeorm-error-handler.service';
 import { PrinterService } from 'src/printer/printer.service';
 import { ILike, MoreThan, Repository } from 'typeorm';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
 import { getClientsReport } from './reports/get-all-clients.report';
-import { TypeOrmErrorHandlerService } from 'src/common/services/typeorm-error-handler.service';
 
 @Injectable()
 export class ClientsService {
