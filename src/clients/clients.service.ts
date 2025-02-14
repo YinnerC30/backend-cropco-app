@@ -1,7 +1,7 @@
 import {
   ConflictException,
   Injectable,
-  NotFoundException
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryForYear } from 'src/common/dto/QueryForYear';
@@ -96,6 +96,7 @@ export class ClientsService {
     await this.findOne(id);
     try {
       await this.clientRepository.update(id, updateClientDto);
+      return await this.findOne(id);
     } catch (error) {
       this.typeOrmErrorHandler.handle(error);
     }
@@ -114,6 +115,7 @@ export class ClientsService {
   }
 
   async deleteAllClients() {
+    // INFO: Solo ejecutar en entorno de desarrollo
     try {
       await this.clientRepository.delete({});
     } catch (error) {
@@ -124,7 +126,7 @@ export class ClientsService {
   async exportAllClients() {
     const clients = await this.clientRepository.find();
     const docDefinition = getClientsReport({ clients });
-    const pdfDoc = await this.printerService.createPdf(docDefinition);
+    const pdfDoc = this.printerService.createPdf(docDefinition);
     pdfDoc.info.Title = 'Listado de clientes';
     return pdfDoc;
   }
