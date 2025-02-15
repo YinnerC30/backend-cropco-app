@@ -19,6 +19,7 @@ export class QueryParams {
   @IsOptional()
   @IsInt()
   @IsPositive()
+  @Min(10)
   @Type(() => Number)
   limit?: number;
 
@@ -43,7 +44,7 @@ export class QueryParams {
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => value === 'true')
-  allRecords?: boolean;
+  all_records?: boolean;
 
   @ApiProperty({
     description: 'Cadena de búsqueda',

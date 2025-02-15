@@ -32,7 +32,6 @@ export class HandlerErrorService {
     }
 
     if (error instanceof HttpException) {
-      console.log('Entro aquí');
       throw error;
     }
 

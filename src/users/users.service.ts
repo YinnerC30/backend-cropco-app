@@ -10,7 +10,7 @@ import { Module } from 'src/auth/entities/module.entity';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
-import { ResponseGetAllRecords } from 'src/common/interfaces/ResponseGetAllRecords';
+
 import { DataSource, ILike, Repository } from 'typeorm';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -60,9 +60,7 @@ export class UsersService {
     }
   }
 
-  async findAll(
-    queryParams: QueryParams,
-  ): Promise<ResponseGetAllRecords<User>> {
+  async findAll(queryParams: QueryParams) {
     const { query = '', limit = 10, offset = 0 } = queryParams;
 
     const users = await this.usersRepository.find({

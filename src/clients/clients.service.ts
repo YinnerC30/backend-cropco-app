@@ -36,41 +36,43 @@ export class ClientsService {
       await this.clientRepository.save(client);
       return client;
     } catch (error) {
-      console.log(error);
       this.handlerError.handle(error);
     }
   }
 
   async findAll(queryParams: QueryParams) {
-    const { query: search = '', limit = 10, offset = 0 } = queryParams;
+    const {
+      query = '',
+      limit = 10,
+      offset = 0,
+      all_records = false,
+    } = queryParams;
 
-    const clients = await this.clientRepository.find({
-      where: [
-        {
-          first_name: ILike(`${search}%`),
-        },
-        {
-          email: ILike(`${search}%`),
-        },
-      ],
-      order: {
-        first_name: 'ASC',
-      },
-      take: limit,
-      skip: offset * limit,
-    });
+    const queryBuilder = this.clientRepository.createQueryBuilder('clients');
 
-    let count: number;
-    if (search.length === 0) {
-      count = await this.clientRepository.count();
-    } else {
-      count = clients.length;
+    !!query &&
+      !all_records &&
+      queryBuilder
+        .where('clients.first_name ILIKE :query', { query: `${query}%` })
+        .orWhere('clients.last_name ILIKE :query', { query: `${query}%` })
+        .orWhere('clients.email ILIKE :query', { query: `${query}%` });
+
+    !all_records && queryBuilder.take(limit).skip(offset * limit);
+
+    const [clients, count] = await queryBuilder.getManyAndCount();
+
+    if (clients.length === 0 && count > 0) {
+      throw new NotFoundException(
+        'There are no client records with the requested pagination',
+      );
     }
 
     return {
-      rowCount: count,
-      rows: clients,
-      pageCount: Math.ceil(count / limit),
+      total_row_count: count,
+      current_row_count: clients.length,
+      total_page_count: all_records ? 1 : Math.ceil(count / limit),
+      current_page_count: all_records ? 1 : offset + 1,
+      clients,
     };
   }
 

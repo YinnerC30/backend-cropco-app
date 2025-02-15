@@ -140,7 +140,7 @@ export class SeedService {
 
     return true;
   }
-  private async insertNewClients() {
+  async insertNewClients() {
     const clients = initialData.clients;
 
     const insertPromises = [];

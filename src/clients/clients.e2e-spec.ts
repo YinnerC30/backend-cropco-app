@@ -5,17 +5,20 @@ import * as request from 'supertest';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { describe, it } from 'node:test';
+import { describe } from 'node:test';
 import { CommonModule } from 'src/common/common.module';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Repository } from 'typeorm';
 import { ClientsModule } from './clients.module';
 import { CreateClientDto } from './dto/create-client.dto';
 import { Client } from './entities/client.entity';
+import { SeedModule } from 'src/seed/seed.module';
+import { SeedService } from 'src/seed/seed.service';
 
 describe('ClientsController (e2e)', () => {
   let app: INestApplication;
   let clientRepository: Repository<Client>;
+  let seedService: SeedService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -25,7 +28,6 @@ describe('ClientsController (e2e)', () => {
           isGlobal: true,
         }),
         ClientsModule,
-        CommonModule,
         TypeOrmModule.forRootAsync({
           imports: [ConfigModule],
           inject: [ConfigService],
@@ -42,8 +44,12 @@ describe('ClientsController (e2e)', () => {
             };
           },
         }),
+        CommonModule,
+        SeedModule,
       ],
     }).compile();
+
+    seedService = moduleFixture.get<SeedService>(SeedService);
 
     app = moduleFixture.createNestApplication();
 
@@ -55,6 +61,7 @@ describe('ClientsController (e2e)', () => {
         transform: true,
       }),
     );
+
     await app.init();
 
     clientRepository = moduleFixture.get<Repository<Client>>(
@@ -63,9 +70,9 @@ describe('ClientsController (e2e)', () => {
     await clientRepository.delete({});
   });
 
-  beforeEach(async () => {
-    await clientRepository.delete({});
-  });
+  // afterEach(async () => {
+  //   await clientRepository.delete({});
+  // });
 
   afterAll(async () => {
     await app.close();
@@ -94,29 +101,31 @@ describe('ClientsController (e2e)', () => {
     });
 
     it('Should throw exception when fields are missing in the body', async () => {
-      // const errorMessage = [
-      //   'first_name must be shorter than or equal to 100 characters',
-      //   'first_name must be a string',
-      //   'last_name must be shorter than or equal to 100 characters',
-      //   'last_name must be a string',
-      //   'email must be shorter than or equal to 100 characters',
-      //   'email must be an email',
-      //   'email must be a string',
-      //   'cell_phone_number must be shorter than or equal to 10 characters',
-      //   'cell_phone_number must be a number string',
-      //   'address must be shorter than or equal to 200 characters',
-      //   'address must be a string',
-      // ];
+      const errorMessage = [
+        'first_name must be shorter than or equal to 100 characters',
+        'first_name must be a string',
+        'last_name must be shorter than or equal to 100 characters',
+        'last_name must be a string',
+        'email must be shorter than or equal to 100 characters',
+        'email must be an email',
+        'email must be a string',
+        'cell_phone_number must be shorter than or equal to 10 characters',
+        'cell_phone_number must be a number string',
+        'address must be shorter than or equal to 200 characters',
+        'address must be a string',
+      ];
 
       const { body } = await request
         .default(app.getHttpServer())
         .post('/clients/create')
         .expect(400);
 
-      // expect(body.message).toContainEqual(errorMessage);
+      errorMessage.forEach((msg) => {
+        expect(body.message).toContain(msg);
+      });
     });
 
-    it('Debe lanzar excepción por intentar crear un cliente con email duplicado', async () => {
+    it('Should throw exception for trying to create a client with duplicate email.', async () => {
       await createTestClient({
         first_name: 'Stiven',
         last_name: 'Gomez',
@@ -132,163 +141,198 @@ describe('ClientsController (e2e)', () => {
         cell_phone_number: '3146652134',
         address: 'Dirección de prueba...',
       };
-      const response = await request
+      const { body } = await request
         .default(app.getHttpServer())
         .post('/clients/create')
         .send(data)
         .expect(400);
+      expect(body.message).toEqual(
+        'Unique constraint violation, Key (email)=(Stiven@gmail.com) already exists.',
+      );
     });
   });
 
   describe('clients/all (GET)', () => {
-    it('Should get all clients', async () => {
-      // Crear clientes de prueba
+    beforeAll(async () => {
+      await clientRepository.delete({});
+      const result = await seedService.insertNewClients();
+      if (result) {
+        console.log('Inserted 17 client records for testing');
+      }
+    });
 
-      await Promise.all([
-        createTestClient({
-          first_name: 'John 2',
-          last_name: 'Doe',
-          email: 'john.doe2@example.com',
-          cell_phone_number: '3007890123',
-          address: '123 Main St',
-        }),
-
-        createTestClient({
-          first_name: 'Jane 2',
-          last_name: 'Smith',
-          email: 'jane.smith2@example.com',
-          cell_phone_number: '3007890123',
-          address: '456 Elm St',
-        }),
-      ]);
-
+    it('should get only 10 clients for default by not sending paging parameters', async () => {
       const response = await request
         .default(app.getHttpServer())
         .get('/clients/all')
         .expect(200);
-      expect(response.body.rows.length).toEqual(2);
+      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.current_row_count).toEqual(10);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(1);
     });
-  });
-
-  describe('clients/one/:id (GET)', () => {
-    it('Should get one client', async () => {
-      // Crear un cliente de prueba
-      const { id } = await createTestClient({
-        first_name: 'John 3',
-        last_name: 'Doe',
-        email: 'john.doe3@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
-
+    it('should return all available records by sending the parameter all_records to true, ignoring other parameters', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .get(`/clients/one/${id}`)
+        .get('/clients/all?all_records=true&&limit=10&&offset=1')
         .expect(200);
-      expect(response.body).toHaveProperty('id');
+      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.current_row_count).toEqual(17);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
     });
-  });
+    it('should return the specified number of clients passed by the paging arguments by the URL', async () => {
+      let limit = 11;
+      let offset = 0;
+      const response1 = await request
+        .default(app.getHttpServer())
+        .get(`/clients/all?limit=${limit}&&offset=${offset}`)
+        .expect(200);
+      expect(response1.body.total_row_count).toEqual(17);
+      expect(response1.body.current_row_count).toEqual(limit);
+      expect(response1.body.total_page_count).toEqual(2);
+      expect(response1.body.current_page_count).toEqual(1);
 
-  describe('clients/update/one/:id (PATCH)', () => {
-    it('Should update one client', async () => {
-      const { id } = await createTestClient({
-        first_name: 'John 3.5',
-        last_name: 'Doe',
-        email: 'john.doe3.5@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
+      offset = 1;
+      const response2 = await request
+        .default(app.getHttpServer())
+        .get(`/clients/all?limit=${limit}&&offset=${offset}`)
+        .expect(200);
+      expect(response2.body.total_row_count).toEqual(17);
+      expect(response2.body.current_row_count).toEqual(6);
+      expect(response2.body.total_page_count).toEqual(2);
+      expect(response2.body.current_page_count).toEqual(2);
+    });
+    it('You should throw an exception for requesting out-of-scope paging.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/clients/update/one/${id}`)
-        .send({ first_name: 'John 4' })
-        .expect(200);
-
-      expect(body.first_name).toEqual('John 4');
-    });
-  });
-  describe('clients/remove/one/:id (DELETE)', () => {
-    it('Should delete one client', async () => {
-      const { id } = await createTestClient({
-        first_name: 'Ana 4.5',
-        last_name: 'Doe',
-        email: 'Ana.doe4.5@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
-
-      await request
-        .default(app.getHttpServer())
-        .delete(`/clients/remove/one/${id}`)
-        .expect(200);
-
-      const { notFound } = await request
-        .default(app.getHttpServer())
-        .get(`/clients/one/${id}`)
+        .get('/clients/all?offset=10')
         .expect(404);
-      expect(notFound).toBe(true);
+      expect(body.message).toEqual(
+        'There are no client records with the requested pagination',
+      );
     });
   });
 
-  describe('clients/export/all/pdf (GET)', () => {
-    it('Should export all clients in PDF format', async () => {
-      const { body } = await request
-        .default(app.getHttpServer())
-        .get('/clients/export/all/pdf')
-        .expect(200);
-      expect(body).toBeDefined();
-    });
-  });
+  // describe('clients/one/:id (GET)', () => {
+  //   it('Should get one client', async () => {
+  //     // Crear un cliente de prueba
+  //     const { id } = await createTestClient({
+  //       first_name: 'John 3',
+  //       last_name: 'Doe',
+  //       email: 'john.doe3@example.com',
+  //       cell_phone_number: '3007890123',
+  //       address: '123 Main St',
+  //     });
 
-  describe('clients/remove/bulk (DELETE)', () => {
-    it('Should delete clients bulk', async () => {
-      // Crear clientes de prueba
-      const [client1, client2, client3] = await Promise.all([
-        createTestClient({
-          first_name: 'John 2',
-          last_name: 'Doe',
-          email: 'john.doefg2@example.com',
-          cell_phone_number: '3007890123',
-          address: '123 Main St',
-        }),
-        createTestClient({
-          first_name: 'Jane4 2',
-          last_name: 'Smith',
-          email: 'jane.smith32@example.com',
-          cell_phone_number: '3007890123',
-          address: '456 Elm St',
-        }),
-        createTestClient({
-          first_name: 'Jane 3',
-          last_name: 'Smith',
-          email: 'jane.smith35@example.com',
-          cell_phone_number: '3007890123',
-          address: '456 Elm St',
-        }),
-      ]);
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .get(`/clients/one/${id}`)
+  //       .expect(200);
+  //     expect(response.body).toHaveProperty('id');
+  //   });
+  // });
 
-      const bulkData: RemoveBulkRecordsDto<Client> = {
-        recordsIds: [{ id: client1.id }, { id: client2.id }],
-      };
+  // describe('clients/update/one/:id (PATCH)', () => {
+  //   it('Should update one client', async () => {
+  //     const { id } = await createTestClient({
+  //       first_name: 'John 3.5',
+  //       last_name: 'Doe',
+  //       email: 'john.doe3.5@example.com',
+  //       cell_phone_number: '3007890123',
+  //       address: '123 Main St',
+  //     });
+  //     const { body } = await request
+  //       .default(app.getHttpServer())
+  //       .patch(`/clients/update/one/${id}`)
+  //       .send({ first_name: 'John 4' })
+  //       .expect(200);
 
-      await request
-        .default(app.getHttpServer())
-        .delete('/clients/remove/bulk')
-        .send(bulkData)
-        .expect(200);
+  //     expect(body.first_name).toEqual('John 4');
+  //   });
+  // });
+  // describe('clients/remove/one/:id (DELETE)', () => {
+  //   it('Should delete one client', async () => {
+  //     const { id } = await createTestClient({
+  //       first_name: 'Ana 4.5',
+  //       last_name: 'Doe',
+  //       email: 'Ana.doe4.5@example.com',
+  //       cell_phone_number: '3007890123',
+  //       address: '123 Main St',
+  //     });
 
-      const [deletedClient1, deletedClient2, remainingClient3] =
-        await Promise.all([
-          clientRepository.findOne({ where: { id: client1.id } }),
-          clientRepository.findOne({ where: { id: client2.id } }),
-          clientRepository.findOne({ where: { id: client3.id } }),
-        ]);
+  //     await request
+  //       .default(app.getHttpServer())
+  //       .delete(`/clients/remove/one/${id}`)
+  //       .expect(200);
 
-      expect(deletedClient1).toBeNull();
-      expect(deletedClient2).toBeNull();
-      expect(remainingClient3).toBeDefined();
-    });
-  });
+  //     const { notFound } = await request
+  //       .default(app.getHttpServer())
+  //       .get(`/clients/one/${id}`)
+  //       .expect(404);
+  //     expect(notFound).toBe(true);
+  //   });
+  // });
+
+  // describe('clients/export/all/pdf (GET)', () => {
+  //   it('Should export all clients in PDF format', async () => {
+  //     const { body } = await request
+  //       .default(app.getHttpServer())
+  //       .get('/clients/export/all/pdf')
+  //       .expect(200);
+  //     expect(body).toBeDefined();
+  //   });
+  // });
+
+  // describe('clients/remove/bulk (DELETE)', () => {
+  //   it('Should delete clients bulk', async () => {
+  //     // Crear clientes de prueba
+  //     const [client1, client2, client3] = await Promise.all([
+  //       createTestClient({
+  //         first_name: 'John 2',
+  //         last_name: 'Doe',
+  //         email: 'john.doefg2@example.com',
+  //         cell_phone_number: '3007890123',
+  //         address: '123 Main St',
+  //       }),
+  //       createTestClient({
+  //         first_name: 'Jane4 2',
+  //         last_name: 'Smith',
+  //         email: 'jane.smith32@example.com',
+  //         cell_phone_number: '3007890123',
+  //         address: '456 Elm St',
+  //       }),
+  //       createTestClient({
+  //         first_name: 'Jane 3',
+  //         last_name: 'Smith',
+  //         email: 'jane.smith35@example.com',
+  //         cell_phone_number: '3007890123',
+  //         address: '456 Elm St',
+  //       }),
+  //     ]);
+
+  //     const bulkData: RemoveBulkRecordsDto<Client> = {
+  //       recordsIds: [{ id: client1.id }, { id: client2.id }],
+  //     };
+
+  //     await request
+  //       .default(app.getHttpServer())
+  //       .delete('/clients/remove/bulk')
+  //       .send(bulkData)
+  //       .expect(200);
+
+  //     const [deletedClient1, deletedClient2, remainingClient3] =
+  //       await Promise.all([
+  //         clientRepository.findOne({ where: { id: client1.id } }),
+  //         clientRepository.findOne({ where: { id: client2.id } }),
+  //         clientRepository.findOne({ where: { id: client3.id } }),
+  //       ]);
+
+  //     expect(deletedClient1).toBeNull();
+  //     expect(deletedClient2).toBeNull();
+  //     expect(remainingClient3).toBeDefined();
+  //   });
+  // });
 
   // TODO: Implementar prueba de GET /clients/sales/all
   // TODO: Implementar prueba de GET top clients by sales

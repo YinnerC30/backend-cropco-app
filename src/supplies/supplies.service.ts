@@ -60,11 +60,11 @@ export class SuppliesService {
       query: search = '',
       limit = 10,
       offset = 0,
-      allRecords = false,
+      all_records = false,
     } = queryParams;
 
     let supplies;
-    if (allRecords) {
+    if (all_records) {
       supplies = await this.supplyRepository.find({
         where: [
           {

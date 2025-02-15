@@ -64,12 +64,12 @@ export class EmployeesService {
       query = '',
       limit = 10,
       offset = 0,
-      allRecords = false,
+      all_records = false,
     } = queryParams;
 
     let employees: Employee[];
 
-    if (allRecords === true) {
+    if (all_records === true) {
       employees = await this.employeeRepository.find({
         where: [
           {

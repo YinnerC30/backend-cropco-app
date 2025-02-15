@@ -40,7 +40,7 @@ export class CropsService {
       query = '',
       limit = 10,
       offset = 0,
-      allRecords = false,
+      all_records = false,
     } = queryParams;
 
     let crops;
@@ -49,7 +49,7 @@ export class CropsService {
       name: ILike(`${query}%`),
     };
 
-    if (allRecords === true) {
+    if (all_records === true) {
       crops = await this.cropRepository.find({
         // withDeleted: true,
         where: [searchCondition],

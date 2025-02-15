@@ -77,15 +77,48 @@ describe('ClientsService', () => {
       const clients = [
         { id: '1', first_name: 'John', email: 'john@example.com' },
       ];
-      jest.spyOn(clientRepository, 'find').mockResolvedValue(clients as any);
-      jest.spyOn(clientRepository, 'count').mockResolvedValue(clients.length);
+      const queryParams = {
+        query: '',
+        limit: 10,
+        offset: 0,
+        all_records: false,
+      };
+      jest.spyOn(clientRepository, 'createQueryBuilder').mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        orWhere: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([clients, clients.length]),
+      } as any);
 
-      const result = await service.findAll({ query: '', limit: 10, offset: 0 });
+      const result = await service.findAll(queryParams);
       expect(result).toEqual({
-        rowCount: clients.length,
-        rows: clients,
-        pageCount: 1,
+        total_row_count: clients.length,
+        current_row_count: clients.length,
+        total_page_count: 1,
+        current_page_count: 1,
+        clients,
       });
+    });
+
+    it('should throw NotFoundException if no clients found with pagination', async () => {
+      const queryParams = {
+        query: '',
+        limit: 10,
+        offset: 1,
+        all_records: false,
+      };
+      jest.spyOn(clientRepository, 'createQueryBuilder').mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        orWhere: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[], 5]),
+      } as any);
+
+      await expect(service.findAll(queryParams)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -187,7 +220,7 @@ describe('ClientsService', () => {
 
       const result = await service.exportAllClients();
       expect(result).toEqual(pdfDoc);
-      console.log(result)
+      console.log(result);
       // expect(result.info.Title).toBe('Listado de clientes');
     });
   });

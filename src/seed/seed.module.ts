@@ -35,5 +35,6 @@ import { ShoppingModule } from 'src/shopping/shopping.module';
     PaymentsModule,
     AuthModule,
   ],
+  exports: [SeedService],
 })
 export class SeedModule {}
