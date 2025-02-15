@@ -1,11 +1,11 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { describe } from 'node:test';
+import { describe, it } from 'node:test';
 import { CommonModule } from 'src/common/common.module';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Repository } from 'typeorm';
@@ -25,6 +25,7 @@ describe('ClientsController (e2e)', () => {
           isGlobal: true,
         }),
         ClientsModule,
+        CommonModule,
         TypeOrmModule.forRootAsync({
           imports: [ConfigModule],
           inject: [ConfigService],
@@ -41,19 +42,28 @@ describe('ClientsController (e2e)', () => {
             };
           },
         }),
-        CommonModule,
       ],
     }).compile();
 
     app = moduleFixture.createNestApplication();
+
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        errorHttpStatusCode: 400,
+        transform: true,
+      }),
+    );
     await app.init();
 
     clientRepository = moduleFixture.get<Repository<Client>>(
       getRepositoryToken(Client),
     );
+    await clientRepository.delete({});
   });
 
-  afterEach(async () => {
+  beforeEach(async () => {
     await clientRepository.delete({});
   });
 
@@ -81,6 +91,52 @@ describe('ClientsController (e2e)', () => {
         .send(data)
         .expect(201);
       expect(response.body).toMatchObject(data);
+    });
+
+    it('Should throw exception when fields are missing in the body', async () => {
+      // const errorMessage = [
+      //   'first_name must be shorter than or equal to 100 characters',
+      //   'first_name must be a string',
+      //   'last_name must be shorter than or equal to 100 characters',
+      //   'last_name must be a string',
+      //   'email must be shorter than or equal to 100 characters',
+      //   'email must be an email',
+      //   'email must be a string',
+      //   'cell_phone_number must be shorter than or equal to 10 characters',
+      //   'cell_phone_number must be a number string',
+      //   'address must be shorter than or equal to 200 characters',
+      //   'address must be a string',
+      // ];
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/clients/create')
+        .expect(400);
+
+      // expect(body.message).toContainEqual(errorMessage);
+    });
+
+    it('Debe lanzar excepción por intentar crear un cliente con email duplicado', async () => {
+      await createTestClient({
+        first_name: 'Stiven',
+        last_name: 'Gomez',
+        email: 'Stiven@gmail.com',
+        cell_phone_number: '3146652134',
+        address: 'Dirección de prueba...',
+      });
+
+      const data: CreateClientDto = {
+        first_name: 'David',
+        last_name: 'Gomez',
+        email: 'Stiven@gmail.com',
+        cell_phone_number: '3146652134',
+        address: 'Dirección de prueba...',
+      };
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/clients/create')
+        .send(data)
+        .expect(400);
     });
   });
 
@@ -113,19 +169,6 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.rows.length).toEqual(2);
     });
   });
-
-  // TODO: Implementar prueba de GET /clients/sales/all
-  // describe('clients/sales/all (GET)', () => {
-  //   it('Should get all clients with sales', async () => {
-  //     // Crear un cliente con ventas de prueba
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/clients/sales/all')
-  //       .expect(200);
-  //     console.log(response.body);
-  //     expect(response.body.rows.length).toBeGreaterThan(1);
-  //   });
-  // });
 
   describe('clients/one/:id (GET)', () => {
     it('Should get one client', async () => {
@@ -247,5 +290,6 @@ describe('ClientsController (e2e)', () => {
     });
   });
 
+  // TODO: Implementar prueba de GET /clients/sales/all
   // TODO: Implementar prueba de GET top clients by sales
 });

@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PersonalInformation } from './entities/personal-information.entity';
-import { TypeOrmErrorHandlerService } from './services/typeorm-error-handler.service';
+import { HandlerErrorService } from './services/handler-error.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([PersonalInformation])],
-  providers: [TypeOrmErrorHandlerService],
-  exports: [TypeOrmModule, TypeOrmErrorHandlerService],
+  providers: [HandlerErrorService],
+  exports: [TypeOrmModule, HandlerErrorService],
 })
 export class CommonModule {}

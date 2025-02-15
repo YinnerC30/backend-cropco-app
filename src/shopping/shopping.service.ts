@@ -383,6 +383,6 @@ export class ShoppingService {
 
     const docDefinition = getShoppingReport({ data: shopping });
 
-    return this.printerService.createPdf(docDefinition);
+    return this.printerService.createPdf({docDefinition});
   }
 }

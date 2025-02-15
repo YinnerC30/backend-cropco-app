@@ -228,7 +228,7 @@ export class WorkService {
   async exportWorkToPDF(id: string) {
     const work = await this.findOne(id);
     const docDefinition = getWorkReport({ data: work });
-    return this.printerService.createPdf(docDefinition);
+    return this.printerService.createPdf({docDefinition});
   }
 
   async findTotalWorkInYear({

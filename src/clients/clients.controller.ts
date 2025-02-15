@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   Query,
-  Res,
+  Res
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -19,16 +19,14 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Response } from 'express';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { PathsController } from 'src/common/interfaces/PathsController';
 import { QueryParams } from '../common/dto/QueryParams';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
-import { PathsController } from 'src/common/interfaces/PathsController';
-import { Response } from 'express';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { Auth } from 'src/auth/decorators/auth.decorator';
-import { QueryForYear } from 'src/common/dto/QueryForYear';
 
 export const pathsClientsController: PathsController = {
   createClient: {

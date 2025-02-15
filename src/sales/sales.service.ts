@@ -345,7 +345,7 @@ export class SalesService {
 
     const docDefinition = getSaleReport({ data: sale });
 
-    return this.printerService.createPdf(docDefinition);
+    return this.printerService.createPdf({docDefinition});
   }
 
   async findTotalSalesInYear({

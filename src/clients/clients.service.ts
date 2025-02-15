@@ -1,13 +1,15 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryForYear } from 'src/common/dto/QueryForYear';
 import { QueryParams } from 'src/common/dto/QueryParams';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { TypeOrmErrorHandlerService } from 'src/common/services/typeorm-error-handler.service';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { PrinterService } from 'src/printer/printer.service';
 import { ILike, MoreThan, Repository } from 'typeorm';
 import { CreateClientDto } from './dto/create-client.dto';
@@ -17,20 +19,25 @@ import { getClientsReport } from './reports/get-all-clients.report';
 
 @Injectable()
 export class ClientsService {
+  private readonly logger = new Logger('ClientsService'); // Logger personalizado
+
   constructor(
     @InjectRepository(Client)
     private readonly clientRepository: Repository<Client>,
     private readonly printerService: PrinterService,
-    private readonly typeOrmErrorHandler: TypeOrmErrorHandlerService,
-  ) {}
-
+    private readonly handlerError: HandlerErrorService, // Inyecta HandlerErrorService
+  ) {
+    // Proporciona el Logger personalizado a HandlerErrorService
+    this.handlerError.setLogger(this.logger);
+  }
   async create(createClientDto: CreateClientDto) {
     try {
       const client = this.clientRepository.create(createClientDto);
       await this.clientRepository.save(client);
       return client;
     } catch (error) {
-      this.typeOrmErrorHandler.handle(error);
+      console.log(error);
+      this.handlerError.handle(error);
     }
   }
 
@@ -98,7 +105,7 @@ export class ClientsService {
       await this.clientRepository.update(id, updateClientDto);
       return await this.findOne(id);
     } catch (error) {
-      this.typeOrmErrorHandler.handle(error);
+      this.handlerError.handle(error);
     }
   }
 
@@ -119,15 +126,18 @@ export class ClientsService {
     try {
       await this.clientRepository.delete({});
     } catch (error) {
-      this.typeOrmErrorHandler.handle(error);
+      this.handlerError.handle(error);
     }
   }
 
   async exportAllClients() {
     const clients = await this.clientRepository.find();
     const docDefinition = getClientsReport({ clients });
-    const pdfDoc = this.printerService.createPdf(docDefinition);
-    pdfDoc.info.Title = 'Listado de clientes';
+    const pdfDoc = this.printerService.createPdf({
+      title: 'Listado de clientes',
+      docDefinition,
+    });
+    // pdfDoc.info.Title = 'Listado de clientes';
     return pdfDoc;
   }
 

@@ -257,6 +257,6 @@ export class PaymentsService {
 
     const docDefinition = getPaymentReport({ data: payment });
 
-    return this.printerService.createPdf(docDefinition);
+    return this.printerService.createPdf({docDefinition});
   }
 }

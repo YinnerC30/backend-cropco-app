@@ -57,16 +57,25 @@ const customTableLayouts: Record<string, CustomTableLayout> = {
   },
 };
 
+interface CreatePdfProps {
+  title?: string;
+  docDefinition: TDocumentDefinitions;
+  options?: {
+    tableLayouts: Record<string, CustomTableLayout>;
+  };
+}
+
 @Injectable()
 export class PrinterService {
   private printer = new PdfPrinter(fonts);
 
-  createPdf(
-    docDefinition: TDocumentDefinitions,
-    options: BufferOptions = {
-      tableLayouts: customTableLayouts,
-    },
-  ): PDFKit.PDFDocument {
-    return this.printer.createPdfKitDocument(docDefinition, options);
+  createPdf({
+    title = '',
+    docDefinition,
+    options = { tableLayouts: customTableLayouts },
+  }: CreatePdfProps): PDFKit.PDFDocument {
+    const document = this.printer.createPdfKitDocument(docDefinition, options);
+    document.info.Title = title;
+    return document;
   }
 }

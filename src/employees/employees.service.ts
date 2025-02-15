@@ -45,7 +45,7 @@ export class EmployeesService {
       employeeWorkSchedule: 'Lunes a Viernes',
       employerCompany: 'Cropco Corp.',
     });
-    const doc = this.printerService.createPdf(docDefinition);
+    const doc = this.printerService.createPdf({docDefinition});
     return doc;
   }
 
