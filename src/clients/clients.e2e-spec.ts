@@ -214,24 +214,48 @@ describe('ClientsController (e2e)', () => {
     });
   });
 
-  // describe('clients/one/:id (GET)', () => {
-  //   it('Should get one client', async () => {
-  //     // Crear un cliente de prueba
-  //     const { id } = await createTestClient({
-  //       first_name: 'John 3',
-  //       last_name: 'Doe',
-  //       email: 'john.doe3@example.com',
-  //       cell_phone_number: '3007890123',
-  //       address: '123 Main St',
-  //     });
+  describe('clients/one/:id (GET)', () => {
+    it('Should get one client', async () => {
+      // Crear un cliente de prueba
+      const { id } = await createTestClient({
+        first_name: 'John 3',
+        last_name: 'Doe',
+        email: 'john.doe3@example.com',
+        cell_phone_number: '3007890123',
+        address: '123 Main St',
+      });
 
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get(`/clients/one/${id}`)
-  //       .expect(200);
-  //     expect(response.body).toHaveProperty('id');
-  //   });
-  // });
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/clients/one/${id}`)
+        .expect(200);
+      expect(response.body).toHaveProperty('id');
+    });
+
+    it('Should throw exception for sending an invalid ID.', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get(`/clients/one/1234`)
+        .expect(400);
+      expect(body.message).toEqual('Validation failed (uuid is expected)');
+    });
+    it('Should throw exception for not finding client by ID', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get(`/clients/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .expect(404);
+      expect(body.message).toEqual(
+        'Client with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+      );
+    });
+    it('Should throw exception for not sending an ID', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get(`/clients/one/`)
+        .expect(404);
+      expect(body.error).toEqual('Not Found');
+    });
+  });
 
   // describe('clients/update/one/:id (PATCH)', () => {
   //   it('Should update one client', async () => {
