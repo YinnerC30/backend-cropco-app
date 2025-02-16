@@ -72,7 +72,7 @@ export class ClientsService {
       current_row_count: clients.length,
       total_page_count: all_records ? 1 : Math.ceil(count / limit),
       current_page_count: all_records ? 1 : offset + 1,
-      clients,
+      records: clients,
     };
   }
 
@@ -111,18 +111,6 @@ export class ClientsService {
     }
   }
 
-  async remove(id: string) {
-    const client = await this.findOne(id);
-
-    if (client.sales_detail.some((record) => record.is_receivable === true)) {
-      throw new ConflictException(
-        `The client ${client.first_name} ${client.last_name} has sales receivables`,
-      );
-    }
-
-    await this.clientRepository.softRemove(client);
-  }
-
   async deleteAllClients() {
     // INFO: Solo ejecutar en entorno de desarrollo
     try {
@@ -142,11 +130,32 @@ export class ClientsService {
     return pdfDoc;
   }
 
-  // TODO: Cambiar por transaction
-  async removeBulk(removeBulkClientsDto: RemoveBulkRecordsDto<Client>) {
-    for (const { id } of removeBulkClientsDto.recordsIds) {
-      await this.remove(id);
+  async remove(id: string) {
+    const client = await this.findOne(id);
+
+    if (client.sales_detail.some((record) => record.is_receivable === true)) {
+      throw new ConflictException(
+        `The client ${client.first_name} ${client.last_name} has sales receivables`,
+      );
     }
+
+    await this.clientRepository.softRemove(client);
+  }
+
+  async removeBulk(removeBulkClientsDto: RemoveBulkRecordsDto<Client>) {
+    const success: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+
+    for (const { id } of removeBulkClientsDto.recordsIds) {
+      try {
+        await this.remove(id); // Intenta eliminar el registro
+        success.push(id);
+      } catch (error) {
+        failed.push({ id, error: error.message }); // Registra el error
+      }
+    }
+
+    return { success, failed }; // Retorna un resumen de las operaciones
   }
 
   async findTopClientsInSales({

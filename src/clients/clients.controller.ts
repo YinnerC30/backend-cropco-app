@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   Query,
-  Res
+  Res,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -204,11 +204,14 @@ export class ClientsController {
   }
 
   @Delete(removeClients.path)
-  @ApiResponse({
-    status: 200,
-    description: 'Empleados eliminados exitosamente',
-  })
-  removeBulk(@Body() removeBulkClientsDto: RemoveBulkRecordsDto<Client>) {
-    return this.clientsService.removeBulk(removeBulkClientsDto);
+  async removeBulk(
+    @Body() removeBulkClientsDto: RemoveBulkRecordsDto<Client>,
+    @Res() response: Response,
+  ) {
+    const result = await this.clientsService.removeBulk(removeBulkClientsDto);
+    if (result.failed && result.failed.length > 0) {
+      return response.status(207).json(result);
+    }
+    return response.status(200).json(result);
   }
 }

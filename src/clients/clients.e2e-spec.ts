@@ -408,6 +408,17 @@ describe('ClientsController (e2e)', () => {
       expect(deletedClient2).toBeNull();
       expect(remainingClient3).toBeDefined();
     });
+
+    it('You should throw exception when trying to send an empty array.', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete('/clients/remove/bulk')
+        .send({ recordsIds: [] })
+        .expect(400);
+      expect(body.message[0]).toEqual('recordsIds should not be empty');
+    });
+
+    // TODO: Implementar prueba de eliminación de clientes con ventas con pago pendiente
   });
 
   // TODO: Implementar prueba de GET /clients/sales/all

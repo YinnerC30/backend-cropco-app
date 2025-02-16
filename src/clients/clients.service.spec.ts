@@ -97,7 +97,7 @@ describe('ClientsService', () => {
         current_row_count: clients.length,
         total_page_count: 1,
         current_page_count: 1,
-        clients,
+        records: clients,
       });
     });
 
