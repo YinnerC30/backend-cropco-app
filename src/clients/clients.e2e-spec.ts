@@ -257,24 +257,62 @@ describe('ClientsController (e2e)', () => {
     });
   });
 
-  // describe('clients/update/one/:id (PATCH)', () => {
-  //   it('Should update one client', async () => {
-  //     const { id } = await createTestClient({
-  //       first_name: 'John 3.5',
-  //       last_name: 'Doe',
-  //       email: 'john.doe3.5@example.com',
-  //       cell_phone_number: '3007890123',
-  //       address: '123 Main St',
-  //     });
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .patch(`/clients/update/one/${id}`)
-  //       .send({ first_name: 'John 4' })
-  //       .expect(200);
+  describe('clients/update/one/:id (PATCH)', () => {
+    it('Should update one client', async () => {
+      const { id } = await createTestClient({
+        first_name: 'John 3.5',
+        last_name: 'Doe',
+        email: 'john.doe3.5@example.com',
+        cell_phone_number: '3007890123',
+        address: '123 Main St',
+      });
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/clients/update/one/${id}`)
+        .send({ first_name: 'John 4', last_name: 'Doe 4' })
+        .expect(200);
 
-  //     expect(body.first_name).toEqual('John 4');
-  //   });
-  // });
+      expect(body.first_name).toEqual('John 4');
+      expect(body.last_name).toEqual('Doe 4');
+    });
+
+    it('Should throw exception for not finding client to update', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/clients/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .send({ first_name: 'John 4' })
+        .expect(404);
+      expect(body.message).toEqual(
+        'Client with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+      );
+    });
+
+    it('Should throw exception for sending incorrect properties', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/clients/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .send({ year: 2025 })
+        .expect(400);
+      expect(body.message).toContain('property year should not exist');
+    });
+    it('It should throw exception for trying to update the email for one that is in use.', async () => {
+      const { id } = await createTestClient({
+        first_name: 'Alan',
+        last_name: 'Demo',
+        email: 'alandemo@example.com',
+        cell_phone_number: '3007890123',
+        address: '123 Main St',
+      });
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/clients/update/one/${id}`)
+        .send({ email: 'john.doe3.5@example.com' })
+        .expect(400);
+      expect(body.message).toEqual(
+        'Unique constraint violation, Key (email)=(john.doe3.5@example.com) already exists.',
+      );
+    });
+  });
   // describe('clients/remove/one/:id (DELETE)', () => {
   //   it('Should delete one client', async () => {
   //     const { id } = await createTestClient({
