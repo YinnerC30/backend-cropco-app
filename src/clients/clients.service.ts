@@ -139,7 +139,6 @@ export class ClientsService {
       title: 'Listado de clientes',
       docDefinition,
     });
-    // pdfDoc.info.Title = 'Listado de clientes';
     return pdfDoc;
   }
 

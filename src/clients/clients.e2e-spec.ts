@@ -348,65 +348,67 @@ describe('ClientsController (e2e)', () => {
     // TODO: Implementar prueba de eliminación de cliente con ventas con pago pendiente
   });
 
-  // describe('clients/export/all/pdf (GET)', () => {
-  //   it('Should export all clients in PDF format', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .get('/clients/export/all/pdf')
-  //       .expect(200);
-  //     expect(body).toBeDefined();
-  //   });
-  // });
+  describe('clients/export/all/pdf (GET)', () => {
+    it('Should export all clients in PDF format', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/clients/export/all/pdf')
+        .expect(200);
+      expect(response.body).toBeDefined();
+      expect(response.headers['content-type']).toEqual('application/pdf');
+      expect(response.body).toBeInstanceOf(Buffer);
+    });
+  });
 
-  // describe('clients/remove/bulk (DELETE)', () => {
-  //   it('Should delete clients bulk', async () => {
-  //     // Crear clientes de prueba
-  //     const [client1, client2, client3] = await Promise.all([
-  //       createTestClient({
-  //         first_name: 'John 2',
-  //         last_name: 'Doe',
-  //         email: 'john.doefg2@example.com',
-  //         cell_phone_number: '3007890123',
-  //         address: '123 Main St',
-  //       }),
-  //       createTestClient({
-  //         first_name: 'Jane4 2',
-  //         last_name: 'Smith',
-  //         email: 'jane.smith32@example.com',
-  //         cell_phone_number: '3007890123',
-  //         address: '456 Elm St',
-  //       }),
-  //       createTestClient({
-  //         first_name: 'Jane 3',
-  //         last_name: 'Smith',
-  //         email: 'jane.smith35@example.com',
-  //         cell_phone_number: '3007890123',
-  //         address: '456 Elm St',
-  //       }),
-  //     ]);
+  describe('clients/remove/bulk (DELETE)', () => {
+    it('Should delete clients bulk', async () => {
+      // Crear clientes de prueba
+      const [client1, client2, client3] = await Promise.all([
+        createTestClient({
+          first_name: 'John 2',
+          last_name: 'Doe',
+          email: 'john.doefg2@example.com',
+          cell_phone_number: '3007890123',
+          address: '123 Main St',
+        }),
+        createTestClient({
+          first_name: 'Jane4 2',
+          last_name: 'Smith',
+          email: 'jane.smith32@example.com',
+          cell_phone_number: '3007890123',
+          address: '456 Elm St',
+        }),
+        createTestClient({
+          first_name: 'Jane 3',
+          last_name: 'Smith',
+          email: 'jane.smith35@example.com',
+          cell_phone_number: '3007890123',
+          address: '456 Elm St',
+        }),
+      ]);
 
-  //     const bulkData: RemoveBulkRecordsDto<Client> = {
-  //       recordsIds: [{ id: client1.id }, { id: client2.id }],
-  //     };
+      const bulkData: RemoveBulkRecordsDto<Client> = {
+        recordsIds: [{ id: client1.id }, { id: client2.id }],
+      };
 
-  //     await request
-  //       .default(app.getHttpServer())
-  //       .delete('/clients/remove/bulk')
-  //       .send(bulkData)
-  //       .expect(200);
+      await request
+        .default(app.getHttpServer())
+        .delete('/clients/remove/bulk')
+        .send(bulkData)
+        .expect(200);
 
-  //     const [deletedClient1, deletedClient2, remainingClient3] =
-  //       await Promise.all([
-  //         clientRepository.findOne({ where: { id: client1.id } }),
-  //         clientRepository.findOne({ where: { id: client2.id } }),
-  //         clientRepository.findOne({ where: { id: client3.id } }),
-  //       ]);
+      const [deletedClient1, deletedClient2, remainingClient3] =
+        await Promise.all([
+          clientRepository.findOne({ where: { id: client1.id } }),
+          clientRepository.findOne({ where: { id: client2.id } }),
+          clientRepository.findOne({ where: { id: client3.id } }),
+        ]);
 
-  //     expect(deletedClient1).toBeNull();
-  //     expect(deletedClient2).toBeNull();
-  //     expect(remainingClient3).toBeDefined();
-  //   });
-  // });
+      expect(deletedClient1).toBeNull();
+      expect(deletedClient2).toBeNull();
+      expect(remainingClient3).toBeDefined();
+    });
+  });
 
   // TODO: Implementar prueba de GET /clients/sales/all
   // TODO: Implementar prueba de GET top clients by sales
