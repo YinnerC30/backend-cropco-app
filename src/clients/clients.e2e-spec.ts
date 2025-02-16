@@ -313,28 +313,40 @@ describe('ClientsController (e2e)', () => {
       );
     });
   });
-  // describe('clients/remove/one/:id (DELETE)', () => {
-  //   it('Should delete one client', async () => {
-  //     const { id } = await createTestClient({
-  //       first_name: 'Ana 4.5',
-  //       last_name: 'Doe',
-  //       email: 'Ana.doe4.5@example.com',
-  //       cell_phone_number: '3007890123',
-  //       address: '123 Main St',
-  //     });
 
-  //     await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/clients/remove/one/${id}`)
-  //       .expect(200);
+  describe('clients/remove/one/:id (DELETE)', () => {
+    it('Should delete one client', async () => {
+      const { id } = await createTestClient({
+        first_name: 'Ana 4.5',
+        last_name: 'Doe',
+        email: 'Ana.doe4.5@example.com',
+        cell_phone_number: '3007890123',
+        address: '123 Main St',
+      });
 
-  //     const { notFound } = await request
-  //       .default(app.getHttpServer())
-  //       .get(`/clients/one/${id}`)
-  //       .expect(404);
-  //     expect(notFound).toBe(true);
-  //   });
-  // });
+      await request
+        .default(app.getHttpServer())
+        .delete(`/clients/remove/one/${id}`)
+        .expect(200);
+
+      const { notFound } = await request
+        .default(app.getHttpServer())
+        .get(`/clients/one/${id}`)
+        .expect(404);
+      expect(notFound).toBe(true);
+    });
+    it('You should throw exception for trying to delete a client that does not exist.', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/clients/remove/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .expect(404);
+      expect(body.message).toEqual(
+        'Client with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+      );
+    });
+
+    // TODO: Implementar prueba de eliminación de cliente con ventas con pago pendiente
+  });
 
   // describe('clients/export/all/pdf (GET)', () => {
   //   it('Should export all clients in PDF format', async () => {
