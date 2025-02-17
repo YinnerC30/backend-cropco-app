@@ -1,44 +1,39 @@
 import {
   ForbiddenException,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { User } from 'src/users/entities/user.entity';
-import { IsNull, Not, Repository } from 'typeorm';
-import { LoginUserDto } from './dto/login-user.dto';
-import { JwtPayload } from './interfaces/jwt-payload.interface';
-import { CheckAuthStatusDto } from './dto/check-status.dto';
-import { Role } from './entities/role.entity';
-import { Module } from './entities/module.entity';
 import { pathsClientsController } from 'src/clients/clients.controller';
+import { pathsConsumptionController } from 'src/consumptions/consumptions.controller';
 import { pathsCropsController } from 'src/crops/crops.controller';
+import { pathsDashboardController } from 'src/dashboard/dashboard.controller';
 import { pathsEmployeesController } from 'src/employees/employees.controller';
 import { pathsHarvestsController } from 'src/harvest/harvest.controller';
 import { pathsPaymentsController } from 'src/payments/payments.controller';
 import { pathsSalesController } from 'src/sales/sales.controller';
+import { pathsShoppingController } from 'src/shopping/shopping.controller';
 import { pathsSuppliersController } from 'src/suppliers/suppliers.controller';
 import { pathsSuppliesController } from 'src/supplies/supplies.controller';
-import { pathsUsersController } from 'src/users/users.controller';
-import { pathsWorksController } from 'src/work/work.controller';
-import { ModuleActions } from './entities/module-actions.entity';
-import { pathsAuthController } from './auth.controller';
-import { UsersService } from 'src/users/users.service';
 import { UserActionDto } from 'src/users/dto/user-action.dto';
-import { pathsConsumptionController } from 'src/consumptions/consumptions.controller';
-import { pathsShoppingController } from 'src/shopping/shopping.controller';
-import { pathsDashboardController } from 'src/dashboard/dashboard.controller';
+import { User } from 'src/users/entities/user.entity';
+import { pathsUsersController } from 'src/users/users.controller';
+import { UsersService } from 'src/users/users.service';
+import { pathsWorksController } from 'src/work/work.controller';
+import { Repository } from 'typeorm';
+import { pathsAuthController } from './auth.controller';
+import { LoginUserDto } from './dto/login-user.dto';
+import { ModuleActions } from './entities/module-actions.entity';
+import { Module } from './entities/module.entity';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
-    @InjectRepository(Role)
-    private readonly rolesRepository: Repository<Role>,
     @InjectRepository(Module)
     private readonly modulesRepository: Repository<Module>,
     @InjectRepository(ModuleActions)
