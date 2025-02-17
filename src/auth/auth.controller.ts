@@ -68,15 +68,15 @@ export class AuthController {
     return this.authService.login(loginUserDto);
   }
 
-  @Patch(renewToken.path)
   @Auth()
+  @Patch(renewToken.path)
   @HttpCode(200)
   renewToken(@GetToken() token: string) {
     return this.authService.renewToken(token);
   }
 
-  @Get(checkAuthStatus.path)
   @Auth()
+  @Get(checkAuthStatus.path)
   checkAuthStatus(@GetToken() token: string) {
     return this.authService.checkAuthStatus(token);
   }

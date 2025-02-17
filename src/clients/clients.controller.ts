@@ -27,6 +27,7 @@ import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 export const pathsClientsController: PathsController = {
   createClient: {
@@ -82,7 +83,7 @@ const {
   exportClients,
 } = pathsClientsController;
 
-// @Auth()
+@Auth()
 @ApiTags('Clients')
 @Controller('clients')
 export class ClientsController {

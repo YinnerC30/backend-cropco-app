@@ -1,8 +1,7 @@
 import {
   createParamDecorator,
   ExecutionContext,
-  ForbiddenException,
-  UnauthorizedException,
+  UnauthorizedException
 } from '@nestjs/common';
 
 export const GetToken = createParamDecorator(

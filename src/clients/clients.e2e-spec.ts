@@ -70,10 +70,6 @@ describe('ClientsController (e2e)', () => {
     await clientRepository.delete({});
   });
 
-  // afterEach(async () => {
-  //   await clientRepository.delete({});
-  // });
-
   afterAll(async () => {
     await app.close();
   });

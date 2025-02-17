@@ -20,6 +20,8 @@ export class UserPermitsGuard implements CanActivate {
 
     // Obtener usuario
     const userRequest = req.user as User as any;
+
+    if (!userRequest) throw new BadRequestException('User not found');
     // Obtener path solicitado
     const pathEndPoint = req.route.path;
 
@@ -33,8 +35,6 @@ export class UserPermitsGuard implements CanActivate {
     const resultValidation = actionsUser.includes(pathEndPoint);
 
     if (resultValidation) return true;
-
-    if (!userRequest) throw new BadRequestException('User not found');
 
     throw new ForbiddenException(
       `User ${userRequest.first_name} need a permit for this action`,
