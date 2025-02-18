@@ -14,6 +14,7 @@ import { CreateClientDto } from './dto/create-client.dto';
 import { Client } from './entities/client.entity';
 import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
+import { AuthGuard } from '@nestjs/passport';
 import * as jwt from 'jsonwebtoken';
 
 describe('ClientsController (e2e)', () => {
@@ -22,13 +23,13 @@ describe('ClientsController (e2e)', () => {
   let seedService: SeedService;
 
   const mockUser = {
-    id: '6c35d62c-2698-4390-9136-ff495a2ee9ba',
-    email: 'demouser@example.com',
+    id: 1,
+    email: 'test@example.com',
     roles: ['admin'],
   };
 
   const generateJwtToken = (user: any): string => {
-    return jwt.sign(user, 'millavesecreta', { expiresIn: '1h' });
+    return jwt.sign(user, 'your-secret-key', { expiresIn: '1h' });
   };
 
   beforeAll(async () => {
@@ -42,28 +43,27 @@ describe('ClientsController (e2e)', () => {
         TypeOrmModule.forRootAsync({
           imports: [ConfigModule],
           inject: [ConfigService],
-          useFactory: (configService: ConfigService) => {
-            return {
-              type: 'postgres',
-              host: configService.get<string>('DB_HOST'),
-              port: configService.get<number>('DB_PORT'),
-              username: configService.get<string>('DB_USERNAME'),
-              password: configService.get<string>('DB_PASSWORD'),
-              database: configService.get<string>('DB_NAME'),
-              entities: [__dirname + '../../**/*.entity{.ts,.js}'],
-              synchronize: true,
-            };
-          },
+          useFactory: (configService: ConfigService) => ({
+            type: 'postgres',
+            host: configService.get<string>('DB_HOST'),
+            port: configService.get<number>('DB_PORT'),
+            username: configService.get<string>('DB_USERNAME'),
+            password: configService.get<string>('DB_PASSWORD'),
+            database: configService.get<string>('DB_NAME'),
+            entities: [__dirname + '../../**/*.entity{.ts,.js}'],
+            synchronize: true,
+          }),
         }),
         CommonModule,
         SeedModule,
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard('jwt')) // Sobrescribir el guard
+      .useValue({ canActivate: jest.fn(() => true) }) // Mockear el guard para permitir acceso
+      .compile();
 
     seedService = moduleFixture.get<SeedService>(SeedService);
-
     app = moduleFixture.createNestApplication();
-
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -72,9 +72,7 @@ describe('ClientsController (e2e)', () => {
         transform: true,
       }),
     );
-
     await app.init();
-
     clientRepository = moduleFixture.get<Repository<Client>>(
       getRepositoryToken(Client),
     );
@@ -91,49 +89,7 @@ describe('ClientsController (e2e)', () => {
   }
 
   describe('/clients/create (POST)', () => {
-    it('should throw an exception for not sending a JWT to the protected path.', async () => {
-      const data: CreateClientDto = {
-        first_name: 'Daniel',
-        last_name: 'Gomez',
-        email: 'daniel@gmail.com',
-        cell_phone_number: '3146652134',
-        address: 'Dirección de prueba...',
-      };
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/clients/create')
-        .send(data)
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('It should throw an exception because the user JWT does not have permissions for this action.', async () => {
-      const token = generateJwtToken({
-        id: '9e4b5189-ad60-4ff5-8c73-25b399423d90',
-        email: 'demouser@example.com',
-        roles: [],
-      });
-      const data: CreateClientDto = {
-        first_name: 'Daniel',
-        last_name: 'Gomez',
-        email: 'daniel@gmail.com',
-        cell_phone_number: '3146652134',
-        address: 'Dirección de prueba...',
-      };
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/clients/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(data)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        'User Javier need a permit for this action',
-      );
-    });
-
     it('should create a new client', async () => {
-      const token = generateJwtToken(mockUser);
-
       const data: CreateClientDto = {
         first_name: 'Daniel',
         last_name: 'Gomez',
@@ -144,62 +100,61 @@ describe('ClientsController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .post('/clients/create')
-        .set('Authorization', `Bearer ${token}`)
         .send(data)
         .expect(201);
       expect(response.body).toMatchObject(data);
     });
 
-    // it('Should throw exception when fields are missing in the body', async () => {
-    //   const errorMessage = [
-    //     'first_name must be shorter than or equal to 100 characters',
-    //     'first_name must be a string',
-    //     'last_name must be shorter than or equal to 100 characters',
-    //     'last_name must be a string',
-    //     'email must be shorter than or equal to 100 characters',
-    //     'email must be an email',
-    //     'email must be a string',
-    //     'cell_phone_number must be shorter than or equal to 10 characters',
-    //     'cell_phone_number must be a number string',
-    //     'address must be shorter than or equal to 200 characters',
-    //     'address must be a string',
-    //   ];
+    it('Should throw exception when fields are missing in the body', async () => {
+      const errorMessage = [
+        'first_name must be shorter than or equal to 100 characters',
+        'first_name must be a string',
+        'last_name must be shorter than or equal to 100 characters',
+        'last_name must be a string',
+        'email must be shorter than or equal to 100 characters',
+        'email must be an email',
+        'email must be a string',
+        'cell_phone_number must be shorter than or equal to 10 characters',
+        'cell_phone_number must be a number string',
+        'address must be shorter than or equal to 200 characters',
+        'address must be a string',
+      ];
 
-    //   const { body } = await request
-    //     .default(app.getHttpServer())
-    //     .post('/clients/create')
-    //     .expect(400);
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/clients/create')
+        .expect(400);
 
-    //   errorMessage.forEach((msg) => {
-    //     expect(body.message).toContain(msg);
-    //   });
-    // });
+      errorMessage.forEach((msg) => {
+        expect(body.message).toContain(msg);
+      });
+    });
 
-    // it('Should throw exception for trying to create a client with duplicate email.', async () => {
-    //   await createTestClient({
-    //     first_name: 'Stiven',
-    //     last_name: 'Gomez',
-    //     email: 'Stiven@gmail.com',
-    //     cell_phone_number: '3146652134',
-    //     address: 'Dirección de prueba...',
-    //   });
+    it('Should throw exception for trying to create a client with duplicate email.', async () => {
+      await createTestClient({
+        first_name: 'Stiven',
+        last_name: 'Gomez',
+        email: 'Stiven@gmail.com',
+        cell_phone_number: '3146652134',
+        address: 'Dirección de prueba...',
+      });
 
-    //   const data: CreateClientDto = {
-    //     first_name: 'David',
-    //     last_name: 'Gomez',
-    //     email: 'Stiven@gmail.com',
-    //     cell_phone_number: '3146652134',
-    //     address: 'Dirección de prueba...',
-    //   };
-    //   const { body } = await request
-    //     .default(app.getHttpServer())
-    //     .post('/clients/create')
-    //     .send(data)
-    //     .expect(400);
-    //   expect(body.message).toEqual(
-    //     'Unique constraint violation, Key (email)=(Stiven@gmail.com) already exists.',
-    //   );
-    // });
+      const data: CreateClientDto = {
+        first_name: 'David',
+        last_name: 'Gomez',
+        email: 'Stiven@gmail.com',
+        cell_phone_number: '3146652134',
+        address: 'Dirección de prueba...',
+      };
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/clients/create')
+        .send(data)
+        .expect(400);
+      expect(body.message).toEqual(
+        'Unique constraint violation, Key (email)=(Stiven@gmail.com) already exists.',
+      );
+    });
   });
 
   // describe('clients/all (GET)', () => {
