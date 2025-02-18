@@ -15,7 +15,7 @@ export class ModuleActions {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', default: 'none' })
+  @Column({ type: 'varchar', default: 'none', unique: true })
   name: string;
 
   @Column({ type: 'varchar' })
@@ -37,5 +37,5 @@ export class ModuleActions {
   users_actions: UserActions[];
 
   @OneToMany(() => RoleActions, (roleActions) => roleActions.action)
-  rols_actions: RoleActions[];
+  roles_actions: RoleActions[];
 }

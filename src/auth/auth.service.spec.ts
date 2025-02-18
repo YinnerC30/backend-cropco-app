@@ -244,7 +244,7 @@ describe('AuthService', () => {
         Promise.resolve(dto),
       );
 
-      await service.createModuleWithActions();
+      await service.createModulesWithActions();
 
       expect(mockModuleRepository.delete).toHaveBeenCalledWith({});
       expect(mockModuleRepository.create).toHaveBeenCalled();

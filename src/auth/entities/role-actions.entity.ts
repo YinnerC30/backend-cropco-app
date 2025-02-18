@@ -11,6 +11,6 @@ export class RoleActions {
   @ManyToOne(() => Role, (role) => role.actions)
   rol: Role;
 
-  @ManyToOne(() => ModuleActions, (moduleActions) => moduleActions.rols_actions)
+  @ManyToOne(() => ModuleActions, (moduleActions) => moduleActions.roles_actions)
   action: ModuleActions;
 }

@@ -83,7 +83,7 @@ describe('AuthController', () => {
 
       const result = await authController.createModuleWithActions();
 
-      expect(authService.createModuleWithActions).toHaveBeenCalled();
+      expect(authService.createModulesWithActions).toHaveBeenCalled();
       expect(result).toEqual(mockResult);
     });
   });

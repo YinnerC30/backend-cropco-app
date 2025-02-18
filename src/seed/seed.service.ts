@@ -57,8 +57,8 @@ export class SeedService {
   ) {}
 
   async runSeed() {
-    await this.deleteTables();
-    await this.authService.createModuleWithActions();
+    await this.clearDatabase();
+    await this.authService.createModulesWithActions();
     await this.authService.convertToAdminUserSeed();
     await this.insertNewUsers();
     await this.insertNewClients();
@@ -77,7 +77,7 @@ export class SeedService {
     return 'SEED EXECUTED';
   }
 
-  private async deleteTables() {
+   async clearDatabase() {
     await this.usersService.deleteAllUsers();
     await this.clientsService.deleteAllClients();
     await this.suppliesService.deleteAllStockSupplies();

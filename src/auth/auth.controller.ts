@@ -82,7 +82,7 @@ export class AuthController {
   }
   @Get(createModuleActions.path)
   createModuleWithActions() {
-    return this.authService.createModuleWithActions();
+    return this.authService.createModulesWithActions();
   }
 
   @Get(findAllModules.path)

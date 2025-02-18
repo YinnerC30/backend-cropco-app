@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
@@ -28,12 +29,15 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { ModuleActions } from './entities/module-actions.entity';
 import { Module } from './entities/module.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { UserActions } from 'src/users/entities/user-actions.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    @InjectRepository(UserActions)
+    private readonly userActionsRepository: Repository<UserActions>,
     @InjectRepository(Module)
     private readonly modulesRepository: Repository<Module>,
     @InjectRepository(ModuleActions)
@@ -105,18 +109,18 @@ export class AuthService {
     return {
       ...user,
       modules: userPermits,
-      token: this.getJwtToken({ id: user.id }),
+      token: this.generateJwtToken({ id: user.id }),
     };
   }
 
-  private getJwtToken(payload: JwtPayload): string {
+  generateJwtToken(payload: JwtPayload): string {
     const token = this.jwtService.sign(payload);
     return token;
   }
 
   async renewToken(token: string): Promise<{ token: string }> {
     const { id } = this.jwtService.verify(token);
-    const newToken = this.jwtService.sign({ id });
+    const newToken = this.generateJwtToken({ id });
     return {
       token: newToken,
     };
@@ -140,7 +144,7 @@ export class AuthService {
     }
   }
 
-  async createModuleWithActions(): Promise<void> {
+  async createModulesWithActions(): Promise<void> {
     const modules = {
       auth: {
         label: 'autenticación',
@@ -247,6 +251,87 @@ export class AuthService {
     return await this.userService.update(id, { ...user, actions });
   }
 
+  async givePermissionsToModule(
+    id: string,
+    nameModule: string,
+  ): Promise<Partial<User> & { modules: Module[] }> {
+    const { modules, ...user } = await this.userService.findOne(id);
+
+    const actions = (await this.moduleActionsRepository.find({
+      select: {
+        id: true,
+      },
+      where: {
+        name: nameModule,
+      },
+    })) as UserActionDto[];
+
+    return await this.userService.update(id, { ...user, actions });
+  }
+
+  async removePermissionsToModule(
+    id: string,
+    nameModule: string,
+  ): Promise<void> {
+    await this.userService.findOne(id);
+
+    const actions = (await this.moduleActionsRepository.find({
+      select: {
+        id: true,
+      },
+      where: {
+        name: nameModule,
+      },
+    })) as UserActionDto[];
+
+    await Promise.all([
+      ...actions.map(async (action) => {
+        await this.userActionsRepository.delete({ user: { id }, action });
+      }),
+    ]);
+  }
+
+  async addPermission(userId: string, actionName: string) {
+    const user = await this.userService.findOne(userId);
+
+    const action = await this.moduleActionsRepository.findOne({
+      where: { name: actionName },
+    });
+
+    if (!action) {
+      throw new BadRequestException('Action not found');
+    }
+
+    const userHasAction = user.actions.some(
+      (userAction) => userAction.id === action.id,
+    );
+
+    if (userHasAction) {
+      return 'Ya tiene la acción';
+    }
+
+    const userAction = this.userActionsRepository.create({ user, action });
+    await this.userActionsRepository.save(userAction);
+    return 'Toco crear la acción';
+  }
+
+  async removePermission(userId: string, actionName: string) {
+    const user = await this.userService.findOne(userId);
+    const action = await this.moduleActionsRepository.findOne({
+      where: { name: actionName },
+    });
+
+    const userHasAction = user.actions.some(
+      (userAction) => userAction.id === action.id,
+    );
+
+    if (userHasAction) return;
+    await this.userActionsRepository.delete({
+      user: { id: userId },
+      id: action.id,
+    });
+  }
+
   async convertToAdminUserSeed(): Promise<
     Partial<User> & { modules: Module[] }
   > {
@@ -269,5 +354,24 @@ export class AuthService {
     })) as UserActionDto[];
 
     return await this.userService.update(user.id, { ...user, actions });
+  }
+
+  async createUserToTests(): Promise<User> {
+    const differentiator = Math.floor(Math.random() * 1000);
+    const data = {
+      first_name: `user test ${differentiator}`,
+      last_name: '',
+      email: `usertest${differentiator}@example.com`,
+      password: '123456',
+      cell_phone_number: '3001234567',
+      is_active: true,
+      actions: [],
+    };
+
+    return await this.userService.create(data);
+  }
+
+  async deleteUserToTests(id: string): Promise<void> {
+    await this.userService.remove(id);
   }
 }
