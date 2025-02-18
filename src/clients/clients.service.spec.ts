@@ -220,8 +220,6 @@ describe('ClientsService', () => {
 
       const result = await service.exportAllClients();
       expect(result).toEqual(pdfDoc);
-      console.log(result);
-      // expect(result.info.Title).toBe('Listado de clientes');
     });
   });
 
