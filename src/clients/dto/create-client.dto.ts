@@ -1,5 +1,6 @@
 import { IsEmail, IsNumberString, IsString, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsColombianPhone } from 'src/common/decorators/is-colombian-phone.decorator';
 
 export class CreateClientDto {
   @ApiProperty({
@@ -41,6 +42,7 @@ export class CreateClientDto {
   })
   @IsNumberString()
   @MaxLength(10)
+  @IsColombianPhone({ message: 'El número de celular debe ser válido para Colombia.' })
   cell_phone_number: string;
 
   @ApiProperty({
