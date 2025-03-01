@@ -10,7 +10,7 @@ describe('AuthController', () => {
     login: jest.fn(),
     renewToken: jest.fn(),
     checkAuthStatus: jest.fn(),
-    createModuleWithActions: jest.fn(),
+    createModulesWithActions: jest.fn(),
     findAllModules: jest.fn(),
     convertToAdmin: jest.fn(),
   };
@@ -79,7 +79,7 @@ describe('AuthController', () => {
     it('should call authService.createModuleWithActions and return result', async () => {
       const mockResult = 'Modules created successfully';
 
-      mockAuthService.createModuleWithActions.mockResolvedValue(mockResult);
+      mockAuthService.createModulesWithActions.mockResolvedValue(mockResult);
 
       const result = await authController.createModuleWithActions();
 

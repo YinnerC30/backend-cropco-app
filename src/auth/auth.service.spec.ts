@@ -9,6 +9,7 @@ import { ModuleActions } from './entities/module-actions.entity';
 import { UsersService } from '../users/users.service';
 import { UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { UserActions } from 'src/users/entities/user-actions.entity';
 
 jest.mock('bcrypt', () => ({
   compareSync: jest.fn(),
@@ -18,6 +19,7 @@ jest.mock('bcrypt', () => ({
 describe('AuthService', () => {
   let service: AuthService;
   let userRepository: Repository<User>;
+  let userActionsRepository: Repository<UserActions>;
   let moduleRepository: Repository<Module>;
   let moduleActionsRepository: Repository<ModuleActions>;
   let jwtService: JwtService;
@@ -25,6 +27,11 @@ describe('AuthService', () => {
 
   const mockUserRepository = {
     findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+  };
+  const mockUserActionsRepository = {
+    delete: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
   };
@@ -61,6 +68,10 @@ describe('AuthService', () => {
           useValue: mockUserRepository,
         },
         {
+          provide: getRepositoryToken(UserActions),
+          useValue: mockUserActionsRepository,
+        },
+        {
           provide: getRepositoryToken(Module),
           useValue: mockModuleRepository,
         },
@@ -81,6 +92,9 @@ describe('AuthService', () => {
 
     service = module.get<AuthService>(AuthService);
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
+    userActionsRepository = module.get<Repository<UserActions>>(
+      getRepositoryToken(UserActions),
+    );
     moduleRepository = module.get<Repository<Module>>(
       getRepositoryToken(Module),
     );
@@ -282,39 +296,6 @@ describe('AuthService', () => {
     });
   });
 
-  // describe('convertToAdmin', () => {
-  //   const userId = '1';
-  //   const mockUser = {
-  //     id: userId,
-  //     first_name: 'Test',
-  //     last_name: 'Admin',
-  //     modules: [],
-  //   };
-
-  //   const mockActions = [{ id: '1' }, { id: '2' }];
-
-  //   it('should convert a user to admin successfully', async () => {
-  //     mockUsersService.findOne.mockResolvedValue(mockUser);
-  //     mockModuleActionsRepository.find.mockResolvedValue(mockActions);
-  //     mockUsersService.update.mockResolvedValue({
-  //       ...mockUser,
-  //       actions: mockActions,
-  //     });
-
-  //     const result = await service.convertToAdmin(userId);
-
-  //     expect(mockUsersService.findOne).toHaveBeenCalledWith(userId);
-  //     expect(mockModuleActionsRepository.find).toHaveBeenCalledWith({
-  //       select: { id: true },
-  //     });
-  //     expect(mockUsersService.update).toHaveBeenCalledWith(userId, {
-  //       ...mockUser,
-  //       actions: mockActions,
-  //     });
-  //     expect(result).toEqual({ ...mockUser, actions: mockActions });
-  //   });
-  // });
-
   describe('convertToAdmin', () => {
     const userId = '1';
     const mockUser = {
@@ -326,7 +307,7 @@ describe('AuthService', () => {
     const mockActions = [{ id: '1' }, { id: '2' }];
 
     it('should convert a user to admin successfully', async () => {
-      mockUsersService.findOne.mockResolvedValue({ ...mockUser, modules: [] });
+      mockUsersService.findOne.mockResolvedValue(mockUser);
       mockModuleActionsRepository.find.mockResolvedValue(mockActions);
       mockUsersService.update.mockResolvedValue({
         ...mockUser,
@@ -340,9 +321,7 @@ describe('AuthService', () => {
         select: { id: true },
       });
       expect(mockUsersService.update).toHaveBeenCalledWith(userId, {
-        id: userId,
-        first_name: 'Test',
-        last_name: 'Admin',
+        ...mockUser,
         actions: mockActions,
       });
       expect(result).toEqual({ ...mockUser, actions: mockActions });
