@@ -61,8 +61,6 @@ export const getClientsReport = (
                 bold: true,
               },
             ],
-
-            // [{ text: 'Bold value', bold: true }, 'Val 2', 'Val 3', 'Val 4'],
           ],
         },
       },
