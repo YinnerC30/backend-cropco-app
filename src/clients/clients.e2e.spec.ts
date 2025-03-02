@@ -256,6 +256,18 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.current_row_count).toEqual(17);
       expect(response.body.total_page_count).toEqual(1);
       expect(response.body.current_page_count).toEqual(1);
+      response.body.records.forEach((client: Client) => {
+        expect(client).toHaveProperty('id');
+        expect(client).toHaveProperty('first_name');
+        expect(client).toHaveProperty('last_name');
+        expect(client).toHaveProperty('email');
+        expect(client).toHaveProperty('cell_phone_number');
+        expect(client).toHaveProperty('address');
+        expect(client).toHaveProperty('createdDate');
+        expect(client).toHaveProperty('updatedDate');
+        expect(client).toHaveProperty('deletedDate');
+        expect(client.deletedDate).toBeNull();
+      });
     });
     it('should return the specified number of clients passed by the paging arguments by the URL', async () => {
       let limit = 11;
@@ -269,6 +281,18 @@ describe('ClientsController (e2e)', () => {
       expect(response1.body.current_row_count).toEqual(limit);
       expect(response1.body.total_page_count).toEqual(2);
       expect(response1.body.current_page_count).toEqual(1);
+      response1.body.records.forEach((client: Client) => {
+        expect(client).toHaveProperty('id');
+        expect(client).toHaveProperty('first_name');
+        expect(client).toHaveProperty('last_name');
+        expect(client).toHaveProperty('email');
+        expect(client).toHaveProperty('cell_phone_number');
+        expect(client).toHaveProperty('address');
+        expect(client).toHaveProperty('createdDate');
+        expect(client).toHaveProperty('updatedDate');
+        expect(client).toHaveProperty('deletedDate');
+        expect(client.deletedDate).toBeNull();
+      });
 
       offset = 1;
       const response2 = await request
@@ -280,6 +304,18 @@ describe('ClientsController (e2e)', () => {
       expect(response2.body.current_row_count).toEqual(6);
       expect(response2.body.total_page_count).toEqual(2);
       expect(response2.body.current_page_count).toEqual(2);
+      response2.body.records.forEach((client: Client) => {
+        expect(client).toHaveProperty('id');
+        expect(client).toHaveProperty('first_name');
+        expect(client).toHaveProperty('last_name');
+        expect(client).toHaveProperty('email');
+        expect(client).toHaveProperty('cell_phone_number');
+        expect(client).toHaveProperty('address');
+        expect(client).toHaveProperty('createdDate');
+        expect(client).toHaveProperty('updatedDate');
+        expect(client).toHaveProperty('deletedDate');
+        expect(client.deletedDate).toBeNull();
+      });
     });
     it('You should throw an exception for requesting out-of-scope paging.', async () => {
       const { body } = await request
@@ -332,6 +368,17 @@ describe('ClientsController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
       expect(response.body).toHaveProperty('id');
+      expect(response.body).toHaveProperty('first_name');
+      expect(response.body).toHaveProperty('last_name');
+      expect(response.body).toHaveProperty('email');
+      expect(response.body).toHaveProperty('cell_phone_number');
+      expect(response.body).toHaveProperty('address');
+      expect(response.body).toHaveProperty('sales_detail');
+      expect(response.body.sales_detail).toBeInstanceOf(Array);
+      expect(response.body).toHaveProperty('createdDate');
+      expect(response.body).toHaveProperty('updatedDate');
+      expect(response.body).toHaveProperty('deletedDate');
+      expect(response.body.deletedDate).toBeNull();
     });
 
     it('Should throw exception for sending an invalid ID.', async () => {
@@ -402,6 +449,9 @@ describe('ClientsController (e2e)', () => {
 
       expect(body.first_name).toEqual('John 4');
       expect(body.last_name).toEqual('Doe 4');
+      expect(body.email).toEqual('john.doe3.5@example.com');
+      expect(body.cell_phone_number).toEqual('3007890123');
+      expect(body.address).toEqual('123 Main St');
     });
 
     it('Should throw exception for not finding client to update', async () => {
