@@ -249,7 +249,8 @@ describe('ClientsController (e2e)', () => {
     it('should return all available records by sending the parameter all_records to true, ignoring other parameters', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .get('/clients/all?all_records=true&&limit=10&&offset=1')
+        .get('/clients/all')
+        .query({ all_records: true, limit: 10, offset: 1 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
       expect(response.body.total_row_count).toEqual(17);
@@ -270,15 +271,14 @@ describe('ClientsController (e2e)', () => {
       });
     });
     it('should return the specified number of clients passed by the paging arguments by the URL', async () => {
-      let limit = 11;
-      let offset = 0;
       const response1 = await request
         .default(app.getHttpServer())
-        .get(`/clients/all?limit=${limit}&&offset=${offset}`)
+        .get(`/clients/all`)
+        .query({ limit: 11, offset: 0 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
       expect(response1.body.total_row_count).toEqual(17);
-      expect(response1.body.current_row_count).toEqual(limit);
+      expect(response1.body.current_row_count).toEqual(11);
       expect(response1.body.total_page_count).toEqual(2);
       expect(response1.body.current_page_count).toEqual(1);
       response1.body.records.forEach((client: Client) => {
@@ -294,10 +294,10 @@ describe('ClientsController (e2e)', () => {
         expect(client.deletedDate).toBeNull();
       });
 
-      offset = 1;
       const response2 = await request
         .default(app.getHttpServer())
-        .get(`/clients/all?limit=${limit}&&offset=${offset}`)
+        .get(`/clients/all`)
+        .query({ limit: 11, offset: 1 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
       expect(response2.body.total_row_count).toEqual(17);
@@ -320,7 +320,8 @@ describe('ClientsController (e2e)', () => {
     it('You should throw an exception for requesting out-of-scope paging.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .get('/clients/all?offset=10')
+        .get('/clients/all')
+        .query({ offset: 10 })
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
       expect(body.message).toEqual(
