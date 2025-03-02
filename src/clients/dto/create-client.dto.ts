@@ -42,7 +42,9 @@ export class CreateClientDto {
   })
   @IsNumberString()
   @MaxLength(10)
-  @IsColombianPhone({ message: 'El número de celular debe ser válido para Colombia.' })
+  @IsColombianPhone({
+    message: 'El número de celular debe ser válido para Colombia.',
+  })
   cell_phone_number: string;
 
   @ApiProperty({

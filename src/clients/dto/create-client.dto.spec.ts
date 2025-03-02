@@ -29,7 +29,7 @@ describe('CreateClientDto', () => {
   });
   it('should throw error for sending an incorrect cell phone number', async () => {
     const dto = new CreateClientDto();
-    dto.cell_phone_number = '312456432';
+    dto.cell_phone_number = '1234567890';
     const errors = await validate(dto);
     const constrain = errors.find((e) => e.property === 'cell_phone_number');
     expect(constrain.constraints.isColombianPhone).toBeDefined();

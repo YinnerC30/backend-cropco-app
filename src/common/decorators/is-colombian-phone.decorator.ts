@@ -10,12 +10,12 @@ export class IsColombianPhoneConstraint
 {
   validate(phone: string, args: ValidationArguments) {
     // Expresión regular para validar números de celular colombianos
-    const colombianPhoneRegex = /^\d{10}$/;
+    const colombianPhoneRegex = /^3\d{9}$/;
     return colombianPhoneRegex.test(phone);
   }
 
   defaultMessage(args: ValidationArguments) {
-    return `El número de teléfono (${args.value}) no es un número de celular válido de Colombia. Asegúrate de que tenga 10 dígitos`;
+    return `The phone number (${args.value}) is not a valid Colombian cell phone number. Make sure it has 10 digits`;
   }
 }
 

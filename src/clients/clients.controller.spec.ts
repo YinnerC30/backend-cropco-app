@@ -114,16 +114,6 @@ describe('ClientsController', () => {
     });
   });
 
-  // describe('removeBulk', () => {
-  //   it('should remove multiple clients', async () => {
-  //     const removeBulkClientsDto: RemoveBulkRecordsDto<any> = {
-  //       recordsIds: [],
-  //     };
-  //     await controller.removeBulk(removeBulkClientsDto);
-  //     expect(service.removeBulk).toHaveBeenCalledWith(removeBulkClientsDto);
-  //   });
-  // });
-
   describe('exportAllClients', () => {
     it('should export all clients as PDF', async () => {
       const response = {
