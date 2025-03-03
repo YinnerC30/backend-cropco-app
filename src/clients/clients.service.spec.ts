@@ -135,8 +135,8 @@ describe('ClientsService', () => {
 
       const result = await service.findAllClientWithSales();
       expect(result).toEqual({
-        rowCount: clients.length,
-        rows: clients,
+        total_row_count: clients.length,
+        records: clients,
       });
     });
   });

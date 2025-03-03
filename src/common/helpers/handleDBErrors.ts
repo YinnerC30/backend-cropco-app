@@ -26,5 +26,6 @@ export const handleDBExceptions = (error: any, logger: Logger) => {
   if (error instanceof UpdateValuesMissingError)
     throw new BadRequestException('No values in the object');
   logger.error(error);
+  console.log(error);
   throw new InternalServerErrorException('Unexpected error, check server logs');
 };

@@ -19,13 +19,22 @@ import { CreateClientDto } from './dto/create-client.dto';
 import { Client } from './entities/client.entity';
 import { SalesModule } from 'src/sales/sales.module';
 import { SalesService } from 'src/sales/sales.service';
+import { CropsService } from 'src/crops/crops.service';
+import { HarvestService } from 'src/harvest/harvest.service';
+import { EmployeesService } from 'src/employees/employees.service';
+import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
+import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
+import { CreateSaleDto } from 'src/sales/dto/create-sale.dto';
 
 describe('ClientsController (e2e)', () => {
   let app: INestApplication;
   let clientRepository: Repository<Client>;
   let seedService: SeedService;
   let authService: AuthService;
+  let employeeService: EmployeesService;
   let saleService: SalesService;
+  let cropService: CropsService;
+  let harvestService: HarvestService;
   let userTest: User;
   let token: string;
 
@@ -63,6 +72,9 @@ describe('ClientsController (e2e)', () => {
     seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
     saleService = moduleFixture.get<SalesService>(SalesService);
+    cropService = moduleFixture.get<CropsService>(CropsService);
+    harvestService = moduleFixture.get<HarvestService>(HarvestService);
+    employeeService = moduleFixture.get<EmployeesService>(EmployeesService);
 
     app = moduleFixture.createNestApplication();
 
@@ -557,7 +569,84 @@ describe('ClientsController (e2e)', () => {
       );
     });
 
-    // TODO: Implementar prueba de eliminación de cliente con ventas con pago pendiente
+    it('Should throw an exception when trying to delete a client with sales pending payment.', async () => {
+      // Crear cliente de prueba
+      const client = await createTestClient({
+        first_name: 'Client for sale',
+        last_name: 'Doe',
+        email: 'clientforsale@example.com',
+        cell_phone_number: '3007890123',
+        address: '123 Main St',
+      });
+
+      // Crear cultivo de prueba
+      const crop = await cropService.create({
+        name: `Crop for sale ${Math.random() * 100}`,
+        description: 'Crop for sale',
+        units: 10,
+        location: 'Main St',
+        date_of_creation: new Date().toISOString(),
+      } as CreateCropDto);
+
+      // Crear empleado de prueba
+      const employee = await employeeService.create({
+        first_name: 'John',
+        last_name: 'Doe',
+        email: `employeedoe${Math.random() * 100}@gmail.com`,
+        cell_phone_number: '3007890123',
+        address: '123 Main St',
+      });
+
+      // Crear cosecha de prueba
+      const harvestData = {
+        date: new Date().toISOString(),
+        crop: { id: crop.id },
+        details: [
+          { employee: { id: employee.id }, total: 10, value_pay: 1000 },
+        ],
+        total: 10,
+        value_pay: 1000,
+        observation: 'description demo test creation harvest...',
+      };
+
+      const harvest = await harvestService.create(
+        harvestData as CreateHarvestDto,
+      );
+
+      // Agregar stock al cultivo
+      await harvestService.createHarvestProcessed({
+        date: new Date().toISOString(),
+        crop: { id: crop.id },
+        harvest: { id: harvest.id },
+        total: 10,
+      });
+
+      // Crear una venta con un cliente vinculado
+      await saleService.create({
+        date: new Date().toISOString(),
+        quantity: 5,
+        total: 500,
+        details: [
+          {
+            crop: { id: crop.id },
+            quantity: 5,
+            total: 500,
+            client: { id: client.id },
+            is_receivable: true,
+          },
+        ],
+      } as CreateSaleDto);
+
+      // Intentar eliminar el cliente
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/clients/remove/one/${client.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(409);
+      expect(body.message).toEqual(
+        `The client ${client.first_name} ${client.last_name} has sales receivables`,
+      );
+    });
   });
 
   describe('clients/export/all/pdf (GET)', () => {
@@ -675,38 +764,183 @@ describe('ClientsController (e2e)', () => {
       expect(body.message[0]).toEqual('recordsIds should not be empty');
     });
 
-    // TODO: Implementar prueba de eliminación de clientes con ventas con pago pendiente
-    it('Should throw an exception when trying to delete a customer with sales pending payment.', async () => {
+    it('Should throw an exception when trying to delete a client with sales pending payment.', async () => {
       // Crear cliente de prueba
-      const client = await createTestClient({
-        first_name: 'Client for sale',
+      const client1 = await createTestClient({
+        first_name: 'Client for sale 1',
         last_name: 'Doe',
-        email: 'clientforsale@example.com',
+        email: 'clientforsale1@example.com',
+        cell_phone_number: '3007890123',
+        address: '123 Main St',
+      });
+      const client2 = await createTestClient({
+        first_name: 'Client for sale 2',
+        last_name: 'Doe',
+        email: 'clientforsale2@example.com',
+        cell_phone_number: '3007890123',
+        address: '123 Main St',
+      });
+      const client3 = await createTestClient({
+        first_name: 'Client for sale 3',
+        last_name: 'Doe',
+        email: 'clientforsale3@example.com',
         cell_phone_number: '3007890123',
         address: '123 Main St',
       });
 
       // Crear cultivo de prueba
+      const crop = await cropService.create({
+        name: `Crop for sale ${Math.random() * 100}`,
+        description: 'Crop for sale',
+        units: 10,
+        location: 'Main St',
+        date_of_creation: new Date().toISOString(),
+      } as CreateCropDto);
+
+      // Crear empleado de prueba
+      const employee = await employeeService.create({
+        first_name: 'John',
+        last_name: 'Doe',
+        email: `employeedoe${Math.random() * 100}@gmail.com`,
+        cell_phone_number: '3007890123',
+        address: '123 Main St',
+      });
+
+      // Crear cosecha de prueba
+      const harvestData = {
+        date: new Date().toISOString(),
+        crop: { id: crop.id },
+        details: [
+          { employee: { id: employee.id }, total: 600, value_pay: 450000 },
+        ],
+        total: 600,
+        value_pay: 450000,
+        observation: 'description demo test creation harvest...',
+      };
+
+      const harvest = await harvestService.create(
+        harvestData as CreateHarvestDto,
+      );
+
+      // Agregar stock al cultivo
+      await harvestService.createHarvestProcessed({
+        date: new Date().toISOString(),
+        crop: { id: crop.id },
+        harvest: { id: harvest.id },
+        total: 450,
+      });
 
       // Crear una venta con un cliente vinculado
       await saleService.create({
         date: new Date().toISOString(),
-        quantity: 10,
-        total: 1000,
+        quantity: 5,
+        total: 500,
         details: [
           {
-            quantity: 10,
-            total: 1000,
-            client: { id: client.id },
-            crop: { id: '' },
+            crop: { id: crop.id },
+            quantity: 5,
+            total: 500,
+            client: { id: client1.id },
+            is_receivable: true,
+          },
+          {
+            crop: { id: crop.id },
+            quantity: 5,
+            total: 500,
+            client: { id: client2.id },
+            is_receivable: true,
+          },
+          {
+            crop: { id: crop.id },
+            quantity: 5,
+            total: 500,
+            client: { id: client3.id },
+            is_receivable: false,
           },
         ],
-      } as any);
+      } as CreateSaleDto);
 
       // Intentar eliminar el cliente
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/clients/remove/bulk`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          recordsIds: [
+            { id: client1.id },
+            { id: client2.id },
+            { id: client3.id },
+          ],
+        })
+        .expect(207);
+      expect(body).toEqual({
+        success: [client3.id],
+        failed: [
+          {
+            id: client1.id,
+            error: 'The client Client for sale 1 Doe has sales receivables',
+          },
+          {
+            id: client2.id,
+            error: 'The client Client for sale 2 Doe has sales receivables',
+          },
+        ],
+      });
     });
   });
 
-  // TODO: Implementar prueba de GET /clients/sales/all
-  // TODO: Implementar prueba de GET top clients by sales
+  describe('clients/sales/all (GET)', () => {
+    it('should throw an exception for not sending a JWT to the protected path clients/sales/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/clients/sales/all')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('It should throw an exception because the user JWT does not have permissions for this action clients/sales/all', async () => {
+      await authService.removePermission(
+        userTest.id,
+        'find_all_clients_with_sales',
+      );
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/clients/sales/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('Should get all sales for all clients', async () => {
+      await authService.addPermission(
+        userTest.id,
+        'find_all_clients_with_sales',
+      );
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/clients/sales/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body).toBeDefined();
+      expect(response.body.records).toBeInstanceOf(Array);
+
+      response.body.records.forEach((record: Client) => {
+        expect(record).toHaveProperty('id');
+        expect(record).toHaveProperty('first_name');
+        expect(record).toHaveProperty('last_name');
+        expect(record).toHaveProperty('email');
+        expect(record).toHaveProperty('cell_phone_number');
+        expect(record).toHaveProperty('address');
+        expect(record).toHaveProperty('createdDate');
+        expect(record).toHaveProperty('updatedDate');
+        expect(record).toHaveProperty('deletedDate');
+        expect(record.deletedDate).toBeNull();
+        expect(record).toHaveProperty('sales_detail');
+        expect(record.sales_detail).toBeInstanceOf(Array);
+        expect(record.sales_detail.length).toBeGreaterThan(0);
+      });
+    });
+  });
 });

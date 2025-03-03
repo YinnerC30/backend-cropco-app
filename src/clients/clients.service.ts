@@ -87,8 +87,8 @@ export class ClientsService {
     });
 
     return {
-      rowCount: clients.length,
-      rows: clients,
+      total_row_count: clients.length,
+      records: clients,
     };
   }
 
