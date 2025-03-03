@@ -35,8 +35,6 @@ export class CreateSaleDto {
   @IsPositive()
   total: number;
 
-  
-
   @ApiProperty({
     type: [SaleDetailsDto],
     description: 'Detalles de los items vendidos',

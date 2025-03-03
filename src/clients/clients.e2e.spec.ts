@@ -17,12 +17,15 @@ import { Repository } from 'typeorm';
 import { ClientsModule } from './clients.module';
 import { CreateClientDto } from './dto/create-client.dto';
 import { Client } from './entities/client.entity';
+import { SalesModule } from 'src/sales/sales.module';
+import { SalesService } from 'src/sales/sales.service';
 
 describe('ClientsController (e2e)', () => {
   let app: INestApplication;
   let clientRepository: Repository<Client>;
   let seedService: SeedService;
   let authService: AuthService;
+  let saleService: SalesService;
   let userTest: User;
   let token: string;
 
@@ -53,11 +56,13 @@ describe('ClientsController (e2e)', () => {
         CommonModule,
         SeedModule,
         AuthModule,
+        SalesModule,
       ],
     }).compile();
 
     seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
+    saleService = moduleFixture.get<SalesService>(SalesService);
 
     app = moduleFixture.createNestApplication();
 
@@ -660,7 +665,7 @@ describe('ClientsController (e2e)', () => {
       expect(remainingClient3).toBeDefined();
     });
 
-    it('You should throw exception when trying to send an empty array.', async () => {
+    it('Should throw exception when trying to send an empty array.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .delete('/clients/remove/bulk')
@@ -671,6 +676,35 @@ describe('ClientsController (e2e)', () => {
     });
 
     // TODO: Implementar prueba de eliminación de clientes con ventas con pago pendiente
+    it('Should throw an exception when trying to delete a customer with sales pending payment.', async () => {
+      // Crear cliente de prueba
+      const client = await createTestClient({
+        first_name: 'Client for sale',
+        last_name: 'Doe',
+        email: 'clientforsale@example.com',
+        cell_phone_number: '3007890123',
+        address: '123 Main St',
+      });
+
+      // Crear cultivo de prueba
+
+      // Crear una venta con un cliente vinculado
+      await saleService.create({
+        date: new Date().toISOString(),
+        quantity: 10,
+        total: 1000,
+        details: [
+          {
+            quantity: 10,
+            total: 1000,
+            client: { id: client.id },
+            crop: { id: '' },
+          },
+        ],
+      } as any);
+
+      // Intentar eliminar el cliente
+    });
   });
 
   // TODO: Implementar prueba de GET /clients/sales/all
