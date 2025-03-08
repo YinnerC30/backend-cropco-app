@@ -1,11 +1,12 @@
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
-import { formatDate } from 'src/common/helpers/formatDate';
-import { FormatMoneyValue } from 'src/common/helpers/formatMoneyValue';
-import { FormatNumber } from 'src/common/helpers/formatNumber';
+
+import { FormatMoneyValue } from 'src/common/helpers/money-formatter';
+import { FormatNumber } from 'src/common/helpers/number-formatter';
 import { footerSection } from 'src/common/reports/sections/footer.section';
 import { headerSection } from 'src/common/reports/sections/header.section';
 import { MyStyles } from 'src/common/reports/sections/styles-dictionary';
 import { Harvest } from '../entities/harvest.entity';
+import { DateFormatter } from 'src/common/helpers';
 
 interface ReportOptions {
   data: Harvest & { total_processed: number };
@@ -39,7 +40,7 @@ export const getHarvestReport = (
       },
 
       {
-        text: `Fecha de la cosecha: ${formatDate(data.date)}`,
+        text: `Fecha de la cosecha: ${DateFormatter.getSpanishDate(data.date)}`,
         style: 'subtitle',
       },
 
@@ -220,7 +221,10 @@ export const getHarvestReport = (
                 link: `${pathFrontend}/app/home/harvests/processed/view/${data.id}`,
                 style: ['tableCell', 'link'],
               },
-              { text: formatDate(proc.date), style: 'tableCell' },
+              {
+                text: DateFormatter.getSpanishDate(proc.date),
+                style: 'tableCell',
+              },
               {
                 text: FormatNumber(proc.total),
                 style: 'tableCell',

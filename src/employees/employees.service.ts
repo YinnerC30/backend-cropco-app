@@ -5,10 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 import { DataSource, ILike, MoreThan, Repository } from 'typeorm';
 
-import { QueryParams } from 'src/common/dto/QueryParams';
+import { QueryParams } from 'src/common/dto/query-params';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { PrinterService } from 'src/printer/printer.service';

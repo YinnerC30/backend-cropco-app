@@ -1,7 +1,6 @@
-export * from './currency-formatter';
-export * from './data-response';
-export * from './date-formatter';
-export * from './handleDBErrors';
 
-export * from './organizeIDsToUpdateEntity';
-export * from './validTotalInArray';
+export * from './date-formatter';
+export * from './handle-db-exceptions';
+
+export * from './organize-ids-to-update-entity';
+export * from './validate-total-in-array';

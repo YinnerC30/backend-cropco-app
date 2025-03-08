@@ -5,8 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryParams } from 'src/common/dto/QueryParams';
-import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { QueryParams } from 'src/common/dto/query-params';
+import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { WorkDetails } from 'src/work/entities/work-details.entity';

@@ -12,7 +12,7 @@ import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
 import { Sale } from '../entities/sale.entity';
 import { Type } from 'class-transformer';
-import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { ValidateUUID } from 'src/common/dto/validate-uuid';
 
 export class SaleDetailsDto {
   @IsUUID(4)

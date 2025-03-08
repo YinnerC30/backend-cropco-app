@@ -17,14 +17,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Auth } from 'src/auth/decorators/auth.decorator';
-import { QueryParams } from 'src/common/dto/QueryParams';
+import { QueryParams } from 'src/common/dto/query-params';
 import { CropsService } from './crops.service';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { QueryForYear } from 'src/common/dto/QueryForYear';
+import { QueryForYear } from 'src/common/dto/query-for-year';
 
 export const pathsCropsController: PathsController = {
   createCrop: {

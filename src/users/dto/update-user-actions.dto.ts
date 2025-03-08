@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { ArrayNotEmpty, IsArray, ValidateNested } from 'class-validator';
-import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { UserActions } from 'src/users/entities/user-actions.entity';
 import { User } from 'src/users/entities/user.entity';
 import { DeepPartial } from 'typeorm';

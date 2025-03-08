@@ -6,7 +6,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
 import { Harvest } from '../entities/harvest.entity';

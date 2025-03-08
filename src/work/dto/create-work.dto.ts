@@ -17,7 +17,7 @@ import { DeepPartial } from 'typeorm';
 import { WorkDetails } from '../entities/work-details.entity';
 import { Type } from 'class-transformer';
 import { SaleDetailsDto } from 'src/sales/dto/sale-details.dto';
-import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { WorkDetailsDto } from './work-details.dto';
 
 export class CreateWorkDto {

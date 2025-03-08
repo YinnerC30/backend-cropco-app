@@ -2,7 +2,7 @@ import { IsInt, IsPositive, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
-import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { ValidateUUID } from 'src/common/dto/validate-uuid';
 
 export class HarvestStockDto {
   @ApiProperty({

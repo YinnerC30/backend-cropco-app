@@ -5,8 +5,8 @@ import {
   NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryForYear } from 'src/common/dto/QueryForYear';
-import { QueryParams } from 'src/common/dto/QueryParams';
+import { QueryForYear } from 'src/common/dto/query-for-year';
+import { QueryParams } from 'src/common/dto/query-params';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { PrinterService } from 'src/printer/printer.service';

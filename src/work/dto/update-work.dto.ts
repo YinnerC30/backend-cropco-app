@@ -17,7 +17,7 @@ import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { DeepPartial } from 'typeorm';
 import { Type } from 'class-transformer';
-import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { WorkDetailsDto } from './work-details.dto';
 
 export class UpdateWorkDto {

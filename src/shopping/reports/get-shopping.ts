@@ -2,10 +2,11 @@ import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { footerSection } from 'src/common/reports/sections/footer.section';
 import { headerSection } from 'src/common/reports/sections/header.section';
 import { SuppliesShopping } from '../entities';
-import { FormatMoneyValue } from 'src/common/helpers/formatMoneyValue';
-import { FormatNumber } from 'src/common/helpers/formatNumber';
-import { formatDate } from 'src/common/helpers/formatDate';
+import { FormatMoneyValue } from 'src/common/helpers/money-formatter';
+import { FormatNumber } from 'src/common/helpers/number-formatter';
+
 import { MyStyles } from 'src/common/reports/sections/styles-dictionary';
+import { DateFormatter } from 'src/common/helpers';
 
 interface ReportOptions {
   title?: string;
@@ -41,7 +42,7 @@ export const getShoppingReport = (
       },
 
       {
-        text: `Fecha de la compra: ${formatDate(data.date)}`,
+        text: `Fecha de la compra: ${DateFormatter.getSpanishDate(data.date)}`,
         style: 'subtitle',
       },
 

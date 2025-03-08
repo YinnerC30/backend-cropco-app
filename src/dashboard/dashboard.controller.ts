@@ -5,7 +5,7 @@ import { QueryTopEmployeesInWorkDto } from 'src/employees/dto/query-top-employee
 import { QueryTopEmployeesInHarvestDto } from 'src/employees/dto/query-top-employees-in-harvest';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { ClientsService } from 'src/clients/clients.service';
-import { QueryForYear } from 'src/common/dto/QueryForYear';
+import { QueryForYear } from 'src/common/dto/query-for-year';
 import { CropsService } from 'src/crops/crops.service';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { QueryTotalHarvestsInYearDto } from 'src/harvest/dto/query-total-harvests-year';

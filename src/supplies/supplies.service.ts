@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { QueryParams } from 'src/common/dto/QueryParams';
+import { QueryParams } from 'src/common/dto/query-params';
 
 import { CreateSupplyDto } from './dto/create-supply.dto';
 
@@ -26,7 +26,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Supply } from './entities/';
 
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 
 import { SuppliesStock } from 'src/supplies/entities/supplies-stock.entity';
 import { InsufficientSupplyStockException } from './exceptions/insufficient-supply-stock.exception';

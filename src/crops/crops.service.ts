@@ -6,14 +6,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryParams } from 'src/common/dto/QueryParams';
-import { handleDBExceptions } from 'src/common/helpers/handleDBErrors';
+import { QueryParams } from 'src/common/dto/query-params';
+import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 import { ILike, IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { QueryForYear } from 'src/common/dto/QueryForYear';
+import { QueryForYear } from 'src/common/dto/query-for-year';
 
 @Injectable()
 export class CropsService {

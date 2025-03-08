@@ -7,7 +7,7 @@ import {
   IsInt,
   IsOptional,
 } from 'class-validator';
-import { QueryParams } from 'src/common/dto/QueryParams';
+import { QueryParams } from 'src/common/dto/query-params';
 import { Transform, Type } from 'class-transformer';
 import { MethodOfPayment } from '../entities/payment.entity';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';

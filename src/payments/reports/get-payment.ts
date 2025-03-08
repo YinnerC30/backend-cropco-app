@@ -2,12 +2,11 @@ import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { footerSection } from 'src/common/reports/sections/footer.section';
 import { headerSection } from 'src/common/reports/sections/header.section';
 
-import { FormatMoneyValue } from 'src/common/helpers/formatMoneyValue';
-import { FormatNumber } from 'src/common/helpers/formatNumber';
-import { Payment } from '../entities/payment.entity';
-import { formatDate } from 'src/common/helpers/formatDate';
+import { DateFormatter } from 'src/common/helpers';
+import { FormatMoneyValue } from 'src/common/helpers/money-formatter';
+import { FormatNumber } from 'src/common/helpers/number-formatter';
 import { MyStyles } from 'src/common/reports/sections/styles-dictionary';
-import { text } from 'node:stream/consumers';
+import { Payment } from '../entities/payment.entity';
 
 interface ReportOptions {
   title?: string;
@@ -43,7 +42,7 @@ export const getPaymentReport = (
       },
 
       {
-        text: `Fecha del pago: ${formatDate(data.date)}`,
+        text: `Fecha del pago: ${DateFormatter.getSpanishDate(data.date)}`,
         style: 'subtitle',
       },
 
@@ -116,7 +115,9 @@ export const getPaymentReport = (
                           style: 'link',
                         },
                         {
-                          text: formatDate(harvests_detail.harvest.date),
+                          text: DateFormatter.getSpanishDate(
+                            harvests_detail.harvest.date,
+                          ),
                           style: 'tableCell',
                         },
                         {
@@ -162,7 +163,9 @@ export const getPaymentReport = (
                           style: 'link',
                         },
                         {
-                          text: formatDate(works_detail.work.date),
+                          text: DateFormatter.getSpanishDate(
+                            works_detail.work.date,
+                          ),
                           style: 'tableCell',
                         },
 

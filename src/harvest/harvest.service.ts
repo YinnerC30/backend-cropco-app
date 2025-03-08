@@ -12,14 +12,14 @@ import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { HarvestDetails } from './entities/harvest-details.entity';
 import { Harvest } from './entities/harvest.entity';
 
-import { organizeIDsToUpdateEntity } from 'src/common/helpers/organizeIDsToUpdateEntity';
-import { handleDBExceptions } from '../common/helpers/handleDBErrors';
+import { organizeIDsToUpdateEntity } from 'src/common/helpers/organize-ids-to-update-entity';
+import { handleDBExceptions } from '../common/helpers/handle-db-exceptions';
 import { HarvestDetailsDto } from './dto/create-harvest-details.dto';
 
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
-import { validateTotalInArray } from 'src/common/helpers/validTotalInArray';
+import { validateTotalInArray } from 'src/common/helpers/validate-total-in-array';
 import { PrinterService } from 'src/printer/printer.service';
 import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
 import { QueryParamsHarvest } from './dto/query-params-harvest.dto';

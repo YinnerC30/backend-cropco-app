@@ -17,7 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { QueryParams } from 'src/common/dto/QueryParams';
+import { QueryParams } from 'src/common/dto/query-params';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { QueryParamsSale } from './dto/query-params-sale.dto';

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { QueryParams } from '../common/dto/QueryParams';
+import { QueryParams } from '../common/dto/query-params';
 import { ClientsController } from './clients.controller';
 import { ClientsService } from './clients.service';
 import { UpdateClientDto } from './dto/update-client.dto';

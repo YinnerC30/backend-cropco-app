@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { SuppliesShopping } from '../entities/supplies-shopping.entity';
 import { Type } from 'class-transformer';
-import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { Supply } from 'src/supplies/entities';
 
 export class ShoppingSuppliesDetailsDto {

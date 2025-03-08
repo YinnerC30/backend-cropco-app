@@ -8,7 +8,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Crop } from 'src/crops/entities/crop.entity';
-import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { Type } from 'class-transformer';
 import { SuppliesConsumption } from '../entities/supplies-consumption.entity';
 import { Supply } from 'src/supplies/entities/supply.entity';

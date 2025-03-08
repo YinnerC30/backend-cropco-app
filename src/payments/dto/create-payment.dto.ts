@@ -12,7 +12,7 @@ import { Employee } from 'src/employees/entities/employee.entity';
 import { DeepPartial } from 'typeorm';
 import { PaymentCategoriesDto } from './payment-categories.dto';
 import { MethodOfPayment } from '../entities/payment.entity';
-import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePaymentDto {

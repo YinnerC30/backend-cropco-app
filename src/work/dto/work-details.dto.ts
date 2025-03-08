@@ -9,7 +9,7 @@ import {
 import { Employee } from 'src/employees/entities/employee.entity';
 import { DeepPartial } from 'typeorm';
 import { Work } from '../entities/work.entity';
-import { ValidateUUID } from 'src/common/dto/ValidateUUID.dto';
+import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { Type } from 'class-transformer';
 
 export class WorkDetailsDto {

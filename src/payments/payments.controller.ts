@@ -16,7 +16,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { QueryParams } from 'src/common/dto/QueryParams';
+import { QueryParams } from 'src/common/dto/query-params';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentsService } from './payments.service';
 import { QueryParamsPayment } from './dto/query-params-payment.dto';
