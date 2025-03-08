@@ -60,14 +60,14 @@ export class SeedService {
     await this.clearDatabase();
     await this.authService.createModulesWithActions();
     await this.authService.convertToAdminUserSeed();
-    await this.insertNewUsers();
-    await this.insertNewClients();
-    await this.insertNewSuppliers();
-    await this.insertNewSupplies();
-    await this.insertNewEmployees();
-    await this.insertNewCrops();
-    await this.insertNewHarvests();
-    await this.insertNewHarvestsProcessed();
+    // await this.insertNewUsers();
+    // await this.insertNewClients();
+    // await this.insertNewSuppliers();
+    // await this.insertNewSupplies();
+    // await this.insertNewEmployees();
+    // await this.insertNewCrops();
+    // await this.insertNewHarvests();
+    // await this.insertNewHarvestsProcessed();
     // await this.insertNewShoppingSupplies();
     // await this.insertNewWork();
     // await this.insertNewConsumptionSupplies();
@@ -77,7 +77,7 @@ export class SeedService {
     return 'SEED EXECUTED';
   }
 
-   async clearDatabase() {
+  async clearDatabase() {
     await this.usersService.deleteAllUsers();
     await this.clientsService.deleteAllClients();
     await this.suppliesService.deleteAllStockSupplies();

@@ -10,5 +10,5 @@ services:
       POSTGRES_PASSWORD: root
 
     volumes:
-      - ./data-server-db:/var/lib/postgresql/data
+      - ./data-server-db-development:/var/lib/postgresql/data
     restart: always

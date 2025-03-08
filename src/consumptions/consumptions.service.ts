@@ -371,7 +371,7 @@ export class ConsumptionsService {
     }
   }
 
-  async findTotalConsumptionsInYearAndPreviusYear({
+  async findTotalConsumptionsInYearAndPreviousYear({
     year = 2025,
     crop = '',
     supply = '',

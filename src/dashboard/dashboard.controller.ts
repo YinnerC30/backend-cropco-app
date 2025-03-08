@@ -20,48 +20,48 @@ export const pathsDashboardController: PathsController = {
   findTopEmployeesInHarvests: {
     path: 'find/top-employees-in-harvests',
     description: 'Obtener los 10 empleados con mayor cosechas',
-    name: 'find_top_employees_in_harvests',
+    name: 'find_top_employees_in_harvests_chart',
   },
   findTopEmployeesInWorks: {
     path: 'find/top-employees-in-works',
     description:
       'Obtener los 10 empleados con mayor participación en el trabajo',
-    name: 'find_top_employees_in_works',
+    name: 'find_top_employees_in_works_chart',
   },
   findAllCropsStock: {
     path: 'stock/all',
     description: 'obtener el stock de todos los cultivos',
-    name: 'find_all_crops_stock',
+    name: 'find_all_crops_stock_chart',
   },
   findTopClientsInSales: {
     path: 'find/top-clients-in-sales',
     description: 'Obtener los 5 clientes con mayores ventas en el año',
-    name: 'find_top_clients_in_sales',
+    name: 'find_top_clients_in_sales_chart',
   },
   findCountHarvestsAndTotalStock: {
     path: 'find/count-harvest-and-total-stock',
     description: 'Cantidad de cosechas realizadas al cultivo y su stock total',
-    name: 'find_count_harvests_and_total_stock',
+    name: 'find_count_harvests_and_total_stock_chart',
   },
-  findTotalHarvestInYearAndPreviusYear: {
+  findTotalHarvestInYearAndPreviousYear: {
     path: 'find/total-harvest-in-year',
     description: 'Obtener el total de las cosechas por mes durante el año',
-    name: 'find_total_harvest_in_year',
+    name: 'find_total_harvest_in_year_chart',
   },
-  findTotalWorkInYearAndPreviusYear: {
+  findTotalWorkInYearAndPreviousYear: {
     path: 'find/total-work-in-year',
     description: 'Obtener el total de los trabajos por mes durante el año',
-    name: 'find_total_work_in_year',
+    name: 'find_total_work_in_year_chart',
   },
-  findTotalSalesInYearAndPreviusYear: {
+  findTotalSalesInYearAndPreviousYear: {
     path: 'find/total-sales-in-year',
     description: 'Obtener el total de las ventas por mes durante el año',
-    name: 'find_total_sales_in_year',
+    name: 'find_total_sales_in_year_chart',
   },
-  findTotalConsumptionsInYearAndPreviusYear: {
+  findTotalConsumptionsInYearAndPreviousYear: {
     path: 'find/total-consumptions-in-year',
     description: 'Obtener el total de los consumos por mes durante el año',
-    name: 'find_total_consumptions_in_year',
+    name: 'find_total_consumptions_in_year_chart',
   },
 };
 
@@ -70,10 +70,10 @@ const {
   findTopEmployeesInWorks,
   findTopClientsInSales,
   findCountHarvestsAndTotalStock,
-  findTotalHarvestInYearAndPreviusYear,
-  findTotalWorkInYearAndPreviusYear,
-  findTotalSalesInYearAndPreviusYear,
-  findTotalConsumptionsInYearAndPreviusYear,
+  findTotalHarvestInYearAndPreviousYear,
+  findTotalWorkInYearAndPreviousYear,
+  findTotalSalesInYearAndPreviousYear,
+  findTotalConsumptionsInYearAndPreviousYear,
   findAllCropsStock,
 } = pathsDashboardController;
 
@@ -121,28 +121,27 @@ export class DashboardController {
   }
 
   // * Harvests
-  @Get(findTotalHarvestInYearAndPreviusYear.path)
+  @Get(findTotalHarvestInYearAndPreviousYear.path)
   async findTotalHarvestInYear(@Query() params: QueryTotalHarvestsInYearDto) {
     return this.harvestService.findTotalHarvestInYear(params);
   }
 
   // * Works
-  @Get(findTotalWorkInYearAndPreviusYear.path)
+  @Get(findTotalWorkInYearAndPreviousYear.path)
   async findTotalWorkInYear(@Query() params: QueryTotalWorksInYearDto) {
     return this.workService.findTotalWorkInYear(params);
   }
 
   // * Sales
-  @Get(findTotalSalesInYearAndPreviusYear.path)
+  @Get(findTotalSalesInYearAndPreviousYear.path)
   async findTotalSalesInYear(@Query() params: QueryTotalSalesInYearDto) {
     return this.salesService.findTotalSalesInYear(params);
   }
 
   // * Consumptions
-
-  @Get(findTotalConsumptionsInYearAndPreviusYear.path)
-  async findTotalConsumptionsInYearAndPreviusYear(@Query() params: any) {
-    return this.consumptionsService.findTotalConsumptionsInYearAndPreviusYear(
+  @Get(findTotalConsumptionsInYearAndPreviousYear.path)
+  async findTotalConsumptionsInYearAndPreviousYear(@Query() params: any) {
+    return this.consumptionsService.findTotalConsumptionsInYearAndPreviousYear(
       params,
     );
   }
