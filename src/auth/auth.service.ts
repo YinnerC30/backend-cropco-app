@@ -113,8 +113,8 @@ export class AuthService {
     };
   }
 
-  generateJwtToken(payload: JwtPayload): string {
-    const token = this.jwtService.sign(payload);
+  generateJwtToken(payload: JwtPayload, timeExpiration = '6h'): string {
+    const token = this.jwtService.sign(payload, { expiresIn: timeExpiration });
     return token;
   }
 

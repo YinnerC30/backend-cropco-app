@@ -80,14 +80,16 @@ export class AuthController {
   checkAuthStatus(@GetToken() token: string) {
     return this.authService.checkAuthStatus(token);
   }
-  @Get(createModuleActions.path)
-  createModuleWithActions() {
-    return this.authService.createModulesWithActions();
-  }
 
   @Get(findAllModules.path)
   findAllModules() {
     return this.authService.findAllModules();
+  }
+
+  // TODO: Solo en modo de desarrollo
+  @Get(createModuleActions.path)
+  createModuleWithActions() {
+    return this.authService.createModulesWithActions();
   }
 
   @Get(convertToAdmin.path)

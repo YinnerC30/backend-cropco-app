@@ -12,6 +12,7 @@ describe('Auth Service (e2e)', () => {
   let authService: AuthService;
   let userTest: User;
   let token: string;
+  let tokenExpired: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -45,6 +46,7 @@ describe('Auth Service (e2e)', () => {
     token = authService.generateJwtToken({
       id: userTest.id,
     });
+    tokenExpired = authService.generateJwtToken({ id: userTest.id }, '2s');
 
     app = moduleFixture.createNestApplication();
 
@@ -135,6 +137,41 @@ describe('Auth Service (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
       expect(body.token).toBeDefined();
+    });
+  });
+  describe('/auth/check-status (GET)', () => {
+    it('should throw an exception for not sending a JWT to the protected path /auth/check-status', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/auth/check-status')
+        .expect(401);
+      expect(body.message.length).toBeGreaterThan(0);
+    });
+    it('should throw an exception for sending an invalid JWT to the protected path /auth/check-status', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/auth/check-status')
+        .set('Authorization', 'Bearer invalidToken')
+        .expect(401);
+      expect(body.message).toBe('Unauthorized');
+    });
+    it('should accept the token sent', async () => {
+      // TODO: Quitar check-status de las opciones de los módulos
+      await authService.addPermission(userTest.id, 'check_status_token');
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/auth/check-status')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(body.message).toBe('Token valid');
+      expect(body.statusCode).toBe(200);
+    });
+    it('should throw exception for sending an expired token.', async () => {
+      await request
+        .default(app.getHttpServer())
+        .get('/auth/check-status')
+        .set('Authorization', `Bearer ${tokenExpired}`)
+        .expect(401);
     });
   });
 });
