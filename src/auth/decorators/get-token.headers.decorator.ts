@@ -1,24 +1,27 @@
 import {
   createParamDecorator,
   ExecutionContext,
-  UnauthorizedException
+  UnauthorizedException,
 } from '@nestjs/common';
 
-export const GetToken = createParamDecorator(
-  (_: unknown, ctx: ExecutionContext): string | null => {
-    const request = ctx.switchToHttp().getRequest();
-    const authorization =
-      request.headers['authorization'] || request.headers['Authorization'];
+export const getTokenFactory = (
+  _: unknown,
+  ctx: ExecutionContext,
+): string | null => {
+  const request = ctx.switchToHttp().getRequest();
+  const authorization =
+    request.headers['authorization'] || request.headers['Authorization'];
 
-    if (!authorization)
-      throw new UnauthorizedException('Token not found in request');
+  if (!authorization)
+    throw new UnauthorizedException('Token not found in request');
 
-    // El encabezado de autorización debería comenzar con 'Bearer '
-    const [bearer, token] = authorization.split(' ');
+  // El encabezado de autorización debería comenzar con 'Bearer '
+  const [bearer, token] = authorization.split(' ');
 
-    if (bearer !== 'Bearer' || !token)
-      throw new UnauthorizedException('Token not found in request');
+  if (bearer !== 'Bearer' || !token)
+    throw new UnauthorizedException('Token not found in request');
 
-    return token;
-  },
-);
+  return token;
+};
+
+export const GetToken = createParamDecorator(getTokenFactory);
