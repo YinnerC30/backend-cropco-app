@@ -11,6 +11,7 @@ describe('Auth Service (e2e)', () => {
   let app: INestApplication;
   let authService: AuthService;
   let userTest: User;
+  let token: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -41,6 +42,9 @@ describe('Auth Service (e2e)', () => {
 
     authService = moduleFixture.get<AuthService>(AuthService);
     userTest = await authService.createUserToTests();
+    token = authService.generateJwtToken({
+      id: userTest.id,
+    });
 
     app = moduleFixture.createNestApplication();
 
@@ -62,7 +66,7 @@ describe('Auth Service (e2e)', () => {
   });
 
   describe('/auth/login (POST)', () => {
-    it('should throw an exception for not sending the data correctly', async () => {
+    it('should throw an exception for not sending the data', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .post('/auth/login')
@@ -104,6 +108,33 @@ describe('Auth Service (e2e)', () => {
       expect(body).toHaveProperty('modules');
       expect(body).toHaveProperty('token');
       expect(body).not.toHaveProperty('password');
+    });
+  });
+  describe('/auth/renew-token (PATCH)', () => {
+    it('should throw an exception for not sending a JWT to the protected path /auth/renew-token', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch('/auth/renew-token')
+        .expect(401);
+      expect(body.message.length).toBeGreaterThan(0);
+    });
+    it('should throw an exception for sending an invalid JWT to the protected path /auth/renew-token', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch('/auth/renew-token')
+        .set('Authorization', 'Bearer invalidToken')
+        .expect(401);
+      expect(body.message).toBe('Unauthorized');
+    });
+    it('should return a new JWT correctly', async () => {
+      // TODO: Quitar renew_token de las opciones de los módulos
+      await authService.addPermission(userTest.id, 'renew_token');
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch('/auth/renew-token')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(body.token).toBeDefined();
     });
   });
 });
