@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column } from 'typeorm';
 
-export abstract class PersonalInformation {
+export class PersonalInformation {
   @ApiProperty({
     description: 'Nombre de la persona',
     example: 'John',

@@ -5,10 +5,6 @@ export class DateFormatter {
     day: '2-digit',
   });
 
-  static getDDMMMMYYYY(date: Date): string {
-    return this.formatter.format(date);
-  }
-
   static getSpanishDate(originalDate: string) {
     // Crear un objeto Date a partir de la fecha original
     const date = new Date(originalDate + 'T00:00:00');

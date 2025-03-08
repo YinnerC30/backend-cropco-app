@@ -10,7 +10,7 @@ import { lineSeparator } from './line-separator';
 // };
 
 const currentDate: Content = {
-  text: DateFormatter.getDDMMMMYYYY(new Date()),
+  text: DateFormatter.getSpanishDate(new Date().toLocaleString()),
   margin: [0, 0, 10, 0],
   width: 150,
   alignment: 'right',

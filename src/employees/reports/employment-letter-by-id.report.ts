@@ -66,7 +66,7 @@ export const getEmploymentLetterByIdReport = (
         style: 'header',
       },
       {
-        text: `Yo, ${employerName}, en mi calidad de ${employerPosition} de ${employerCompany}, por medio de la presente certifico que ${employeeName} ha sido empleado en nuestra empresa desde el ${DateFormatter.getDDMMMMYYYY(employeeStartDate)}. \n\n
+        text: `Yo, ${employerName}, en mi calidad de ${employerPosition} de ${employerCompany}, por medio de la presente certifico que ${employeeName} ha sido empleado en nuestra empresa desde el ${DateFormatter.getSpanishDate(employeeStartDate.toLocaleString())}. \n\n
         Durante su empleo, el Sr./Sra. ${employeeName} ha desempeñado el cargo de ${employeePosition}, demostrando responsabilidad, compromiso y habilidades profesionales en sus labores.\n\n
         La jornada laboral del Sr./ Sra. ${employeeName} es de ${employeeHours} horas semanales, con un horario de ${employeeWorkSchedule}, cumpliendo con las políticas y procedimientos establecidos por la empresa.\n\n
         Esta constancia se expide a solicitud del interesado para los fines que considere conveniente. \n\n`,
@@ -76,7 +76,10 @@ export const getEmploymentLetterByIdReport = (
       { text: employerName, style: 'signature' },
       { text: employerPosition, style: 'signature' },
       { text: employerCompany, style: 'signature' },
-      { text: DateFormatter.getDDMMMMYYYY(new Date()), style: 'signature' },
+      {
+        text: DateFormatter.getSpanishDate(new Date().toLocaleString()),
+        style: 'signature',
+      },
     ],
 
     footer: {
