@@ -1,9 +1,8 @@
 import {
   ConflictException,
-  Inject,
   Injectable,
   Logger,
-  NotFoundException,
+  NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryForYear } from 'src/common/dto/QueryForYear';
@@ -11,7 +10,7 @@ import { QueryParams } from 'src/common/dto/QueryParams';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { PrinterService } from 'src/printer/printer.service';
-import { ILike, MoreThan, Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
@@ -179,8 +178,8 @@ export class ClientsService {
       .limit(5)
       .getRawMany();
     return {
-      rowCount: clients.length,
-      rows: clients,
+      current_row_count: clients.length,
+      records: clients,
     };
   }
 }

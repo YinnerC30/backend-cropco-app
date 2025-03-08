@@ -257,8 +257,8 @@ describe('ClientsService', () => {
 
       const result = await service.findTopClientsInSales({ year: 2023 });
       expect(result).toEqual({
-        rowCount: clients.length,
-        rows: clients,
+        current_row_count: clients.length,
+        records: clients,
       });
     });
   });
