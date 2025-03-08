@@ -1,0 +1,40 @@
+# Ignorar archivos y carpetas generados por el sistema operativo
+.DS_Store
+Thumbs.db
+
+# Ignorar archivos de configuración local
+.env
+.env.*
+!.env.example
+
+# Ignorar directorios y archivos generados por Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn.lock
+
+# Ignorar archivos de pruebas o logs
+coverage/
+test-results/
+
+# Ignorar archivos de versionamiento
+.git/
+.gitignore
+.svn/
+.hg/
+
+# Ignorar IDEs y editores de código
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Ignorar archivos temporales
+*.tmp
+*.log
+*.pid
+
+# Ignorar dependencias globales (si las hay)
+.npm/
+.yarn/
+.pnpm/

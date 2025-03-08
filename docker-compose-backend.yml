@@ -1,0 +1,30 @@
+services:
+  backend:
+    image: backend-cropco
+    container_name: backend-container
+    ports:
+      - 3000:3000
+    environment:
+      - DB_HOST=server-db
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=root
+      - DB_NAME=cropco
+      - JWT_SECRET=millavesecreta
+      - PORT=3000
+      - HOST_FRONTED=http://localhost:5173
+    depends_on:
+      - db
+  db:
+    image: postgres:15
+    container_name: server-db
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: cropco
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+
+    volumes:
+      - ./data-server-db-development:/var/lib/postgresql/data
+    restart: always
