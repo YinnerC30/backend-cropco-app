@@ -174,4 +174,20 @@ describe('Auth Service (e2e)', () => {
         .expect(401);
     });
   });
+  describe('/auth/modules/all (GET)', () => {
+    it('should return an array of modules with their actions', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/auth/modules/all')
+        .expect(200);
+      expect(body).toBeInstanceOf(Array);
+      body.forEach((module) => {
+        expect(module).toHaveProperty('id');
+        expect(module).toHaveProperty('label');
+        expect(module).toHaveProperty('name');
+        expect(module).toHaveProperty('actions');
+        expect(module.actions).toBeInstanceOf(Array);
+      });
+    });
+  });
 });
