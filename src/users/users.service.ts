@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Module } from 'src/auth/entities/module.entity';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 
@@ -60,7 +60,7 @@ export class UsersService {
     }
   }
 
-  async findAll(queryParams: QueryParams) {
+  async findAll(queryParams: QueryParamsDto) {
     const { query = '', limit = 10, offset = 0 } = queryParams;
 
     const users = await this.usersRepository.find({

@@ -8,12 +8,12 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { Transform, Type } from 'class-transformer';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 
-export class QueryParamsWork extends QueryParams {
+export class QueryParamsWork extends QueryParamsDto {
   @IsOptional()
   @IsString()
   crop?: string;

@@ -9,7 +9,7 @@ import {
   Min,
 } from 'class-validator';
 
-export class QueryParams {
+export class QueryParamsDto {
   @ApiPropertyOptional({
     default: 10,
     description: 'Número de registros que se obtendrán',

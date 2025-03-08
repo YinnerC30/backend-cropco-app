@@ -16,7 +16,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentsService } from './payments.service';
 import { QueryParamsPayment } from './dto/query-params-payment.dto';
@@ -88,7 +88,7 @@ export class PaymentsController {
   @Get(findAllPayments.path)
   @ApiOperation({ summary: 'Get all payments' })
   @ApiResponse({ status: 200, description: 'Return all payments.' })
-  @ApiQuery({ type: QueryParams })
+  @ApiQuery({ type: QueryParamsDto })
   findAll(@Query() queryParams: QueryParamsPayment) {
     return this.paymentsService.findAll(queryParams);
   }

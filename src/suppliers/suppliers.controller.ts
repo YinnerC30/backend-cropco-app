@@ -19,7 +19,7 @@ import {
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { SuppliersService } from './suppliers.service';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { Supplier } from './entities/supplier.entity';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
@@ -93,8 +93,8 @@ export class SuppliersController {
   @Get(findAllSuppliers.path)
   @ApiOperation({ summary: 'Get all suppliers' })
   @ApiResponse({ status: 200, description: 'Return all suppliers.' })
-  @ApiQuery({ type: QueryParams })
-  findAll(@Query() queryParams: QueryParams) {
+  @ApiQuery({ type: QueryParamsDto })
+  findAll(@Query() queryParams: QueryParamsDto) {
     return this.suppliersService.findAll(queryParams);
   }
   @Get(findAllSuppliersWithShopping.path)

@@ -17,7 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { QueryParamsSale } from './dto/query-params-sale.dto';
@@ -109,7 +109,7 @@ export class SalesController {
   @Get(findAllSales.path)
   @ApiOperation({ summary: 'Get all sales' })
   @ApiResponse({ status: 200, description: 'Return all sales.' })
-  @ApiQuery({ type: QueryParams })
+  @ApiQuery({ type: QueryParamsDto })
   findAll(@Query() queryParams: QueryParamsSale) {
     return this.salesService.findAll(queryParams);
   }

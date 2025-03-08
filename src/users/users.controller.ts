@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 
 import { Auth } from 'src/auth/decorators/auth.decorator';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -86,7 +86,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get(findAllUsers.path)
-  findAll(@Query() queryParams: QueryParams) {
+  findAll(@Query() queryParams: QueryParamsDto) {
     return this.usersService.findAll(queryParams);
   }
 

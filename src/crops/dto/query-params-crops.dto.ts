@@ -1,5 +1,5 @@
-import { QueryParams } from "src/common/dto/query-params";
+import { QueryParamsDto } from "src/common/dto/query-params.dto";
 
-export class QueryParamsCrop extends QueryParams {
+export class QueryParamsCrop extends QueryParamsDto {
     
 }

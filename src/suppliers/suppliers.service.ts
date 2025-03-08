@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 import { ILike, MoreThan, Repository } from 'typeorm';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
@@ -28,7 +28,7 @@ export class SuppliersService {
     }
   }
 
-  async findAll(queryParams: QueryParams) {
+  async findAll(queryParams: QueryParamsDto) {
     const { query: search = '', limit = 10, offset = 0 } = queryParams;
 
     const suppliers = await this.supplierRepository.find({

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { QueryParams } from '../common/dto/query-params';
+import { QueryParamsDto } from '../common/dto/query-params.dto';
 import { ClientsController } from './clients.controller';
 import { ClientsService } from './clients.service';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -72,7 +72,7 @@ describe('ClientsController', () => {
 
   describe('findAll', () => {
     it('should return an array of clients', async () => {
-      const queryParams: QueryParams = {
+      const queryParams: QueryParamsDto = {
         /* mock data */
       };
       await controller.findAll(queryParams);
@@ -143,11 +143,19 @@ describe('ClientsController', () => {
   describe('removeBulk', () => {
     it('should return 200 status and result when no records fail', async () => {
       const removeBulkClientsDto: RemoveBulkRecordsDto<any> = {
-        recordsIds: [1, 2, 3],
+        recordsIds: [
+          { id: '550e8400-e29b-41d4-a716-446655440000' },
+          { id: '550e8400-e29b-41d4-a716-446655440001' },
+          { id: '550e8400-e29b-41d4-a716-446655440002' },
+        ],
       };
 
       const mockResult = {
-        success: [{ id: 1 }, { id: 2 }, { id: 3 }],
+        success: [
+          { id: '550e8400-e29b-41d4-a716-446655440000' },
+          { id: '550e8400-e29b-41d4-a716-446655440001' },
+          { id: '550e8400-e29b-41d4-a716-446655440002' },
+        ],
         failed: [],
       } as any;
 
@@ -166,14 +174,18 @@ describe('ClientsController', () => {
 
     it('should return 207 status and result when some records fail', async () => {
       const removeBulkClientsDto: RemoveBulkRecordsDto<any> = {
-        recordsIds: [1, 2, 3],
+        recordsIds: [
+          { id: '550e8400-e29b-41d4-a716-446655440000' },
+          { id: '550e8400-e29b-41d4-a716-446655440001' },
+          { id: '550e8400-e29b-41d4-a716-446655440002' },
+        ],
       };
 
       const mockResult = {
-        success: [{ id: 1 }],
+        success: [{ id: '550e8400-e29b-41d4-a716-446655440000' }],
         failed: [
-          { id: 2, error: 'Not found' },
-          { id: 3, error: 'Invalid' },
+          { id: '550e8400-e29b-41d4-a716-446655440001', error: 'Not found' },
+          { id: '550e8400-e29b-41d4-a716-446655440002', error: 'Invalid' },
         ],
       } as any;
 

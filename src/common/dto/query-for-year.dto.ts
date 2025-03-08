@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsNumber, IsOptional, Min } from 'class-validator';
 
-export class QueryForYear {
+export class QueryForYearDto {
   @IsOptional()
   @IsNumber()
   @Type(() => Number)

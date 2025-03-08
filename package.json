@@ -38,7 +38,7 @@
     "passport-local": "^1.0.0",
     "pdfmake": "^0.2.11",
     "pg": "^8.11.3",
-    "reflect-metadata": "^0.2.0",
+    "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.20",
     "uuid": "^9.0.1"
@@ -86,6 +86,9 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "setupFiles": [
+      "./jest-setup-file.ts"
+    ]
   }
 }

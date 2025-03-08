@@ -13,7 +13,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response as ResponseExpress } from 'express';
 import { Auth } from 'src/auth/decorators/auth.decorator';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
@@ -158,7 +158,7 @@ export class EmployeesController {
   })
   @ApiResponse({ status: 500, description: 'Error interno del servidor' })
   // Método
-  findAll(@Query() queryParams: QueryParams) {
+  findAll(@Query() queryParams: QueryParamsDto) {
     return this.employeesService.findAll(queryParams);
   }
 
@@ -172,7 +172,7 @@ export class EmployeesController {
   })
   @ApiResponse({ status: 500, description: 'Error interno del servidor' })
   // Método
-  findAllEmployeeWithPaymentsPending(@Query() queryParams: QueryParams) {
+  findAllEmployeeWithPaymentsPending(@Query() queryParams: QueryParamsDto) {
     return this.employeesService.findAllEmployeesWithPaymentsPending();
   }
   // Obtener todos los pagos pendientes de los clientes
@@ -185,7 +185,7 @@ export class EmployeesController {
   })
   @ApiResponse({ status: 500, description: 'Error interno del servidor' })
   // Método
-  findAllEmployeeWithPaymentsMade(@Query() queryParams: QueryParams) {
+  findAllEmployeeWithPaymentsMade(@Query() queryParams: QueryParamsDto) {
     return this.employeesService.findAllEmployeesWithPaymentsMade();
   }
 

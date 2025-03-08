@@ -5,8 +5,8 @@ import {
   NotFoundException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryForYear } from 'src/common/dto/query-for-year';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { PrinterService } from 'src/printer/printer.service';
@@ -39,7 +39,7 @@ export class ClientsService {
     }
   }
 
-  async findAll(queryParams: QueryParams) {
+  async findAll(queryParams: QueryParamsDto) {
     const {
       query = '',
       limit = 10,
@@ -159,7 +159,7 @@ export class ClientsService {
 
   async findTopClientsInSales({
     year = new Date().getFullYear(),
-  }: QueryForYear) {
+  }: QueryForYearDto) {
     const clients = await this.clientRepository
       .createQueryBuilder('clients')
       .leftJoin('clients.sales_detail', 'sales_detail')

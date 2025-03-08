@@ -7,13 +7,13 @@ import {
   IsInt,
   IsOptional,
 } from 'class-validator';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { Transform, Type } from 'class-transformer';
 import { MethodOfPayment } from '../entities/payment.entity';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 
-export class QueryParamsPayment extends QueryParams {
+export class QueryParamsPayment extends QueryParamsDto {
   @IsOptional()
   employee?: string;
 

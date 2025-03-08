@@ -22,7 +22,7 @@ import {
 import { Response } from 'express';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
-import { QueryParams } from '../common/dto/query-params';
+import { QueryParamsDto } from '../common/dto/query-params.dto';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -127,7 +127,7 @@ export class ClientsController {
   })
   @ApiResponse({ status: 400, description: 'Datos de consulta inválidos.' })
   // Método
-  findAll(@Query() queryParams: QueryParams) {
+  findAll(@Query() queryParams: QueryParamsDto) {
     return this.clientsService.findAll(queryParams);
   }
 

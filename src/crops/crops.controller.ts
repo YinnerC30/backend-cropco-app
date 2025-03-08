@@ -17,14 +17,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Auth } from 'src/auth/decorators/auth.decorator';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { CropsService } from './crops.service';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { QueryForYear } from 'src/common/dto/query-for-year';
+import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 
 export const pathsCropsController: PathsController = {
   createCrop: {
@@ -142,12 +142,12 @@ export class CropsController {
   @ApiResponse({ status: 401, description: 'No autorizado' })
   @ApiResponse({ status: 403, description: 'Prohibido' })
   @ApiResponse({ status: 500, description: 'Error interno del servidor' })
-  findAll(@Query() queryParams: QueryParams) {
+  findAll(@Query() queryParams: QueryParamsDto) {
     return this.cropsService.findAll(queryParams);
   }
 
   @Get(findAllCropsWithHarvest.path)
-  findAllWithHarvest(@Query() queryParams: QueryParams) {
+  findAllWithHarvest(@Query() queryParams: QueryParamsDto) {
     return this.cropsService.findAllWithHarvest(queryParams);
   }
 

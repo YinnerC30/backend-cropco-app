@@ -6,14 +6,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 import { ILike, IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { QueryForYear } from 'src/common/dto/query-for-year';
+import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 
 @Injectable()
 export class CropsService {
@@ -35,7 +35,7 @@ export class CropsService {
     }
   }
 
-  async findAll(queryParams: QueryParams) {
+  async findAll(queryParams: QueryParamsDto) {
     const {
       query = '',
       limit = 10,
@@ -83,7 +83,7 @@ export class CropsService {
       pageCount: Math.ceil(count / limit),
     };
   }
-  async findAllWithHarvest(queryParams: QueryParams) {
+  async findAllWithHarvest(queryParams: QueryParamsDto) {
     const { limit = 10 } = queryParams;
     const [crops, count] = await this.cropRepository.findAndCount({
       withDeleted: true,
@@ -241,7 +241,7 @@ export class CropsService {
 
   async findCountHarvestsAndTotalStock({
     year = new Date().getFullYear(),
-  }: QueryForYear) {
+  }: QueryForYearDto) {
     const crops = await this.cropRepository
       .createQueryBuilder('crops')
       .leftJoin('crops.harvests', 'harvests')

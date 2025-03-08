@@ -13,6 +13,7 @@ const config: Config.InitialOptions = {
     '<rootDir>/src/**/*.spec.ts', // Unit tests (if you have them)
     '<rootDir>/src/**/*.e2e-spec.ts', // E2E tests
   ],
+  setupFiles: ['./jest-setup-file.ts'],
 };
 
 export default config;

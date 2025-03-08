@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Auth } from 'src/auth/decorators/auth.decorator';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { CreateSupplyDto } from './dto/create-supply.dto';
@@ -90,7 +90,7 @@ export class SuppliesController {
   constructor(private readonly suppliesService: SuppliesService) {}
 
   @Get(findAllSupplies.path)
-  findAll(@Query() queryParams: QueryParams) {
+  findAll(@Query() queryParams: QueryParamsDto) {
     return this.suppliesService.findAll(queryParams);
   }
   @Get(findAllSuppliesWithShopping.path)
@@ -103,7 +103,7 @@ export class SuppliesController {
   }
 
   @Get(findAllStock.path)
-  findAllSuppliesStock(@Query() queryParams: QueryParams) {
+  findAllSuppliesStock(@Query() queryParams: QueryParamsDto) {
     return this.suppliesService.findAllSuppliesStock(queryParams);
   }
 

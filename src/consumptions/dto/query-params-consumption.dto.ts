@@ -7,11 +7,11 @@ import {
   IsOptional,
   IsUUID,
 } from 'class-validator';
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { Transform, Type } from 'class-transformer';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 
-export class QueryParamsConsumption extends QueryParams {
+export class QueryParamsConsumption extends QueryParamsDto {
   @IsOptional()
   @IsBooleanString()
   filter_by_date?: boolean;

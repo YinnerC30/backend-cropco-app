@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 
 import { CreateSupplyDto } from './dto/create-supply.dto';
 
@@ -55,7 +55,7 @@ export class SuppliesService {
     }
   }
 
-  async findAll(queryParams: QueryParams) {
+  async findAll(queryParams: QueryParamsDto) {
     const {
       query: search = '',
       limit = 10,
@@ -181,7 +181,7 @@ export class SuppliesService {
     }
   }
 
-  async findAllSuppliesStock(queryParams: QueryParams) {
+  async findAllSuppliesStock(queryParams: QueryParamsDto) {
     const { limit = 10, offset = 0, query: search = '' } = queryParams;
 
     const suppliesStock = await this.suppliesStockRepository.find({

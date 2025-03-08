@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 import { DataSource, ILike, MoreThan, Repository } from 'typeorm';
 
-import { QueryParams } from 'src/common/dto/query-params';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { PrinterService } from 'src/printer/printer.service';
@@ -59,7 +59,7 @@ export class EmployeesService {
     }
   }
 
-  async findAll(queryParams: QueryParams) {
+  async findAll(queryParams: QueryParamsDto) {
     const {
       query = '',
       limit = 10,

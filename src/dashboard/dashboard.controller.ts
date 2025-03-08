@@ -5,7 +5,7 @@ import { QueryTopEmployeesInWorkDto } from 'src/employees/dto/query-top-employee
 import { QueryTopEmployeesInHarvestDto } from 'src/employees/dto/query-top-employees-in-harvest';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { ClientsService } from 'src/clients/clients.service';
-import { QueryForYear } from 'src/common/dto/query-for-year';
+import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 import { CropsService } from 'src/crops/crops.service';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { QueryTotalHarvestsInYearDto } from 'src/harvest/dto/query-total-harvests-year';
@@ -105,13 +105,13 @@ export class DashboardController {
 
   //* Clients
   @Get(findTopClientsInSales.path)
-  async findTopClientsInSales(@Query() params: QueryForYear) {
+  async findTopClientsInSales(@Query() params: QueryForYearDto) {
     return this.clientsService.findTopClientsInSales(params);
   }
 
   // * Crops
   @Get(findCountHarvestsAndTotalStock.path)
-  async findCountHarvestsAndTotalStock(@Query() params: QueryForYear) {
+  async findCountHarvestsAndTotalStock(@Query() params: QueryForYearDto) {
     return this.cropsService.findCountHarvestsAndTotalStock(params);
   }
 

@@ -6,7 +6,7 @@ import { DeepPartial } from 'typeorm';
 export class RemoveBulkRecordsDto<T> {
   @IsArray()
   @ArrayNotEmpty()
-  @ValidateNested()
+  @ValidateNested({ each: true })
   @Type(() => ValidateUUID)
-  recordsIds: DeepPartial<T[]>;
+  recordsIds: ValidateUUID[];
 }
