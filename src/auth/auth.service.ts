@@ -257,16 +257,19 @@ export class AuthService {
   ): Promise<Partial<User> & { modules: Module[] }> {
     const { modules, ...user } = await this.userService.findOne(id);
 
-    const actions = (await this.moduleActionsRepository.find({
-      select: {
-        id: true,
+    const { actions } = await this.modulesRepository.findOne({
+      relations: {
+        actions: true,
       },
       where: {
         name: nameModule,
       },
-    })) as UserActionDto[];
+    });
 
-    return await this.userService.update(id, { ...user, actions });
+    return await this.userService.update(id, {
+      ...user,
+      actions: actions.flatMap((action) => ({ id: action.id })),
+    });
   }
 
   async removePermissionsToModule(
