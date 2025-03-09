@@ -105,7 +105,7 @@ export class SeedService {
 
     return true;
   }
-  private async insertNewCrops() {
+  async insertNewCrops() {
     const crops = initialData.crops;
 
     const insertPromises = [];

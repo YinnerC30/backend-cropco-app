@@ -110,7 +110,7 @@ describe('ClientsController (e2e)', () => {
     return await clientRepository.save(client);
   }
 
-  describe('/clients/create (POST)', () => {
+  describe('clients/create (POST)', () => {
     it('should throw an exception for not sending a JWT to the protected path /clients/create', async () => {
       const data: CreateClientDto = {
         first_name: 'Daniel',

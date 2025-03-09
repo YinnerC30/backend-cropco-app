@@ -59,7 +59,7 @@ export class CropsService {
     const [crops, count] = await queryBuilder.getManyAndCount();
     if (crops.length === 0 && count > 0) {
       throw new NotFoundException(
-        'There are no crops records with the requested pagination',
+        'There are no crop records with the requested pagination',
       );
     }
     return {
@@ -202,6 +202,7 @@ export class CropsService {
     await this.findOne(id);
     try {
       await this.cropRepository.update(id, updateCropDto);
+      return await this.findOne(id);
     } catch (error) {
       this.handlerError.handle(error);
     }
@@ -226,9 +227,18 @@ export class CropsService {
   }
 
   async removeBulk(removeBulkCropsDto: RemoveBulkRecordsDto<Crop>) {
+    const success: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+
     for (const { id } of removeBulkCropsDto.recordsIds) {
-      await this.remove(id);
+      try {
+        await this.remove(id);
+        success.push(id);
+      } catch (error) {
+        failed.push({ id, error: error.message });
+      }
     }
+    return { success, failed };
   }
 
   async findCountHarvestsAndTotalStock({

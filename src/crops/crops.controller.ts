@@ -3,11 +3,13 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -25,6 +27,7 @@ import { Crop } from './entities/crop.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
+import { Response } from 'express';
 
 export const pathsCropsController: PathsController = {
   createCrop: {
@@ -222,11 +225,19 @@ export class CropsController {
   }
 
   @Delete(removeCrops.path)
+  @HttpCode(207)
   @ApiResponse({
     status: 200,
     description: 'Empleados eliminados exitosamente',
   })
-  removeBulk(@Body() removeBulkCropsDto: RemoveBulkRecordsDto<Crop>) {
-    return this.cropsService.removeBulk(removeBulkCropsDto);
+  async removeBulk(
+    @Body() removeBulkCropsDto: RemoveBulkRecordsDto<Crop>,
+    @Res() response: Response,
+  ) {
+    const result = await this.cropsService.removeBulk(removeBulkCropsDto);
+    if (result.failed && result.failed.length > 0) {
+      return response.status(207).json(result);
+    }
+    return response.status(200).json(result);
   }
 }
