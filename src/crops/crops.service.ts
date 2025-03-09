@@ -1,29 +1,31 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
-import { ILike, IsNull, MoreThan, Not, Repository } from 'typeorm';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import { IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 
 @Injectable()
 export class CropsService {
   private readonly logger = new Logger('CropsService');
-  private handleDBExceptions = (error: any, logger = this.logger) =>
-    handleDBExceptions(error, logger);
+
   constructor(
     @InjectRepository(Crop)
     private readonly cropRepository: Repository<Crop>,
-  ) {}
+    private readonly handlerError: HandlerErrorService,
+  ) {
+    this.handlerError.setLogger(this.logger);
+  }
 
   async create(createCropDto: CreateCropDto) {
     try {
@@ -31,7 +33,7 @@ export class CropsService {
       await this.cropRepository.save(crop);
       return crop;
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
@@ -43,48 +45,32 @@ export class CropsService {
       all_records = false,
     } = queryParams;
 
-    let crops;
+    const queryBuilder = this.cropRepository.createQueryBuilder('crops');
+    queryBuilder.leftJoinAndSelect('crops.harvests_stock', 'harvests_stock');
 
-    const searchCondition = {
-      name: ILike(`${query}%`),
-    };
+    !!query &&
+      !all_records &&
+      queryBuilder.where('crops.name ILIKE :query', { query: `${query}%` });
 
-    if (all_records === true) {
-      crops = await this.cropRepository.find({
-        // withDeleted: true,
-        where: [searchCondition],
-        order: {
-          name: 'ASC',
-        },
-        relations: {
-          harvests_stock: true,
-        },
-      });
-    } else {
-      crops = await this.cropRepository.find({
-        where: [searchCondition],
-        order: {
-          name: 'ASC',
-        },
-        relations: {
-          harvests_stock: true,
-        },
-        take: limit,
-        skip: offset * limit,
-      });
+    !all_records && queryBuilder.take(limit).skip(offset * limit);
+
+    queryBuilder.orderBy('crops.name', 'ASC');
+
+    const [crops, count] = await queryBuilder.getManyAndCount();
+    if (crops.length === 0 && count > 0) {
+      throw new NotFoundException(
+        'There are no crops records with the requested pagination',
+      );
     }
-
-    const count =
-      query.length === 0 ? await this.cropRepository.count() : crops.length;
-
     return {
-      rowCount: count,
-      rows: crops,
-      pageCount: Math.ceil(count / limit),
+      total_row_count: count,
+      current_row_count: crops.length,
+      total_page_count: all_records ? 1 : Math.ceil(count / limit),
+      current_page_count: all_records ? 1 : offset + 1,
+      records: crops,
     };
   }
   async findAllWithHarvest(queryParams: QueryParamsDto) {
-    const { limit = 10 } = queryParams;
     const [crops, count] = await this.cropRepository.findAndCount({
       withDeleted: true,
       where: {
@@ -97,9 +83,10 @@ export class CropsService {
       },
     });
     return {
-      rowCount: count,
-      rows: crops,
-      pageCount: Math.ceil(count / limit),
+      total_row_count: count,
+      current_row_count: count,
+      total_page_count: count > 0 ? 1 : 0,
+      records: crops,
     };
   }
 
@@ -116,8 +103,10 @@ export class CropsService {
       },
     });
     return {
-      rowCount: count,
-      rows: crops,
+      total_row_count: count,
+      current_row_count: count,
+      total_page_count: count > 0 ? 1 : 0,
+      records: crops,
     };
   }
   async findAllWithSales() {
@@ -131,8 +120,10 @@ export class CropsService {
       },
     });
     return {
-      rowCount: count,
-      rows: crops,
+      total_row_count: count,
+      current_row_count: count,
+      total_page_count: count > 0 ? 1 : 0,
+      records: crops,
     };
   }
   async findAllWithConsumptions() {
@@ -148,13 +139,15 @@ export class CropsService {
       },
     });
     return {
-      rowCount: count,
-      rows: crops,
+      total_row_count: count,
+      current_row_count: count,
+      total_page_count: count > 0 ? 1 : 0,
+      records: crops,
     };
   }
 
   async findAllCropsWithStock() {
-    const crops = await this.cropRepository.find({
+    const [crops, count] = await this.cropRepository.findAndCount({
       where: {
         harvests_stock: {
           total: MoreThan(0),
@@ -166,16 +159,15 @@ export class CropsService {
     });
 
     return {
-      rowCount: crops.length,
-      rows: crops.map((item) => ({
+      total_row_count: count,
+      current_row_count: count,
+      total_page_count: count > 0 ? 1 : 0,
+      records: crops.map((item) => ({
         id: item.id,
         name: item.name,
         stock: item.harvests_stock.total,
       })),
-      pageCount: crops.length > 0 ? 1 : 0,
     };
-
-    // return crops;
   }
 
   async findOne(id: string) {
@@ -211,7 +203,7 @@ export class CropsService {
     try {
       await this.cropRepository.update(id, updateCropDto);
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
@@ -221,15 +213,15 @@ export class CropsService {
     if (crop.harvests_stock !== null && crop.harvests_stock.total > 0) {
       throw new ConflictException('Crop has stock available');
     }
-
     await this.cropRepository.softRemove(crop);
   }
 
+  // INFO: Método solo para el modo desarrollo
   async deleteAllCrops() {
     try {
       await this.cropRepository.delete({});
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
@@ -258,9 +250,13 @@ export class CropsService {
       .limit(5)
       .getRawMany();
 
+    const count = crops.length;
+
     return {
-      rowCount: crops.length,
-      rows: crops,
+      total_row_count: count,
+      current_row_count: count,
+      total_page_count: count > 0 ? 1 : 0,
+      records: crops,
     };
   }
 }

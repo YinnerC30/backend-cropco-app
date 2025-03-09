@@ -2,7 +2,7 @@ import {
   ConflictException,
   Injectable,
   Logger,
-  NotFoundException
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
