@@ -154,7 +154,7 @@ export class ClientsService {
       }
     }
 
-    return { success, failed }; // Retorna un resumen de las operaciones
+    return { success, failed };
   }
 
   async findTopClientsInSales({

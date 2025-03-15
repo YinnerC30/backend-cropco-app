@@ -10,8 +10,8 @@ import { Module } from 'src/auth/entities/module.entity';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
-
-import { DataSource, ILike, Repository } from 'typeorm';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import { Repository } from 'typeorm';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -20,7 +20,6 @@ import { UserActions } from './entities/user-actions.entity';
 import { User } from './entities/user.entity';
 import { hashPassword } from './helpers/encrypt-password';
 import { generatePassword } from './helpers/generate-password';
-import { HandlerErrorService } from 'src/common/services/handler-error.service';
 
 @Injectable()
 export class UsersService {
@@ -48,13 +47,13 @@ export class UsersService {
 
       const { id } = await this.usersRepository.save(user);
 
-      const actionsEntity = createUserDto.actions.map((act: any) => {
+      const actionsEntity = createUserDto.actions.map((act: UserActionDto) => {
         return this.userActionsRepository.create({ action: act, user: { id } });
       });
 
-      for (const element of actionsEntity) {
-        await this.userActionsRepository.save(element);
-      }
+      await Promise.all(
+        actionsEntity.map((action) => this.userActionsRepository.save(action)),
+      );
 
       return user;
     } catch (error) {
@@ -65,33 +64,30 @@ export class UsersService {
   async findAll(queryParams: QueryParamsDto) {
     const { query = '', limit = 10, offset = 0 } = queryParams;
 
-    const users = await this.usersRepository.find({
-      where: [
-        {
-          first_name: ILike(`${query}%`),
-        },
-        {
-          email: ILike(`${query}%`),
-        },
-      ],
-      order: {
-        first_name: 'ASC',
-      },
-      take: limit,
-      skip: offset * limit,
-    });
+    const queryBuilder = this.usersRepository.createQueryBuilder('users');
 
-    let count: number;
-    if (query.length === 0) {
-      count = await this.usersRepository.count();
-    } else {
-      count = users.length;
+    !!query &&
+      queryBuilder
+        .where('users.first_name ILIKE :query', { query: `${query}%` })
+        .orWhere('users.last_name ILIKE :query', { query: `${query}%` })
+        .orWhere('users.email ILIKE :query', { query: `${query}%` });
+
+    queryBuilder.take(limit).skip(offset * limit);
+
+    const [users, count] = await queryBuilder.getManyAndCount();
+
+    if (users.length === 0 && count > 0) {
+      throw new NotFoundException(
+        'There are no user records with the requested pagination',
+      );
     }
 
     return {
-      rowCount: count,
-      rows: users,
-      pageCount: Math.ceil(count / limit),
+      total_row_count: count,
+      current_row_count: users.length,
+      total_page_count: Math.ceil(count / limit),
+      current_page_count: offset + 1,
+      records: users,
     };
   }
 
@@ -163,12 +159,9 @@ export class UsersService {
         return this.userActionsRepository.create({ action: act, user: { id } });
       });
 
-      let arrayPromises = [];
-      for (const element of actionsEntity) {
-        arrayPromises.push(this.userActionsRepository.save(element));
-      }
-
-      await Promise.all(arrayPromises);
+      await Promise.all(
+        actionsEntity.map((action) => this.userActionsRepository.save(action)),
+      );
 
       return await this.findOne(id);
     } catch (error) {
@@ -181,12 +174,20 @@ export class UsersService {
     await this.usersRepository.delete(id);
   }
 
-  async removeBulk(
-    removeBulkUsersDto: RemoveBulkRecordsDto<User>,
-  ): Promise<void> {
+  async removeBulk(removeBulkUsersDto: RemoveBulkRecordsDto<User>) {
+    const success: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+
     for (const { id } of removeBulkUsersDto.recordsIds) {
-      await this.remove(id);
+      try {
+        await this.remove(id);
+        success.push(id);
+      } catch (error) {
+        failed.push({ id, error: error.message });
+      }
     }
+
+    return { success, failed };
   }
 
   async deleteAllUsers() {
@@ -197,7 +198,10 @@ export class UsersService {
     }
   }
 
-  async updatePassword(userId: string, newPassword: string): Promise<void> {
+  private async updatePassword(
+    userId: string,
+    newPassword: string,
+  ): Promise<void> {
     await this.usersRepository.update(
       {
         id: userId,
