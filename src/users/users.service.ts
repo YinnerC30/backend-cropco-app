@@ -55,6 +55,7 @@ export class UsersService {
         actionsEntity.map((action) => this.userActionsRepository.save(action)),
       );
 
+      delete user.password;
       return user;
     } catch (error) {
       this.handleError.handle(error);

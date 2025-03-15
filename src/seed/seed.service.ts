@@ -92,12 +92,14 @@ export class SeedService {
     await this.salesService.deleteAllSales();
   }
 
-  private async insertNewUsers() {
-    const Users = initialData.users;
+  async insertNewUsers() {
+    const users = initialData.users;
+
+    console.log(users.length);
 
     const insertPromises = [];
 
-    Users.forEach((user) => {
+    users.forEach((user) => {
       insertPromises.push(this.usersService.create({ ...user, actions: [] }));
     });
 
@@ -155,7 +157,7 @@ export class SeedService {
 
     return true;
   }
-   async insertNewSuppliers() {
+  async insertNewSuppliers() {
     const suppliers = initialData.suppliers;
 
     const insertPromises = [];

@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsString,
   MaxLength,
+  MinLength,
   ValidateNested,
 } from 'class-validator';
 import { UserActionDto } from './user-action.dto';
@@ -23,6 +24,7 @@ export class CreateUserDto {
   email: string;
 
   @IsString()
+  @MinLength(6)
   @MaxLength(100)
   password: string;
 
