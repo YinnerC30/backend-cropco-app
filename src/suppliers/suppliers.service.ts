@@ -1,22 +1,24 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
-import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 import { ILike, MoreThan, Repository } from 'typeorm';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { Supplier } from './entities/supplier.entity';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 
 @Injectable()
 export class SuppliersService {
   private readonly logger = new Logger('SuppliersService');
-  private handleDBExceptions = (error: any, logger = this.logger) =>
-    handleDBExceptions(error, logger);
+
   constructor(
     @InjectRepository(Supplier)
     private readonly supplierRepository: Repository<Supplier>,
-  ) {}
+    private readonly handlerError: HandlerErrorService,
+  ) {
+    this.handlerError.setLogger(this.logger);
+  }
 
   async create(createSupplierDto: CreateSupplierDto) {
     try {
@@ -24,40 +26,44 @@ export class SuppliersService {
       await this.supplierRepository.save(supplier);
       return supplier;
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
   async findAll(queryParams: QueryParamsDto) {
-    const { query: search = '', limit = 10, offset = 0 } = queryParams;
+    const {
+      query = '',
+      limit = 10,
+      offset = 0,
+      all_records = false,
+    } = queryParams;
 
-    const suppliers = await this.supplierRepository.find({
-      where: [
-        {
-          first_name: ILike(`${search}%`),
-        },
-        {
-          email: ILike(`${search}%`),
-        },
-      ],
-      order: {
-        first_name: 'ASC',
-      },
-      take: limit,
-      skip: offset * limit,
-    });
+    const queryBuilder =
+      this.supplierRepository.createQueryBuilder('suppliers');
 
-    let count: number;
-    if (search.length === 0) {
-      count = await this.supplierRepository.count();
-    } else {
-      count = suppliers.length;
+    !!query &&
+      !all_records &&
+      queryBuilder
+        .where('suppliers.first_name ILIKE :query', { query: `${query}%` })
+        .orWhere('suppliers.last_name ILIKE :query', { query: `${query}%` })
+        .orWhere('suppliers.email ILIKE :query', { query: `${query}%` });
+
+    !all_records && queryBuilder.take(limit).skip(offset * limit);
+
+    const [suppliers, count] = await queryBuilder.getManyAndCount();
+
+    if (suppliers.length === 0 && count > 0) {
+      throw new NotFoundException(
+        'There are no supplier records with the requested pagination',
+      );
     }
 
     return {
-      rowCount: count,
-      rows: suppliers,
-      pageCount: Math.ceil(count / limit),
+      total_row_count: count,
+      current_row_count: suppliers.length,
+      total_page_count: all_records ? 1 : Math.ceil(count / limit),
+      current_page_count: all_records ? 1 : offset + 1,
+      records: suppliers,
     };
   }
 
@@ -73,7 +79,7 @@ export class SuppliersService {
     return {
       rowCount: suppliers.length,
       rows: suppliers,
-    }
+    };
   }
 
   async findOne(id: string) {
@@ -94,8 +100,9 @@ export class SuppliersService {
     await this.findOne(id);
     try {
       await this.supplierRepository.update(id, updateSupplierDto);
+      return await this.findOne(id);
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
@@ -108,13 +115,23 @@ export class SuppliersService {
     try {
       await this.supplierRepository.delete({});
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
   async removeBulk(removeBulkSuppliersDto: RemoveBulkRecordsDto<Supplier>) {
+    const success: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+
     for (const { id } of removeBulkSuppliersDto.recordsIds) {
-      await this.remove(id);
+      try {
+        await this.remove(id);
+        success.push(id);
+      } catch (error) {
+        failed.push({ id, error: error.message });
+      }
     }
+
+    return { success, failed };
   }
 }

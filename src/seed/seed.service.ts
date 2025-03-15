@@ -155,7 +155,7 @@ export class SeedService {
 
     return true;
   }
-  private async insertNewSuppliers() {
+   async insertNewSuppliers() {
     const suppliers = initialData.suppliers;
 
     const insertPromises = [];

@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,6 +25,7 @@ import { PathsController } from 'src/common/interfaces/PathsController';
 import { Supplier } from './entities/supplier.entity';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { Response } from 'express';
 
 export const pathsSuppliersController: PathsController = {
   createSupplier: {
@@ -70,7 +72,7 @@ const {
   updateSupplier,
   removeSupplier,
   removeSuppliers,
-  findAllSuppliersWithShopping
+  findAllSuppliersWithShopping,
 } = pathsSuppliersController;
 
 @Auth()
@@ -98,9 +100,6 @@ export class SuppliersController {
     return this.suppliersService.findAll(queryParams);
   }
   @Get(findAllSuppliersWithShopping.path)
-  
-  
-  
   findAllSuppliersWithShopping() {
     return this.suppliersService.findAllSuppliersWithShopping();
   }
@@ -147,7 +146,16 @@ export class SuppliersController {
     status: 200,
     description: 'Empleados eliminados exitosamente',
   })
-  removeBulk(@Body() removeBulkSuppliersDto: RemoveBulkRecordsDto<Supplier>) {
-    return this.suppliersService.removeBulk(removeBulkSuppliersDto);
+  async removeBulk(
+    @Body() removeBulkSuppliersDto: RemoveBulkRecordsDto<Supplier>,
+    @Res() response: Response,
+  ) {
+    const result = await this.suppliersService.removeBulk(
+      removeBulkSuppliersDto,
+    );
+    if (result.failed && result.failed.length > 0) {
+      return response.status(207).json(result);
+    }
+    return response.status(200).json(result);
   }
 }

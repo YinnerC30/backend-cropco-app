@@ -147,10 +147,10 @@ export class ClientsService {
 
     for (const { id } of removeBulkClientsDto.recordsIds) {
       try {
-        await this.remove(id); // Intenta eliminar el registro
+        await this.remove(id); 
         success.push(id);
       } catch (error) {
-        failed.push({ id, error: error.message }); // Registra el error
+        failed.push({ id, error: error.message }); 
       }
     }
 
