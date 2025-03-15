@@ -17,9 +17,9 @@ import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { Employee } from './entities/employee.entity';
 import { getEmploymentLetterByIdReport } from './reports/employment-letter-by-id.report';
-import { QueryTopEmployeesInHarvestDto } from './dto/query-top-employees-in-harvest';
-import { QueryTopEmployeesInWorkDto } from './dto/query-top-employees-in-work';
+
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 
 @Injectable()
 export class EmployeesService {
@@ -251,10 +251,10 @@ export class EmployeesService {
 
     for (const { id } of removeBulkEmployeesDto.recordsIds) {
       try {
-        await this.remove(id); 
+        await this.remove(id);
         success.push(id);
       } catch (error) {
-        failed.push({ id, error: error.message }); 
+        failed.push({ id, error: error.message });
       }
     }
 
@@ -273,7 +273,7 @@ export class EmployeesService {
 
   async findTopEmployeesInHarvests({
     year = new Date().getFullYear(),
-  }: QueryTopEmployeesInHarvestDto) {
+  }: QueryForYearDto) {
     const employees = await this.employeeRepository
       .createQueryBuilder('employees')
       .leftJoin('employees.harvests_detail', 'harvests_detail')
@@ -299,7 +299,7 @@ export class EmployeesService {
   }
   async findTopEmployeesInWorks({
     year = new Date().getFullYear(),
-  }: QueryTopEmployeesInWorkDto) {
+  }: QueryForYearDto) {
     const employees = await this.employeeRepository
       .createQueryBuilder('employees')
       .leftJoin('employees.works_detail', 'works_detail')
