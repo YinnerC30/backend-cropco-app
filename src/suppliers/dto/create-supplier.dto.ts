@@ -5,6 +5,8 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  Min,
+  MinLength,
 } from 'class-validator';
 
 export class CreateSupplierDto {
@@ -14,6 +16,7 @@ export class CreateSupplierDto {
     maxLength: 100,
   })
   @IsString()
+  @MinLength(1)
   @MaxLength(100)
   first_name: string;
 
