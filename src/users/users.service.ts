@@ -9,7 +9,7 @@ import * as bcrypt from 'bcrypt';
 import { Module } from 'src/auth/entities/module.entity';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
+
 
 import { DataSource, ILike, Repository } from 'typeorm';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -20,12 +20,12 @@ import { UserActions } from './entities/user-actions.entity';
 import { User } from './entities/user.entity';
 import { hashPassword } from './helpers/encrypt-password';
 import { generatePassword } from './helpers/generate-password';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger('UsersService');
-  private handleDBExceptions = (error: any, logger = this.logger) =>
-    handleDBExceptions(error, logger);
+
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
@@ -36,8 +36,10 @@ export class UsersService {
     @InjectRepository(Module)
     private readonly modulesRepository: Repository<Module>,
 
-    private readonly dataSource: DataSource,
-  ) {}
+    private readonly handleError: HandlerErrorService,
+  ) {
+    this.handleError.setLogger(this.logger);
+  }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     try {
@@ -56,7 +58,7 @@ export class UsersService {
 
       return user;
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handleError.handle(error);
     }
   }
 
@@ -170,7 +172,7 @@ export class UsersService {
 
       return await this.findOne(id);
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handleError.handle(error);
     }
   }
 
@@ -191,7 +193,7 @@ export class UsersService {
     try {
       await this.usersRepository.delete({});
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handleError.handle(error);
     }
   }
 

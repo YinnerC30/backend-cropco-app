@@ -1,14 +1,12 @@
+import { Type } from 'class-transformer';
 import {
-  ArrayNotEmpty,
   IsArray,
   IsEmail,
   IsString,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
 import { UserActionDto } from './user-action.dto';
-import { Type } from 'class-transformer';
 
 export class CreateUserDto {
   @IsString()
