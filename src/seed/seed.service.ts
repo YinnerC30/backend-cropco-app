@@ -123,7 +123,7 @@ export class SeedService {
 
     return true;
   }
-  private async insertNewEmployees() {
+  async insertNewEmployees() {
     const employees = initialData.employees;
 
     const insertPromises = [];

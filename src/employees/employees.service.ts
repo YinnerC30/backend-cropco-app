@@ -19,18 +19,20 @@ import { Employee } from './entities/employee.entity';
 import { getEmploymentLetterByIdReport } from './reports/employment-letter-by-id.report';
 import { QueryTopEmployeesInHarvestDto } from './dto/query-top-employees-in-harvest';
 import { QueryTopEmployeesInWorkDto } from './dto/query-top-employees-in-work';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 
 @Injectable()
 export class EmployeesService {
   private readonly logger = new Logger('EmployeesService');
-  private handleDBExceptions = (error: any, logger = this.logger) =>
-    handleDBExceptions(error, logger);
+
   constructor(
     @InjectRepository(Employee)
     private readonly employeeRepository: Repository<Employee>,
-    private readonly dataSource: DataSource,
     private readonly printerService: PrinterService,
-  ) {}
+    private readonly handlerError: HandlerErrorService,
+  ) {
+    this.handlerError.setLogger(this.logger);
+  }
 
   async findOneCertification(id: string) {
     const employee = await this.findOne(id);
@@ -45,7 +47,7 @@ export class EmployeesService {
       employeeWorkSchedule: 'Lunes a Viernes',
       employerCompany: 'Cropco Corp.',
     });
-    const doc = this.printerService.createPdf({docDefinition});
+    const doc = this.printerService.createPdf({ docDefinition });
     return doc;
   }
 
@@ -55,7 +57,7 @@ export class EmployeesService {
       await this.employeeRepository.save(employee);
       return employee;
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
@@ -67,51 +69,32 @@ export class EmployeesService {
       all_records = false,
     } = queryParams;
 
-    let employees: Employee[];
+    const queryBuilder =
+      this.employeeRepository.createQueryBuilder('employees');
 
-    if (all_records === true) {
-      employees = await this.employeeRepository.find({
-        where: [
-          {
-            first_name: ILike(`${query}%`),
-          },
-          {
-            email: ILike(`${query}%`),
-          },
-        ],
-        order: {
-          first_name: 'ASC',
-        },
-      });
-    } else {
-      employees = await this.employeeRepository.find({
-        where: [
-          {
-            first_name: ILike(`${query}%`),
-          },
-          {
-            email: ILike(`${query}%`),
-          },
-        ],
-        order: {
-          first_name: 'ASC',
-        },
-        take: limit,
-        skip: offset * limit,
-      });
-    }
+    !!query &&
+      !all_records &&
+      queryBuilder
+        .where('employees.first_name ILIKE :query', { query: `${query}%` })
+        .orWhere('employees.last_name ILIKE :query', { query: `${query}%` })
+        .orWhere('employees.email ILIKE :query', { query: `${query}%` });
 
-    let count: number;
-    if (query.length === 0) {
-      count = await this.employeeRepository.count();
-    } else {
-      count = employees.length;
+    !all_records && queryBuilder.take(limit).skip(offset * limit);
+
+    const [employees, count] = await queryBuilder.getManyAndCount();
+
+    if (employees.length === 0 && count > 0) {
+      throw new NotFoundException(
+        'There are no employee records with the requested pagination',
+      );
     }
 
     return {
-      rowCount: count,
-      rows: employees,
-      pageCount: Math.ceil(count / limit),
+      total_row_count: count,
+      current_row_count: employees.length,
+      total_page_count: all_records ? 1 : Math.ceil(count / limit),
+      current_page_count: all_records ? 1 : offset + 1,
+      records: employees,
     };
   }
 
@@ -230,8 +213,9 @@ export class EmployeesService {
     await this.findOne(id);
     try {
       await this.employeeRepository.update(id, updateEmployeeDto);
+      return await this.findOne(id);
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
@@ -262,20 +246,30 @@ export class EmployeesService {
   }
 
   async removeBulk(removeBulkEmployeesDto: RemoveBulkRecordsDto<Employee>) {
+    const success: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+
     for (const { id } of removeBulkEmployeesDto.recordsIds) {
-      await this.remove(id);
+      try {
+        await this.remove(id); // Intenta eliminar el registro
+        success.push(id);
+      } catch (error) {
+        failed.push({ id, error: error.message }); // Registra el error
+      }
     }
+
+    return { success, failed }; // Retorna un resumen de las operaciones
   }
 
   async deleteAllEmployees() {
     try {
       await this.employeeRepository.delete({});
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
-  // Graficos
+  // Gráficos
 
   async findTopEmployeesInHarvests({
     year = new Date().getFullYear(),
