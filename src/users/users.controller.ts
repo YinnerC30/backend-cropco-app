@@ -19,6 +19,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
+import { GetPropertyFromToken } from 'src/auth/decorators/get-property-from-user-token.decorator';
 
 export const pathsUsersController: PathsController = {
   createUser: {
@@ -57,7 +58,7 @@ export const pathsUsersController: PathsController = {
     name: 'reset_password_user',
   },
   changePassword: {
-    path: 'change-password/one/:id',
+    path: 'change-password/one',
     description: 'cambio de contraseña',
     name: 'change_password_user',
   },
@@ -130,7 +131,7 @@ export class UsersController {
 
   @Patch(changePassword.path)
   changePassword(
-    @Param('id', ParseUUIDPipe) id: string,
+    @GetPropertyFromToken('id', ParseUUIDPipe) id: string,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
     return this.usersService.changePassword(id, changePasswordDto);

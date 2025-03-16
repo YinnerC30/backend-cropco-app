@@ -149,14 +149,14 @@ export class UsersService {
   ): Promise<Partial<User> & { modules: Module[] }> {
     await this.findOne(id);
     try {
-      const { actions, ...rest } = updateUserDto;
+      const { actions = [], ...rest } = updateUserDto;
 
       await this.usersRepository.update(id, rest);
 
       // Acciones
       await this.userActionsRepository.delete({ user: { id } });
 
-      const actionsEntity = updateUserDto.actions.map((act: UserActionDto) => {
+      const actionsEntity = actions.map((act: UserActionDto) => {
         return this.userActionsRepository.create({ action: act, user: { id } });
       });
 
@@ -223,6 +223,7 @@ export class UsersService {
     id: string,
     changePasswordDto: ChangePasswordDto,
   ): Promise<void> {
+    console.log(id, changePasswordDto);
     const { old_password, new_password } = changePasswordDto;
     const user = await this.findOne(id, true);
     const valid_password = bcrypt.compareSync(old_password, user.password);

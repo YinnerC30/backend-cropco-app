@@ -15,8 +15,10 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersModule } from './users.module';
 
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import * as request from 'supertest';
 import { User } from './entities/user.entity';
+import { hashPassword } from './helpers/encrypt-password';
 
 describe('UsersController (e2e)', () => {
   let app: INestApplication;
@@ -90,6 +92,7 @@ describe('UsersController (e2e)', () => {
 
   async function createTestUser(data: CreateUserDto) {
     const user = userRepository.create(data);
+    user.password = await hashPassword(user.password);
     return await userRepository.save(user);
   }
 
@@ -315,6 +318,14 @@ describe('UsersController (e2e)', () => {
 
   describe('users/one/:id (GET)', () => {
     const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+
+    beforeAll(async () => {
+      await userRepository.delete({});
+      await seedService.insertNewUsers();
+      userTest = await authService.createUserToTests();
+      token = authService.generateJwtToken({ id: userTest.id });
+    });
+
     it('should throw an exception for not sending a JWT to the protected path users/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -416,403 +427,366 @@ describe('UsersController (e2e)', () => {
     });
   });
 
-  // describe('users/update/one/:id (PATCH)', () => {
-  //   const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
-  //   it('should throw an exception for not sending a JWT to the protected path users/update/one/:id', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .patch(`/users/update/one/${userId}`)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+  describe('users/update/one/:id (PATCH)', () => {
+    const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    it('should throw an exception for not sending a JWT to the protected path users/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/users/update/one/${userId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('It should throw an exception because the user JWT does not have permissions for this action users/update/one/:id', async () => {
-  //     await authService.removePermission(userTest.id, 'find_one_user');
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .patch(`/users/update/one/${userId}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .expect(403);
-  //     expect(response.body.message).toEqual(
-  //       `User ${userTest.first_name} need a permit for this action`,
-  //     );
-  //   });
+    it('It should throw an exception because the user JWT does not have permissions for this action users/update/one/:id', async () => {
+      await authService.removePermission(userTest.id, 'find_one_user');
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/users/update/one/${userId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
 
-  //   it('Should update one user', async () => {
-  //     await authService.addPermission(userTest.id, 'update_one_user');
-  //     const { id } = await createTestUser({
-  //       first_name: 'John 3.5',
-  //       last_name: 'Doe',
-  //       email: 'john.doe3.5@example.com',
-  //       cell_phone_number: '3007890123',
-  //       address: '123 Main St',
-  //     });
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .patch(`/users/update/one/${id}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send({ first_name: 'John 4', last_name: 'Doe 4' })
-  //       .expect(200);
+    it('Should update one user', async () => {
+      await authService.addPermission(userTest.id, 'update_one_user');
+      const { id } = await createTestUser({
+        first_name: 'John Es',
+        last_name: 'Doe',
+        email: 'johnes@example.com',
+        cell_phone_number: '3007890123',
+        password: '123456',
+        actions: [],
+      });
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/users/update/one/${id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ first_name: 'John Es Modify', last_name: 'Doe Modify' })
+        .expect(200);
 
-  //     expect(body.first_name).toEqual('John 4');
-  //     expect(body.last_name).toEqual('Doe 4');
-  //     expect(body.email).toEqual('john.doe3.5@example.com');
-  //     expect(body.cell_phone_number).toEqual('3007890123');
-  //     expect(body.address).toEqual('123 Main St');
-  //   });
+      expect(body.first_name).toEqual('John Es Modify');
+      expect(body.last_name).toEqual('Doe Modify');
+      expect(body.email).toEqual('johnes@example.com');
+      expect(body.cell_phone_number).toEqual('3007890123');
+    });
 
-  //   it('Should throw exception for not finding user to update', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .patch(`/users/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send({ first_name: 'John 4' })
-  //       .expect(404);
-  //     expect(body.message).toEqual(
-  //       'User with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
-  //     );
-  //   });
+    it('Should throw exception for not finding user to update', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/users/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ first_name: 'John 4' })
+        .expect(404);
+      expect(body.message).toEqual(
+        'User with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+      );
+    });
 
-  //   it('Should throw exception for sending incorrect properties', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .patch(`/users/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send({ year: 2025 })
-  //       .expect(400);
-  //     expect(body.message).toContain('property year should not exist');
-  //   });
-  //   it('It should throw exception for trying to update the email for one that is in use.', async () => {
-  //     const { id } = await createTestUser({
-  //       first_name: 'Alan',
-  //       last_name: 'Demo',
-  //       email: 'alandemo@example.com',
-  //       cell_phone_number: '3007890123',
-  //       address: '123 Main St',
-  //     });
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .patch(`/users/update/one/${id}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send({ email: 'john.doe3.5@example.com' })
-  //       .expect(400);
-  //     expect(body.message).toEqual(
-  //       'Unique constraint violation, Key (email)=(john.doe3.5@example.com) already exists.',
-  //     );
-  //   });
-  // });
+    it('Should throw exception for sending incorrect properties', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/users/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ year: 2025 })
+        .expect(400);
+      expect(body.message).toContain('property year should not exist');
+    });
+    it('It should throw exception for trying to update the email for one that is in use.', async () => {
+      const { id } = await createTestUser({
+        first_name: 'Alan',
+        last_name: 'Demo',
+        email: 'alandemo@example.com',
+        cell_phone_number: '3007890123',
+        password: '123456',
+        actions: [],
+      });
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/users/update/one/${id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ email: 'johnes@example.com' })
+        .expect(400);
+      expect(body.message).toEqual(
+        'Unique constraint violation, Key (email)=(johnes@example.com) already exists.',
+      );
+    });
+  });
 
-  // describe('users/remove/one/:id (DELETE)', () => {
-  //   const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
-  //   it('should throw an exception for not sending a JWT to the protected path users/remove/one/:id', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/users/remove/one/${userId}`)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+  describe('users/remove/one/:id (DELETE)', () => {
+    const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    it('should throw an exception for not sending a JWT to the protected path users/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/users/remove/one/${userId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('It should throw an exception because the user JWT does not have permissions for this action users/remove/one/:id', async () => {
-  //     await authService.removePermission(userTest.id, 'remove_one_user');
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/users/remove/one/${userId}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .expect(403);
-  //     expect(response.body.message).toEqual(
-  //       `User ${userTest.first_name} need a permit for this action`,
-  //     );
-  //   });
+    it('It should throw an exception because the user JWT does not have permissions for this action users/remove/one/:id', async () => {
+      await authService.removePermission(userTest.id, 'remove_one_user');
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/users/remove/one/${userId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
 
-  //   it('Should delete one user', async () => {
-  //     await authService.addPermission(userTest.id, 'remove_one_user');
-  //     const { id } = await createTestUser({
-  //       first_name: 'Ana 4.5',
-  //       last_name: 'Doe',
-  //       email: 'Ana.doe4.5@example.com',
-  //       cell_phone_number: '3007890123',
-  //       address: '123 Main St',
-  //     });
+    it('Should delete one user', async () => {
+      await authService.addPermission(userTest.id, 'remove_one_user');
+      const { id } = await createTestUser({
+        first_name: 'Ana 4.5',
+        last_name: 'Doe',
+        email: 'Ana.doe4.5@example.com',
+        cell_phone_number: '3007890123',
+        password: '123456',
+        actions: [],
+      });
 
-  //     await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/users/remove/one/${id}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .expect(200);
+      await request
+        .default(app.getHttpServer())
+        .delete(`/users/remove/one/${id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
 
-  //     const { notFound } = await request
-  //       .default(app.getHttpServer())
-  //       .get(`/users/one/${id}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .expect(404);
-  //     expect(notFound).toBe(true);
-  //   });
-  //   it('You should throw exception for trying to delete a user that does not exist.', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/users/remove/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .expect(404);
-  //     expect(body.message).toEqual(
-  //       'User with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
-  //     );
-  //   });
+      const { notFound } = await request
+        .default(app.getHttpServer())
+        .get(`/users/one/${id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404);
+      expect(notFound).toBe(true);
+    });
+    it('You should throw exception for trying to delete a user that does not exist.', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/users/remove/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404);
+      expect(body.message).toEqual(
+        'User with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+      );
+    });
+  });
 
-  //   it('Should throw an exception when trying to delete a user with harvests or works with pending payment.', async () => {
-  //     // Crear usere de prueba
-  //     const user1 = await createTestUser({
-  //       first_name: 'User for harvest',
-  //       last_name: 'Doe',
-  //       email: 'userforharvest@example.com',
-  //       cell_phone_number: '3007890123',
-  //       address: '123 Main St',
-  //     });
-  //     const user2 = await createTestUser({
-  //       first_name: 'User for work',
-  //       last_name: 'Doe',
-  //       email: 'userforwork@example.com',
-  //       cell_phone_number: '3007890123',
-  //       address: '123 Main St',
-  //     });
+  describe('users/remove/bulk (DELETE)', () => {
+    it('should throw an exception for not sending a JWT to the protected path users/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/users/remove/bulk')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //     // Crear cultivo de prueba
-  //     const crop = await cropService.create({
-  //       name: `Crop for sale ${Math.random() * 100}`,
-  //       description: 'Crop for sale',
-  //       units: 10,
-  //       location: 'Main St',
-  //       date_of_creation: new Date().toISOString(),
-  //     } as CreateCropDto);
+    it('It should throw an exception because the user JWT does not have permissions for this action users/remove/bulk ', async () => {
+      await authService.removePermission(userTest.id, 'remove_bulk_users');
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/users/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
 
-  //     // Crear cosecha de prueba
-  //     const harvestData = {
-  //       date: new Date().toISOString(),
-  //       crop: { id: crop.id },
-  //       details: [
-  //         { user: { id: user1.id }, total: 10, value_pay: 1000 },
-  //       ],
-  //       total: 10,
-  //       value_pay: 1000,
-  //       observation: 'description demo test creation harvest...',
-  //     };
+    it('Should delete users bulk', async () => {
+      await authService.addPermission(userTest.id, 'remove_bulk_users');
+      // Crear usuarios de prueba
+      const [user1, user2, user3] = await Promise.all([
+        createTestUser({
+          first_name: 'John 2',
+          last_name: 'Doe',
+          email: 'john.doefg2@example.com',
+          cell_phone_number: '3007890123',
+          password: '123456',
+          actions: [],
+        }),
+        createTestUser({
+          first_name: 'Jane4 2',
+          last_name: 'Smith',
+          email: 'jane.smith32@example.com',
+          cell_phone_number: '3007890123',
+          password: '123456',
+          actions: [],
+        }),
+        createTestUser({
+          first_name: 'Jane 3',
+          last_name: 'Smith',
+          email: 'jane.smith35@example.com',
+          cell_phone_number: '3007890123',
+          password: '123456',
+          actions: [],
+        }),
+      ]);
 
-  //     await harvestService.create(harvestData as CreateHarvestDto);
+      const bulkData: RemoveBulkRecordsDto<User> = {
+        recordsIds: [{ id: user1.id }, { id: user2.id }],
+      };
 
-  //     await workService.create({
-  //       date: new Date().toISOString(),
-  //       crop: { id: crop.id },
-  //       details: [
-  //         {
-  //           user: { id: user2.id },
-  //           value_pay: 1000,
-  //           payment_is_pending: true,
-  //         },
-  //       ],
-  //       total: 10,
-  //       value_pay: 1000,
-  //       description: 'description demo test creation harvest...',
-  //     } as any);
+      await request
+        .default(app.getHttpServer())
+        .delete('/users/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bulkData)
+        .expect(200);
 
-  //     // Intentar eliminar el user
-  //     const { body: body1 } = await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/users/remove/one/${user1.id}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .expect(409);
-  //     expect(body1.message).toEqual(
-  //       `Cannot remove user with harvests pending payment`,
-  //     );
+      const [deletedUser1, deletedUser2, remainingUser3] = await Promise.all([
+        userRepository.findOne({ where: { id: user1.id } }),
+        userRepository.findOne({ where: { id: user2.id } }),
+        userRepository.findOne({ where: { id: user3.id } }),
+      ]);
 
-  //     const { body: body2 } = await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/users/remove/one/${user2.id}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .expect(409);
-  //     expect(body2.message).toEqual(
-  //       `Cannot remove user with works pending payment`,
-  //     );
-  //   });
-  // });
+      expect(deletedUser1).toBeNull();
+      expect(deletedUser2).toBeNull();
+      expect(remainingUser3).toBeDefined();
+    });
 
-  // describe('users/remove/bulk (DELETE)', () => {
-  //   it('should throw an exception for not sending a JWT to the protected path users/remove/bulk ', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .delete('/users/remove/bulk')
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+    it('Should throw exception when trying to send an empty array.', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete('/users/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ recordsIds: [] })
+        .expect(400);
+      expect(body.message[0]).toEqual('recordsIds should not be empty');
+    });
+  });
 
-  //   it('It should throw an exception because the user JWT does not have permissions for this action users/remove/bulk ', async () => {
-  //     await authService.removePermission(userTest.id, 'remove_bulk_users');
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .delete('/users/remove/bulk')
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .expect(403);
-  //     expect(response.body.message).toEqual(
-  //       `User ${userTest.first_name} need a permit for this action`,
-  //     );
-  //   });
+  describe('users/reset-password/one/:id (PATCH)', () => {
+    const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    it('should throw an exception for not sending a JWT to the protected path users/reset-password/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/users/reset-password/one/${userId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('Should delete users bulk', async () => {
-  //     await authService.addPermission(userTest.id, 'remove_bulk_users');
-  //     // Crear useres de prueba
-  //     const [user1, user2, user3] = await Promise.all([
-  //       createTestUser({
-  //         first_name: 'John 2',
-  //         last_name: 'Doe',
-  //         email: 'john.doefg2@example.com',
-  //         cell_phone_number: '3007890123',
-  //         address: '123 Main St',
-  //       }),
-  //       createTestUser({
-  //         first_name: 'Jane4 2',
-  //         last_name: 'Smith',
-  //         email: 'jane.smith32@example.com',
-  //         cell_phone_number: '3007890123',
-  //         address: '456 Elm St',
-  //       }),
-  //       createTestUser({
-  //         first_name: 'Jane 3',
-  //         last_name: 'Smith',
-  //         email: 'jane.smith35@example.com',
-  //         cell_phone_number: '3007890123',
-  //         address: '456 Elm St',
-  //       }),
-  //     ]);
+    it('It should throw an exception because the user JWT does not have permissions for this action users/reset-password/one/:id', async () => {
+      await authService.removePermission(userTest.id, 'reset_password_user');
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/users/reset-password/one/${userId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
 
-  //     const bulkData: RemoveBulkRecordsDto<User> = {
-  //       recordsIds: [{ id: user1.id }, { id: user2.id }],
-  //     };
+    it('Should reset the password for one user', async () => {
+      await authService.addPermission(userTest.id, 'reset_password_user');
+      const { id } = await createTestUser({
+        first_name: 'Alan',
+        last_name: 'Demo',
+        email: 'alandemo2@example.com',
+        cell_phone_number: '3007890123',
+        password: '123456',
+        actions: [],
+      });
 
-  //     await request
-  //       .default(app.getHttpServer())
-  //       .delete('/users/remove/bulk')
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send(bulkData)
-  //       .expect(200);
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/users/reset-password/one/${id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(body).toHaveProperty('password');
+      expect(body.password).not.toEqual('123456');
+      expect(body.password).toBeDefined();
+    });
+  });
 
-  //     const [deletedUser1, deletedUser2, remainingUser3] =
-  //       await Promise.all([
-  //         userRepository.findOne({ where: { id: user1.id } }),
-  //         userRepository.findOne({ where: { id: user2.id } }),
-  //         userRepository.findOne({ where: { id: user3.id } }),
-  //       ]);
+  describe('users/change-password/one (PATCH)', () => {
+    const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    it('should throw an exception for not sending a JWT to the protected path users/change-password/one', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/users/change-password/one`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //     expect(deletedUser1).toBeNull();
-  //     expect(deletedUser2).toBeNull();
-  //     expect(remainingUser3).toBeDefined();
-  //   });
+    it('It should throw an exception because the user JWT does not have permissions for this action users/change-password/one', async () => {
+      await authService.removePermission(userTest.id, 'change_password_user');
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/users/change-password/one`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
 
-  //   it('Should throw exception when trying to send an empty array.', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .delete('/users/remove/bulk')
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send({ recordsIds: [] })
-  //       .expect(400);
-  //     expect(body.message[0]).toEqual('recordsIds should not be empty');
-  //   });
+    it('Should change the password for one user', async () => {
+      const userChangePassword = await authService.createUserToTests();
+      const token = authService.generateJwtToken({ id: userChangePassword.id });
+      await authService.addPermission(
+        userChangePassword.id,
+        'change_password_user',
+      );
 
-  //   it('Should throw an exception when trying to delete a user with sales pending payment.', async () => {
-  //     // Crear usere de prueba
-  //     const user1 = await createTestUser({
-  //       first_name: 'User for sale 1',
-  //       last_name: 'Doe',
-  //       email: 'userforsale1@example.com',
-  //       cell_phone_number: '3007890123',
-  //       address: '123 Main St',
-  //     });
-  //     const user2 = await createTestUser({
-  //       first_name: 'User for sale 2',
-  //       last_name: 'Doe',
-  //       email: 'userforsale2@example.com',
-  //       cell_phone_number: '3007890123',
-  //       address: '123 Main St',
-  //     });
-  //     const user3 = await createTestUser({
-  //       first_name: 'User for sale 3',
-  //       last_name: 'Doe',
-  //       email: 'userforsale3@example.com',
-  //       cell_phone_number: '3007890123',
-  //       address: '123 Main St',
-  //     });
+      const bodyRequest = {
+        old_password: '123456',
+        new_password: 'otraClave1234',
+      };
 
-  //     // Crear cultivo de prueba
-  //     const crop = await cropService.create({
-  //       name: `Crop for sale ${Math.random() * 100}`,
-  //       description: 'Crop for sale',
-  //       units: 10,
-  //       location: 'Main St',
-  //       date_of_creation: new Date().toISOString(),
-  //     } as CreateCropDto);
+      await request
+        .default(app.getHttpServer())
+        .patch(`/users/change-password/one`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(200);
+    });
+  });
 
-  //     // Crear cosecha de prueba
-  //     const harvestData = {
-  //       date: new Date().toISOString(),
-  //       crop: { id: crop.id },
-  //       details: [
-  //         { user: { id: user1.id }, total: 600, value_pay: 450000 },
-  //       ],
-  //       total: 600,
-  //       value_pay: 450000,
-  //       observation: 'description demo test creation harvest...',
-  //     };
+  describe('users/toggle-status/one/:id (PATCH)', () => {
+    const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    it('should throw an exception for not sending a JWT to the protected path users/toggle-status/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/users/toggle-status/one/${userId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //     await harvestService.create(harvestData as CreateHarvestDto);
+    it('It should throw an exception because the user JWT does not have permissions for this action users/toggle-status/one/:id', async () => {
+      await authService.removePermission(userTest.id, 'change_password_user');
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/users/toggle-status/one/${userId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
 
-  //     await workService.create({
-  //       date: new Date().toISOString(),
-  //       crop: { id: crop.id },
-  //       details: [
-  //         {
-  //           user: { id: user2.id },
-  //           value_pay: 1000,
-  //           payment_is_pending: true,
-  //         },
-  //       ],
-  //       total: 10,
-  //       value_pay: 1000,
-  //       description: 'description demo test creation harvest...',
-  //     } as any);
+    it('Should toggle status for one user', async () => {
+      await authService.addPermission(userTest.id, 'toggle_status_user');
+      const { id } = await createTestUser({
+        first_name: 'Alan',
+        last_name: 'Demo',
+        email: 'alandemo4@example.com',
+        cell_phone_number: '3007890123',
+        password: '123456',
+        actions: [],
+        is_active: true,
+      } as any);
 
-  //     // Intentar eliminar el user
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/users/remove/bulk`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send({
-  //         recordsIds: [
-  //           { id: user1.id },
-  //           { id: user2.id },
-  //           { id: user3.id },
-  //         ],
-  //       })
-  //       .expect(207);
-  //     expect(body).toEqual({
-  //       success: [user3.id],
-  //       failed: [
-  //         {
-  //           id: user1.id,
-  //           error: 'Cannot remove user with harvests pending payment',
-  //         },
-  //         {
-  //           id: user2.id,
-  //           error: 'Cannot remove user with works pending payment',
-  //         },
-  //       ],
-  //     });
-  //   });
-  // });
+      await request
+        .default(app.getHttpServer())
+        .patch(`/users/toggle-status/one/${id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
 
-  // TODO: Implementar pruebas para estos endpoints
-  // TODO: pending-payments/all
-  // TODO: made-payments/all
-  // TODO: pending-payments/one/:id
-  // TODO: harvests/all
-  // TODO: works/all
-  // TODO: find/certification/one/:id
-  // TODO: find/top-users-in-harvests
-  // TODO: find/top-users-in-works
+      const user = await userRepository.findOne({ where: { id } });
+      expect(user).toHaveProperty('is_active');
+      expect(user.is_active).toEqual(false);
+    });
+  });
 });
