@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsDateString,
+  IsDefined,
   IsInt,
   IsPositive,
   ValidateNested,
@@ -25,6 +26,7 @@ export class CreateHarvestProcessedDto {
     description: 'ID del cultivo asociado al procesamiento',
     type: () => ValidateUUID,
   })
+  @IsDefined()
   @ValidateNested()
   @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;
@@ -33,6 +35,7 @@ export class CreateHarvestProcessedDto {
     description: 'Cosecha asociada al procesamiento',
     type: ValidateUUID,
   })
+  @IsDefined()
   @ValidateNested()
   @Type(() => ValidateUUID)
   harvest: DeepPartial<Harvest>;

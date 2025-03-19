@@ -18,7 +18,7 @@ export interface DataReturn {
   growth_value: number;
   total_current: number;
   total_previous: number;
-  diference: number;
+  difference: number;
   status: 'increment' | 'decrement' | 'stable' | 'no-valid';
 }
 
@@ -45,19 +45,19 @@ export function calculateGrowthHarvest({
   if (totalLastYear === 0 && totalPreviousYear === 0) {
     return {
       growth_value: 0,
-      diference: 0,
+      difference: 0,
       status: 'no-valid',
       total_current: 0,
       total_previous: 0,
     };
   }
 
-  const diference = totalLastYear - totalPreviousYear;
+  const difference = totalLastYear - totalPreviousYear;
 
   if (totalPreviousYear === 0) {
     return {
       growth_value: 100,
-      diference: diference,
+      difference: difference,
       status: 'no-valid',
       total_current: totalLastYear,
       total_previous: totalPreviousYear,
@@ -65,13 +65,13 @@ export function calculateGrowthHarvest({
   }
 
   // Aplicamos la fórmula
-  const growthValue = (diference / totalPreviousYear) * 100;
+  const growthValue = (difference / totalPreviousYear) * 100;
 
   return {
     growth_value: growthValue,
-    diference: diference,
+    difference: difference,
     status:
-      diference > 0 ? 'increment' : diference < 0 ? 'decrement' : 'stable',
+      difference > 0 ? 'increment' : difference < 0 ? 'decrement' : 'stable',
     total_current: totalLastYear,
     total_previous: totalPreviousYear,
   };

@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsDefined,
   IsInt,
   IsOptional,
   IsPositive,
@@ -22,6 +23,7 @@ export class HarvestDetailsDto {
     description: 'Empleado asociado a los detalles de la cosecha',
     type: () => ValidateUUID,
   })
+  @IsDefined()
   @ValidateNested()
   @Type(() => ValidateUUID)
   employee: DeepPartial<Employee>;

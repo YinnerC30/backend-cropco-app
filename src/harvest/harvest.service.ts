@@ -23,7 +23,7 @@ import { validateTotalInArray } from 'src/common/helpers/validate-total-in-array
 import { PrinterService } from 'src/printer/printer.service';
 import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
 import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
-import { QueryTotalHarvestsInYearDto } from './dto/query-total-harvests-year';
+import { QueryParamsTotalHarvestsInYearDto } from './dto/query-params-total-harvests-year';
 import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
 import { HarvestProcessed } from './entities/harvest-processed.entity';
 import { HarvestStock } from './entities/harvest-stock.entity';
@@ -666,7 +666,7 @@ export class HarvestService {
     year = 2025,
     crop = '',
     employee = '',
-  }: QueryTotalHarvestsInYearDto) {
+  }: QueryParamsTotalHarvestsInYearDto) {
     const previousYear = year - 1;
 
     const currentYearData = await this.getHarvestDataForYear(

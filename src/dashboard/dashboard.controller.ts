@@ -7,7 +7,7 @@ import { ClientsService } from 'src/clients/clients.service';
 import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 import { CropsService } from 'src/crops/crops.service';
 import { HarvestService } from 'src/harvest/harvest.service';
-import { QueryTotalHarvestsInYearDto } from 'src/harvest/dto/query-total-harvests-year';
+import { QueryParamsTotalHarvestsInYearDto } from 'src/harvest/dto/query-params-total-harvests-year';
 import { WorkService } from 'src/work/work.service';
 import { QueryTotalWorksInYearDto } from 'src/work/dto/query-total-works-year';
 import { QueryTotalSalesInYearDto } from 'src/sales/dto/query-total-sales-year';
@@ -119,7 +119,7 @@ export class DashboardController {
 
   // * Harvests
   @Get(findTotalHarvestInYearAndPreviousYear.path)
-  async findTotalHarvestInYear(@Query() params: QueryTotalHarvestsInYearDto) {
+  async findTotalHarvestInYear(@Query() params: QueryParamsTotalHarvestsInYearDto) {
     return this.harvestService.findTotalHarvestInYear(params);
   }
 

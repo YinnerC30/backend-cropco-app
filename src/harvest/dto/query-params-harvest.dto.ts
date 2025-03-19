@@ -8,7 +8,9 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  ValidateNested,
 } from 'class-validator';
+import { UUID } from 'node:crypto';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
@@ -60,10 +62,10 @@ export class QueryParamsHarvest extends QueryParamsDto {
   @IsArray()
   @Transform(({ value }) => {
     if (typeof value === 'string' && value.trim() === '') {
-      return undefined; // Convierte strings vacíos a undefined
+      return undefined;
     }
-    return typeof value === 'string' ? value.split(',') : value; // Convierte strings separados por comas a un array
+    return typeof value === 'string' ? value.split(',') : value;
   })
-  @IsUUID('4', { each: true }) // Valida que cada elemento del array sea un UUID v4
-  employees?: string[];
+  @IsUUID('4', { each: true })
+  employees?: UUID[];
 }

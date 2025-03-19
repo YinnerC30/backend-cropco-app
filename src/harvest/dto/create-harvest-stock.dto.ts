@@ -1,22 +1,16 @@
-import { IsInt, IsPositive, IsUUID } from 'class-validator';
+import { IsDefined, IsInt, IsPositive, IsUUID, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
+import { Type } from 'class-transformer';
 
 export class HarvestStockDto {
-  @ApiProperty({
-    description: 'ID del cultivo asociado',
-    type: () => ValidateUUID,
-  })
-  @IsUUID()
+  @ValidateNested()
+  @IsDefined()
+  @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;
 
-  @ApiProperty({
-    description: 'Cantidad total del cultivo cosechado',
-    example: 100,
-    type: Number,
-  })
   @IsInt()
   @IsPositive()
   total: number;
