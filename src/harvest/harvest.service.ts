@@ -31,6 +31,7 @@ import { InsufficientHarvestStockException } from './exceptions/insufficient-har
 import { getHarvestReport } from './reports/get-harvest';
 import { calculateGrowthHarvest } from './helpers/calculateGrowthHarvest';
 import { monthNamesES } from 'src/common/utils/monthNamesEs';
+import { UUID } from 'node:crypto';
 
 @Injectable()
 export class HarvestService {
@@ -51,16 +52,10 @@ export class HarvestService {
   ) {}
 
   async create(createHarvestDto: CreateHarvestDto) {
-    validateTotalInArray(createHarvestDto, {
-      propertyNameArray: 'details',
-      namesPropertiesToSum: ['total', 'value_pay'],
-    });
-
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    // TODO: Validar que exista un único empleado por registro de cosecha
     try {
       const { details, ...rest } = createHarvestDto;
 
@@ -604,7 +599,7 @@ export class HarvestService {
   async exportHarvestToPDF(id: string) {
     const harvest = await this.findOne(id);
     const docDefinition = getHarvestReport({ data: harvest });
-    return this.printerService.createPdf({docDefinition});
+    return this.printerService.createPdf({ docDefinition });
   }
 
   async getHarvestDataForYear(
@@ -664,8 +659,8 @@ export class HarvestService {
 
   async findTotalHarvestInYear({
     year = 2025,
-    crop = '',
-    employee = '',
+    crop = '' as UUID,
+    employee = '' as UUID,
   }: QueryParamsTotalHarvestsInYearDto) {
     const previousYear = year - 1;
 

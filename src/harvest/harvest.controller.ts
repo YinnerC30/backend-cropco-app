@@ -18,7 +18,6 @@ import { PathsController } from 'src/common/interfaces/PathsController';
 import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
 import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
-import { QueryParamsTotalHarvestsInYearDto } from './dto/query-params-total-harvests-year';
 import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { Harvest } from './entities/harvest.entity';
@@ -45,7 +44,7 @@ export const pathsHarvestsController: PathsController = {
     description: 'obtener todas las cosechas procesadas',
     name: 'find_all_harvests_processed',
   },
-  
+
   findAllHarvestsWithPendingPayments: {
     path: 'pending-payments/all',
     description: 'obtener todas las cosechas con pagos pendientes',
