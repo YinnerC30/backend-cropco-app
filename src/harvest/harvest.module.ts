@@ -6,6 +6,7 @@ import { HarvestStock } from './entities/harvest-stock.entity';
 import { Harvest } from './entities/harvest.entity';
 import { HarvestController } from './harvest.controller';
 import { HarvestService } from './harvest.service';
+import { CommonModule } from 'src/common/common.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { HarvestService } from './harvest.service';
       HarvestStock,
       HarvestProcessed,
     ]),
+    CommonModule,
   ],
   controllers: [HarvestController],
   providers: [HarvestService],

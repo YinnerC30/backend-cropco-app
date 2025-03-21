@@ -13,13 +13,14 @@ import { HarvestDetails } from './entities/harvest-details.entity';
 import { Harvest } from './entities/harvest.entity';
 
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organize-ids-to-update-entity';
-import { handleDBExceptions } from '../common/helpers/handle-db-exceptions';
 import { HarvestDetailsDto } from './dto/create-harvest-details.dto';
 
+import { UUID } from 'node:crypto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
-import { validateTotalInArray } from 'src/common/helpers/validate-total-in-array';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { PrinterService } from 'src/printer/printer.service';
 import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
 import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
@@ -28,28 +29,27 @@ import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
 import { HarvestProcessed } from './entities/harvest-processed.entity';
 import { HarvestStock } from './entities/harvest-stock.entity';
 import { InsufficientHarvestStockException } from './exceptions/insufficient-harvest-stock';
-import { getHarvestReport } from './reports/get-harvest';
 import { calculateGrowthHarvest } from './helpers/calculateGrowthHarvest';
-import { monthNamesES } from 'src/common/utils/monthNamesEs';
-import { UUID } from 'node:crypto';
+import { getHarvestReport } from './reports/get-harvest';
+import { getComparisonOperator } from 'src/common/helpers/get-comparasion-operator';
 
 @Injectable()
 export class HarvestService {
   private readonly logger = new Logger('HarvestsService');
-  private handleDBExceptions = (error: any, logger = this.logger) =>
-    handleDBExceptions(error, logger);
+
   constructor(
     @InjectRepository(Harvest)
     private readonly harvestRepository: Repository<Harvest>,
 
     @InjectRepository(HarvestProcessed)
     private readonly harvestProcessedRepository: Repository<HarvestProcessed>,
-    @InjectRepository(HarvestStock)
-    private readonly harvestStockRepository: Repository<HarvestStock>,
 
     private readonly dataSource: DataSource,
     private readonly printerService: PrinterService,
-  ) {}
+    private readonly handlerError: HandlerErrorService,
+  ) {
+    this.handlerError.setLogger(this.logger);
+  }
 
   async create(createHarvestDto: CreateHarvestDto) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -68,7 +68,7 @@ export class HarvestService {
       return harvest;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     } finally {
       await queryRunner.release();
     }
@@ -93,7 +93,7 @@ export class HarvestService {
       type_filter_value_pay,
       value_pay,
 
-      employees = [], // Array de IDs de empleados
+      employees = [],
     } = queryParams;
 
     let addedFilter =
@@ -118,35 +118,26 @@ export class HarvestService {
     }
 
     if (filter_by_date) {
-      const operation =
-        TypeFilterDate.AFTER == type_filter_date
-          ? '>'
-          : TypeFilterDate.EQUAL == type_filter_date
-            ? '='
-            : '<';
-      queryBuilder.andWhere(`harvest.date ${operation} :date`, { date });
+      queryBuilder.andWhere(
+        `harvest.date ${getComparisonOperator(type_filter_date)} :date`,
+        { date },
+      );
     }
 
     if (filter_by_total) {
-      const operation =
-        TypeFilterNumber.MAX == type_filter_total
-          ? '>'
-          : TypeFilterNumber.EQUAL == type_filter_total
-            ? '='
-            : '<';
-      queryBuilder.andWhere(`harvest.total ${operation} :total`, { total });
+      queryBuilder.andWhere(
+        `harvest.total ${getComparisonOperator(type_filter_total)} :total`,
+        { total },
+      );
     }
 
     if (filter_by_value_pay) {
-      const operation =
-        TypeFilterNumber.MAX == type_filter_value_pay
-          ? '>'
-          : TypeFilterNumber.EQUAL == type_filter_value_pay
-            ? '='
-            : '<';
-      queryBuilder.andWhere(`harvest.value_pay ${operation} :value_pay`, {
-        value_pay,
-      });
+      queryBuilder.andWhere(
+        `harvest.value_pay ${getComparisonOperator(type_filter_value_pay)} :value_pay`,
+        {
+          value_pay,
+        },
+      );
     }
 
     if (employees.length > 0) {
@@ -202,11 +193,6 @@ export class HarvestService {
   }
 
   async update(id: string, updateHarvestDto: UpdateHarvestDto) {
-    validateTotalInArray(updateHarvestDto, {
-      propertyNameArray: 'details',
-      namesPropertiesToSum: ['total', 'value_pay'],
-    });
-
     const harvest = await this.findOne(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -215,6 +201,7 @@ export class HarvestService {
 
     try {
       const newHarvestDetails = updateHarvestDto.details;
+
       const newIDs = newHarvestDetails.map((record) =>
         new String(record.id).toString(),
       );
@@ -255,14 +242,14 @@ export class HarvestService {
           (record) => record.id === recordId,
         );
 
-        const valuesAreDiferent =
+        const valuesAreDifferent =
           dataRecordNew.total !== dataRecordOld.total ||
           dataRecordNew.value_pay !== dataRecordOld.value_pay;
 
         if (
           (dataRecordOld.deletedDate !== null ||
             dataRecordOld.payment_is_pending === false) &&
-          valuesAreDiferent
+          valuesAreDifferent
         ) {
           throw new BadRequestException(
             'You cannot update this record, it is linked to other records.',
@@ -297,7 +284,7 @@ export class HarvestService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     } finally {
       await queryRunner.release();
     }
@@ -323,23 +310,23 @@ export class HarvestService {
     await queryRunner.startTransaction();
 
     try {
-      for (const harvestProcessed of harvest.processed) {
-        await queryRunner.manager.remove(harvestProcessed);
-        const { crop } = harvestProcessed;
-        await this.updateStock(
-          queryRunner,
-          crop.id,
-          harvestProcessed.total,
-          false,
-        );
-      }
+      // for (const harvestProcessed of harvest.processed) {
+      //   await queryRunner.manager.remove(harvestProcessed);
+      //   const { crop } = harvestProcessed;
+      //   await this.updateStock(
+      //     queryRunner,
+      //     crop.id,
+      //     harvestProcessed.total,
+      //     false,
+      //   );
+      // }
 
       await queryRunner.manager.remove(Harvest, harvest);
 
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     } finally {
       await queryRunner.release();
     }
@@ -349,7 +336,7 @@ export class HarvestService {
     try {
       await this.harvestRepository.delete({});
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
@@ -471,7 +458,7 @@ export class HarvestService {
       await queryRunner.release();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     } finally {
       await queryRunner.release();
     }
@@ -554,7 +541,7 @@ export class HarvestService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     } finally {
       await queryRunner.release();
     }
@@ -584,7 +571,7 @@ export class HarvestService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     } finally {
       await queryRunner.release();
     }
