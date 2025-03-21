@@ -32,6 +32,7 @@ import { InsufficientHarvestStockException } from './exceptions/insufficient-har
 import { calculateGrowthHarvest } from './helpers/calculateGrowthHarvest';
 import { getHarvestReport } from './reports/get-harvest';
 import { getComparisonOperator } from 'src/common/helpers/get-comparasion-operator';
+import { TemplateGetAllRecords } from 'src/common/interfaces/TemplateGetAllRecords';
 
 @Injectable()
 export class HarvestService {
@@ -74,7 +75,9 @@ export class HarvestService {
     }
   }
 
-  async findAll(queryParams: QueryParamsHarvest) {
+  async findAll(
+    queryParams: QueryParamsHarvest,
+  ): Promise<TemplateGetAllRecords<Harvest>> {
     const {
       limit = 10,
       offset = 0,
@@ -154,16 +157,14 @@ export class HarvestService {
       });
     }
 
-    const result = await queryBuilder.getMany();
-
-    const count = addedFilter
-      ? result.length
-      : await this.harvestRepository.count();
+    const [harvest, count] = await queryBuilder.getManyAndCount();
 
     return {
-      rowCount: count,
-      rows: result,
-      pageCount: Math.ceil(count / limit),
+      total_row_count: count,
+      current_row_count: harvest.length,
+      total_page_count: Math.ceil(count / limit),
+      current_page_count: offset + 1,
+      records: harvest,
     };
   }
 

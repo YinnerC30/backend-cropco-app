@@ -334,6 +334,33 @@ describe('ClientsController (e2e)', () => {
         expect(client.deletedDate).toBeNull();
       });
     });
+    it('should return the specified number of clients passed by the query', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/clients/all`)
+        .query({ query: 'Ava' })
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(response.body.total_row_count).toEqual(1);
+      expect(response.body.current_row_count).toEqual(1);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
+
+      response.body.records.forEach((client: Client) => {
+        expect(client).toHaveProperty('id');
+        expect(client).toHaveProperty('first_name');
+        expect(client).toHaveProperty('last_name');
+        expect(client).toHaveProperty('email');
+        expect(client).toHaveProperty('cell_phone_number');
+        expect(client).toHaveProperty('address');
+        expect(client).toHaveProperty('createdDate');
+        expect(client).toHaveProperty('updatedDate');
+        expect(client).toHaveProperty('deletedDate');
+        expect(client.deletedDate).toBeNull();
+      });
+    });
+
     it('You should throw an exception for requesting out-of-scope paging.', async () => {
       const { body } = await request
         .default(app.getHttpServer())

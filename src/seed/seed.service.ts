@@ -61,7 +61,7 @@ export class SeedService {
     await this.authService.createModulesWithActions();
     await this.authService.convertToAdminUserSeed();
     // await this.insertNewUsers();
-    // await this.insertNewClients();
+    await this.insertNewClients();
     // await this.insertNewSuppliers();
     // await this.insertNewSupplies();
     // await this.insertNewEmployees();

@@ -15,6 +15,7 @@ import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
 import { getClientsReport } from './reports/get-all-clients.report';
+import { TemplateGetAllRecords } from 'src/common/interfaces/TemplateGetAllRecords';
 
 @Injectable()
 export class ClientsService {
@@ -39,7 +40,9 @@ export class ClientsService {
     }
   }
 
-  async findAll(queryParams: QueryParamsDto) {
+  async findAll(
+    queryParams: QueryParamsDto,
+  ): Promise<TemplateGetAllRecords<Client>> {
     const {
       query = '',
       limit = 10,
@@ -53,7 +56,6 @@ export class ClientsService {
       !all_records &&
       queryBuilder
         .where('clients.first_name ILIKE :query', { query: `${query}%` })
-        .orWhere('clients.last_name ILIKE :query', { query: `${query}%` })
         .orWhere('clients.email ILIKE :query', { query: `${query}%` });
 
     !all_records && queryBuilder.take(limit).skip(offset * limit);
@@ -147,10 +149,10 @@ export class ClientsService {
 
     for (const { id } of removeBulkClientsDto.recordsIds) {
       try {
-        await this.remove(id); 
+        await this.remove(id);
         success.push(id);
       } catch (error) {
-        failed.push({ id, error: error.message }); 
+        failed.push({ id, error: error.message });
       }
     }
 
