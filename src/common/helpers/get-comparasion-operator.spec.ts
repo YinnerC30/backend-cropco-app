@@ -1,5 +1,5 @@
 import { TypeFilterDate } from '../enums/TypeFilterDate';
-import { getComparisonOperator } from './get-comparasion-operator';
+import { getComparisonOperator } from './get-comparison-operator';
 
 describe('getComparisonOperator', () => {
   it('should return > when operator is AFTER', () => {

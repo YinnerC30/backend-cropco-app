@@ -117,7 +117,7 @@ describe('CreateHarvestDto', () => {
   it('should validate a correct harvest dto', async () => {
     const dto = plainToClass(CreateHarvestDto, validDto);
     const errors = await validate(dto);
-    console.log(JSON.stringify(errors, null, 2));
+
     expect(errors.length).toBe(0);
   });
 

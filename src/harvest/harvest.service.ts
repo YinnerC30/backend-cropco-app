@@ -17,8 +17,8 @@ import { HarvestDetailsDto } from './dto/create-harvest-details.dto';
 
 import { UUID } from 'node:crypto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
-import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
+import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
+import { TemplateGetAllRecords } from 'src/common/interfaces/TemplateGetAllRecords';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { PrinterService } from 'src/printer/printer.service';
@@ -31,8 +31,6 @@ import { HarvestStock } from './entities/harvest-stock.entity';
 import { InsufficientHarvestStockException } from './exceptions/insufficient-harvest-stock';
 import { calculateGrowthHarvest } from './helpers/calculateGrowthHarvest';
 import { getHarvestReport } from './reports/get-harvest';
-import { getComparisonOperator } from 'src/common/helpers/get-comparasion-operator';
-import { TemplateGetAllRecords } from 'src/common/interfaces/TemplateGetAllRecords';
 
 @Injectable()
 export class HarvestService {
@@ -148,11 +146,17 @@ export class HarvestService {
 
     const [harvest, count] = await queryBuilder.getManyAndCount();
 
+    if (harvest.length === 0 && count > 0) {
+      throw new NotFoundException(
+        'There are no harvest records with the requested pagination',
+      );
+    }
+
     return {
       total_row_count: count,
       current_row_count: harvest.length,
       total_page_count: Math.ceil(count / limit),
-      current_page_count: offset + 1,
+      current_page_count: harvest.length > 0 ? offset + 1 : 0,
       records: harvest,
     };
   }
