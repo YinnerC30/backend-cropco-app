@@ -68,6 +68,7 @@ export class HarvestService {
       await queryRunner.commitTransaction();
       return harvest;
     } catch (error) {
+      console.log(error);
       await queryRunner.rollbackTransaction();
       this.handlerError.handle(error);
     } finally {
@@ -99,13 +100,6 @@ export class HarvestService {
       employees = [],
     } = queryParams;
 
-    let addedFilter =
-      !!crop ||
-      filter_by_date ||
-      filter_by_total ||
-      filter_by_value_pay ||
-      employees.length > 0;
-
     const queryBuilder = this.harvestRepository
       .createQueryBuilder('harvest')
       .withDeleted()
@@ -116,34 +110,30 @@ export class HarvestService {
       .take(limit)
       .skip(offset * limit);
 
-    if (crop.length > 0) {
+    crop.length > 0 &&
       queryBuilder.andWhere('harvest.crop = :cropId', { cropId: crop });
-    }
 
-    if (filter_by_date) {
+    filter_by_date &&
       queryBuilder.andWhere(
         `harvest.date ${getComparisonOperator(type_filter_date)} :date`,
         { date },
       );
-    }
 
-    if (filter_by_total) {
+    filter_by_total &&
       queryBuilder.andWhere(
         `harvest.total ${getComparisonOperator(type_filter_total)} :total`,
         { total },
       );
-    }
 
-    if (filter_by_value_pay) {
+    filter_by_value_pay &&
       queryBuilder.andWhere(
         `harvest.value_pay ${getComparisonOperator(type_filter_value_pay)} :value_pay`,
         {
           value_pay,
         },
       );
-    }
 
-    if (employees.length > 0) {
+    employees.length > 0 &&
       queryBuilder.andWhere((qb) => {
         const subQuery = qb
           .subQuery()
@@ -155,7 +145,6 @@ export class HarvestService {
           .getQuery();
         return 'harvest.id IN ' + subQuery;
       });
-    }
 
     const [harvest, count] = await queryBuilder.getManyAndCount();
 
