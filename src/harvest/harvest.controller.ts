@@ -44,7 +44,6 @@ export const pathsHarvestsController: PathsController = {
     description: 'obtener todas las cosechas procesadas',
     name: 'find_all_harvests_processed',
   },
-
   findAllHarvestsWithPendingPayments: {
     path: 'pending-payments/all',
     description: 'obtener todas las cosechas con pagos pendientes',
@@ -102,7 +101,6 @@ const {
   createHarvestProcessed,
   findAllHarvests,
   findAllHarvestsProcessed,
-  findAllCropsStock,
   findOneHarvest,
   findOneHarvestProcessed,
   updateHarvest,
@@ -189,16 +187,6 @@ export class HarvestController {
     return this.harvestService.findAll(queryParams);
   }
 
-  // @Get(findAllCropsStock.path)
-  // @ApiResponse({
-  //   status: 200,
-  //   description: 'Se han obtenido todas las cosechas con su respectivo Stock',
-  // })
-  // @ApiResponse({ status: 500, description: 'Internal server error' })
-  // findAllHarvestStock() {
-  //   return this.harvestService.findAllHarvestStock();
-  // }
-
   @Get(findAllHarvestsProcessed.path)
   @ApiResponse({ status: 200, description: 'List of all processed harvests' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
@@ -266,7 +254,14 @@ export class HarvestController {
   }
 
   @Delete(removeHarvests.path)
-  removeBulk(@Body() removeBulkHarvestsDto: RemoveBulkRecordsDto<Harvest>) {
-    return this.harvestService.removeBulk(removeBulkHarvestsDto);
+  async removeBulk(
+    @Body() removeBulkHarvestsDto: RemoveBulkRecordsDto<Harvest>,
+    @Res() response: Response,
+  ) {
+    const result = await this.harvestService.removeBulk(removeBulkHarvestsDto);
+    if (result.failed && result.failed.length > 0) {
+      return response.status(207).json(result);
+    }
+    return response.status(200).json(result);
   }
 }

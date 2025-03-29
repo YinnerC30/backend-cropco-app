@@ -24,6 +24,7 @@ import { HarvestController } from './harvest.controller';
 import { HarvestModule } from './harvest.module';
 import { HarvestService } from './harvest.service';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 describe('HarvestsController (e2e)', () => {
   let app: INestApplication;
@@ -1766,6 +1767,204 @@ describe('HarvestsController (e2e)', () => {
         .send({ year: 2025 })
         .expect(400);
       expect(body.message).toContain('property year should not exist');
+    });
+  });
+
+  describe('harvests/remove/one/:id (DELETE)', () => {
+    const harvestId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    it('should throw an exception for not sending a JWT to the protected path harvests/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/remove/one/${harvestId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('It should throw an exception because the user JWT does not have permissions for this action harvests/remove/one/:id', async () => {
+      await authService.removePermission(userTest.id, 'remove_one_harvest');
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/remove/one/${harvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('Should delete one harvest', async () => {
+      await authService.addPermission(userTest.id, 'remove_one_harvest');
+      const { id } = (
+        await harvestService.findAll({
+          limit: 1,
+        })
+      ).records[0];
+
+      await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/remove/one/${id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const { notFound } = await request
+        .default(app.getHttpServer())
+        .get(`/harvests/one/${id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404);
+      expect(notFound).toBe(true);
+    });
+
+    it('You should throw exception for trying to delete a harvest that does not exist.', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/remove/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404);
+      expect(body.message).toEqual(
+        'Harvest with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+      );
+    });
+
+    it('Should throw an exception when trying to delete a harvest with sales pending payment.', async () => {
+      const harvest = (
+        await harvestService.findAll({
+          limit: 1,
+        })
+      ).records[0];
+
+      await harvestService.createHarvestProcessed({
+        date: new Date().toISOString(),
+        crop: { id: harvest.crop.id },
+        harvest: { id: harvest.id },
+        total: 10,
+      });
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/remove/one/${harvest.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(409);
+
+      expect(body.message).toEqual(
+        `The record cannot be deleted because it has processed records linked to it.`,
+      );
+    });
+  });
+
+  describe('harvests/remove/bulk (DELETE)', () => {
+    it('should throw an exception for not sending a JWT to the protected path harvests/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/harvests/remove/bulk')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('It should throw an exception because the user JWT does not have permissions for this action harvests/remove/bulk ', async () => {
+      await authService.removePermission(userTest.id, 'remove_bulk_harvests');
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/harvests/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('Should delete harvests bulk', async () => {
+      await authService.addPermission(userTest.id, 'remove_bulk_harvests');
+      // Crear harvests de prueba
+      const [harvest1, harvest2, harvest3] = (
+        await harvestService.findAll({
+          limit: 3,
+          offset: 1,
+        })
+      ).records;
+
+      const bulkData: RemoveBulkRecordsDto<Harvest> = {
+        recordsIds: [{ id: harvest1.id }, { id: harvest2.id }],
+      };
+
+      const { body, statusCode } = await request
+        .default(app.getHttpServer())
+        .delete('/harvests/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bulkData)
+        .expect(200);
+
+      const [deletedHarvest1, deletedHarvest2, remainingHarvest3] =
+        await Promise.all([
+          harvestRepository.findOne({ where: { id: harvest1.id } }),
+          harvestRepository.findOne({ where: { id: harvest2.id } }),
+          harvestRepository.findOne({ where: { id: harvest3.id } }),
+        ]);
+
+      expect(deletedHarvest1).toBeNull();
+      expect(deletedHarvest2).toBeNull();
+      expect(remainingHarvest3).toBeDefined();
+    });
+
+    it('Should throw exception when trying to send an empty array.', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete('/harvests/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ recordsIds: [] })
+        .expect(400);
+      expect(body.message[0]).toEqual('recordsIds should not be empty');
+    });
+
+    it('Should throw an exception when trying to delete a harvest with sales pending payment.', async () => {
+      // Crear harvests de prueba
+      const [harvest1, harvest2, harvest3] = (
+        await harvestService.findAll({
+          limit: 3,
+        })
+      ).records;
+
+      await harvestService.createHarvestProcessed({
+        date: new Date().toISOString(),
+        crop: { id: harvest1.crop.id },
+        harvest: { id: harvest1.id },
+        total: 10,
+      });
+
+      await harvestService.createHarvestProcessed({
+        date: new Date().toISOString(),
+        crop: { id: harvest2.crop.id },
+        harvest: { id: harvest2.id },
+        total: 10,
+      });
+
+      // Intentar eliminar el harvest
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/remove/bulk`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          recordsIds: [
+            { id: harvest1.id },
+            { id: harvest2.id },
+            { id: harvest3.id },
+          ],
+        })
+        .expect(207);
+      expect(body).toEqual({
+        success: [harvest3.id],
+        failed: [
+          {
+            id: harvest1.id,
+            error:
+              'The record cannot be deleted because it has processed records linked to it.',
+          },
+          {
+            id: harvest2.id,
+            error:
+              'The record cannot be deleted because it has processed records linked to it.',
+          },
+        ],
+      });
     });
   });
 });

@@ -305,7 +305,7 @@ export class HarvestService {
     await queryRunner.startTransaction();
 
     try {
-      await queryRunner.manager.softRemove(Harvest, harvest);
+      await queryRunner.manager.remove(Harvest, harvest);
 
       await queryRunner.commitTransaction();
     } catch (error) {
@@ -323,25 +323,6 @@ export class HarvestService {
       this.handlerError.handle(error);
     }
   }
-
-  // async findAllHarvestStock() {
-  //   const harvestStock = await this.harvestStockRepository.find({
-  //     relations: {
-  //       crop: true,
-  //     },
-  //   });
-  //   let count: number = harvestStock.length;
-
-  //   return {
-  //     rowCount: count,
-  //     rows: harvestStock.map((item) => ({
-  //       id: item.crop.id,
-  //       name: item.crop.name,
-  //       stock: item.total,
-  //     })),
-  //     pageCount: count > 0 ? 1 : 0,
-  //   };
-  // }
 
   async updateStock(
     queryRunner: QueryRunner,
@@ -562,9 +543,19 @@ export class HarvestService {
   }
 
   async removeBulk(removeBulkHarvestsDto: RemoveBulkRecordsDto<Harvest>) {
+    const success: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+
     for (const { id } of removeBulkHarvestsDto.recordsIds) {
-      await this.remove(id);
+      try {
+        await this.remove(id);
+        success.push(id);
+      } catch (error) {
+        failed.push({ id, error: error.message });
+      }
     }
+
+    return { success, failed };
   }
 
   async exportHarvestToPDF(id: string) {
