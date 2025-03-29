@@ -23,6 +23,7 @@ import { Harvest } from './entities/harvest.entity';
 import { HarvestController } from './harvest.controller';
 import { HarvestModule } from './harvest.module';
 import { HarvestService } from './harvest.service';
+import { UpdateHarvestDto } from './dto/update-harvest.dto';
 
 describe('HarvestsController (e2e)', () => {
   let app: INestApplication;
@@ -1598,7 +1599,6 @@ describe('HarvestsController (e2e)', () => {
         .get(`/harvests/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      console.log(response.body);
       const harvest = response.body;
       expect(harvest).toHaveProperty('id');
       expect(harvest).toHaveProperty('date');
@@ -1658,6 +1658,114 @@ describe('HarvestsController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
       expect(body.error).toEqual('Not Found');
+    });
+  });
+
+  describe('harvests/update/one/:id (PATCH)', () => {
+    const harvestId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    it('should throw an exception for not sending a JWT to the protected path harvests/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/harvests/update/one/${harvestId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('It should throw an exception because the user JWT does not have permissions for this action harvests/update/one/:id', async () => {
+      await authService.removePermission(userTest.id, 'find_one_harvest');
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/harvests/update/one/${harvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('Should update one harvest', async () => {
+      await authService.addPermission(userTest.id, 'update_one_harvest');
+
+      const record = (
+        await harvestService.findAll({
+          limit: 1,
+        })
+      ).records[0];
+
+      const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
+
+      const bodyRequest: UpdateHarvestDto = {
+        ...rest,
+        crop: { id: rest.crop.id },
+        observation: 'Observation updated',
+        details: record.details.map((detail) => ({
+          id: detail.id,
+          employee: { id: detail.employee.id },
+          total: detail.total,
+          value_pay: detail.value_pay,
+        })) as HarvestDetailsDto[],
+      };
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/harvests/update/one/${record.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(200);
+
+      expect(body.observation).toBe(bodyRequest.observation);
+
+      expect(body).toHaveProperty('id');
+      expect(body).toHaveProperty('date');
+      expect(body).toHaveProperty('total');
+      expect(body).toHaveProperty('value_pay');
+      expect(body).toHaveProperty('observation');
+      expect(body).toHaveProperty('createdDate');
+      expect(body).toHaveProperty('updatedDate');
+      expect(body).toHaveProperty('deletedDate');
+      expect(body.deletedDate).toBeNull();
+      expect(body).toHaveProperty('crop');
+      expect(body.crop).toBeDefined();
+      expect(body.crop).toHaveProperty('id');
+      expect(body.crop).toHaveProperty('name');
+      expect(body).toHaveProperty('details');
+      expect(body.details.length).toBeGreaterThan(0);
+      body.details.forEach((detail) => {
+        expect(detail).toHaveProperty('id');
+        expect(detail).toHaveProperty('total');
+        expect(detail).toHaveProperty('value_pay');
+        expect(detail).toHaveProperty('payment_is_pending');
+        expect(detail).toHaveProperty('employee');
+        expect(detail.employee).toBeDefined();
+        expect(detail.employee).toHaveProperty('id');
+        expect(detail.employee).toHaveProperty('first_name');
+        expect(detail.employee).toHaveProperty('last_name');
+        expect(detail.employee).toHaveProperty('email');
+        expect(detail.employee).toHaveProperty('cell_phone_number');
+        expect(detail.employee).toHaveProperty('address');
+      });
+    });
+
+    it('Should throw exception for not finding harvest to update', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/harvests/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ observation: 'Observation updated 2' })
+        .expect(404);
+      expect(body.message).toEqual(
+        'Harvest with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+      );
+    });
+
+    it('Should throw exception for sending incorrect properties', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/harvests/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ year: 2025 })
+        .expect(400);
+      expect(body.message).toContain('property year should not exist');
     });
   });
 });
