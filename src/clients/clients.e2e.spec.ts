@@ -127,7 +127,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action /clients/create', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action /clients/create', async () => {
       await authService.removePermission(userTest.id, 'create_client');
 
       const data: CreateClientDto = {
@@ -168,7 +168,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body).toMatchObject(data);
     });
 
-    it('Should throw exception when fields are missing in the body', async () => {
+    it('should throw exception when fields are missing in the body', async () => {
       const errorMessage = [
         'first_name must be shorter than or equal to 100 characters',
         'first_name must be a string',
@@ -194,7 +194,7 @@ describe('ClientsController (e2e)', () => {
       });
     });
 
-    it('Should throw exception for trying to create a client with duplicate email.', async () => {
+    it('should throw exception for trying to create a client with duplicate email.', async () => {
       await createTestClient({
         first_name: 'Stiven',
         last_name: 'Gomez',
@@ -239,7 +239,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action /clients/all', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action /clients/all', async () => {
       await authService.removePermission(userTest.id, 'find_all_clients');
       const response = await request
         .default(app.getHttpServer())
@@ -384,7 +384,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action clients/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action clients/one/:id', async () => {
       await authService.removePermission(userTest.id, 'find_one_client');
       const response = await request
         .default(app.getHttpServer())
@@ -396,7 +396,7 @@ describe('ClientsController (e2e)', () => {
       );
     });
 
-    it('Should get one client', async () => {
+    it('should get one client', async () => {
       // Crear un cliente de prueba
       await authService.addPermission(userTest.id, 'find_one_client');
       const { id } = await createTestClient({
@@ -426,7 +426,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.deletedDate).toBeNull();
     });
 
-    it('Should throw exception for sending an invalid ID.', async () => {
+    it('should throw exception for sending an invalid ID.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/clients/one/1234`)
@@ -434,7 +434,7 @@ describe('ClientsController (e2e)', () => {
         .expect(400);
       expect(body.message).toEqual('Validation failed (uuid is expected)');
     });
-    it('Should throw exception for not finding client by ID', async () => {
+    it('should throw exception for not finding client by ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/clients/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -444,7 +444,7 @@ describe('ClientsController (e2e)', () => {
         'Client with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
       );
     });
-    it('Should throw exception for not sending an ID', async () => {
+    it('should throw exception for not sending an ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/clients/one/`)
@@ -464,7 +464,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action clients/update/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action clients/update/one/:id', async () => {
       await authService.removePermission(userTest.id, 'find_one_client');
       const response = await request
         .default(app.getHttpServer())
@@ -476,7 +476,7 @@ describe('ClientsController (e2e)', () => {
       );
     });
 
-    it('Should update one client', async () => {
+    it('should update one client', async () => {
       await authService.addPermission(userTest.id, 'update_one_client');
       const { id } = await createTestClient({
         first_name: 'John 3.5',
@@ -499,7 +499,7 @@ describe('ClientsController (e2e)', () => {
       expect(body.address).toEqual('123 Main St');
     });
 
-    it('Should throw exception for not finding client to update', async () => {
+    it('should throw exception for not finding client to update', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/clients/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -511,7 +511,7 @@ describe('ClientsController (e2e)', () => {
       );
     });
 
-    it('Should throw exception for sending incorrect properties', async () => {
+    it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/clients/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -520,7 +520,7 @@ describe('ClientsController (e2e)', () => {
         .expect(400);
       expect(body.message).toContain('property year should not exist');
     });
-    it('It should throw exception for trying to update the email for one that is in use.', async () => {
+    it('should throw exception for trying to update the email for one that is in use.', async () => {
       const { id } = await createTestClient({
         first_name: 'Alan',
         last_name: 'Demo',
@@ -550,7 +550,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action clients/remove/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action clients/remove/one/:id', async () => {
       await authService.removePermission(userTest.id, 'remove_one_client');
       const response = await request
         .default(app.getHttpServer())
@@ -562,7 +562,7 @@ describe('ClientsController (e2e)', () => {
       );
     });
 
-    it('Should delete one client', async () => {
+    it('should delete one client', async () => {
       await authService.addPermission(userTest.id, 'remove_one_client');
       const { id } = await createTestClient({
         first_name: 'Ana 4.5',
@@ -596,7 +596,7 @@ describe('ClientsController (e2e)', () => {
       );
     });
 
-    it('Should throw an exception when trying to delete a client with sales pending payment.', async () => {
+    it('should throw an exception when trying to delete a client with sales pending payment.', async () => {
       // Crear cliente de prueba
       const client = await createTestClient({
         first_name: 'Client for sale',
@@ -685,7 +685,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action clients/export/all/pdf', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action clients/export/all/pdf', async () => {
       await authService.removePermission(userTest.id, 'export_clients_pdf');
       const response = await request
         .default(app.getHttpServer())
@@ -697,7 +697,7 @@ describe('ClientsController (e2e)', () => {
       );
     });
 
-    it('Should export all clients in PDF format', async () => {
+    it('should export all clients in PDF format', async () => {
       await authService.addPermission(userTest.id, 'export_clients_pdf');
       const response = await request
         .default(app.getHttpServer())
@@ -719,7 +719,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action clients/remove/bulk ', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action clients/remove/bulk ', async () => {
       await authService.removePermission(userTest.id, 'remove_bulk_clients');
       const response = await request
         .default(app.getHttpServer())
@@ -731,7 +731,7 @@ describe('ClientsController (e2e)', () => {
       );
     });
 
-    it('Should delete clients bulk', async () => {
+    it('should delete clients bulk', async () => {
       await authService.addPermission(userTest.id, 'remove_bulk_clients');
       // Crear clientes de prueba
       const [client1, client2, client3] = await Promise.all([
@@ -781,7 +781,7 @@ describe('ClientsController (e2e)', () => {
       expect(remainingClient3).toBeDefined();
     });
 
-    it('Should throw exception when trying to send an empty array.', async () => {
+    it('should throw exception when trying to send an empty array.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .delete('/clients/remove/bulk')
@@ -791,7 +791,7 @@ describe('ClientsController (e2e)', () => {
       expect(body.message[0]).toEqual('recordsIds should not be empty');
     });
 
-    it('Should throw an exception when trying to delete a client with sales pending payment.', async () => {
+    it('should throw an exception when trying to delete a client with sales pending payment.', async () => {
       // Crear cliente de prueba
       const client1 = await createTestClient({
         first_name: 'Client for sale 1',
@@ -925,7 +925,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action clients/sales/all', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action clients/sales/all', async () => {
       await authService.removePermission(
         userTest.id,
         'find_all_clients_with_sales',
@@ -940,7 +940,7 @@ describe('ClientsController (e2e)', () => {
       );
     });
 
-    it('Should get all sales for all clients', async () => {
+    it('should get all sales for all clients', async () => {
       await authService.addPermission(
         userTest.id,
         'find_all_clients_with_sales',

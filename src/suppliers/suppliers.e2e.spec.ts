@@ -127,7 +127,7 @@ describe('SuppliersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action /suppliers/create', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action /suppliers/create', async () => {
       await authService.removePermission(userTest.id, 'create_supplier');
 
       const data: CreateSupplierDto = {
@@ -168,7 +168,7 @@ describe('SuppliersController (e2e)', () => {
       expect(response.body).toMatchObject(data);
     });
 
-    it('Should throw exception when fields are missing in the body', async () => {
+    it('should throw exception when fields are missing in the body', async () => {
       const errorMessage = [
         'first_name must be shorter than or equal to 100 characters',
         'first_name must be a string',
@@ -194,7 +194,7 @@ describe('SuppliersController (e2e)', () => {
       });
     });
 
-    it('Should throw exception for trying to create a supplier with duplicate email.', async () => {
+    it('should throw exception for trying to create a supplier with duplicate email.', async () => {
       await createTestSupplier({
         first_name: 'Stiven',
         last_name: 'Gomez',
@@ -239,7 +239,7 @@ describe('SuppliersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action /suppliers/all', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action /suppliers/all', async () => {
       await authService.removePermission(userTest.id, 'find_all_suppliers');
       const response = await request
         .default(app.getHttpServer())
@@ -357,7 +357,7 @@ describe('SuppliersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action suppliers/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action suppliers/one/:id', async () => {
       await authService.removePermission(userTest.id, 'find_one_supplier');
       const response = await request
         .default(app.getHttpServer())
@@ -369,7 +369,7 @@ describe('SuppliersController (e2e)', () => {
       );
     });
 
-    it('Should get one supplier', async () => {
+    it('should get one supplier', async () => {
       // Crear un suppliere de prueba
       await authService.addPermission(userTest.id, 'find_one_supplier');
       const { id } = await createTestSupplier({
@@ -399,7 +399,7 @@ describe('SuppliersController (e2e)', () => {
       expect(response.body.deletedDate).toBeNull();
     });
 
-    it('Should throw exception for sending an invalid ID.', async () => {
+    it('should throw exception for sending an invalid ID.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/suppliers/one/1234`)
@@ -407,7 +407,7 @@ describe('SuppliersController (e2e)', () => {
         .expect(400);
       expect(body.message).toEqual('Validation failed (uuid is expected)');
     });
-    it('Should throw exception for not finding supplier by ID', async () => {
+    it('should throw exception for not finding supplier by ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/suppliers/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -417,7 +417,7 @@ describe('SuppliersController (e2e)', () => {
         'Supplier with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
       );
     });
-    it('Should throw exception for not sending an ID', async () => {
+    it('should throw exception for not sending an ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/suppliers/one/`)
@@ -437,7 +437,7 @@ describe('SuppliersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action suppliers/update/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action suppliers/update/one/:id', async () => {
       await authService.removePermission(userTest.id, 'find_one_supplier');
       const response = await request
         .default(app.getHttpServer())
@@ -449,7 +449,7 @@ describe('SuppliersController (e2e)', () => {
       );
     });
 
-    it('Should update one supplier', async () => {
+    it('should update one supplier', async () => {
       await authService.addPermission(userTest.id, 'update_one_supplier');
       const { id } = await createTestSupplier({
         first_name: 'John 3.5',
@@ -472,7 +472,7 @@ describe('SuppliersController (e2e)', () => {
       expect(body.address).toEqual('123 Main St');
     });
 
-    it('Should throw exception for not finding supplier to update', async () => {
+    it('should throw exception for not finding supplier to update', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/suppliers/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -484,7 +484,7 @@ describe('SuppliersController (e2e)', () => {
       );
     });
 
-    it('Should throw exception for sending incorrect properties', async () => {
+    it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/suppliers/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -493,7 +493,7 @@ describe('SuppliersController (e2e)', () => {
         .expect(400);
       expect(body.message).toContain('property year should not exist');
     });
-    it('It should throw exception for trying to update the email for one that is in use.', async () => {
+    it('should throw exception for trying to update the email for one that is in use.', async () => {
       const { id } = await createTestSupplier({
         first_name: 'Alan',
         last_name: 'Demo',
@@ -523,7 +523,7 @@ describe('SuppliersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action suppliers/remove/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action suppliers/remove/one/:id', async () => {
       await authService.removePermission(userTest.id, 'remove_one_supplier');
       const response = await request
         .default(app.getHttpServer())
@@ -535,7 +535,7 @@ describe('SuppliersController (e2e)', () => {
       );
     });
 
-    it('Should delete one supplier', async () => {
+    it('should delete one supplier', async () => {
       await authService.addPermission(userTest.id, 'remove_one_supplier');
       const { id } = await createTestSupplier({
         first_name: 'Ana 4.5',
@@ -579,7 +579,7 @@ describe('SuppliersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action suppliers/remove/bulk ', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action suppliers/remove/bulk ', async () => {
       await authService.removePermission(userTest.id, 'remove_bulk_suppliers');
       const response = await request
         .default(app.getHttpServer())
@@ -591,7 +591,7 @@ describe('SuppliersController (e2e)', () => {
       );
     });
 
-    it('Should delete suppliers bulk', async () => {
+    it('should delete suppliers bulk', async () => {
       await authService.addPermission(userTest.id, 'remove_bulk_suppliers');
       // Crear supplieres de prueba
       const [supplier1, supplier2, supplier3] = await Promise.all([
@@ -641,7 +641,7 @@ describe('SuppliersController (e2e)', () => {
       expect(remainingSupplier3).toBeDefined();
     });
 
-    it('Should throw exception when trying to send an empty array.', async () => {
+    it('should throw exception when trying to send an empty array.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .delete('/suppliers/remove/bulk')

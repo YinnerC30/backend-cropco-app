@@ -100,9 +100,7 @@ const {
   createHarvest,
   createHarvestProcessed,
   findAllHarvests,
-  findAllHarvestsProcessed,
   findOneHarvest,
-  findOneHarvestProcessed,
   updateHarvest,
   updateHarvestProcessed,
   removeHarvest,
@@ -166,16 +164,6 @@ export class HarvestController {
     );
   }
 
-  @Get('deleteAll')
-  @ApiResponse({
-    status: 200,
-    description: 'Todos los registros han sido eliminados',
-  })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  deleteAll() {
-    return this.harvestService.deleteAllHarvest();
-  }
-
   @Get(findAllHarvests.path)
   @ApiResponse({
     status: 200,
@@ -187,27 +175,12 @@ export class HarvestController {
     return this.harvestService.findAll(queryParams);
   }
 
-  @Get(findAllHarvestsProcessed.path)
-  @ApiResponse({ status: 200, description: 'List of all processed harvests' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  findAllHarvestProcessed() {
-    return this.harvestService.findAllHarvestProcessed();
-  }
-
   @Get(findOneHarvest.path)
   @ApiResponse({ status: 200, description: 'Found harvest by ID' })
   @ApiResponse({ status: 404, description: 'Harvest not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.harvestService.findOne(id);
-  }
-
-  @Get(findOneHarvestProcessed.path)
-  @ApiResponse({ status: 200, description: 'Found processed harvest by ID' })
-  @ApiResponse({ status: 404, description: 'Processed harvest not found' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  findOneHarvestProcessed(@Param('id', ParseUUIDPipe) id: string) {
-    return this.harvestService.findOneHarvestProcessed(id);
   }
 
   @Patch(updateHarvest.path)

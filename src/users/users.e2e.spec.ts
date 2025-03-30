@@ -114,7 +114,7 @@ describe('UsersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action /users/create', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action /users/create', async () => {
       await authService.removePermission(userTest.id, 'create_user');
 
       const data: CreateUserDto = {
@@ -159,7 +159,7 @@ describe('UsersController (e2e)', () => {
       expect(response.body).toMatchObject(data);
     });
 
-    it('Should throw exception when fields are missing in the body', async () => {
+    it('should throw exception when fields are missing in the body', async () => {
       const errorMessage = [
         'first_name must be shorter than or equal to 100 characters',
         'first_name must be a string',
@@ -187,7 +187,7 @@ describe('UsersController (e2e)', () => {
       });
     });
 
-    it('Should throw exception for trying to create a user with duplicate email.', async () => {
+    it('should throw exception for trying to create a user with duplicate email.', async () => {
       await createTestUser({
         first_name: 'Stiven',
         last_name: 'Gomez',
@@ -233,7 +233,7 @@ describe('UsersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action /users/all', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action /users/all', async () => {
       await authService.removePermission(userTest.id, 'find_all_users');
       const response = await request
         .default(app.getHttpServer())
@@ -334,7 +334,7 @@ describe('UsersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action users/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action users/one/:id', async () => {
       await authService.removePermission(userTest.id, 'find_one_user');
       const response = await request
         .default(app.getHttpServer())
@@ -346,7 +346,7 @@ describe('UsersController (e2e)', () => {
       );
     });
 
-    it('Should get one user', async () => {
+    it('should get one user', async () => {
       // Crear un usere de prueba
       await authService.addPermission(userTest.id, 'find_one_user');
       const { id } = await createTestUser({
@@ -399,7 +399,7 @@ describe('UsersController (e2e)', () => {
       });
     });
 
-    it('Should throw exception for sending an invalid ID.', async () => {
+    it('should throw exception for sending an invalid ID.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/users/one/1234`)
@@ -407,7 +407,7 @@ describe('UsersController (e2e)', () => {
         .expect(400);
       expect(body.message).toEqual('Validation failed (uuid is expected)');
     });
-    it('Should throw exception for not finding user by ID', async () => {
+    it('should throw exception for not finding user by ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/users/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -417,7 +417,7 @@ describe('UsersController (e2e)', () => {
         'User with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
       );
     });
-    it('Should throw exception for not sending an ID', async () => {
+    it('should throw exception for not sending an ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/users/one/`)
@@ -437,7 +437,7 @@ describe('UsersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action users/update/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action users/update/one/:id', async () => {
       await authService.removePermission(userTest.id, 'find_one_user');
       const response = await request
         .default(app.getHttpServer())
@@ -449,7 +449,7 @@ describe('UsersController (e2e)', () => {
       );
     });
 
-    it('Should update one user', async () => {
+    it('should update one user', async () => {
       await authService.addPermission(userTest.id, 'update_one_user');
       const { id } = await createTestUser({
         first_name: 'John Es',
@@ -472,7 +472,7 @@ describe('UsersController (e2e)', () => {
       expect(body.cell_phone_number).toEqual('3007890123');
     });
 
-    it('Should throw exception for not finding user to update', async () => {
+    it('should throw exception for not finding user to update', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/users/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -484,7 +484,7 @@ describe('UsersController (e2e)', () => {
       );
     });
 
-    it('Should throw exception for sending incorrect properties', async () => {
+    it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/users/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -493,7 +493,7 @@ describe('UsersController (e2e)', () => {
         .expect(400);
       expect(body.message).toContain('property year should not exist');
     });
-    it('It should throw exception for trying to update the email for one that is in use.', async () => {
+    it('should throw exception for trying to update the email for one that is in use.', async () => {
       const { id } = await createTestUser({
         first_name: 'Alan',
         last_name: 'Demo',
@@ -524,7 +524,7 @@ describe('UsersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action users/remove/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action users/remove/one/:id', async () => {
       await authService.removePermission(userTest.id, 'remove_one_user');
       const response = await request
         .default(app.getHttpServer())
@@ -536,7 +536,7 @@ describe('UsersController (e2e)', () => {
       );
     });
 
-    it('Should delete one user', async () => {
+    it('should delete one user', async () => {
       await authService.addPermission(userTest.id, 'remove_one_user');
       const { id } = await createTestUser({
         first_name: 'Ana 4.5',
@@ -581,7 +581,7 @@ describe('UsersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action users/remove/bulk ', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action users/remove/bulk ', async () => {
       await authService.removePermission(userTest.id, 'remove_bulk_users');
       const response = await request
         .default(app.getHttpServer())
@@ -593,7 +593,7 @@ describe('UsersController (e2e)', () => {
       );
     });
 
-    it('Should delete users bulk', async () => {
+    it('should delete users bulk', async () => {
       await authService.addPermission(userTest.id, 'remove_bulk_users');
       // Crear usuarios de prueba
       const [user1, user2, user3] = await Promise.all([
@@ -645,7 +645,7 @@ describe('UsersController (e2e)', () => {
       expect(remainingUser3).toBeDefined();
     });
 
-    it('Should throw exception when trying to send an empty array.', async () => {
+    it('should throw exception when trying to send an empty array.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .delete('/users/remove/bulk')
@@ -666,7 +666,7 @@ describe('UsersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action users/reset-password/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action users/reset-password/one/:id', async () => {
       await authService.removePermission(userTest.id, 'reset_password_user');
       const response = await request
         .default(app.getHttpServer())
@@ -678,7 +678,7 @@ describe('UsersController (e2e)', () => {
       );
     });
 
-    it('Should reset the password for one user', async () => {
+    it('should reset the password for one user', async () => {
       await authService.addPermission(userTest.id, 'reset_password_user');
       const { id } = await createTestUser({
         first_name: 'Alan',
@@ -710,7 +710,7 @@ describe('UsersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action users/change-password/one', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action users/change-password/one', async () => {
       await authService.removePermission(userTest.id, 'change_password_user');
       const response = await request
         .default(app.getHttpServer())
@@ -722,7 +722,7 @@ describe('UsersController (e2e)', () => {
       );
     });
 
-    it('Should change the password for one user', async () => {
+    it('should change the password for one user', async () => {
       const userChangePassword = await authService.createUserToTests();
       const token = authService.generateJwtToken({ id: userChangePassword.id });
       await authService.addPermission(
@@ -754,7 +754,7 @@ describe('UsersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action users/toggle-status/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action users/toggle-status/one/:id', async () => {
       await authService.removePermission(userTest.id, 'change_password_user');
       const response = await request
         .default(app.getHttpServer())
@@ -766,7 +766,7 @@ describe('UsersController (e2e)', () => {
       );
     });
 
-    it('Should toggle status for one user', async () => {
+    it('should toggle status for one user', async () => {
       await authService.addPermission(userTest.id, 'toggle_status_user');
       const { id } = await createTestUser({
         first_name: 'Alan',

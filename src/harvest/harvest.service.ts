@@ -370,17 +370,20 @@ export class HarvestService {
 
   async validateTotalProcessed(
     queryRunner: QueryRunner,
-    dto: CreateHarvestDto | UpdateHarvestDto | any,
-    actualAmount: number,
+    data: {
+      harvestId: string;
+      currentAmount: number;
+      oldAmount: number;
+    },
   ) {
     const harvest = await queryRunner.manager
       .createQueryBuilder(Harvest, 'harvest')
       .leftJoinAndSelect('harvest.processed', 'processed')
-      .where('harvest.id = :id', { id: dto.harvest.id })
+      .where('harvest.id = :id', { id: data.harvestId })
       .getOne();
 
     if (!harvest) {
-      throw new NotFoundException('Cosecha no encontrada');
+      throw new NotFoundException('Harvest not found');
     }
 
     const totalProcessed = harvest.processed.reduce(
@@ -388,9 +391,9 @@ export class HarvestService {
       0,
     );
 
-    if (totalProcessed - actualAmount + dto.total > harvest.total) {
+    if (totalProcessed - data.oldAmount + data.currentAmount > harvest.total) {
       throw new BadRequestException(
-        'No puedes agregar más registros de cosecha procesada, supera el valor de la cosecha',
+        'You cannot add more processed harvest records, it exceeds the value of the harvest.',
       );
     }
 
@@ -402,11 +405,11 @@ export class HarvestService {
   ) {
     const queryRunner = this.dataSource.createQueryRunner();
 
-    await this.validateTotalProcessed(
-      queryRunner,
-      createHarvestProcessedDto,
-      0,
-    );
+    await this.validateTotalProcessed(queryRunner, {
+      harvestId: createHarvestProcessedDto.harvest.id,
+      currentAmount: createHarvestProcessedDto.total,
+      oldAmount: 0,
+    });
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -420,7 +423,8 @@ export class HarvestService {
       await this.updateStock(queryRunner, crop.id, total, true);
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
+
+      return await this.findOneHarvestProcessed(harvestProcessed.id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.handlerError.handle(error);
@@ -476,11 +480,11 @@ export class HarvestService {
 
     const queryRunner = this.dataSource.createQueryRunner();
 
-    await this.validateTotalProcessed(
-      queryRunner,
-      updateHarvestProcessedDto,
-      harvestProcessed.total,
-    );
+    await this.validateTotalProcessed(queryRunner, {
+      harvestId: harvestProcessed.harvest.id,
+      oldAmount: harvestProcessed.total,
+      currentAmount: updateHarvestProcessedDto.total,
+    });
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -499,11 +503,17 @@ export class HarvestService {
         updateHarvestProcessedDto,
       );
 
-      const { crop, total } = updateHarvestProcessedDto;
+      const { total } = updateHarvestProcessedDto;
 
-      await this.updateStock(queryRunner, crop.id, total, true);
+      await this.updateStock(
+        queryRunner,
+        harvestProcessed.crop.id,
+        total,
+        true,
+      );
 
       await queryRunner.commitTransaction();
+      return await this.findOneHarvestProcessed(harvestProcessed.id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.handlerError.handle(error);

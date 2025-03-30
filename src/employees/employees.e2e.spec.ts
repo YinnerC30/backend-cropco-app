@@ -129,7 +129,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action /employees/create', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action /employees/create', async () => {
       await authService.removePermission(userTest.id, 'create_employee');
 
       const data: CreateEmployeeDto = {
@@ -170,7 +170,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body).toMatchObject(data);
     });
 
-    it('Should throw exception when fields are missing in the body', async () => {
+    it('should throw exception when fields are missing in the body', async () => {
       const errorMessage = [
         'first_name must be shorter than or equal to 100 characters',
         'first_name must be a string',
@@ -196,7 +196,7 @@ describe('EmployeesController (e2e)', () => {
       });
     });
 
-    it('Should throw exception for trying to create a employee with duplicate email.', async () => {
+    it('should throw exception for trying to create a employee with duplicate email.', async () => {
       await createTestEmployee({
         first_name: 'Stiven',
         last_name: 'Gomez',
@@ -241,7 +241,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action /employees/all', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action /employees/all', async () => {
       await authService.removePermission(userTest.id, 'find_all_employees');
       const response = await request
         .default(app.getHttpServer())
@@ -359,7 +359,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action employees/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action employees/one/:id', async () => {
       await authService.removePermission(userTest.id, 'find_one_employee');
       const response = await request
         .default(app.getHttpServer())
@@ -371,7 +371,7 @@ describe('EmployeesController (e2e)', () => {
       );
     });
 
-    it('Should get one employee', async () => {
+    it('should get one employee', async () => {
       // Crear un employeee de prueba
       await authService.addPermission(userTest.id, 'find_one_employee');
       const { id } = await createTestEmployee({
@@ -405,7 +405,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.deletedDate).toBeNull();
     });
 
-    it('Should throw exception for sending an invalid ID.', async () => {
+    it('should throw exception for sending an invalid ID.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/employees/one/1234`)
@@ -413,7 +413,7 @@ describe('EmployeesController (e2e)', () => {
         .expect(400);
       expect(body.message).toEqual('Validation failed (uuid is expected)');
     });
-    it('Should throw exception for not finding employee by ID', async () => {
+    it('should throw exception for not finding employee by ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/employees/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -423,7 +423,7 @@ describe('EmployeesController (e2e)', () => {
         'Employee with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
       );
     });
-    it('Should throw exception for not sending an ID', async () => {
+    it('should throw exception for not sending an ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/employees/one/`)
@@ -443,7 +443,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action employees/update/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action employees/update/one/:id', async () => {
       await authService.removePermission(userTest.id, 'find_one_employee');
       const response = await request
         .default(app.getHttpServer())
@@ -455,7 +455,7 @@ describe('EmployeesController (e2e)', () => {
       );
     });
 
-    it('Should update one employee', async () => {
+    it('should update one employee', async () => {
       await authService.addPermission(userTest.id, 'update_one_employee');
       const { id } = await createTestEmployee({
         first_name: 'John 3.5',
@@ -478,7 +478,7 @@ describe('EmployeesController (e2e)', () => {
       expect(body.address).toEqual('123 Main St');
     });
 
-    it('Should throw exception for not finding employee to update', async () => {
+    it('should throw exception for not finding employee to update', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/employees/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -490,7 +490,7 @@ describe('EmployeesController (e2e)', () => {
       );
     });
 
-    it('Should throw exception for sending incorrect properties', async () => {
+    it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/employees/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -499,7 +499,7 @@ describe('EmployeesController (e2e)', () => {
         .expect(400);
       expect(body.message).toContain('property year should not exist');
     });
-    it('It should throw exception for trying to update the email for one that is in use.', async () => {
+    it('should throw exception for trying to update the email for one that is in use.', async () => {
       const { id } = await createTestEmployee({
         first_name: 'Alan',
         last_name: 'Demo',
@@ -529,7 +529,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action employees/remove/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action employees/remove/one/:id', async () => {
       await authService.removePermission(userTest.id, 'remove_one_employee');
       const response = await request
         .default(app.getHttpServer())
@@ -541,7 +541,7 @@ describe('EmployeesController (e2e)', () => {
       );
     });
 
-    it('Should delete one employee', async () => {
+    it('should delete one employee', async () => {
       await authService.addPermission(userTest.id, 'remove_one_employee');
       const { id } = await createTestEmployee({
         first_name: 'Ana 4.5',
@@ -575,7 +575,7 @@ describe('EmployeesController (e2e)', () => {
       );
     });
 
-    it('Should throw an exception when trying to delete a employee with harvests or works with pending payment.', async () => {
+    it('should throw an exception when trying to delete a employee with harvests or works with pending payment.', async () => {
       // Crear employeee de prueba
       const employee1 = await createTestEmployee({
         first_name: 'Employee for harvest',
@@ -660,7 +660,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action employees/remove/bulk ', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action employees/remove/bulk ', async () => {
       await authService.removePermission(userTest.id, 'remove_bulk_employees');
       const response = await request
         .default(app.getHttpServer())
@@ -672,7 +672,7 @@ describe('EmployeesController (e2e)', () => {
       );
     });
 
-    it('Should delete employees bulk', async () => {
+    it('should delete employees bulk', async () => {
       await authService.addPermission(userTest.id, 'remove_bulk_employees');
       // Crear employeees de prueba
       const [employee1, employee2, employee3] = await Promise.all([
@@ -722,7 +722,7 @@ describe('EmployeesController (e2e)', () => {
       expect(remainingEmployee3).toBeDefined();
     });
 
-    it('Should throw exception when trying to send an empty array.', async () => {
+    it('should throw exception when trying to send an empty array.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .delete('/employees/remove/bulk')
@@ -732,7 +732,7 @@ describe('EmployeesController (e2e)', () => {
       expect(body.message[0]).toEqual('recordsIds should not be empty');
     });
 
-    it('Should throw an exception when trying to delete a employee with sales pending payment.', async () => {
+    it('should throw an exception when trying to delete a employee with sales pending payment.', async () => {
       // Crear employeee de prueba
       const employee1 = await createTestEmployee({
         first_name: 'Employee for sale 1',

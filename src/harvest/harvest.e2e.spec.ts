@@ -16,7 +16,7 @@ import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { HarvestDetailsDto } from './dto/create-harvest-details.dto';
 import { CreateHarvestDto } from './dto/create-harvest.dto';
 import { Harvest } from './entities/harvest.entity';
@@ -25,10 +25,14 @@ import { HarvestModule } from './harvest.module';
 import { HarvestService } from './harvest.service';
 import { UpdateHarvestDto } from './dto/update-harvest.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
+import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
+import { HarvestProcessed } from './entities/harvest-processed.entity';
 
 describe('HarvestsController (e2e)', () => {
   let app: INestApplication;
   let harvestRepository: Repository<Harvest>;
+  let harvestProcessedRepository: Repository<HarvestProcessed>;
   let seedService: SeedService;
   let authService: AuthService;
 
@@ -97,6 +101,9 @@ describe('HarvestsController (e2e)', () => {
     harvestRepository = moduleFixture.get<Repository<Harvest>>(
       getRepositoryToken(Harvest),
     );
+    harvestProcessedRepository = moduleFixture.get<
+      Repository<HarvestProcessed>
+    >(getRepositoryToken(HarvestProcessed));
 
     await harvestRepository.delete({});
     await cropService.deleteAllCrops();
@@ -114,13 +121,11 @@ describe('HarvestsController (e2e)', () => {
 
   describe('harvests/create (POST)', () => {
     it('should throw an exception for not sending a JWT to the protected path /harvests/create', async () => {
-      const data: CreateHarvestDto = {
+      const data: CreateHarvestProcessedDto = {
         date: '',
         crop: { id: '' },
+        harvest: { id: '' },
         total: 0,
-        value_pay: 0,
-        observation: '',
-        details: [],
       };
       const response = await request
         .default(app.getHttpServer())
@@ -130,7 +135,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action /harvests/create', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action /harvests/create', async () => {
       await authService.removePermission(userTest.id, 'create_harvest');
 
       const data: CreateHarvestDto = {
@@ -210,7 +215,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body).toMatchObject(data);
     });
 
-    it('Should throw exception when fields are missing in the body', async () => {
+    it('should throw exception when fields are missing in the body', async () => {
       const errorMessage = [
         'date must be a valid ISO 8601 date string',
         'crop should not be null or undefined',
@@ -340,7 +345,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action /harvests/all', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action /harvests/all', async () => {
       await authService.removePermission(userTest.id, 'find_all_harvests');
       const response = await request
         .default(app.getHttpServer())
@@ -1573,7 +1578,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action harvests/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/one/:id', async () => {
       await authService.removePermission(userTest.id, 'find_one_harvest');
       const response = await request
         .default(app.getHttpServer())
@@ -1585,7 +1590,7 @@ describe('HarvestsController (e2e)', () => {
       );
     });
 
-    it('Should get one harvest', async () => {
+    it('should get one harvest', async () => {
       // Crear un harvest de prueba
       await authService.addPermission(userTest.id, 'find_one_harvest');
 
@@ -1632,7 +1637,7 @@ describe('HarvestsController (e2e)', () => {
       });
     });
 
-    it('Should throw exception for sending an invalid ID.', async () => {
+    it('should throw exception for sending an invalid ID.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/harvests/one/1234`)
@@ -1641,7 +1646,7 @@ describe('HarvestsController (e2e)', () => {
       expect(body.message).toEqual('Validation failed (uuid is expected)');
     });
 
-    it('Should throw exception for not finding harvest by ID', async () => {
+    it('should throw exception for not finding harvest by ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/harvests/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -1652,7 +1657,7 @@ describe('HarvestsController (e2e)', () => {
       );
     });
 
-    it('Should throw exception for not sending an ID', async () => {
+    it('should throw exception for not sending an ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/harvests/one/`)
@@ -1672,7 +1677,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action harvests/update/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/update/one/:id', async () => {
       await authService.removePermission(userTest.id, 'find_one_harvest');
       const response = await request
         .default(app.getHttpServer())
@@ -1684,7 +1689,7 @@ describe('HarvestsController (e2e)', () => {
       );
     });
 
-    it('Should update one harvest', async () => {
+    it('should update one harvest', async () => {
       await authService.addPermission(userTest.id, 'update_one_harvest');
 
       const record = (
@@ -1747,7 +1752,7 @@ describe('HarvestsController (e2e)', () => {
       });
     });
 
-    it('Should throw exception for not finding harvest to update', async () => {
+    it('should throw exception for not finding harvest to update', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/harvests/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -1759,7 +1764,7 @@ describe('HarvestsController (e2e)', () => {
       );
     });
 
-    it('Should throw exception for sending incorrect properties', async () => {
+    it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/harvests/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
@@ -1780,7 +1785,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action harvests/remove/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/remove/one/:id', async () => {
       await authService.removePermission(userTest.id, 'remove_one_harvest');
       const response = await request
         .default(app.getHttpServer())
@@ -1792,7 +1797,7 @@ describe('HarvestsController (e2e)', () => {
       );
     });
 
-    it('Should delete one harvest', async () => {
+    it('should delete one harvest', async () => {
       await authService.addPermission(userTest.id, 'remove_one_harvest');
       const { id } = (
         await harvestService.findAll({
@@ -1825,7 +1830,7 @@ describe('HarvestsController (e2e)', () => {
       );
     });
 
-    it('Should throw an exception when trying to delete a harvest with sales pending payment.', async () => {
+    it('should throw an exception when trying to delete a harvest with sales pending payment.', async () => {
       const harvest = (
         await harvestService.findAll({
           limit: 1,
@@ -1860,7 +1865,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('It should throw an exception because the user JWT does not have permissions for this action harvests/remove/bulk ', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/remove/bulk ', async () => {
       await authService.removePermission(userTest.id, 'remove_bulk_harvests');
       const response = await request
         .default(app.getHttpServer())
@@ -1872,7 +1877,7 @@ describe('HarvestsController (e2e)', () => {
       );
     });
 
-    it('Should delete harvests bulk', async () => {
+    it('should delete harvests bulk', async () => {
       await authService.addPermission(userTest.id, 'remove_bulk_harvests');
       // Crear harvests de prueba
       const [harvest1, harvest2, harvest3] = (
@@ -1905,7 +1910,7 @@ describe('HarvestsController (e2e)', () => {
       expect(remainingHarvest3).toBeDefined();
     });
 
-    it('Should throw exception when trying to send an empty array.', async () => {
+    it('should throw exception when trying to send an empty array.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .delete('/harvests/remove/bulk')
@@ -1915,13 +1920,17 @@ describe('HarvestsController (e2e)', () => {
       expect(body.message[0]).toEqual('recordsIds should not be empty');
     });
 
-    it('Should throw an exception when trying to delete a harvest with sales pending payment.', async () => {
-      // Crear harvests de prueba
-      const [harvest1, harvest2, harvest3] = (
-        await harvestService.findAll({
-          limit: 3,
-        })
-      ).records;
+    it('should throw an exception when trying to delete a harvest with harvest processed.', async () => {
+      //  harvests de prueba
+      const [harvest1, harvest2, harvest3] = await harvestRepository.find({
+        relations: { processed: true, crop: true },
+        where: {
+          processed: {
+            id: IsNull(),
+          },
+        },
+        take: 3,
+      });
 
       await harvestService.createHarvestProcessed({
         date: new Date().toISOString(),
@@ -1965,6 +1974,286 @@ describe('HarvestsController (e2e)', () => {
           },
         ],
       });
+    });
+  });
+
+  describe('harvests/export/one/pdf/:id (GET)', () => {
+    const harvestId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    it('should throw an exception for not sending a JWT to the protected path harvests/export/one/pdf/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/harvests/export/one/pdf/:id')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/export/one/pdf/:id', async () => {
+      await authService.removePermission(userTest.id, 'export_harvest_to_pdf');
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/harvests/export/one/pdf/${harvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should export one harvest in PDF format', async () => {
+      await authService.addPermission(userTest.id, 'export_harvest_to_pdf');
+      const record = (
+        await harvestService.findAll({
+          limit: 1,
+        })
+      ).records[0];
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/harvests/export/one/pdf/${record.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body).toBeDefined();
+      expect(response.headers['content-type']).toEqual('application/pdf');
+      expect(response.body).toBeInstanceOf(Buffer);
+    });
+  });
+
+  describe('harvests/processed/create (POST)', () => {
+    it('should throw an exception for not sending a JWT to the protected path /harvests/processed/create', async () => {
+      const data: CreateHarvestProcessedDto = {
+        date: '',
+        crop: { id: '' },
+        harvest: { id: '' },
+        total: 0,
+      };
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/harvests/processed/create')
+        .send(data)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /harvests/create', async () => {
+      await authService.removePermission(userTest.id, 'create_harvest');
+
+      const data: CreateHarvestProcessedDto = {
+        date: '',
+        crop: { id: '' },
+        harvest: { id: '' },
+        total: 0,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/harvests/processed/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(data)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should create a new harvest processed', async () => {
+      await authService.addPermission(userTest.id, 'create_harvest_processed');
+
+      const harvest = (
+        await harvestService.findAll({
+          limit: 1,
+        })
+      ).records[0];
+
+      const data: CreateHarvestProcessedDto = {
+        date: new Date().toISOString(),
+        crop: { id: harvest.crop.id },
+        harvest: { id: harvest.id },
+        total: 10,
+      };
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/harvests/processed/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(data)
+        .expect(201);
+
+      expect(body).toHaveProperty('id');
+      expect(body).toHaveProperty('date');
+      expect(body).toHaveProperty('total');
+      expect(body.total).toBe(data.total);
+      expect(body).toHaveProperty('crop');
+      expect(body.crop.id).toBe(data.crop.id);
+      expect(body).toHaveProperty('harvest');
+      expect(body.harvest.id).toBe(data.harvest.id);
+    });
+
+    it('should throw exception when fields are missing in the body', async () => {
+      const errorMessage = [
+        'date must be a valid ISO 8601 date string',
+        'crop should not be null or undefined',
+        'harvest should not be null or undefined',
+        'total must be a positive number',
+        'total must be an integer number',
+      ];
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/harvests/processed/create')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(400);
+
+      errorMessage.forEach((msg) => {
+        expect(body.message).toContain(msg);
+      });
+    });
+  });
+
+  describe('harvests/processed/update/one/:id (PATCH)', () => {
+    const harvestProcessedId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    it('should throw an exception for not sending a JWT to the protected path harvests/processed/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/harvests/processed/update/one/${harvestProcessedId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/processed/update/one/:id', async () => {
+      await authService.removePermission(
+        userTest.id,
+        'update_one_harvest_processed',
+      );
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/harvests/processed/update/one/${harvestProcessedId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should update one harvest processed', async () => {
+      await authService.addPermission(
+        userTest.id,
+        'update_one_harvest_processed',
+      );
+
+      const harvest = await harvestRepository.findOne({
+        relations: { processed: true, crop: true },
+        where: {
+          processed: {
+            id: Not(IsNull()),
+          },
+        },
+      });
+
+      const bodyRequest: UpdateHarvestProcessedDto = {
+        total: 23,
+      };
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/harvests/processed/update/one/${harvest.processed[0].id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(200);
+
+      expect(body).toHaveProperty('id');
+      expect(body).toHaveProperty('date');
+      expect(body).toHaveProperty('total');
+      expect(body.total).toBe(bodyRequest.total);
+      expect(body).toHaveProperty('crop');
+      expect(body).toHaveProperty('harvest');
+    });
+
+    it('should throw exception for not finding harvest processed to update', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(
+          `/harvests/processed/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`,
+        )
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404);
+      expect(body.message).toEqual(
+        'Harvest processed with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+      );
+    });
+
+    it('should throw exception for sending incorrect properties', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(
+          `/harvests/processed/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`,
+        )
+        .set('Authorization', `Bearer ${token}`)
+        .send({ year: 2025 })
+        .expect(400);
+      expect(body.message).toContain('property year should not exist');
+    });
+  });
+
+  describe('harvests/processed/remove/one/:id (DELETE)', () => {
+    const harvestProcessedId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    it('should throw an exception for not sending a JWT to the protected path harvests/processed/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/processed/remove/one/${harvestProcessedId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/processed/remove/one/:id', async () => {
+      await authService.removePermission(userTest.id, 'remove_one_harvest');
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/processed/remove/one/${harvestProcessedId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should delete one harvest processed', async () => {
+      await authService.addPermission(
+        userTest.id,
+        'remove_one_harvest_processed',
+      );
+
+      const { processed } = await harvestRepository.findOne({
+        relations: { processed: true, crop: true },
+        where: {
+          processed: {
+            id: Not(IsNull()),
+          },
+        },
+      });
+
+      await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/processed/remove/one/${processed[0].id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const record = await harvestProcessedRepository.findOne({
+        where: { id: processed[0].id },
+      });
+
+      expect(record).toBeNull();
+    });
+
+    it('You should throw exception for trying to delete a harvest processed that does not exist.', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(
+          `/harvests/processed/remove/one/2f6b49e7-5114-463b-8e7c-748633a9e157`,
+        )
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404);
+      expect(body.message).toEqual(
+        'Harvest processed with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+      );
     });
   });
 });
