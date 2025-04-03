@@ -14,10 +14,15 @@
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest --config jest.config.ts",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:unit&e2e": "npm run test:unit && npm run test:e2e",
+    "test:unit": "jest --config jest.unit.config.ts",
+    "test:e2e": "jest --config jest.e2e.config.ts --runInBand",
+    "test:watch": "jest --config jest.unit.config.ts --watch",
+    "test:e2e:watch": "jest --config jest.e2e.config.ts --watch",
+    "test:cov": "jest --config jest.unit.config.ts --coverage",
+    "test:e2e:cov": "jest --config jest.e2e.config.ts --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --config jest.unit.config.ts --runInBand",
+    "test:e2e:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --config jest.e2e.config.ts --runInBand"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

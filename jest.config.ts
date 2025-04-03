@@ -1,6 +1,6 @@
 import type { Config } from '@jest/types';
 
-const config: Config.InitialOptions = {
+const commonConfig: Config.InitialOptions = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   moduleNameMapper: {
@@ -9,11 +9,7 @@ const config: Config.InitialOptions = {
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
   },
-  testMatch: [
-    '<rootDir>/src/**/*.spec.ts', // Unit tests (if you have them)
-    '<rootDir>/src/**/*.e2e-spec.ts', // E2E tests
-  ],
   setupFiles: ['./jest-setup-file.ts'],
 };
 
-export default config;
+export default commonConfig;
