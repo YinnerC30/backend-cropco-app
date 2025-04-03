@@ -39,30 +39,10 @@ export const pathsHarvestsController: PathsController = {
     description: 'obtener todas las cosechas',
     name: 'find_all_harvests',
   },
-  findAllHarvestsProcessed: {
-    path: 'processed/all',
-    description: 'obtener todas las cosechas procesadas',
-    name: 'find_all_harvests_processed',
-  },
-  findAllHarvestsWithPendingPayments: {
-    path: 'pending-payments/all',
-    description: 'obtener todas las cosechas con pagos pendientes',
-    name: 'find_all_harvests_with_pending_payments',
-  },
-  findOneEmployeeWithPendingPayments: {
-    path: 'pending-payments/one/:id',
-    description: 'obtener los pagos pendientes de cosecha de 1 empleado',
-    name: 'find_one_employee_with_harvests_pending_payments',
-  },
   findOneHarvest: {
     path: 'one/:id',
     description: 'obtener 1 cosecha',
     name: 'find_one_harvest',
-  },
-  findOneHarvestProcessed: {
-    path: 'processed/one/:id',
-    description: 'obtener 1 cosecha procesada',
-    name: 'find_one_harvest_processed',
   },
   updateHarvest: {
     path: 'update/one/:id',

@@ -28,16 +28,25 @@ import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
 import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
 import { HarvestProcessed } from './entities/harvest-processed.entity';
+import { Crop } from 'src/crops/entities/crop.entity';
+import { Employee } from 'src/employees/entities/employee.entity';
+import exp from 'constants';
+import { HarvestDetails } from './entities/harvest-details.entity';
+import { PaymentsController } from 'src/payments/payments.controller';
+import { MethodOfPayment } from 'src/payments/entities/payment.entity';
+import { PaymentCategoriesDto } from 'src/payments/dto/payment-categories.dto';
 
 describe('HarvestsController (e2e)', () => {
   let app: INestApplication;
   let harvestRepository: Repository<Harvest>;
+  let harvestDetailsRepository: Repository<HarvestDetails>;
   let harvestProcessedRepository: Repository<HarvestProcessed>;
   let seedService: SeedService;
   let authService: AuthService;
 
   let employeeService: EmployeesService;
   let employeeController: EmployeesController;
+  let paymentsController: PaymentsController;
   let cropService: CropsService;
   let cropController: CropsController;
   let harvestService: HarvestService;
@@ -84,6 +93,8 @@ describe('HarvestsController (e2e)', () => {
     employeeService = moduleFixture.get<EmployeesService>(EmployeesService);
     employeeController =
       moduleFixture.get<EmployeesController>(EmployeesController);
+    paymentsController =
+      moduleFixture.get<PaymentsController>(PaymentsController);
 
     app = moduleFixture.createNestApplication();
 
@@ -100,6 +111,9 @@ describe('HarvestsController (e2e)', () => {
 
     harvestRepository = moduleFixture.get<Repository<Harvest>>(
       getRepositoryToken(Harvest),
+    );
+    harvestDetailsRepository = moduleFixture.get<Repository<HarvestDetails>>(
+      getRepositoryToken(HarvestDetails),
     );
     harvestProcessedRepository = moduleFixture.get<
       Repository<HarvestProcessed>
@@ -195,13 +209,11 @@ describe('HarvestsController (e2e)', () => {
             employee: { id: employee1.id },
             total: 100,
             value_pay: 60_000,
-            payment_is_pending: false,
           } as HarvestDetailsDto,
           {
             employee: { id: employee2.id },
             total: 100,
             value_pay: 60_000,
-            payment_is_pending: false,
           } as HarvestDetailsDto,
         ],
       };
@@ -242,10 +254,10 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/all (GET)', () => {
-    let crop1: any;
-    let crop2: any;
-    let employee1: any;
-    let employee2: any;
+    let crop1: Crop;
+    let crop2: Crop;
+    let employee1: Employee;
+    let employee2: Employee;
     beforeAll(async () => {
       await harvestRepository.delete({});
       crop1 = await cropController.create({
@@ -275,7 +287,6 @@ describe('HarvestsController (e2e)', () => {
             employee: { id: employee1.id },
             total: 100,
             value_pay: 60_000,
-            payment_is_pending: false,
           } as HarvestDetailsDto,
         ],
       };
@@ -308,7 +319,6 @@ describe('HarvestsController (e2e)', () => {
             employee: { id: employee2.id },
             total: 150,
             value_pay: 90_000,
-            payment_is_pending: false,
           } as HarvestDetailsDto,
         ],
       };
@@ -325,7 +335,6 @@ describe('HarvestsController (e2e)', () => {
             employee: { id: employee2.id },
             total: 300,
             value_pay: 180_000,
-            payment_is_pending: false,
           } as HarvestDetailsDto,
         ],
       };
@@ -1179,7 +1188,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.current_page_count).toEqual(0);
     });
 
-    describe('Mix query filter', () => {
+    describe('should return the specified number of harvests passed by the query mix filter', () => {
       beforeAll(async () => {
         const data1: CreateHarvestDto = {
           date: new Date(
@@ -1194,13 +1203,11 @@ describe('HarvestsController (e2e)', () => {
               employee: { id: employee1.id },
               total: 300,
               value_pay: 180_000,
-              payment_is_pending: false,
             } as HarvestDetailsDto,
             {
               employee: { id: employee2.id },
               total: 300,
               value_pay: 180_000,
-              payment_is_pending: false,
             } as HarvestDetailsDto,
           ],
         };
@@ -1218,13 +1225,11 @@ describe('HarvestsController (e2e)', () => {
               employee: { id: employee1.id },
               total: 250,
               value_pay: 150_000,
-              payment_is_pending: false,
             } as HarvestDetailsDto,
             {
               employee: { id: employee2.id },
               total: 250,
               value_pay: 150_000,
-              payment_is_pending: false,
             } as HarvestDetailsDto,
           ],
         };
@@ -1591,7 +1596,6 @@ describe('HarvestsController (e2e)', () => {
     });
 
     it('should get one harvest', async () => {
-      // Crear un harvest de prueba
       await authService.addPermission(userTest.id, 'find_one_harvest');
 
       const record = (
@@ -1702,13 +1706,15 @@ describe('HarvestsController (e2e)', () => {
 
       const bodyRequest: UpdateHarvestDto = {
         ...rest,
+        total: rest.total + 10 * record.details.length,
+        value_pay: rest.value_pay + 2000 * record.details.length,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
         details: record.details.map((detail) => ({
           id: detail.id,
           employee: { id: detail.employee.id },
-          total: detail.total,
-          value_pay: detail.value_pay,
+          total: detail.total + 10,
+          value_pay: detail.value_pay + 2000,
         })) as HarvestDetailsDto[],
       };
 
@@ -1719,13 +1725,14 @@ describe('HarvestsController (e2e)', () => {
         .send(bodyRequest)
         .expect(200);
 
-      expect(body.observation).toBe(bodyRequest.observation);
-
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('date');
       expect(body).toHaveProperty('total');
+      expect(body.total).toBe(bodyRequest.total);
       expect(body).toHaveProperty('value_pay');
+      expect(body.value_pay).toBe(bodyRequest.value_pay);
       expect(body).toHaveProperty('observation');
+      expect(body.observation).toBe(bodyRequest.observation);
       expect(body).toHaveProperty('createdDate');
       expect(body).toHaveProperty('updatedDate');
       expect(body).toHaveProperty('deletedDate');
@@ -1750,6 +1757,218 @@ describe('HarvestsController (e2e)', () => {
         expect(detail.employee).toHaveProperty('cell_phone_number');
         expect(detail.employee).toHaveProperty('address');
       });
+    });
+
+    it(' should throw an exception for trying to delete a record that is already paid for.', async () => {
+      await authService.addPermission(userTest.id, 'update_one_harvest');
+
+      const [employee1, employee2] = (await employeeController.findAll({}))
+        .records;
+      const crop = (await cropController.findAll({})).records[0];
+
+      const data: CreateHarvestDto = {
+        date: new Date().toISOString(),
+        crop: { id: crop.id },
+        total: 200,
+        value_pay: 120_000,
+        observation: 'No observation',
+        details: [
+          {
+            employee: { id: employee1.id },
+            total: 100,
+            value_pay: 60_000,
+          } as HarvestDetailsDto,
+          {
+            employee: { id: employee2.id },
+            total: 100,
+            value_pay: 60_000,
+          } as HarvestDetailsDto,
+        ],
+      };
+
+      const record = await harvestService.create(data);
+
+      const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
+
+      const idHarvestDetail = record.details[0].id;
+
+      await harvestDetailsRepository.update(idHarvestDetail, {
+        payment_is_pending: false,
+      });
+
+      const bodyRequest: UpdateHarvestDto = {
+        ...rest,
+        total: 100,
+        value_pay: 60_000,
+        crop: { id: rest.crop.id },
+        observation: 'Observation updated',
+        details: record.details
+          .filter((detail) => detail.id !== idHarvestDetail)
+          .map((detail) => ({
+            id: detail.id,
+            employee: { id: detail.employee.id },
+            total: 100,
+            value_pay: 60_000,
+          })) as HarvestDetailsDto[],
+      };
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/harvests/update/one/${record.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(400);
+
+      expect(body.message).toBe(
+        `You cannot delete the record with id ${record.details[0].id} , it is linked to a payment record.`,
+      );
+    });
+
+    it('You should throw an exception for attempting to delete a record that has been cascaded out.', async () => {
+      await authService.addPermission(userTest.id, 'update_one_harvest');
+
+      const [employee1, employee2] = (await employeeController.findAll({}))
+        .records;
+      const crop = (await cropController.findAll({})).records[0];
+
+      const data: CreateHarvestDto = {
+        date: new Date().toISOString(),
+        crop: { id: crop.id },
+        total: 200,
+        value_pay: 120_000,
+        observation: 'No observation',
+        details: [
+          {
+            employee: { id: employee1.id },
+            total: 100,
+            value_pay: 60_000,
+          } as HarvestDetailsDto,
+          {
+            employee: { id: employee2.id },
+            total: 100,
+            value_pay: 60_000,
+          } as HarvestDetailsDto,
+        ],
+      };
+
+      const record = await harvestService.create(data);
+
+      const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
+
+      const idHarvestDetail = record.details[0].id;
+
+      await harvestDetailsRepository.softDelete(idHarvestDetail);
+
+      const bodyRequest: UpdateHarvestDto = {
+        ...rest,
+        total: 100,
+        value_pay: 60_000,
+        crop: { id: rest.crop.id },
+        observation: 'Observation updated',
+        details: record.details
+          .filter((detail) => detail.id !== idHarvestDetail)
+          .map((detail) => ({
+            id: detail.id,
+            employee: { id: detail.employee.id },
+            total: 100,
+            value_pay: 60_000,
+          })) as HarvestDetailsDto[],
+      };
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/harvests/update/one/${record.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(400);
+
+      expect(body.message).toBe(
+        `You cannot delete the record with id ${record.details[0].id} , it is linked to other records.`,
+      );
+    });
+
+    it(' should throw an exception for trying to modify a record that is already paid for.', async () => {
+      await authService.addPermission(userTest.id, 'update_one_harvest');
+
+      const record = (
+        await harvestService.findAll({
+          limit: 1,
+        })
+      ).records[0];
+
+      const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
+
+      await harvestDetailsRepository.update(record.details[0].id, {
+        payment_is_pending: false,
+      });
+
+      const bodyRequest: UpdateHarvestDto = {
+        ...rest,
+        total: rest.total + 10 * record.details.length,
+        value_pay: rest.value_pay + 2000 * record.details.length,
+        crop: { id: rest.crop.id },
+        observation: 'Observation updated',
+        details: record.details.map((detail) => ({
+          id: detail.id,
+          employee: { id: detail.employee.id },
+          total: detail.total + 10,
+          value_pay: detail.value_pay + 2000,
+        })) as HarvestDetailsDto[],
+      };
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/harvests/update/one/${record.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(400);
+
+      expect(body.message).toBe(
+        `You cannot update the record with id ${record.details[0].id} , it is linked to a payment record.`,
+      );
+
+      await harvestDetailsRepository.update(record.details[0].id, {
+        payment_is_pending: true,
+      });
+    });
+
+    it('You should throw an exception for attempting to modify a record that has been cascaded out.', async () => {
+      await authService.addPermission(userTest.id, 'update_one_harvest');
+
+      const record = (
+        await harvestService.findAll({
+          limit: 1,
+        })
+      ).records[0];
+
+      const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
+
+      await harvestDetailsRepository.softDelete(record.details[0].id);
+
+      const bodyRequest: UpdateHarvestDto = {
+        ...rest,
+        total: rest.total + 10 * record.details.length,
+        value_pay: rest.value_pay + 2000 * record.details.length,
+        crop: { id: rest.crop.id },
+        observation: 'Observation updated',
+        details: record.details.map((detail) => ({
+          id: detail.id,
+          employee: { id: detail.employee.id },
+          total: detail.total + 10,
+          value_pay: detail.value_pay + 2000,
+        })) as HarvestDetailsDto[],
+      };
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .patch(`/harvests/update/one/${record.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(400);
+
+      expect(body.message).toBe(
+        `You cannot update the record with id ${record.details[0].id} , it is linked to other records.`,
+      );
     });
 
     it('should throw exception for not finding harvest to update', async () => {
@@ -1830,7 +2049,7 @@ describe('HarvestsController (e2e)', () => {
       );
     });
 
-    it('should throw an exception when trying to delete a harvest with sales pending payment.', async () => {
+    it('should throw an exception when trying to delete a harvest with processed records.', async () => {
       const harvest = (
         await harvestService.findAll({
           limit: 1,
@@ -1852,6 +2071,38 @@ describe('HarvestsController (e2e)', () => {
 
       expect(body.message).toEqual(
         `The record cannot be deleted because it has processed records linked to it.`,
+      );
+    });
+
+    it('should throw an exception when trying to delete a harvest with payments records', async () => {
+      const harvest = (
+        await harvestService.findAll({
+          limit: 1,
+          offset: 1,
+        })
+      ).records[0];
+
+      const [employee] = (await employeeController.findAll({})).records;
+
+      await paymentsController.create({
+        date: new Date().toISOString(),
+        employee: { id: employee.id },
+        method_of_payment: MethodOfPayment.EFECTIVO,
+        total: harvest.details[0].value_pay,
+        categories: {
+          harvests: [harvest.details[0].id],
+          works: [],
+        } as PaymentCategoriesDto,
+      });
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/remove/one/${harvest.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(409);
+
+      expect(body.message).toEqual(
+        `The record cannot be deleted because it has payments linked to it.`,
       );
     });
   });
@@ -1879,7 +2130,6 @@ describe('HarvestsController (e2e)', () => {
 
     it('should delete harvests bulk', async () => {
       await authService.addPermission(userTest.id, 'remove_bulk_harvests');
-      // Crear harvests de prueba
       const [harvest1, harvest2, harvest3] = (
         await harvestService.findAll({
           limit: 3,
@@ -1891,7 +2141,7 @@ describe('HarvestsController (e2e)', () => {
         recordsIds: [{ id: harvest1.id }, { id: harvest2.id }],
       };
 
-      const { body, statusCode } = await request
+      await request
         .default(app.getHttpServer())
         .delete('/harvests/remove/bulk')
         .set('Authorization', `Bearer ${token}`)
@@ -1921,7 +2171,6 @@ describe('HarvestsController (e2e)', () => {
     });
 
     it('should throw an exception when trying to delete a harvest with harvest processed.', async () => {
-      //  harvests de prueba
       const [harvest1, harvest2, harvest3] = await harvestRepository.find({
         relations: { processed: true, crop: true },
         where: {
@@ -1946,7 +2195,6 @@ describe('HarvestsController (e2e)', () => {
         total: 10,
       });
 
-      // Intentar eliminar el harvest
       const { body } = await request
         .default(app.getHttpServer())
         .delete(`/harvests/remove/bulk`)
@@ -2085,6 +2333,34 @@ describe('HarvestsController (e2e)', () => {
       expect(body.crop.id).toBe(data.crop.id);
       expect(body).toHaveProperty('harvest');
       expect(body.harvest.id).toBe(data.harvest.id);
+    });
+
+    it('Should throw an exception for attempting to create a processed harvest that exceeds the total value of the harvest.', async () => {
+      await authService.addPermission(userTest.id, 'create_harvest_processed');
+
+      const harvest = (
+        await harvestService.findAll({
+          limit: 1,
+        })
+      ).records[0];
+
+      const data: CreateHarvestProcessedDto = {
+        date: new Date().toISOString(),
+        crop: { id: harvest.crop.id },
+        harvest: { id: harvest.id },
+        total: harvest.total + 50,
+      };
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/harvests/processed/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(data)
+        .expect(400);
+
+      expect(body.message).toBe(
+        'You cannot add more processed harvest records, it exceeds the value of the harvest.',
+      );
     });
 
     it('should throw exception when fields are missing in the body', async () => {

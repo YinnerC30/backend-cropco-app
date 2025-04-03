@@ -44,7 +44,7 @@ export class Employee extends PersonalInformation {
   @OneToMany(
     () => HarvestDetails,
     (harvest_details) => harvest_details.employee,
-    { cascade: true },
+    { cascade: false },
   )
   harvests_detail: HarvestDetails[];
 

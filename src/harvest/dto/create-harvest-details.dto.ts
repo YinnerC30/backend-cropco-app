@@ -56,12 +56,12 @@ export class HarvestDetailsDto {
   @IsPositive()
   value_pay: number;
 
-  @ApiProperty({
-    description: 'Indica si el pago está pendiente para estos detalles',
-    required: false,
-    type: Boolean,
-  })
-  @IsOptional()
-  @IsBoolean()
-  payment_is_pending: boolean;
+  // @ApiProperty({
+  //   description: 'Indica si el pago está pendiente para estos detalles',
+  //   required: false,
+  //   type: Boolean,
+  // })
+  // @IsOptional()
+  // @IsBoolean()
+  // payment_is_pending: boolean;
 }

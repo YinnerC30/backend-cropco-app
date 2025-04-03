@@ -66,7 +66,6 @@ export class HarvestService {
       await queryRunner.commitTransaction();
       return harvest;
     } catch (error) {
-      console.log(error);
       await queryRunner.rollbackTransaction();
       this.handlerError.handle(error);
     } finally {
@@ -195,10 +194,10 @@ export class HarvestService {
 
     try {
       const newHarvestDetails = updateHarvestDto.details ?? [];
-
       const newIDs = newHarvestDetails.map((record) =>
         new String(record.id).toString(),
       );
+
       const oldHarvestDetails = harvest.details;
       const oldIDs = oldHarvestDetails.map((record) =>
         new String(record.id).toString(),
@@ -214,18 +213,21 @@ export class HarvestService {
           (record) => record.id === recordId,
         );
 
-        if (
-          dataRecordOld.deletedDate !== null ||
-          dataRecordOld.payment_is_pending === false
-        ) {
+        if (dataRecordOld.payment_is_pending === false) {
           throw new BadRequestException(
-            'You cannot delete this record, it is linked to other records.',
+            `You cannot delete the record with id ${recordId} , it is linked to a payment record.`,
           );
-        } else {
-          await queryRunner.manager.delete(HarvestDetails, {
-            id: recordId,
-          });
         }
+
+        if (dataRecordOld.deletedDate !== null) {
+          throw new BadRequestException(
+            `You cannot delete the record with id ${recordId} , it is linked to other records.`,
+          );
+        }
+
+        await queryRunner.manager.delete(HarvestDetails, {
+          id: recordId,
+        });
       }
 
       for (const recordId of toUpdate) {
@@ -240,14 +242,17 @@ export class HarvestService {
           dataRecordNew.total !== dataRecordOld.total ||
           dataRecordNew.value_pay !== dataRecordOld.value_pay;
 
-        if (
-          (dataRecordOld.deletedDate !== null ||
-            dataRecordOld.payment_is_pending === false) &&
-          valuesAreDifferent
-        ) {
-          throw new BadRequestException(
-            'You cannot update this record, it is linked to other records.',
-          );
+        if (valuesAreDifferent) {
+          switch (true) {
+            case dataRecordOld.payment_is_pending === false:
+              throw new BadRequestException(
+                `You cannot update the record with id ${recordId} , it is linked to a payment record.`,
+              );
+            case dataRecordOld.deletedDate !== null:
+              throw new BadRequestException(
+                `You cannot update the record with id ${recordId} , it is linked to other records.`,
+              );
+          }
         }
 
         await queryRunner.manager.update(
@@ -345,13 +350,12 @@ export class HarvestService {
       await queryRunner.manager.save(HarvestStock, recordToSave);
     }
     if (increment) {
-      await queryRunner.manager.increment(
+      return await queryRunner.manager.increment(
         HarvestStock,
         { crop: cropId },
         'total',
         total,
       );
-      return;
     }
     const amountActually = recordHarvestCropStock?.total ?? 0;
     if (amountActually < total) {
@@ -368,36 +372,35 @@ export class HarvestService {
     );
   }
 
-  async validateTotalProcessed(
-    queryRunner: QueryRunner,
-    data: {
-      harvestId: string;
-      currentAmount: number;
-      oldAmount: number;
-    },
-  ) {
-    const harvest = await queryRunner.manager
-      .createQueryBuilder(Harvest, 'harvest')
-      .leftJoinAndSelect('harvest.processed', 'processed')
-      .where('harvest.id = :id', { id: data.harvestId })
-      .getOne();
+  async validateTotalProcessed(data: {
+    harvestId: string;
+    currentAmount: number;
+    oldAmount: number;
+  }) {
+    const harvest = await this.harvestRepository.findOne({
+      where: { id: data.harvestId },
+    });
 
     if (!harvest) {
-      throw new NotFoundException('Harvest not found');
+      throw new NotFoundException(
+        `Harvest with id ${data.harvestId} not found`,
+      );
     }
 
-    const totalProcessed = harvest.processed.reduce(
-      (acc, record) => acc + record.total,
-      0,
-    );
+    const totalProcessed = await this.harvestRepository
+      .createQueryBuilder('harvest')
+      .leftJoin('harvest.processed', 'processed')
+      .select('COALESCE(SUM(processed.total), 0)', 'totalProcessed')
+      .where('harvest.id = :harvestId', { harvestId: data.harvestId })
+      .getRawOne();
 
-    if (totalProcessed - data.oldAmount + data.currentAmount > harvest.total) {
+    const processedSum = Number(totalProcessed?.totalProcessed || 0);
+
+    if (processedSum - data.oldAmount + data.currentAmount > harvest.total) {
       throw new BadRequestException(
         'You cannot add more processed harvest records, it exceeds the value of the harvest.',
       );
     }
-
-    return;
   }
 
   async createHarvestProcessed(
@@ -405,7 +408,7 @@ export class HarvestService {
   ) {
     const queryRunner = this.dataSource.createQueryRunner();
 
-    await this.validateTotalProcessed(queryRunner, {
+    await this.validateTotalProcessed({
       harvestId: createHarvestProcessedDto.harvest.id,
       currentAmount: createHarvestProcessedDto.total,
       oldAmount: 0,
@@ -433,30 +436,6 @@ export class HarvestService {
     }
   }
 
-  async findAllHarvestProcessed() {
-    const harvestProcessed = await this.harvestProcessedRepository.find({
-      withDeleted: true,
-      order: {
-        date: 'ASC',
-      },
-      relations: {
-        crop: true,
-        harvest: true,
-      },
-    });
-    let count: number = harvestProcessed.length;
-
-    return {
-      rowCount: count,
-      rows: harvestProcessed.map((item) => ({
-        ...item,
-        crop: item.crop.name,
-        harvest: item.harvest.date,
-      })),
-      pageCount: count > 0 ? 1 : 0,
-    };
-  }
-
   async findOneHarvestProcessed(id: string) {
     const harvestProcessed = await this.harvestProcessedRepository.findOne({
       where: {
@@ -480,7 +459,7 @@ export class HarvestService {
 
     const queryRunner = this.dataSource.createQueryRunner();
 
-    await this.validateTotalProcessed(queryRunner, {
+    await this.validateTotalProcessed({
       harvestId: harvestProcessed.harvest.id,
       oldAmount: harvestProcessed.total,
       currentAmount: updateHarvestProcessedDto.total,
@@ -531,7 +510,6 @@ export class HarvestService {
     await queryRunner.startTransaction();
 
     try {
-      // Delete Harvest
       await queryRunner.manager.remove(harvestProcessed);
 
       const { crop } = harvestProcessed;
