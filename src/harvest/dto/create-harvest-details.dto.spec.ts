@@ -61,16 +61,4 @@ describe('HarvestDetailsDto', () => {
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
   });
-
-  // it('should fail with non-boolean payment_is_pending', async () => {
-  //   const dto = plainToClass(HarvestDetailsDto, {
-  //     employee: { id: '123e4567-e89b-12d3-a456-426614174001' },
-  //     total: 100,
-  //     value_pay: 500,
-  //     payment_is_pending: 'not-a-boolean',
-  //   });
-
-  //   const errors = await validate(dto);
-  //   expect(errors.length).toBeGreaterThan(0);
-  // });
 });

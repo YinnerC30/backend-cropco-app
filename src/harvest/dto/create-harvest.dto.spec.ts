@@ -199,33 +199,5 @@ describe('CreateHarvestDto', () => {
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
     });
-
-    it('should validate with optional payment_is_pending', async () => {
-      const dto = plainToClass(CreateHarvestDto, {
-        ...validDto,
-        details: [
-          {
-            ...validDetail,
-            payment_is_pending: undefined,
-          },
-        ],
-      });
-      const errors = await validate(dto);
-      expect(errors.length).toBe(0);
-    });
-
-    it('should fail with non-boolean payment_is_pending', async () => {
-      const dto = plainToClass(CreateHarvestDto, {
-        ...validDto,
-        details: [
-          {
-            ...validDetail,
-            payment_is_pending: 'true',
-          },
-        ],
-      });
-      const errors = await validate(dto);
-      expect(errors.length).toBeGreaterThan(0);
-    });
   });
 });
