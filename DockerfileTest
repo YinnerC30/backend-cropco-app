@@ -1,0 +1,14 @@
+# Stage 1: Install dependencies using npm
+FROM node:18-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Stage 3: Build the application
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+COPY ./.env.test.build ./.env.test
+
+

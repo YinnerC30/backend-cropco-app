@@ -1,25 +1,27 @@
 # Stage 1: Install dependencies using npm
-FROM node:18-alpine as deps
+FROM node:18-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
 # Stage 2: Run tests
-FROM node:18-alpine as tester
+FROM node:18-alpine AS tester
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run test
+# COPY ./.env.test.build ./.env.test
+RUN npm run test:unit
+# RUN npm run test:e2e
 
 # Stage 3: Build the application
-FROM node:18-alpine as builder
+FROM node:18-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
 # Stage 4: Prepare the runtime environment
-FROM node:18-alpine as runner
+FROM node:18-alpine AS runner
 WORKDIR /app
 COPY package.json ./
 COPY --from=builder /app/dist ./dist

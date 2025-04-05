@@ -58,7 +58,7 @@ export class SeedService {
 
   async runSeed() {
     await this.clearDatabase();
-    await this.authService.createModulesWithActions();
+    // await this.authService.createModulesWithActions();
     await this.authService.convertToAdminUserSeed();
     // await this.insertNewUsers();
     await this.insertNewClients();

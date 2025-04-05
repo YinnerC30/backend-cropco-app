@@ -16,9 +16,16 @@ services:
     volumes:
       - ./data-server-db-development:/var/lib/postgresql/data
       - ./sql-scripts:/docker-entrypoint-initdb.d/
-  nest-api:
-    image: backend-cropco
-    container_name: nest-api
+
+  nest-api-tests:
+    image: backend-cropco-tests
+    container_name: nest-api-tests
+    build:
+      context: .
+      dockerfile: DockerfileTest
+    depends_on:
+      server-db:
+        condition: service_healthy
     ports:
       - 3000:3000
     environment:
@@ -30,5 +37,5 @@ services:
       - JWT_SECRET=millavesecreta
       - PORT=3000
       - HOST_FRONTED=http://localhost:5173
-    depends_on:
-      - server-db
+
+    command: sh -c "npm run test:unit && npm run test:e2e && npm run build && npm run start:prod"
