@@ -1,31 +1,25 @@
+import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsArray,
-  IsBoolean,
   IsDateString,
   IsInt,
-  IsOptional,
   IsPositive,
   IsString,
-  IsUUID,
   Length,
-  ValidateNested,
+  ValidateNested
 } from 'class-validator';
-import { Crop } from 'src/crops/entities/crop.entity';
-import { Employee } from 'src/employees/entities/employee.entity';
-import { DeepPartial } from 'typeorm';
-import { WorkDetails } from '../entities/work-details.entity';
-import { Type } from 'class-transformer';
-import { SaleDetailsDto } from 'src/sales/dto/sale-details.dto';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
-import { WorkDetailsDto } from './work-details.dto';
+import { Crop } from 'src/crops/entities/crop.entity';
+import { DeepPartial } from 'typeorm';
+import { WorkDetailsDto } from './create-work-details.dto';
 
 export class CreateWorkDto {
   @IsDateString()
   date: string;
 
   @IsString()
-  @Length(0, 500)
+  @Length(50, 500)
   description: string;
 
   @IsInt()
@@ -38,7 +32,7 @@ export class CreateWorkDto {
 
   @IsArray()
   @ArrayNotEmpty()
-  @ValidateNested()
+  @ValidateNested({ each: true })
   @Type(() => WorkDetailsDto)
   details: WorkDetailsDto[];
 }

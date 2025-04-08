@@ -1,17 +1,12 @@
 import { Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsUUID, Min } from 'class-validator';
+import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 
-export class QueryTotalWorksInYearDto {
-  @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  @Min(2024)
-  year: number;
-
+export class QueryTotalWorksInYearDto extends QueryForYearDto {
   @IsOptional()
   @IsUUID(4)
   crop: string;
-  
+
   @IsOptional()
   @IsUUID(4)
   employee: string;

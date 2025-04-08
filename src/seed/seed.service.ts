@@ -21,7 +21,7 @@ import { CreateShoppingSuppliesDto } from 'src/shopping/dto/create-shopping-supp
 import { ShoppingService } from 'src/shopping/shopping.service';
 import { SuppliesService } from 'src/supplies/supplies.service';
 import { CreateWorkDto } from 'src/work/dto/create-work.dto';
-import { WorkDetailsDto } from 'src/work/dto/work-details.dto';
+import { WorkDetailsDto } from 'src/work/dto/create-work-details.dto';
 import { Work } from 'src/work/entities/work.entity';
 import { WorkService } from 'src/work/work.service';
 import { DeepPartial } from 'typeorm';
@@ -347,7 +347,6 @@ export class SeedService {
           {
             employee: { id: employees[index] },
             value_pay: 35000,
-            payment_is_pending: true,
           },
         ] as WorkDetailsDto[],
       };

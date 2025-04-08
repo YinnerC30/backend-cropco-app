@@ -1,6 +1,4 @@
 import { Crop } from 'src/crops/entities/crop.entity';
-import { Employee } from 'src/employees/entities/employee.entity';
-import { PaymentWork } from 'src/payments/entities/payment-work.entity';
 import {
   Column,
   CreateDateColumn,
@@ -8,9 +6,8 @@ import {
   Entity,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
+  UpdateDateColumn
 } from 'typeorm';
 import { WorkDetails } from './work-details.entity';
 

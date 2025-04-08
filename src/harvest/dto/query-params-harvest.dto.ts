@@ -41,7 +41,7 @@ export class QueryParamsHarvest extends QueryParamsDto {
   type_filter_total?: TypeFilterNumber;
 
   @IsOptional()
-  @Type(() => Number) // Transformará el valor a un número
+  @Type(() => Number)
   @IsInt()
   total?: number;
 
@@ -54,7 +54,7 @@ export class QueryParamsHarvest extends QueryParamsDto {
   type_filter_value_pay?: TypeFilterNumber;
 
   @IsOptional()
-  @Type(() => Number) // Transformará el valor a un número
+  @Type(() => Number)
   @IsInt()
   value_pay?: number;
 

@@ -9,7 +9,7 @@ import { CropsService } from 'src/crops/crops.service';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { QueryParamsTotalHarvestsInYearDto } from 'src/harvest/dto/query-params-total-harvests-year';
 import { WorkService } from 'src/work/work.service';
-import { QueryTotalWorksInYearDto } from 'src/work/dto/query-total-works-year';
+import { QueryTotalWorksInYearDto } from 'src/work/dto/query-params-total-works-year';
 import { QueryTotalSalesInYearDto } from 'src/sales/dto/query-total-sales-year';
 import { SalesService } from 'src/sales/sales.service';
 import { ConsumptionsService } from 'src/consumptions/consumptions.service';

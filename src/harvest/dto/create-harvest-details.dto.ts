@@ -1,14 +1,13 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsBoolean,
   IsDefined,
   IsInt,
   IsOptional,
   IsPositive,
   IsUUID,
-  ValidateNested,
+  ValidateNested
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { DeepPartial } from 'typeorm';
@@ -55,13 +54,4 @@ export class HarvestDetailsDto {
   @IsInt()
   @IsPositive()
   value_pay: number;
-
-  // @ApiProperty({
-  //   description: 'Indica si el pago está pendiente para estos detalles',
-  //   required: false,
-  //   type: Boolean,
-  // })
-  // @IsOptional()
-  // @IsBoolean()
-  // payment_is_pending: boolean;
 }

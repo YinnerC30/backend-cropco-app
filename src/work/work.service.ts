@@ -8,31 +8,33 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
-import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organize-ids-to-update-entity';
 import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { PrinterService } from 'src/printer/printer.service';
 import { DataSource, Repository } from 'typeorm';
 import { CreateWorkDto } from './dto/create-work.dto';
 import { QueryParamsWork } from './dto/query-params-work.dto';
-import { QueryTotalWorksInYearDto } from './dto/query-total-works-year';
+import { QueryTotalWorksInYearDto } from './dto/query-params-total-works-year';
 import type { UpdateWorkDto } from './dto/update-work.dto';
-import { WorkDetailsDto } from './dto/work-details.dto';
+import { WorkDetailsDto } from './dto/create-work-details.dto';
 import { WorkDetails } from './entities/work-details.entity';
 import { Work } from './entities/work.entity';
 import { getWorkReport } from './reports/get-work';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 
 @Injectable()
 export class WorkService {
   private readonly logger = new Logger('WorkService');
-  private handleDBExceptions = (error: any, logger = this.logger) =>
-    handleDBExceptions(error, logger);
+
   constructor(
     @InjectRepository(Work)
     private readonly workRepository: Repository<Work>,
     private readonly dataSource: DataSource,
     private readonly printerService: PrinterService,
-  ) {}
+    private readonly handlerError: HandlerErrorService,
+  ) {
+    this.handlerError.setLogger(this.logger);
+  }
 
   async create(createWorkDto: CreateWorkDto) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -52,7 +54,7 @@ export class WorkService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     } finally {
       await queryRunner.release();
     }
@@ -194,7 +196,7 @@ export class WorkService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     } finally {
       await queryRunner.release();
     }
@@ -215,7 +217,7 @@ export class WorkService {
     try {
       await this.workRepository.delete({});
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
@@ -228,7 +230,7 @@ export class WorkService {
   async exportWorkToPDF(id: string) {
     const work = await this.findOne(id);
     const docDefinition = getWorkReport({ data: work });
-    return this.printerService.createPdf({docDefinition});
+    return this.printerService.createPdf({ docDefinition });
   }
 
   async findTotalWorkInYear({

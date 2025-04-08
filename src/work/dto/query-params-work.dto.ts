@@ -39,7 +39,7 @@ export class QueryParamsWork extends QueryParamsDto {
   type_filter_total?: TypeFilterNumber;
 
   @IsOptional()
-  @Type(() => Number) // Transformará el valor a un número
+  @Type(() => Number)
   @IsInt()
   total?: number;
 
@@ -47,10 +47,10 @@ export class QueryParamsWork extends QueryParamsDto {
   @IsArray()
   @Transform(({ value }) => {
     if (typeof value === 'string' && value.trim() === '') {
-      return undefined; // Convierte strings vacíos a undefined
+      return undefined;
     }
-    return typeof value === 'string' ? value.split(',') : value; // Convierte strings separados por comas a un array
+    return typeof value === 'string' ? value.split(',') : value;
   })
-  @IsUUID('4', { each: true }) // Valida que cada elemento del array sea un UUID v4
+  @IsUUID('4', { each: true })
   employees?: string[];
 }
