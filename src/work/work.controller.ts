@@ -20,7 +20,6 @@ import { UpdateWorkDto } from './dto/update-work.dto';
 import { Work } from './entities/work.entity';
 import { WorkService } from './work.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
-import { QueryTotalWorksInYearDto } from './dto/query-params-total-works-year';
 
 export const pathsWorksController: PathsController = {
   createWork: {

@@ -5,8 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
-import { DataSource, ILike, MoreThan, Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';

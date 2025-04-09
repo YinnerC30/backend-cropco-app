@@ -5,12 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
-import { HarvestService } from 'src/harvest/harvest.service';
 import { WorkDetails } from 'src/work/entities/work-details.entity';
-import { WorkService } from 'src/work/work.service';
 import { DataSource, Repository } from 'typeorm';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { PaymentHarvest } from './entities/payment-harvest.entity';

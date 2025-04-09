@@ -2,7 +2,6 @@ import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { CreateUserDto } from './create-user.dto';
 import { UserActionDto } from './user-action.dto';
-import exp from 'constants';
 
 describe('CreateUserDto', () => {
   it('should validate a valid CreateUserDto object', async () => {

@@ -8,7 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { CreateCropDto } from './dto/create-crop.dto';

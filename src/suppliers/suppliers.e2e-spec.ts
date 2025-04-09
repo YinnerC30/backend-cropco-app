@@ -22,9 +22,6 @@ import { SalesService } from 'src/sales/sales.service';
 import { CropsService } from 'src/crops/crops.service';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { EmployeesService } from 'src/employees/employees.service';
-import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
-import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
-import { CreateSaleDto } from 'src/sales/dto/create-sale.dto';
 
 describe('SuppliersController (e2e)', () => {
   let app: INestApplication;

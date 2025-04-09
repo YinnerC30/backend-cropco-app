@@ -1,4 +1,3 @@
-import { Test } from '@nestjs/testing';
 import { Client } from './client.entity';
 import { PersonalInformation } from 'src/common/entities/personal-information.entity';
 import { SaleDetails } from 'src/sales/entities/sale-details.entity';

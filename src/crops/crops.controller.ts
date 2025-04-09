@@ -26,7 +26,6 @@ import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 import { Response } from 'express';
 
 export const pathsCropsController: PathsController = {

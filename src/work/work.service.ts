@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organize-ids-to-update-entity';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { monthNamesES } from 'src/common/utils/monthNamesEs';
@@ -21,6 +20,7 @@ import type { UpdateWorkDto } from './dto/update-work.dto';
 import { WorkDetails } from './entities/work-details.entity';
 import { Work } from './entities/work.entity';
 import { getWorkReport } from './reports/get-work';
+import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 
 @Injectable()
 export class WorkService {

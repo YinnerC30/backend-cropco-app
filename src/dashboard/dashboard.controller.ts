@@ -1,6 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { EmployeesService } from 'src/employees/employees.service';
-import { DashboardService } from './dashboard.service';
 
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { ClientsService } from 'src/clients/clients.service';

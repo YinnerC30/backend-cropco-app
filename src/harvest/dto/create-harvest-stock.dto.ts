@@ -1,5 +1,4 @@
-import { IsDefined, IsInt, IsPositive, IsUUID, ValidateNested } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsDefined, IsInt, IsPositive, ValidateNested } from 'class-validator';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';

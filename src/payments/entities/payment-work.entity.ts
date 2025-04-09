@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Work } from 'src/work/entities/work.entity';
 import {
   Entity,
   JoinColumn,

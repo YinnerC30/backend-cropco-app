@@ -30,7 +30,6 @@ import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
 import { HarvestProcessed } from './entities/harvest-processed.entity';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
-import exp from 'constants';
 import { HarvestDetails } from './entities/harvest-details.entity';
 import { PaymentsController } from 'src/payments/payments.controller';
 import { MethodOfPayment } from 'src/payments/entities/payment.entity';

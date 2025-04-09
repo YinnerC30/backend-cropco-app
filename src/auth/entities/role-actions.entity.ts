@@ -1,4 +1,4 @@
-import { Entity, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { ModuleActions } from 'src/auth/entities/module-actions.entity';
 import { Role } from './role.entity';

@@ -5,7 +5,6 @@ import { Sale } from '../entities/sale.entity';
 import { FormatMoneyValue } from 'src/common/helpers/money-formatter';
 import { FormatNumber } from 'src/common/helpers/number-formatter';
 import { MyStyles } from 'src/common/reports/sections/styles-dictionary';
-import { text } from 'stream/consumers';
 import { DateFormatter } from 'src/common/helpers';
 
 interface ReportOptions {

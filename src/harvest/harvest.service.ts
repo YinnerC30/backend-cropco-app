@@ -17,7 +17,6 @@ import { HarvestDetailsDto } from './dto/create-harvest-details.dto';
 
 import { UUID } from 'node:crypto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 import { TemplateGetAllRecords } from 'src/common/interfaces/TemplateGetAllRecords';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { monthNamesES } from 'src/common/utils/monthNamesEs';
@@ -31,6 +30,7 @@ import { HarvestStock } from './entities/harvest-stock.entity';
 import { InsufficientHarvestStockException } from './exceptions/insufficient-harvest-stock';
 import { calculateGrowthHarvest } from './helpers/calculateGrowthHarvest';
 import { getHarvestReport } from './reports/get-harvest';
+import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 
 @Injectable()
 export class HarvestService {

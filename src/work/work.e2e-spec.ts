@@ -11,7 +11,6 @@ import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
 import { EmployeesController } from 'src/employees/employees.controller';
 import { EmployeesService } from 'src/employees/employees.service';
 import { SeedModule } from 'src/seed/seed.module';
-import { SeedService } from 'src/seed/seed.service';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
 import { IsNull, Repository } from 'typeorm';
@@ -22,16 +21,16 @@ import { WorkController } from './work.controller';
 import { WorkModule } from './work.module';
 import { WorkService } from './work.service';
 
-import { PaymentsController } from 'src/payments/payments.controller';
-import { WorkDetails } from './entities/work-details.entity';
-import { Crop } from 'src/crops/entities/crop.entity';
-import { Employee } from 'src/employees/entities/employee.entity';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
-import { UpdateWorkDto } from './dto/update-work.dto';
-import { MethodOfPayment } from 'src/payments/entities/payment.entity';
+import { Crop } from 'src/crops/entities/crop.entity';
+import { Employee } from 'src/employees/entities/employee.entity';
 import { PaymentCategoriesDto } from 'src/payments/dto/payment-categories.dto';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { MethodOfPayment } from 'src/payments/entities/payment.entity';
+import { PaymentsController } from 'src/payments/payments.controller';
+import { UpdateWorkDto } from './dto/update-work.dto';
+import { WorkDetails } from './entities/work-details.entity';
 
 describe('WorksController (e2e)', () => {
   let app: INestApplication;

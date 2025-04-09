@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
-import { ILike, MoreThan, Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { Supplier } from './entities/supplier.entity';

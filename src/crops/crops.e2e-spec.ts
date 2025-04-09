@@ -17,7 +17,6 @@ import { EmployeesService } from 'src/employees/employees.service';
 import { HarvestService } from 'src/harvest/harvest.service';
 
 import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
-import { CropsService } from './crops.service';
 import { ClientsService } from 'src/clients/clients.service';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 

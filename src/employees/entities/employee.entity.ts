@@ -1,6 +1,5 @@
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { Payment } from 'src/payments/entities/payment.entity';
-import { Work } from 'src/work/entities/work.entity';
 import {
   Column,
   CreateDateColumn,

@@ -1,5 +1,4 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { ModuleActions } from './module-actions.entity';
 import { RoleActions } from './role-actions.entity';
 
 @Entity('roles')
