@@ -130,6 +130,7 @@ describe('HarvestsController (e2e)', () => {
 
   afterAll(async () => {
     await authService.deleteUserToTests(userTest.id);
+    await harvestRepository.delete({});
     await app.close();
   });
 
@@ -2219,6 +2220,61 @@ describe('HarvestsController (e2e)', () => {
             id: harvest2.id,
             error:
               'The record cannot be deleted because it has processed records linked to it.',
+          },
+        ],
+      });
+    });
+
+    it('should throw a multi-state code when trying to delete a harvest with payment records and other unrestricted records.', async () => {
+      const [harvest1, harvest2, harvest3] = await harvestRepository.find({
+        relations: {
+          processed: true,
+          crop: true,
+          details: { employee: true },
+        },
+        where: {
+          processed: {
+            id: IsNull(),
+          },
+          details: {
+            payments_harvest: {
+              id: IsNull(),
+            },
+          },
+        },
+        take: 3,
+      });
+
+      await paymentsController.create({
+        date: new Date().toISOString(),
+        employee: { id: harvest1.details[0].employee.id },
+        method_of_payment: MethodOfPayment.EFECTIVO,
+        total: harvest1.details[0].value_pay,
+        categories: {
+          harvests: [harvest1.details[0].id],
+          works: [],
+        } as PaymentCategoriesDto,
+      });
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/remove/bulk`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          recordsIds: [
+            { id: harvest1.id },
+            { id: harvest2.id },
+            { id: harvest3.id },
+          ],
+        })
+        .expect(207);
+      expect(body).toEqual({
+        success: [harvest2.id, harvest3.id],
+        failed: [
+          {
+            id: harvest1.id,
+            error:
+              'The record cannot be deleted because it has payments linked to it.',
           },
         ],
       });

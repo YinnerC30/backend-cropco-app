@@ -116,7 +116,14 @@ export class WorkController {
   }
 
   @Delete(removeWorks.path)
-  removeBulk(@Body() removeBulkWorksDto: RemoveBulkRecordsDto<Work>) {
-    return this.workService.removeBulk(removeBulkWorksDto);
+  async removeBulk(
+    @Body() removeBulkWorksDto: RemoveBulkRecordsDto<Work>,
+    @Res() response: Response,
+  ) {
+    const result = await this.workService.removeBulk(removeBulkWorksDto);
+    if (result.failed && result.failed.length > 0) {
+      return response.status(207).json(result);
+    }
+    return response.status(200).json(result);
   }
 }

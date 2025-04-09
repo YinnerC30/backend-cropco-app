@@ -5,9 +5,9 @@ import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 export class QueryTotalWorksInYearDto extends QueryForYearDto {
   @IsOptional()
   @IsUUID(4)
-  crop: string;
+  cropId: string;
 
   @IsOptional()
   @IsUUID(4)
-  employee: string;
+  employeeId: string;
 }

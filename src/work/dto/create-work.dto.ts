@@ -19,7 +19,7 @@ export class CreateWorkDto {
   date: string;
 
   @IsString()
-  @Length(50, 500)
+  @Length(10, 500)
   description: string;
 
   @IsInt()
