@@ -11,39 +11,32 @@ import { CreateSupplyDto } from './dto/create-supply.dto';
 
 import { UpdateSupplyDto } from './dto/update-supply.dto';
 
-import {
-  DataSource,
-  ILike,
-  IsNull,
-  MoreThan,
-  Not,
-  QueryRunner,
-  Repository,
-} from 'typeorm';
+import { MoreThan, QueryRunner, Repository } from 'typeorm';
 
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Supply } from './entities/';
 
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { SuppliesStock } from 'src/supplies/entities/supplies-stock.entity';
 import { InsufficientSupplyStockException } from './exceptions/insufficient-supply-stock.exception';
 
 @Injectable()
 export class SuppliesService {
   private readonly logger = new Logger('SuppliesService');
-  private handleDBExceptions = (error: any, logger = this.logger) =>
-    handleDBExceptions(error, logger);
+
   constructor(
     @InjectRepository(Supply)
     private readonly supplyRepository: Repository<Supply>,
 
     @InjectRepository(SuppliesStock)
     private readonly suppliesStockRepository: Repository<SuppliesStock>,
-    private dataSource: DataSource,
-  ) {}
+    private readonly handlerError: HandlerErrorService,
+  ) {
+    this.handlerError.setLogger(this.logger);
+  }
 
   async create(createSupply: CreateSupplyDto) {
     try {
@@ -51,73 +44,47 @@ export class SuppliesService {
       await this.supplyRepository.save(supply);
       return supply;
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
   async findAll(queryParams: QueryParamsDto) {
     const {
-      query: search = '',
+      query = '',
       limit = 10,
       offset = 0,
       all_records = false,
     } = queryParams;
 
-    let supplies;
-    if (all_records) {
-      supplies = await this.supplyRepository.find({
-        where: [
-          {
-            name: ILike(`${search}%`),
-          },
-          {
-            brand: ILike(`${search}%`),
-          },
-        ],
-        relations: {
-          stock: true,
-        },
-        order: {
-          name: 'ASC',
-        },
-      });
-    } else {
-      supplies = await this.supplyRepository.find({
-        where: [
-          {
-            name: ILike(`${search}%`),
-          },
-          {
-            brand: ILike(`${search}%`),
-          },
-        ],
-        relations: {
-          stock: true,
-        },
-        order: {
-          name: 'ASC',
-        },
-        take: limit,
-        skip: offset * limit,
-      });
+    const queryBuilder = this.supplyRepository.createQueryBuilder('supplies');
+    queryBuilder.leftJoinAndSelect('supplies.stock', 'stock');
+
+    if (!!query && !all_records) {
+      queryBuilder.where('supplies.name ILIKE :query', { query: `${query}%` });
+      queryBuilder.where('supplies.brand ILIKE :query', { query: `${query}%` });
     }
 
-    let count: number;
-    if (search.length === 0) {
-      count = await this.supplyRepository.count();
-    } else {
-      count = supplies.length;
-    }
+    !all_records && queryBuilder.take(limit).skip(offset * limit);
 
+    queryBuilder.orderBy('supplies.name', 'ASC');
+
+    const [supplies, count] = await queryBuilder.getManyAndCount();
+    if (supplies.length === 0 && count > 0) {
+      throw new NotFoundException(
+        'There are no supply records with the requested pagination',
+      );
+    }
     return {
-      rowCount: count,
-      rows: supplies,
-      pageCount: Math.ceil(count / limit),
+      total_row_count: count,
+      current_row_count: supplies.length,
+      total_page_count: all_records ? 1 : Math.ceil(count / limit),
+      current_page_count: all_records ? 1 : offset + 1,
+      records: supplies,
     };
   }
 
   async findAllSuppliesWithShopping() {
-    const supplies = await this.supplyRepository.find({
+    const [supplies, count] = await this.supplyRepository.findAndCount({
       where: {
         shopping_details: MoreThan(0),
       },
@@ -126,12 +93,15 @@ export class SuppliesService {
       },
     });
     return {
-      rowCount: supplies.length,
-      rows: supplies,
+      total_row_count: count,
+      current_row_count: count,
+      total_page_count: count > 0 && 1,
+      current_page_count: count > 0 && 1,
+      records: supplies,
     };
   }
   async findAllWithConsumptions() {
-    const supplies = await this.supplyRepository.find({
+    const [supplies, count] = await this.supplyRepository.findAndCount({
       where: {
         consumption_details: MoreThan(0),
       },
@@ -140,8 +110,11 @@ export class SuppliesService {
       },
     });
     return {
-      rowCount: supplies.length,
-      rows: supplies,
+      total_row_count: count,
+      current_row_count: count,
+      total_page_count: count > 0 && 1,
+      current_page_count: count > 0 && 1,
+      records: supplies,
     };
   }
 
@@ -167,7 +140,9 @@ export class SuppliesService {
     const supply = await this.findOne(id);
 
     if (supply.stock !== null && supply.stock.amount > 0) {
-      throw new ConflictException('Supply has stock available');
+      throw new ConflictException(
+        `Supply with id ${supply.name} has stock available`,
+      );
     }
 
     await this.supplyRepository.softRemove(supply);
@@ -177,62 +152,51 @@ export class SuppliesService {
     try {
       await this.supplyRepository.delete({});
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
-  async findAllSuppliesStock(queryParams: QueryParamsDto) {
-    const { limit = 10, offset = 0, query: search = '' } = queryParams;
-
-    const suppliesStock = await this.suppliesStockRepository.find({
-      where: {
-        supply: Not(IsNull()),
-      },
+  async findAllSuppliesStock() {
+    const [suppliesStock, count] = await this.supplyRepository.findAndCount({
       relations: {
-        supply: true,
+        stock: true,
+      },
+      where: {
+        stock: {
+          amount: MoreThan(0),
+        },
       },
       order: {
-        amount: 'ASC',
+        name: 'ASC',
       },
-      take: limit,
-      skip: offset,
     });
 
-    let count: number;
-    if (search.length === 0) {
-      count = await this.supplyRepository.count();
-    } else {
-      count = suppliesStock.length;
-    }
-
     return {
-      rowCount: count,
-      rows: suppliesStock.map((item: SuppliesStock) => {
-        return {
-          ...item.supply,
-          amount: item.amount,
-        };
-      }),
-      pageCount: Math.ceil(count / limit),
+      total_row_count: count,
+      current_row_count: suppliesStock.length,
+      total_page_count: 1,
+      current_page_count: 1,
+      records: suppliesStock,
     };
   }
 
   async updateStock(
     queryRunner: QueryRunner,
-    supplyId: any,
-    amount: number,
-    increment = true,
+    info: {
+      supplyId: any;
+      amount: number;
+      type_update: 'increment' | 'decrement';
+    },
   ) {
-    const supply = await this.supplyRepository.findOne({
-      // withDeleted: true,
-      where: { id: supplyId },
-    });
+    const { supplyId, amount, type_update } = info;
 
-    const recordSupplyStock = await queryRunner.manager
-      .getRepository(SuppliesStock)
-      .createQueryBuilder('supplyStock')
-      .where('supplyStock.supplyId = :supplyId', { supplyId })
-      .getOne();
+    const supply = await this.findOne(supplyId);
+
+    const recordSupplyStock = await this.suppliesStockRepository.findOne({
+      where: {
+        supply: { id: supplyId },
+      },
+    });
 
     if (!recordSupplyStock) {
       const recordToSave = queryRunner.manager.create(SuppliesStock, {
@@ -243,34 +207,41 @@ export class SuppliesService {
       await queryRunner.manager.save(SuppliesStock, recordToSave);
     }
 
-    if (increment) {
-      return await queryRunner.manager.increment(
-        SuppliesStock,
-        { supply: supplyId },
-        'amount',
-        amount,
-      );
+    switch (type_update) {
+      case 'increment':
+        return await queryRunner.manager.increment(
+          SuppliesStock,
+          { supply: supplyId },
+          'amount',
+          amount,
+        );
+      case 'decrement':
+        const amountActually = recordSupplyStock?.amount || 0;
+
+        if (amountActually < amount) {
+          throw new InsufficientSupplyStockException(
+            amountActually,
+            supply?.name,
+          );
+        }
+
+        return await queryRunner.manager.decrement(
+          SuppliesStock,
+          { supply: supplyId },
+          'amount',
+          amount,
+        );
+
+      default:
+        throw new Error('Invalid type_update value');
     }
-
-    const amountActually = recordSupplyStock?.amount || 0;
-
-    if (amountActually < amount) {
-      throw new InsufficientSupplyStockException(amountActually, supply?.name);
-    }
-
-    await queryRunner.manager.decrement(
-      SuppliesStock,
-      { supply: supplyId },
-      'amount',
-      amount,
-    );
   }
 
   async deleteAllStockSupplies() {
     try {
       await this.suppliesStockRepository.delete({});
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 

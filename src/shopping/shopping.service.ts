@@ -13,6 +13,7 @@ import {
   handleDBExceptions,
   organizeIDsToUpdateEntity,
 } from 'src/common/helpers';
+import { PrinterService } from 'src/printer/printer.service';
 import { Condition } from 'src/supplies/interfaces/condition.interface';
 import { SuppliesService } from 'src/supplies/supplies.service';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
@@ -21,7 +22,6 @@ import { QueryParamsShopping } from './dto/query-params-shopping.dto';
 import { ShoppingSuppliesDetailsDto } from './dto/shopping-supplies-details.dto';
 import { UpdateSuppliesShoppingDto } from './dto/update-supplies-shopping.dto';
 import { SuppliesShopping, SuppliesShoppingDetails } from './entities';
-import { PrinterService } from 'src/printer/printer.service';
 import { getShoppingReport } from './reports/get-shopping';
 
 @Injectable()
@@ -85,12 +85,11 @@ export class ShoppingService {
           queryRunner.manager.create(SuppliesShoppingDetails, register),
         );
 
-        await this.suppliesService.updateStock(
-          queryRunner,
-          register.supply.id,
-          register.amount,
-          true,
-        );
+        await this.suppliesService.updateStock(queryRunner, {
+          supplyId: register.supply.id,
+          amount: register.amount,
+          type_update: 'increment',
+        });
       }
 
       const shopping = queryRunner.manager.create(SuppliesShopping, {
@@ -255,12 +254,11 @@ export class ShoppingService {
             id: detailId,
           });
 
-          await this.suppliesService.updateStock(
-            queryRunner,
-            oldRecordData.supply.id,
-            oldRecordData.amount,
-            false,
-          );
+          await this.suppliesService.updateStock(queryRunner, {
+            supplyId: oldRecordData.supply.id,
+            amount: oldRecordData.amount,
+            type_update: 'decrement',
+          });
         }
       }
 
@@ -277,19 +275,17 @@ export class ShoppingService {
           (record) => record.id === detailId,
         );
 
-        await this.suppliesService.updateStock(
-          queryRunner,
-          oldRecordData.supply.id,
-          oldRecordData.amount,
-          false,
-        );
+        await this.suppliesService.updateStock(queryRunner, {
+          supplyId: oldRecordData.supply.id,
+          amount: oldRecordData.amount,
+          type_update: 'decrement',
+        });
 
-        await this.suppliesService.updateStock(
-          queryRunner,
-          dataRecordNew.supply.id,
-          dataRecordNew.amount,
-          true,
-        );
+        await this.suppliesService.updateStock(queryRunner, {
+          supplyId: dataRecordNew.supply.id,
+          amount: dataRecordNew.amount,
+          type_update: 'increment',
+        });
 
         await this.updateShoppingDetails(
           queryRunner,
@@ -308,12 +304,11 @@ export class ShoppingService {
           ...newRecordData,
         });
 
-        await this.suppliesService.updateStock(
-          queryRunner,
-          newRecordData.supply.id,
-          newRecordData.amount,
-          true,
-        );
+        await this.suppliesService.updateStock(queryRunner, {
+          supplyId: newRecordData.supply.id,
+          amount: newRecordData.amount,
+          type_update: 'increment',
+        });
       }
 
       const { details, ...rest } = updateSuppliesShoppingDto;
@@ -344,12 +339,11 @@ export class ShoppingService {
 
         const { supply } = record;
 
-        await this.suppliesService.updateStock(
-          queryRunner,
-          supply.id,
-          record.amount,
-          false,
-        );
+        await this.suppliesService.updateStock(queryRunner, {
+          supplyId: id,
+          amount: record.amount,
+          type_update: 'decrement',
+        });
       }
       await queryRunner.manager.softRemove(shoppingSupply);
 
@@ -383,6 +377,6 @@ export class ShoppingService {
 
     const docDefinition = getShoppingReport({ data: shopping });
 
-    return this.printerService.createPdf({docDefinition});
+    return this.printerService.createPdf({ docDefinition });
   }
 }

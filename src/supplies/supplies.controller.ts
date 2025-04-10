@@ -103,8 +103,8 @@ export class SuppliesController {
   }
 
   @Get(findAllStock.path)
-  findAllSuppliesStock(@Query() queryParams: QueryParamsDto) {
-    return this.suppliesService.findAllSuppliesStock(queryParams);
+  findAllSuppliesStock() {
+    return this.suppliesService.findAllSuppliesStock();
   }
 
   @Get(findOneSupply.path)

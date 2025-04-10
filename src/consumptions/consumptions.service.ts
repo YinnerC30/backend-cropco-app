@@ -72,12 +72,11 @@ export class ConsumptionsService {
       await queryRunner.manager.save(consumption);
 
       for (const item of details) {
-        await this.suppliesService.updateStock(
-          queryRunner,
-          item.supply.id,
-          item.amount,
-          false,
-        );
+        await this.suppliesService.updateStock(queryRunner, {
+          supplyId: item.supply.id,
+          amount: item.amount,
+          type_update: 'decrement',
+        });
       }
 
       await queryRunner.commitTransaction();
@@ -251,12 +250,11 @@ export class ConsumptionsService {
           id: detailId,
         });
 
-        await this.suppliesService.updateStock(
-          queryRunner,
-          oldRecordData.supply.id,
-          oldRecordData.amount,
-          true,
-        );
+        await this.suppliesService.updateStock(queryRunner, {
+          supplyId: oldRecordData.supply.id,
+          amount: oldRecordData.amount,
+          type_update: 'increment',
+        });
       }
 
       for (const detailId of toUpdate) {
@@ -268,23 +266,21 @@ export class ConsumptionsService {
           continue;
         }
 
-        await this.suppliesService.updateStock(
-          queryRunner,
-          oldRecordData.supply.id,
-          oldRecordData.amount,
-          true,
-        );
+        await this.suppliesService.updateStock(queryRunner, {
+          supplyId: oldRecordData.supply.id,
+          amount: oldRecordData.amount,
+          type_update: 'increment',
+        });
 
         const newRecordData = newDetails.find(
           (record) => record.id === detailId,
         );
 
-        await this.suppliesService.updateStock(
-          queryRunner,
-          newRecordData.supply.id,
-          newRecordData.amount,
-          false,
-        );
+        await this.suppliesService.updateStock(queryRunner, {
+          supplyId: newRecordData.supply.id,
+          amount: newRecordData.amount,
+          type_update: 'decrement',
+        });
 
         await this.updateConsumptionDetails(
           queryRunner,
@@ -303,12 +299,11 @@ export class ConsumptionsService {
           ...newRecordData,
         });
 
-        await this.suppliesService.updateStock(
-          queryRunner,
-          newRecordData.supply.id,
-          newRecordData.amount,
-          false,
-        );
+        await this.suppliesService.updateStock(queryRunner, {
+          supplyId: newRecordData.supply.id,
+          amount: newRecordData.amount,
+          type_update: 'decrement',
+        });
       }
 
       const { details, ...rest } = updateSuppliesConsumptionDto;
@@ -337,12 +332,11 @@ export class ConsumptionsService {
           continue;
         }
 
-        await this.suppliesService.updateStock(
-          queryRunner,
-          record.supply.id,
-          record.amount,
-          true,
-        );
+        await this.suppliesService.updateStock(queryRunner, {
+          supplyId: record.supply.id,
+          amount: record.amount,
+          type_update: 'increment',
+        });
       }
       await queryRunner.manager.softRemove(consumptionSupply);
 
