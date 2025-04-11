@@ -37,6 +37,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
           database: configService.get<string>('DB_NAME'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: true,
+          ssl: {
+            rejectUnauthorized: false, // Be cautious with this in production
+          },
         };
       },
     }),
