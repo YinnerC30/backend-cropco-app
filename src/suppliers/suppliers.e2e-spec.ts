@@ -59,7 +59,9 @@ describe('SuppliersController (e2e)', () => {
               database: configService.get<string>('DB_NAME'),
               entities: [__dirname + '../../**/*.entity{.ts,.js}'],
               synchronize: true,
-              // logger: true
+              ssl: {
+                rejectUnauthorized: true, // Be cautious with this in production
+              },
             };
           },
         }),

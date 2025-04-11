@@ -38,7 +38,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: true,
           ssl: {
-            rejectUnauthorized: false, // Be cautious with this in production
+            rejectUnauthorized: true, // Be cautious with this in production
           },
         };
       },
