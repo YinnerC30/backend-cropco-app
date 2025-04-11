@@ -9,6 +9,7 @@ import {
   Post,
   Query,
   Res,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Auth } from 'src/auth/decorators/auth.decorator';
@@ -20,6 +21,7 @@ import { UpdateSupplyDto } from './dto/update-supply.dto';
 import { Supply } from './entities';
 import { SuppliesService } from './supplies.service';
 import { Response } from 'express';
+import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
 
 export const pathsSuppliesController: PathsController = {
   createSupply: {
@@ -132,19 +134,15 @@ export class SuppliesController {
     return this.suppliesService.remove(id);
   }
 
-  @Delete(removeSupplies.path)
   @ApiResponse({
     status: 200,
     description: 'Suministros eliminados exitosamente',
   })
+  @Delete(removeSupplies.path)
+  @UseInterceptors(ResponseStatusInterceptor)
   async removeBulk(
     @Body() removeBulkSuppliesDto: RemoveBulkRecordsDto<Supply>,
-    @Res() response: Response,
   ) {
-    const result = await this.suppliesService.removeBulk(removeBulkSuppliesDto);
-    if (result.failed && result.failed.length > 0) {
-      return response.status(207).json(result);
-    }
-    return response.status(200).json(result);
+    return await this.suppliesService.removeBulk(removeBulkSuppliesDto);
   }
 }
