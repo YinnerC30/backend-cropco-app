@@ -174,7 +174,7 @@ export class SeedService {
 
     return true;
   }
-  private async insertNewSupplies() {
+  async insertNewSupplies() {
     const supplies = initialData.supplies;
 
     const insertPromises = [];
@@ -187,6 +187,7 @@ export class SeedService {
 
     this.suppliesIds = result.map((supply) => new String(supply.id).toString());
 
+    console.log(this.suppliesIds.length);
     return true;
   }
   private async insertNewHarvests() {

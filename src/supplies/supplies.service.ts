@@ -133,7 +133,12 @@ export class SuppliesService {
 
   async update(id: string, updateSupplyDto: UpdateSupplyDto) {
     await this.findOne(id);
-    await this.supplyRepository.update(id, updateSupplyDto);
+    try {
+      await this.supplyRepository.update(id, updateSupplyDto);
+      return await this.findOne(id);
+    } catch (error) {
+      this.handlerError.handle(error);
+    }
   }
 
   async remove(id: string) {
@@ -246,8 +251,18 @@ export class SuppliesService {
   }
 
   async removeBulk(removeBulkSuppliesDto: RemoveBulkRecordsDto<Supply>) {
+    const success: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+
     for (const { id } of removeBulkSuppliesDto.recordsIds) {
-      await this.remove(id);
+      try {
+        await this.remove(id);
+        success.push(id);
+      } catch (error) {
+        failed.push({ id, error: error.message });
+      }
     }
+
+    return { success, failed };
   }
 }

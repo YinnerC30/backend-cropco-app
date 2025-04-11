@@ -102,7 +102,7 @@ export class ShoppingController {
   }
 
   @Post(createShopping.path)
-  shopping(@Body() createShoppingSuppliesDto: CreateShoppingSuppliesDto) {
+  create(@Body() createShoppingSuppliesDto: CreateShoppingSuppliesDto) {
     return this.shoppingService.createShopping(createShoppingSuppliesDto);
   }
   @Patch(updateShopping.path)
