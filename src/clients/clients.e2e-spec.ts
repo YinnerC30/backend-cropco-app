@@ -225,10 +225,7 @@ describe('ClientsController (e2e)', () => {
   describe('clients/all (GET)', () => {
     beforeAll(async () => {
       await clientRepository.delete({});
-      const result = await seedService.insertNewClients();
-      if (result) {
-        console.log('Inserted 17 client records for testing');
-      }
+      await seedService.insertNewClients();
     });
 
     it('should throw an exception for not sending a JWT to the protected path /clients/all', async () => {

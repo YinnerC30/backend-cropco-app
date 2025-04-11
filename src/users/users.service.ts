@@ -223,7 +223,6 @@ export class UsersService {
     id: string,
     changePasswordDto: ChangePasswordDto,
   ): Promise<void> {
-    console.log(id, changePasswordDto);
     const { old_password, new_password } = changePasswordDto;
     const user = await this.findOne(id, true);
     const valid_password = bcrypt.compareSync(old_password, user.password);

@@ -71,7 +71,7 @@ export class ConsumptionsController {
   constructor(private readonly consumptionsService: ConsumptionsService) {}
 
   @Post(createConsumption.path)
-  consumption(
+  create(
     @Body() createConsumptionSuppliesDto: CreateConsumptionSuppliesDto,
   ) {
     return this.consumptionsService.createConsumption(

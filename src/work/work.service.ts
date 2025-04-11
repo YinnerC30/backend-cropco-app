@@ -242,8 +242,6 @@ export class WorkService {
   async remove(id: string) {
     const work = await this.findOne(id);
 
-    console.log(work);
-
     if (work.details.some((item) => item.payments_work !== null)) {
       throw new ConflictException(
         'The record cannot be deleted because it has payments linked to it.',

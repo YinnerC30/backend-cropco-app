@@ -219,10 +219,7 @@ describe('UsersController (e2e)', () => {
 
   describe('users/all (GET)', () => {
     beforeAll(async () => {
-      const result = await seedService.insertNewUsers();
-      if (result) {
-        console.log('Inserted 14 user records for testing');
-      }
+      await seedService.insertNewUsers();
     });
 
     it('should throw an exception for not sending a JWT to the protected path /users/all', async () => {

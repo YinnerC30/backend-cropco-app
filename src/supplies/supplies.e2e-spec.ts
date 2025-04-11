@@ -8,7 +8,7 @@ import { CommonModule } from 'src/common/common.module';
 import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
 import { User } from 'src/users/entities/user.entity';
-import { IsNull, Not, Repository } from 'typeorm';
+import { IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { CreateSupplyDto } from './dto/create-supply.dto';
 import { Supply } from './entities/supply.entity';
 import * as request from 'supertest';
@@ -18,6 +18,12 @@ import { ShoppingController } from 'src/shopping/shopping.controller';
 import { SuppliersController } from 'src/suppliers/suppliers.controller';
 import { CreateShoppingSuppliesDto } from 'src/shopping/dto/create-shopping-supplies.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { ConsumptionsController } from 'src/consumptions/consumptions.controller';
+import { CropsController } from 'src/crops/crops.controller';
+import { CreateConsumptionSuppliesDto } from 'src/consumptions/dto/create-consumption-supplies.dto';
+import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
+import { CropsService } from 'src/crops/crops.service';
+import { Crop } from 'src/crops/entities/crop.entity';
 
 describe('SuppliesController e2e', () => {
   let app: INestApplication;
@@ -26,9 +32,13 @@ describe('SuppliesController e2e', () => {
   let userTest: User;
   let token: string;
   let supplyRepository: Repository<Supply>;
+  let cropRepository: Repository<Crop>;
   let suppliesController: SuppliesController;
   let suppliersController: SuppliersController;
   let shoppingController: ShoppingController;
+  let consumptionsController: ConsumptionsController;
+  let cropsController: CropsController;
+  let cropsService: CropsService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -61,6 +71,7 @@ describe('SuppliesController e2e', () => {
     }).compile();
 
     seedService = moduleFixture.get<SeedService>(SeedService);
+    cropsService = moduleFixture.get<CropsService>(CropsService);
     suppliesController =
       moduleFixture.get<SuppliesController>(SuppliesController);
     suppliersController =
@@ -69,12 +80,21 @@ describe('SuppliesController e2e', () => {
     shoppingController =
       moduleFixture.get<ShoppingController>(ShoppingController);
 
+    consumptionsController = moduleFixture.get<ConsumptionsController>(
+      ConsumptionsController,
+    );
+    cropsController = moduleFixture.get<CropsController>(CropsController);
+
     authService = moduleFixture.get<AuthService>(AuthService);
 
     supplyRepository = moduleFixture.get<Repository<Supply>>(
       getRepositoryToken(Supply),
     );
+    cropRepository = moduleFixture.get<Repository<Crop>>(
+      getRepositoryToken(Crop),
+    );
     await supplyRepository.delete({});
+    await cropsService.deleteAllCrops();
 
     userTest = await authService.createUserToTests();
     token = authService.generateJwtToken({
@@ -97,6 +117,7 @@ describe('SuppliesController e2e', () => {
 
   afterAll(async () => {
     await authService.deleteUserToTests(userTest.id);
+
     await app.close();
   });
 
@@ -212,9 +233,6 @@ describe('SuppliesController e2e', () => {
     beforeAll(async () => {
       await supplyRepository.delete({});
       const result = await seedService.insertNewSupplies();
-      if (result) {
-        console.log('Inserted 15 supply records for testing');
-      }
     });
 
     it('should throw an exception for not sending a JWT to the protected path /supplies/all', async () => {
@@ -630,8 +648,6 @@ describe('SuppliesController e2e', () => {
         take: 3,
       });
 
-      console.log(supply1, supply2, supply3);
-
       const bulkData: RemoveBulkRecordsDto<Supply> = {
         recordsIds: [{ id: supply1.id }, { id: supply2.id }],
       };
@@ -728,6 +744,171 @@ describe('SuppliesController e2e', () => {
           },
         ],
       });
+    });
+  });
+
+  describe('supplies/shopping/all (GET)', () => {
+    it('should throw an exception for not sending a JWT to the protected path /supplies/shopping/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/supplies/shopping/all')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /supplies/shopping/all', async () => {
+      await authService.removePermission(
+        userTest.id,
+        'find_all_supplies_with_shopping',
+      );
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/supplies/shopping/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should obtain all supplies that have purchases', async () => {
+      await authService.addPermission(
+        userTest.id,
+        'find_all_supplies_with_shopping',
+      );
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/supplies/shopping/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(3);
+      expect(response.body.current_row_count).toEqual(3);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
+      await authService.removePermission(
+        userTest.id,
+        'find_all_supplies_with_shopping',
+      );
+    });
+  });
+
+  describe('supplies/consumptions/all (GET)', () => {
+    it('should throw an exception for not sending a JWT to the protected path /supplies/consumptions/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/supplies/consumptions/all')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /supplies/consumptions/all', async () => {
+      await authService.removePermission(
+        userTest.id,
+        'find_all_supplies_with_consumptions',
+      );
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/supplies/consumptions/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should obtain all supplies that have consumptions', async () => {
+      await authService.addPermission(
+        userTest.id,
+        'find_all_supplies_with_consumptions',
+      );
+
+      const [supply1, supply2] = await supplyRepository.find({
+        where: {
+          stock: { id: Not(IsNull()), amount: MoreThan(100) },
+        },
+        take: 2,
+      });
+
+      const crop = await cropsController.create({
+        name: 'CropName1',
+        description: 'Crop description...',
+        units: 10,
+        location: 'Location of the crop...',
+        date_of_creation: new Date().toISOString(),
+      } as CreateCropDto);
+
+      await consumptionsController.create({
+        date: new Date().toISOString(),
+        details: [
+          {
+            supply: { id: supply1.id },
+            crop: { id: crop.id },
+            amount: 100,
+          },
+        ],
+      } as CreateConsumptionSuppliesDto);
+
+      await consumptionsController.create({
+        date: new Date().toISOString(),
+        details: [
+          {
+            supply: { id: supply2.id },
+            crop: { id: crop.id },
+            amount: 100,
+          },
+        ],
+      } as CreateConsumptionSuppliesDto);
+
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/supplies/consumptions/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(2);
+      expect(response.body.current_row_count).toEqual(2);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
+    });
+  });
+
+  describe('supplies/stock/all (GET)', () => {
+    it('should throw an exception for not sending a JWT to the protected path /supplies/stock/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/supplies/stock/all')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /supplies/stock/all', async () => {
+      await authService.removePermission(
+        userTest.id,
+        'find_all_supplies_with_stock',
+      );
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/supplies/stock/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should obtain all supplies that have purchases', async () => {
+      await authService.addPermission(
+        userTest.id,
+        'find_all_supplies_with_stock',
+      );
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/supplies/stock/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(3);
+      expect(response.body.current_row_count).toEqual(3);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
     });
   });
 });

@@ -48,7 +48,7 @@ export const pathsSuppliesController: PathsController = {
   findAllStock: {
     path: 'stock/all',
     description: 'obtener el stock de todos los suplementos',
-    name: 'find_all_supplies_stock',
+    name: 'find_all_supplies_with_stock',
   },
 
   findOneSupply: {

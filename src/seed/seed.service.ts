@@ -58,10 +58,10 @@ export class SeedService {
 
   async runSeed() {
     await this.clearDatabase();
-    // await this.authService.createModulesWithActions();
+    await this.authService.createModulesWithActions();
     await this.authService.convertToAdminUserSeed();
     // await this.insertNewUsers();
-    await this.insertNewClients();
+    // await this.insertNewClients();
     // await this.insertNewSuppliers();
     // await this.insertNewSupplies();
     // await this.insertNewEmployees();
@@ -94,8 +94,6 @@ export class SeedService {
 
   async insertNewUsers() {
     const users = initialData.users;
-
-    console.log(users.length);
 
     const insertPromises = [];
 
@@ -187,7 +185,6 @@ export class SeedService {
 
     this.suppliesIds = result.map((supply) => new String(supply.id).toString());
 
-    console.log(this.suppliesIds.length);
     return true;
   }
   private async insertNewHarvests() {

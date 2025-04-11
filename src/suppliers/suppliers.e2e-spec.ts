@@ -223,9 +223,6 @@ describe('SuppliersController (e2e)', () => {
     beforeAll(async () => {
       await supplierRepository.delete({});
       const result = await seedService.insertNewSuppliers();
-      if (result) {
-        console.log('Inserted 17 supplier records for testing');
-      }
     });
 
     it('should throw an exception for not sending a JWT to the protected path /suppliers/all', async () => {

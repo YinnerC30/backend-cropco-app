@@ -222,10 +222,7 @@ describe('EmployeesController (e2e)', () => {
   describe('employees/all (GET)', () => {
     beforeAll(async () => {
       await employeeRepository.delete({});
-      const result = await seedService.insertNewEmployees();
-      if (result) {
-        console.log('Inserted 17 employee records for testing');
-      }
+      await seedService.insertNewEmployees();
     });
 
     it('should throw an exception for not sending a JWT to the protected path /employees/all', async () => {

@@ -329,6 +329,7 @@ export class AuthService {
     );
 
     if (userHasAction) return;
+
     await this.userActionsRepository.delete({
       user: { id: userId },
       id: action.id,

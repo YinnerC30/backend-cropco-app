@@ -221,9 +221,6 @@ describe('CropsController e2e', () => {
     beforeAll(async () => {
       await cropRepository.delete({});
       const result = await seedService.insertNewCrops();
-      if (result) {
-        console.log('Inserted 15 crop records for testing');
-      }
     });
 
     it('should throw an exception for not sending a JWT to the protected path /crops/all', async () => {
