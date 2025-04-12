@@ -9,6 +9,7 @@ import {
   Post,
   Query,
   Res,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
@@ -21,6 +22,7 @@ import { SuppliesShopping } from './entities';
 import { ShoppingService } from './shopping.service';
 import { Response } from 'express';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
 
 export const pathsShoppingController: PathsController = {
   createShopping: {
@@ -105,6 +107,7 @@ export class ShoppingController {
   create(@Body() createShoppingSuppliesDto: CreateShoppingSuppliesDto) {
     return this.shoppingService.createShopping(createShoppingSuppliesDto);
   }
+
   @Patch(updateShopping.path)
   updateShopping(
     @Param('id', ParseUUIDPipe) id: string,
@@ -112,11 +115,14 @@ export class ShoppingController {
   ) {
     return this.shoppingService.updateShopping(id, updateSuppliesShoppingDto);
   }
+
   @Delete(removeShopping.path)
   removeShopping(@Param('id', ParseUUIDPipe) id: string) {
     return this.shoppingService.removeShopping(id);
   }
+
   @Delete(removeBulkShopping.path)
+  @UseInterceptors(ResponseStatusInterceptor)
   @ApiResponse({
     status: 200,
     description: 'Compras eliminadas exitosamente',
