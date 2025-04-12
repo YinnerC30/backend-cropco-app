@@ -22,6 +22,7 @@ import { Repository } from 'typeorm';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeesModule } from './employees.module';
 import { Employee } from './entities/employee.entity';
+import { CreateWorkDto } from 'src/work/dto/create-work.dto';
 
 describe('EmployeesController (e2e)', () => {
   let app: INestApplication;
@@ -614,13 +615,11 @@ describe('EmployeesController (e2e)', () => {
           {
             employee: { id: employee2.id },
             value_pay: 1000,
-            payment_is_pending: true,
           },
         ],
-        total: 10,
         value_pay: 1000,
         description: 'description demo test creation harvest...',
-      } as any);
+      } as CreateWorkDto);
 
       // Intentar eliminar el employee
       const { body: body1 } = await request
@@ -778,13 +777,11 @@ describe('EmployeesController (e2e)', () => {
           {
             employee: { id: employee2.id },
             value_pay: 1000,
-            payment_is_pending: true,
           },
         ],
-        total: 10,
         value_pay: 1000,
         description: 'description demo test creation harvest...',
-      } as any);
+      } as CreateWorkDto);
 
       // Intentar eliminar el employee
       const { body } = await request

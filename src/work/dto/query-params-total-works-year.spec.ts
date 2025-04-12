@@ -2,6 +2,7 @@ import { validate } from 'class-validator';
 import { plainToClass } from 'class-transformer';
 import { QueryTotalWorksInYearDto } from './query-params-total-works-year';
 
+
 describe('QueryTotalWorksInYearDto', () => {
   it('should pass validation with valid data', async () => {
     const dto = plainToClass(QueryTotalWorksInYearDto, {

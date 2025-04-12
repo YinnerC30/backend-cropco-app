@@ -9,6 +9,7 @@ import {
   Post,
   Query,
   Res,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response as ResponseExpress } from 'express';
@@ -21,6 +22,7 @@ import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { EmployeesService } from './employees.service';
 import { Employee } from './entities/employee.entity';
 import { Response } from 'express';
+import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
 
 export const pathsEmployeesController: PathsController = {
   createEmployee: {
@@ -255,22 +257,16 @@ export class EmployeesController {
   }
 
   @Delete(removeEmployees.path)
+  @UseInterceptors(ResponseStatusInterceptor)
   @ApiResponse({
     status: 200,
     description: 'Empleados eliminados exitosamente',
   })
   async removeBulk(
     @Body() removeBulkEmployeesDto: RemoveBulkRecordsDto<Employee>,
-    @Res() response: Response,
   ) {
-    const result = await this.employeesService.removeBulk(removeBulkEmployeesDto);
-    if (result.failed && result.failed.length > 0) {
-      return response.status(207).json(result);
-    }
-    return response.status(200).json(result);
+    return await this.employeesService.removeBulk(removeBulkEmployeesDto);
   }
-
-  
 
   @Get(findAllEmployeesWithHarvests.path)
   findAllEmployeesWithHarvests() {

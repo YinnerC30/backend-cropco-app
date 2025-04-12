@@ -9,7 +9,7 @@ describe('CreateWorkDto', () => {
     dto = plainToInstance(CreateWorkDto, {
       date: '2023-01-01',
       description: 'Test work'.repeat(10),
-      total: 100,
+      value_pay: 100,
       crop: { id: '123e4567-e89b-12d3-a456-426614174000' },
       details: [
         {
@@ -44,14 +44,14 @@ describe('CreateWorkDto', () => {
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should fail with negative total', async () => {
-    dto.total = -1;
+  it('should fail with negative value_pay', async () => {
+    dto.value_pay = -1;
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should fail with non-integer total', async () => {
-    dto.total = 1.5;
+  it('should fail with non-integer value_pay', async () => {
+    dto.value_pay = 1.5;
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
   });

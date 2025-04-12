@@ -7,12 +7,13 @@ import {
   IsPositive,
   IsString,
   Length,
-  ValidateNested
+  ValidateNested,
 } from 'class-validator';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
 import { WorkDetailsDto } from './create-work-details.dto';
+import { MatchTotals } from 'src/common/decorators/match-totals.decorator';
 
 export class CreateWorkDto {
   @IsDateString()
@@ -24,7 +25,7 @@ export class CreateWorkDto {
 
   @IsInt()
   @IsPositive()
-  total: number;
+  value_pay: number;
 
   @ValidateNested()
   @Type(() => ValidateUUID)
@@ -32,6 +33,10 @@ export class CreateWorkDto {
 
   @IsArray()
   @ArrayNotEmpty()
+  @MatchTotals({
+    fields: ['value_pay'],
+    nameArrayToCalculate: 'details',
+  })
   @ValidateNested({ each: true })
   @Type(() => WorkDetailsDto)
   details: WorkDetailsDto[];

@@ -75,7 +75,7 @@ export interface Supply {
 export interface Work {
   date: string;
   description: string;
-  total: number;
+  value_pay: number;
   crop?: { id: string; [key: string]: any };
   details?: {
     employee?: Partial<Employee>;
@@ -843,17 +843,17 @@ export const initialData: Seed = {
     {
       date: '2023-02-06',
       description: 'Ninguna por el momento',
-      total: 35000,
+      value_pay: 35000,
     },
     {
       date: '2023-02-06',
       description: 'Ninguna por el momento',
-      total: 35000,
+      value_pay: 35000,
     },
     {
       date: '2023-02-06',
       description: 'Ninguna por el momento',
-      total: 35000,
+      value_pay: 35000,
     },
   ],
   sales: [

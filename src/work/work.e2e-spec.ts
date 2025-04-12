@@ -129,7 +129,7 @@ describe('WorksController (e2e)', () => {
       const data: CreateWorkDto = {
         date: '',
         description: '',
-        total: 0,
+        value_pay: 0,
         crop: { id: '' },
         details: [],
       };
@@ -147,7 +147,7 @@ describe('WorksController (e2e)', () => {
       const data: CreateWorkDto = {
         date: '',
         description: '',
-        total: 0,
+        value_pay: 0,
         crop: { id: '' },
         details: [],
       };
@@ -192,7 +192,7 @@ describe('WorksController (e2e)', () => {
       const data: CreateWorkDto = {
         date: new Date().toISOString(),
         crop: { id: crop.id },
-        total: 120_000,
+        value_pay: 120_000,
         description: 'No description',
         details: [
           {
@@ -220,8 +220,8 @@ describe('WorksController (e2e)', () => {
         'date must be a valid ISO 8601 date string',
         'description must be longer than or equal to 10 characters',
         'description must be a string',
-        'total must be a positive number',
-        'total must be an integer number',
+        'value_pay must be a positive number',
+        'value_pay must be an integer number',
         'details should not be empty',
         'details must be an array',
       ];
@@ -264,7 +264,7 @@ describe('WorksController (e2e)', () => {
       const data1: CreateWorkDto = {
         date: new Date().toISOString(),
         crop: { id: crop1.id },
-        total: 60_000,
+        value_pay: 60_000,
         description: 'No description',
         details: [
           {
@@ -294,7 +294,7 @@ describe('WorksController (e2e)', () => {
           new Date().setDate(new Date().getDate() + 5),
         ).toISOString(),
         crop: { id: crop2.id },
-        total: 90_000,
+        value_pay: 90_000,
         description: 'No description',
         details: [
           {
@@ -308,7 +308,7 @@ describe('WorksController (e2e)', () => {
           new Date().setDate(new Date().getDate() + 10),
         ).toISOString(),
         crop: { id: crop2.id },
-        total: 180_000,
+        value_pay: 180_000,
         description: 'No description',
         details: [
           {
@@ -350,8 +350,10 @@ describe('WorksController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .get('/works/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
+        .set('Authorization', `Bearer ${token}`);
+
+      console.log(response.body);
+      // .expect(200);
       expect(response.body.total_row_count).toEqual(18);
       expect(response.body.current_row_count).toEqual(10);
       expect(response.body.total_page_count).toEqual(2);
@@ -372,7 +374,7 @@ describe('WorksController (e2e)', () => {
       response1.body.records.forEach((work: Work) => {
         expect(work).toHaveProperty('id');
         expect(work).toHaveProperty('date');
-        expect(work).toHaveProperty('total');
+        expect(work).toHaveProperty('value_pay');
         expect(work).toHaveProperty('description');
         expect(work).toHaveProperty('createdDate');
         expect(work).toHaveProperty('updatedDate');
@@ -412,7 +414,7 @@ describe('WorksController (e2e)', () => {
       response2.body.records.forEach((work: Work) => {
         expect(work).toHaveProperty('id');
         expect(work).toHaveProperty('date');
-        expect(work).toHaveProperty('total');
+        expect(work).toHaveProperty('value_pay');
         expect(work).toHaveProperty('description');
         expect(work).toHaveProperty('createdDate');
         expect(work).toHaveProperty('updatedDate');
@@ -455,7 +457,7 @@ describe('WorksController (e2e)', () => {
       response.body.records.forEach((work: Work) => {
         expect(work).toHaveProperty('id');
         expect(work).toHaveProperty('date');
-        expect(work).toHaveProperty('total');
+        expect(work).toHaveProperty('value_pay');
         expect(work).toHaveProperty('description');
         expect(work).toHaveProperty('createdDate');
         expect(work).toHaveProperty('updatedDate');
@@ -499,7 +501,7 @@ describe('WorksController (e2e)', () => {
       response.body.records.forEach((work: Work) => {
         expect(work).toHaveProperty('id');
         expect(work).toHaveProperty('date');
-        expect(work).toHaveProperty('total');
+        expect(work).toHaveProperty('value_pay');
         expect(work).toHaveProperty('description');
         expect(work).toHaveProperty('createdDate');
         expect(work).toHaveProperty('updatedDate');
@@ -543,7 +545,7 @@ describe('WorksController (e2e)', () => {
       response.body.records.forEach((work: Work) => {
         expect(work).toHaveProperty('id');
         expect(work).toHaveProperty('date');
-        expect(work).toHaveProperty('total');
+        expect(work).toHaveProperty('value_pay');
         expect(work).toHaveProperty('description');
         expect(work).toHaveProperty('createdDate');
         expect(work).toHaveProperty('updatedDate');
@@ -588,7 +590,7 @@ describe('WorksController (e2e)', () => {
       response.body.records.forEach((work: Work) => {
         expect(work).toHaveProperty('id');
         expect(work).toHaveProperty('date');
-        expect(work).toHaveProperty('total');
+        expect(work).toHaveProperty('value_pay');
         expect(work).toHaveProperty('description');
         expect(work).toHaveProperty('createdDate');
         expect(work).toHaveProperty('updatedDate');
@@ -639,7 +641,7 @@ describe('WorksController (e2e)', () => {
         expect(work).toHaveProperty('id');
         expect(work).toHaveProperty('date');
         expect(new Date(work.date) > new Date(queryData.date)).toBe(true);
-        expect(work).toHaveProperty('total');
+        expect(work).toHaveProperty('value_pay');
         expect(work).toHaveProperty('description');
         expect(work).toHaveProperty('createdDate');
         expect(work).toHaveProperty('updatedDate');
@@ -690,7 +692,7 @@ describe('WorksController (e2e)', () => {
         expect(work).toHaveProperty('id');
         expect(work).toHaveProperty('date');
         expect(new Date(work.date) < new Date(queryData.date)).toBe(true);
-        expect(work).toHaveProperty('total');
+        expect(work).toHaveProperty('value_pay');
         expect(work).toHaveProperty('description');
         expect(work).toHaveProperty('createdDate');
         expect(work).toHaveProperty('updatedDate');
@@ -743,7 +745,7 @@ describe('WorksController (e2e)', () => {
         expect(work.date.split('T')[0]).toBe(
           new Date(queryData.date).toISOString().split('T')[0],
         );
-        expect(work).toHaveProperty('total');
+        expect(work).toHaveProperty('value_pay');
         expect(work).toHaveProperty('description');
         expect(work).toHaveProperty('createdDate');
         expect(work).toHaveProperty('updatedDate');
@@ -771,11 +773,11 @@ describe('WorksController (e2e)', () => {
       });
     });
 
-    it('should return the specified number of works passed by the query (equal total)', async () => {
+    it('should return the specified number of works passed by the query (equal value_pay)', async () => {
       const queryData = {
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.EQUAL,
-        total: 60_000,
+        filter_by_value_pay: true,
+        type_filter_value_pay: TypeFilterNumber.EQUAL,
+        value_pay: 60_000,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -792,8 +794,8 @@ describe('WorksController (e2e)', () => {
       response.body.records.forEach((work: Work) => {
         expect(work).toHaveProperty('id');
         expect(work).toHaveProperty('date');
-        expect(work).toHaveProperty('total');
-        expect(work.total).toBe(queryData.total);
+        expect(work).toHaveProperty('value_pay');
+        expect(work.value_pay).toBe(queryData.value_pay);
         expect(work).toHaveProperty('description');
         expect(work).toHaveProperty('createdDate');
         expect(work).toHaveProperty('updatedDate');
@@ -820,11 +822,11 @@ describe('WorksController (e2e)', () => {
         });
       });
     });
-    it('should return the specified number of works passed by the query (max total)', async () => {
+    it('should return the specified number of works passed by the query (max value_pay)', async () => {
       const queryData = {
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.MAX,
-        total: 60_000,
+        filter_by_value_pay: true,
+        type_filter_value_pay: TypeFilterNumber.MAX,
+        value_pay: 60_000,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -841,8 +843,8 @@ describe('WorksController (e2e)', () => {
       response.body.records.forEach((work: Work) => {
         expect(work).toHaveProperty('id');
         expect(work).toHaveProperty('date');
-        expect(work).toHaveProperty('total');
-        expect(work.total).toBeGreaterThan(queryData.total);
+        expect(work).toHaveProperty('value_pay');
+        expect(work.value_pay).toBeGreaterThan(queryData.value_pay);
         expect(work).toHaveProperty('description');
         expect(work).toHaveProperty('createdDate');
         expect(work).toHaveProperty('updatedDate');
@@ -869,11 +871,11 @@ describe('WorksController (e2e)', () => {
         });
       });
     });
-    it('should return the specified number of works passed by the query (min total)', async () => {
+    it('should return the specified number of works passed by the query (min value_pay)', async () => {
       const queryData = {
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.MIN,
-        total: 180_000,
+        filter_by_value_pay: true,
+        type_filter_value_pay: TypeFilterNumber.MIN,
+        value_pay: 180_000,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -890,8 +892,8 @@ describe('WorksController (e2e)', () => {
       response.body.records.forEach((work: Work) => {
         expect(work).toHaveProperty('id');
         expect(work).toHaveProperty('date');
-        expect(work).toHaveProperty('total');
-        expect(work.total).toBeLessThan(queryData.total);
+        expect(work).toHaveProperty('value_pay');
+        expect(work.value_pay).toBeLessThan(queryData.value_pay);
         expect(work).toHaveProperty('description');
         expect(work).toHaveProperty('createdDate');
         expect(work).toHaveProperty('updatedDate');
@@ -919,12 +921,12 @@ describe('WorksController (e2e)', () => {
       });
     });
 
-    it('should return the specified number of works passed by the query (total and crop 1)', async () => {
+    it('should return the specified number of works passed by the query (value_pay and crop 1)', async () => {
       const queryData = {
         crop: crop1.id,
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.MIN,
-        total: 180_000,
+        filter_by_value_pay: true,
+        type_filter_value_pay: TypeFilterNumber.MIN,
+        value_pay: 180_000,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -941,8 +943,8 @@ describe('WorksController (e2e)', () => {
       response.body.records.forEach((work: Work) => {
         expect(work).toHaveProperty('id');
         expect(work).toHaveProperty('date');
-        expect(work).toHaveProperty('total');
-        expect(work.total).toBeLessThan(queryData.total);
+        expect(work).toHaveProperty('value_pay');
+        expect(work.value_pay).toBeLessThan(queryData.value_pay);
         expect(work).toHaveProperty('description');
         expect(work).toHaveProperty('createdDate');
         expect(work).toHaveProperty('updatedDate');
@@ -970,12 +972,12 @@ describe('WorksController (e2e)', () => {
         });
       });
     });
-    it('should return the specified number of works passed by the query (total and crop 2)', async () => {
+    it('should return the specified number of works passed by the query (value_pay and crop 2)', async () => {
       const queryData = {
         crop: crop2.id,
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.MAX,
-        total: 180_000,
+        filter_by_value_pay: true,
+        type_filter_value_pay: TypeFilterNumber.MAX,
+        value_pay: 180_000,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -997,7 +999,7 @@ describe('WorksController (e2e)', () => {
             new Date().setDate(new Date().getDate() + 3),
           ).toISOString(),
           crop: { id: crop1.id },
-          total: 360_000,
+          value_pay: 360_000,
           description: 'No description',
           details: [
             {
@@ -1016,7 +1018,7 @@ describe('WorksController (e2e)', () => {
             new Date().setDate(new Date().getDate() + 3),
           ).toISOString(),
           crop: { id: crop1.id },
-          total: 300_000,
+          value_pay: 300_000,
           description: 'No description',
           details: [
             {
@@ -1034,7 +1036,7 @@ describe('WorksController (e2e)', () => {
         const work2 = await workController.create(data2);
       });
 
-      it('should return the specified number of works passed by the query (EQUAL 1 date , total)', async () => {
+      it('should return the specified number of works passed by the query (EQUAL 1 date , value_pay)', async () => {
         const queryData = {
           crop: crop2.id,
           filter_by_date: true,
@@ -1042,9 +1044,9 @@ describe('WorksController (e2e)', () => {
           date: new Date(
             new Date().setDate(new Date().getDate() + 3),
           ).toISOString(),
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.EQUAL,
-          total: 360_000,
+          filter_by_value_pay: true,
+          type_filter_value_pay: TypeFilterNumber.EQUAL,
+          value_pay: 360_000,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1058,7 +1060,7 @@ describe('WorksController (e2e)', () => {
         expect(response.body.total_page_count).toEqual(0);
         expect(response.body.current_page_count).toEqual(0);
       });
-      it('should return the specified number of works passed by the query (EQUAL 2 date, total)', async () => {
+      it('should return the specified number of works passed by the query (EQUAL 2 date, value_pay)', async () => {
         const queryData = {
           crop: crop1.id,
           filter_by_date: true,
@@ -1066,9 +1068,9 @@ describe('WorksController (e2e)', () => {
           date: new Date(
             new Date().setDate(new Date().getDate() + 3),
           ).toISOString(),
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.EQUAL,
-          total: 360_000,
+          filter_by_value_pay: true,
+          type_filter_value_pay: TypeFilterNumber.EQUAL,
+          value_pay: 360_000,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1089,9 +1091,9 @@ describe('WorksController (e2e)', () => {
           expect(work.date.split('T')[0]).toBe(
             new Date(queryData.date).toISOString().split('T')[0],
           );
-          expect(work).toHaveProperty('total');
-          expect(work.total).toBe(queryData.total);
-          expect(work.total).toBe(queryData.total);
+          expect(work).toHaveProperty('value_pay');
+          expect(work.value_pay).toBe(queryData.value_pay);
+          expect(work.value_pay).toBe(queryData.value_pay);
           expect(work).toHaveProperty('description');
           expect(work).toHaveProperty('createdDate');
           expect(work).toHaveProperty('updatedDate');
@@ -1173,7 +1175,7 @@ describe('WorksController (e2e)', () => {
       const work = response.body;
       expect(work).toHaveProperty('id');
       expect(work).toHaveProperty('date');
-      expect(work).toHaveProperty('total');
+      expect(work).toHaveProperty('value_pay');
       expect(work).toHaveProperty('description');
       expect(work).toHaveProperty('createdDate');
       expect(work).toHaveProperty('updatedDate');
@@ -1265,7 +1267,7 @@ describe('WorksController (e2e)', () => {
 
       const bodyRequest: UpdateWorkDto = {
         ...rest,
-        total: rest.total + 2000 * record.details.length,
+        value_pay: rest.value_pay + 2000 * record.details.length,
         crop: { id: rest.crop.id },
         description: 'Observation updated',
         details: record.details.map((detail) => ({
@@ -1284,8 +1286,8 @@ describe('WorksController (e2e)', () => {
 
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('date');
-      expect(body).toHaveProperty('total');
-      expect(body.total).toBe(bodyRequest.total);
+      expect(body).toHaveProperty('value_pay');
+      expect(body.value_pay).toBe(bodyRequest.value_pay);
       expect(body).toHaveProperty('description');
       expect(body.description).toBe(bodyRequest.description);
       expect(body).toHaveProperty('createdDate');
@@ -1323,7 +1325,7 @@ describe('WorksController (e2e)', () => {
       const data: CreateWorkDto = {
         date: new Date().toISOString(),
         crop: { id: crop.id },
-        total: 120_000,
+        value_pay: 120_000,
         description: 'No description',
         details: [
           {
@@ -1349,7 +1351,7 @@ describe('WorksController (e2e)', () => {
 
       const bodyRequest: UpdateWorkDto = {
         ...rest,
-        total: 60_000,
+        value_pay: 60_000,
         crop: { id: rest.crop.id },
         description: 'Observation updated',
         details: record.details
@@ -1383,7 +1385,7 @@ describe('WorksController (e2e)', () => {
       const data: CreateWorkDto = {
         date: new Date().toISOString(),
         crop: { id: crop.id },
-        total: 120_000,
+        value_pay: 120_000,
         description: 'No description',
         details: [
           {
@@ -1407,7 +1409,7 @@ describe('WorksController (e2e)', () => {
 
       const bodyRequest: UpdateWorkDto = {
         ...rest,
-        total: 60_000,
+        value_pay: 60_000,
         crop: { id: rest.crop.id },
         description: 'Observation updated',
         details: record.details
@@ -1448,7 +1450,7 @@ describe('WorksController (e2e)', () => {
 
       const bodyRequest: UpdateWorkDto = {
         ...rest,
-        total: rest.total + 2000 * record.details.length,
+        value_pay: rest.value_pay + 2000 * record.details.length,
         crop: { id: rest.crop.id },
         description: 'Observation updated',
         details: record.details.map((detail) => ({
@@ -1489,7 +1491,7 @@ describe('WorksController (e2e)', () => {
 
       const bodyRequest: UpdateWorkDto = {
         ...rest,
-        total: rest.total + 2000 * record.details.length,
+        value_pay: rest.value_pay + 2000 * record.details.length,
         crop: { id: rest.crop.id },
         description: 'Observation updated',
         details: record.details.map((detail) => ({

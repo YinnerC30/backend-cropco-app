@@ -14,13 +14,14 @@ import { PrinterService } from 'src/printer/printer.service';
 import { DataSource, Repository } from 'typeorm';
 import { WorkDetailsDto } from './dto/create-work-details.dto';
 import { CreateWorkDto } from './dto/create-work.dto';
-import { QueryTotalWorksInYearDto } from './dto/query-params-total-works-year';
+
 import { QueryParamsWork } from './dto/query-params-work.dto';
 import type { UpdateWorkDto } from './dto/update-work.dto';
 import { WorkDetails } from './entities/work-details.entity';
 import { Work } from './entities/work.entity';
 import { getWorkReport } from './reports/get-work';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
+import { QueryTotalWorksInYearDto } from './dto/query-params-total-works-year';
 
 @Injectable()
 export class WorkService {
@@ -72,9 +73,9 @@ export class WorkService {
       type_filter_date,
       date,
 
-      filter_by_total = false,
-      type_filter_total,
-      total,
+      filter_by_value_pay = false,
+      type_filter_value_pay,
+      value_pay,
 
       employees = [],
     } = queryParams;
@@ -97,10 +98,10 @@ export class WorkService {
         { date },
       );
 
-    filter_by_total &&
+    filter_by_value_pay &&
       queryBuilder.andWhere(
-        `work.total ${getComparisonOperator(type_filter_total)} :total`,
-        { total },
+        `work.value_pay ${getComparisonOperator(type_filter_value_pay)} :value_pay`,
+        { value_pay },
       );
 
     employees.length > 0 &&
@@ -288,7 +289,7 @@ export class WorkService {
       .leftJoin('details.employee', 'employee')
       .select([
         'CAST(EXTRACT(MONTH FROM work.date) AS INTEGER) as month',
-        'CAST(SUM(DISTINCT work.total) AS INTEGER) as total',
+        'CAST(SUM(DISTINCT work.value_pay) AS INTEGER) as value_pay',
         'COUNT(work) as quantity_works',
       ])
       .where('EXTRACT(YEAR FROM work.date) = :year', { year })
@@ -314,7 +315,7 @@ export class WorkService {
         return {
           month_name: monthName,
           month_number: monthNumber,
-          total: 0,
+          value_pay: 0,
           quantity_works: 0,
         };
       }

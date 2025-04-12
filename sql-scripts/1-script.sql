@@ -1,6 +1,5 @@
 -- create database cropco with owner postgres;
-
-\c cropco;
+ \c cropco;
 
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -83,7 +82,7 @@ alter table public.supplies_consumption_details owner to postgres;
 
 
 create table public.works
-    (id uuid default uuid_generate_v4() not null constraint "PK_a9ffbf516ba6e52604b29e5cce0" primary key, date date not null, description text not null, total integer not null, "createdDate" timestamp default now() not null, "updatedDate" timestamp default now() not null, "deletedDate" timestamp, "cropId" uuid constraint "FK_78401ea62aa980a97bf7c0db11f" references public.crops on delete cascade);
+    (id uuid default uuid_generate_v4() not null constraint "PK_a9ffbf516ba6e52604b29e5cce0" primary key, date date not null, description text not null, value_pay integer not null, "createdDate" timestamp default now() not null, "updatedDate" timestamp default now() not null, "deletedDate" timestamp, "cropId" uuid constraint "FK_78401ea62aa980a97bf7c0db11f" references public.crops on delete cascade);
 
 
 alter table public.works owner to postgres;

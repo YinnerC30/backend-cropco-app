@@ -9,7 +9,7 @@ describe('UpdateWorkDto', () => {
   it('should allow partial updates', async () => {
     const updateHarvestDto = new UpdateWorkDto();
     const partialData = {
-      total: 50,
+      value_pay: 50,
       // Other fields can be omitted since it's partial
     };
     Object.assign(updateHarvestDto, partialData);
