@@ -18,6 +18,7 @@ export class ShoppingSuppliesDetailsDto {
   @IsOptional()
   id: string;
 
+  @IsOptional()
   @ValidateNested()
   @Type(() => ValidateUUID)
   shopping: DeepPartial<SuppliesShopping>;
@@ -33,6 +34,7 @@ export class ShoppingSuppliesDetailsDto {
   @IsInt()
   @IsPositive()
   amount: number;
+  
   @IsInt()
   @IsPositive()
   total: number;
