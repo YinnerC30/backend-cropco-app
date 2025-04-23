@@ -25,7 +25,7 @@ import { getComparisonOperator } from 'src/common/helpers/get-comparison-operato
 
 @Injectable()
 export class ShoppingService {
-  private readonly logger = new Logger('ConsumptionsService');
+  private readonly logger = new Logger('ShoppingService');
 
   constructor(
     @InjectRepository(SuppliesShopping)
@@ -264,7 +264,9 @@ export class ShoppingService {
           (record) => record.id === detailId,
         );
 
-        const valuesAreDifferent = dataRecordNew.total !== oldRecordData.total;
+        const valuesAreDifferent =
+          dataRecordNew.total !== oldRecordData.total ||
+          dataRecordNew.amount !== oldRecordData.amount;
 
         if (valuesAreDifferent && oldRecordData.deletedDate !== null) {
           throw new BadRequestException(
@@ -342,7 +344,7 @@ export class ShoppingService {
         });
       }
 
-      await queryRunner.manager.softRemove(shoppingSupply);
+      await queryRunner.manager.remove(shoppingSupply);
 
       await queryRunner.commitTransaction();
     } catch (error) {

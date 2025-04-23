@@ -4,6 +4,7 @@ import { SuppliesModule } from 'src/supplies/supplies.module';
 import { SuppliesShopping, SuppliesShoppingDetails } from './entities';
 import { ShoppingController } from './shopping.controller';
 import { ShoppingService } from './shopping.service';
+import { CommonModule } from 'src/common/common.module';
 
 @Module({
   controllers: [ShoppingController],
@@ -11,7 +12,7 @@ import { ShoppingService } from './shopping.service';
   imports: [TypeOrmModule.forFeature([
         SuppliesShopping,
         SuppliesShoppingDetails,
-      ]),SuppliesModule],
+      ]),SuppliesModule, CommonModule],
   exports: [ShoppingService, TypeOrmModule],
 })
 export class ShoppingModule { }
