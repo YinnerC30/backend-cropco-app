@@ -37,5 +37,5 @@ export class ShoppingSuppliesDetailsDto {
   
   @IsInt()
   @IsPositive()
-  total: number;
+  value_pay: number;
 }

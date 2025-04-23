@@ -114,9 +114,9 @@ export class ShoppingService {
       type_filter_date,
       date,
 
-      filter_by_total = false,
-      type_filter_total,
-      total,
+      filter_by_value_pay = false,
+      type_filter_value_pay,
+      value_pay,
 
       suppliers = [],
       supplies = [],
@@ -140,11 +140,11 @@ export class ShoppingService {
         },
       );
 
-    filter_by_total &&
+    filter_by_value_pay &&
       queryBuilder.andWhere(
-        `supplies_shopping.total ${getComparisonOperator(type_filter_total)} :total`,
+        `supplies_shopping.value_pay ${getComparisonOperator(type_filter_value_pay)} :value_pay`,
         {
-          total,
+          value_pay,
         },
       );
 
@@ -265,7 +265,7 @@ export class ShoppingService {
         );
 
         const valuesAreDifferent =
-          dataRecordNew.total !== oldRecordData.total ||
+          dataRecordNew.value_pay !== oldRecordData.value_pay ||
           dataRecordNew.amount !== oldRecordData.amount;
 
         if (valuesAreDifferent && oldRecordData.deletedDate !== null) {

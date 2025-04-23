@@ -137,7 +137,7 @@ describe('ShoppingController (e2e)', () => {
     it('should throw an exception for not sending a JWT to the protected path /shopping/create', async () => {
       const data: CreateShoppingSuppliesDto = {
         date: '',
-        total: 0,
+        value_pay: 0,
         details: [],
       };
       const response = await request
@@ -153,7 +153,7 @@ describe('ShoppingController (e2e)', () => {
 
       const data: CreateShoppingSuppliesDto = {
         date: '',
-        total: 0,
+        value_pay: 0,
         details: [],
       };
 
@@ -167,89 +167,89 @@ describe('ShoppingController (e2e)', () => {
         `User ${userTest.first_name} need a permit for this action`,
       );
     });
-  });
 
-  it('should create a new shopping', async () => {
-    await authService.addPermission(userTest.id, 'create_supply_shopping');
+    it('should create a new shopping', async () => {
+      await authService.addPermission(userTest.id, 'create_supply_shopping');
 
-    const supply1 = await suppliesService.create({
-      name: 'supply name 1',
-      brand: 'brand name',
-      unit_of_measure: 'GRAMOS',
-      observation: 'none observation',
-    } as CreateSupplyDto);
+      const supply1 = await suppliesService.create({
+        name: 'supply name 1',
+        brand: 'brand name',
+        unit_of_measure: 'GRAMOS',
+        observation: 'none observation',
+      } as CreateSupplyDto);
 
-    const supply2 = await suppliesService.create({
-      name: 'supply name 2',
-      brand: 'brand name',
-      unit_of_measure: 'MILILITROS',
-      observation: 'none observation',
-    } as CreateSupplyDto);
+      const supply2 = await suppliesService.create({
+        name: 'supply name 2',
+        brand: 'brand name',
+        unit_of_measure: 'MILILITROS',
+        observation: 'none observation',
+      } as CreateSupplyDto);
 
-    const supplier1 = await supplierController.create({
-      first_name: 'Supplier test1',
-      last_name: 'Supplier test',
-      email: 'suppliertest123@mail.com',
-      cell_phone_number: '3127836149',
-      address: 'no address',
+      const supplier1 = await supplierController.create({
+        first_name: 'Supplier test1',
+        last_name: 'Supplier test',
+        email: 'suppliertest123@mail.com',
+        cell_phone_number: '3127836149',
+        address: 'no address',
+      });
+
+      const supplier2 = await supplierController.create({
+        first_name: 'Supplier test2',
+        last_name: 'Supplier test',
+        email: 'suppliertest1234@mail.com',
+        cell_phone_number: '3127836149',
+        address: 'no address',
+      });
+
+      const data: CreateShoppingSuppliesDto = {
+        date: new Date().toISOString(),
+        value_pay: 110_000,
+        details: [
+          {
+            supplier: { id: supplier1.id },
+            supply: { id: supply1.id },
+            amount: 10_000,
+            value_pay: 60_000,
+          } as SuppliesShoppingDetails,
+          {
+            supplier: { id: supplier2.id },
+            supply: { id: supply2.id },
+            amount: 3_000,
+            value_pay: 50_000,
+          } as SuppliesShoppingDetails,
+        ],
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/shopping/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(data)
+        .expect(201);
+
+      expect(response.body).toMatchObject(data);
     });
 
-    const supplier2 = await supplierController.create({
-      first_name: 'Supplier test2',
-      last_name: 'Supplier test',
-      email: 'suppliertest1234@mail.com',
-      cell_phone_number: '3127836149',
-      address: 'no address',
-    });
+    it('should throw exception when fields are missing in the body', async () => {
+      await authService.addPermission(userTest.id, 'create_supply_shopping');
+      const errorMessage = [
+        'date must be a valid ISO 8601 date string',
+        'The value must be a multiple of 50',
+        'value_pay must be a positive number',
+        'value_pay must be an integer number',
+        "The sum of fields [value_pay] in 'details' must match the corresponding top-level values.",
+        'details should not be empty',
+      ];
 
-    const data: CreateShoppingSuppliesDto = {
-      date: new Date().toISOString(),
-      total: 110_000,
-      details: [
-        {
-          supplier: { id: supplier1.id },
-          supply: { id: supply1.id },
-          amount: 10_000,
-          total: 60_000,
-        } as SuppliesShoppingDetails,
-        {
-          supplier: { id: supplier2.id },
-          supply: { id: supply2.id },
-          amount: 3_000,
-          total: 50_000,
-        } as SuppliesShoppingDetails,
-      ],
-    };
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/shopping/create')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(400);
 
-    const response = await request
-      .default(app.getHttpServer())
-      .post('/shopping/create')
-      .set('Authorization', `Bearer ${token}`)
-      .send(data)
-      .expect(201);
-
-    expect(response.body).toMatchObject(data);
-  });
-
-  it('should throw exception when fields are missing in the body', async () => {
-    await authService.addPermission(userTest.id, 'create_supply_shopping');
-    const errorMessage = [
-      'date must be a valid ISO 8601 date string',
-      'The value must be a multiple of 50',
-      'total must be a positive number',
-      'total must be an integer number',
-      "The sum of fields [total] in 'details' must match the corresponding top-level values.",
-      'details should not be empty',
-    ];
-
-    const { body } = await request
-      .default(app.getHttpServer())
-      .post('/shopping/create')
-      .set('Authorization', `Bearer ${token}`)
-      .expect(400);
-
-    errorMessage.forEach((msg) => {
-      expect(body.message).toContain(msg);
+      errorMessage.forEach((msg) => {
+        expect(body.message).toContain(msg);
+      });
     });
   });
 
@@ -267,13 +267,13 @@ describe('ShoppingController (e2e)', () => {
 
       const data1: CreateShoppingSuppliesDto = {
         date: new Date().toISOString(),
-        total: 60_000,
+        value_pay: 60_000,
         details: [
           {
             supplier: { id: supplier1.id },
             supply: { id: supply1.id },
             amount: 1000,
-            total: 60_000,
+            value_pay: 60_000,
           } as ShoppingSuppliesDetailsDto,
         ],
       };
@@ -282,13 +282,13 @@ describe('ShoppingController (e2e)', () => {
         date: new Date(
           new Date().setDate(new Date().getDate() + 5),
         ).toISOString(),
-        total: 90_000,
+        value_pay: 90_000,
         details: [
           {
             supplier: { id: supplier2.id },
             supply: { id: supply2.id },
             amount: 1500,
-            total: 90_000,
+            value_pay: 90_000,
           } as ShoppingSuppliesDetailsDto,
         ],
       };
@@ -296,13 +296,13 @@ describe('ShoppingController (e2e)', () => {
         date: new Date(
           new Date().setDate(new Date().getDate() + 10),
         ).toISOString(),
-        total: 180_000,
+        value_pay: 180_000,
         details: [
           {
             supplier: { id: supplier2.id },
             supply: { id: supply2.id },
             amount: 3000,
-            total: 180_000,
+            value_pay: 180_000,
           } as ShoppingSuppliesDetailsDto,
         ],
       };
@@ -367,7 +367,7 @@ describe('ShoppingController (e2e)', () => {
       response1.body.records.forEach((shopping: SuppliesShopping) => {
         expect(shopping).toHaveProperty('id');
         expect(shopping).toHaveProperty('date');
-        expect(shopping).toHaveProperty('total');
+        expect(shopping).toHaveProperty('value_pay');
         expect(shopping).toHaveProperty('createdDate');
         expect(shopping).toHaveProperty('updatedDate');
         expect(shopping).toHaveProperty('deletedDate');
@@ -376,7 +376,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping.details.length).toBeGreaterThan(0);
         shopping.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('supplier');
           expect(detail.supplier).toBeDefined();
@@ -406,7 +406,7 @@ describe('ShoppingController (e2e)', () => {
       response2.body.records.forEach((shopping: SuppliesShopping) => {
         expect(shopping).toHaveProperty('id');
         expect(shopping).toHaveProperty('date');
-        expect(shopping).toHaveProperty('total');
+        expect(shopping).toHaveProperty('value_pay');
         expect(shopping).toHaveProperty('createdDate');
         expect(shopping).toHaveProperty('updatedDate');
         expect(shopping).toHaveProperty('deletedDate');
@@ -415,7 +415,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping.details.length).toBeGreaterThan(0);
         shopping.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('supplier');
           expect(detail.supplier).toBeDefined();
@@ -448,7 +448,7 @@ describe('ShoppingController (e2e)', () => {
       response.body.records.forEach((shopping: SuppliesShopping) => {
         expect(shopping).toHaveProperty('id');
         expect(shopping).toHaveProperty('date');
-        expect(shopping).toHaveProperty('total');
+        expect(shopping).toHaveProperty('value_pay');
         expect(shopping).toHaveProperty('createdDate');
         expect(shopping).toHaveProperty('updatedDate');
         expect(shopping).toHaveProperty('deletedDate');
@@ -457,7 +457,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping.details.length).toBeGreaterThan(0);
         shopping.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('supplier');
           expect(detail.supplier).toBeDefined();
@@ -490,7 +490,7 @@ describe('ShoppingController (e2e)', () => {
       response.body.records.forEach((shopping: SuppliesShopping) => {
         expect(shopping).toHaveProperty('id');
         expect(shopping).toHaveProperty('date');
-        expect(shopping).toHaveProperty('total');
+        expect(shopping).toHaveProperty('value_pay');
         expect(shopping).toHaveProperty('createdDate');
         expect(shopping).toHaveProperty('updatedDate');
         expect(shopping).toHaveProperty('deletedDate');
@@ -499,7 +499,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping.details.length).toBeGreaterThan(0);
         shopping.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('supplier');
           expect(detail.supplier).toBeDefined();
@@ -533,7 +533,7 @@ describe('ShoppingController (e2e)', () => {
       response.body.records.forEach((shopping: SuppliesShopping) => {
         expect(shopping).toHaveProperty('id');
         expect(shopping).toHaveProperty('date');
-        expect(shopping).toHaveProperty('total');
+        expect(shopping).toHaveProperty('value_pay');
         expect(shopping).toHaveProperty('createdDate');
         expect(shopping).toHaveProperty('updatedDate');
         expect(shopping).toHaveProperty('deletedDate');
@@ -542,7 +542,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping.details.length).toBeGreaterThan(0);
         shopping.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('supplier');
           expect(detail.supplier).toBeDefined();
@@ -576,7 +576,7 @@ describe('ShoppingController (e2e)', () => {
       response.body.records.forEach((shopping: SuppliesShopping) => {
         expect(shopping).toHaveProperty('id');
         expect(shopping).toHaveProperty('date');
-        expect(shopping).toHaveProperty('total');
+        expect(shopping).toHaveProperty('value_pay');
         expect(shopping).toHaveProperty('createdDate');
         expect(shopping).toHaveProperty('updatedDate');
         expect(shopping).toHaveProperty('deletedDate');
@@ -585,7 +585,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping.details.length).toBeGreaterThan(0);
         shopping.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('supplier');
           expect(detail.supplier).toBeDefined();
@@ -625,7 +625,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping).toHaveProperty('id');
         expect(shopping).toHaveProperty('date');
         expect(new Date(shopping.date) > new Date(queryData.date)).toBe(true);
-        expect(shopping).toHaveProperty('total');
+        expect(shopping).toHaveProperty('value_pay');
         expect(shopping).toHaveProperty('createdDate');
         expect(shopping).toHaveProperty('updatedDate');
         expect(shopping).toHaveProperty('deletedDate');
@@ -634,7 +634,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping.details.length).toBeGreaterThan(0);
         shopping.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('supplier');
           expect(detail.supplier).toBeDefined();
@@ -675,7 +675,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping).toHaveProperty('id');
         expect(shopping).toHaveProperty('date');
         expect(new Date(shopping.date) < new Date(queryData.date)).toBe(true);
-        expect(shopping).toHaveProperty('total');
+        expect(shopping).toHaveProperty('value_pay');
         expect(shopping).toHaveProperty('createdDate');
         expect(shopping).toHaveProperty('updatedDate');
         expect(shopping).toHaveProperty('deletedDate');
@@ -684,7 +684,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping.details.length).toBeGreaterThan(0);
         shopping.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('supplier');
           expect(detail.supplier).toBeDefined();
@@ -727,7 +727,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping.date.split('T')[0]).toBe(
           new Date(queryData.date).toISOString().split('T')[0],
         );
-        expect(shopping).toHaveProperty('total');
+        expect(shopping).toHaveProperty('value_pay');
         expect(shopping).toHaveProperty('createdDate');
         expect(shopping).toHaveProperty('updatedDate');
         expect(shopping).toHaveProperty('deletedDate');
@@ -736,7 +736,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping.details.length).toBeGreaterThan(0);
         shopping.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('supplier');
           expect(detail.supplier).toBeDefined();
@@ -753,11 +753,11 @@ describe('ShoppingController (e2e)', () => {
         });
       });
     });
-    it('should return the specified number of shopping passed by the query (equal total)', async () => {
+    it('should return the specified number of shopping passed by the query (equal value_pay)', async () => {
       const queryData = {
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.EQUAL,
-        total: 60_000,
+        filter_by_value_pay: true,
+        type_filter_value_pay: TypeFilterNumber.EQUAL,
+        value_pay: 60_000,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -774,8 +774,8 @@ describe('ShoppingController (e2e)', () => {
       response.body.records.forEach((shopping: SuppliesShopping) => {
         expect(shopping).toHaveProperty('id');
         expect(shopping).toHaveProperty('date');
-        expect(shopping).toHaveProperty('total');
-        expect(shopping.total).toBe(queryData.total);
+        expect(shopping).toHaveProperty('value_pay');
+        expect(shopping.value_pay).toBe(queryData.value_pay);
         expect(shopping).toHaveProperty('createdDate');
         expect(shopping).toHaveProperty('updatedDate');
         expect(shopping).toHaveProperty('deletedDate');
@@ -784,7 +784,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping.details.length).toBeGreaterThan(0);
         shopping.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('supplier');
           expect(detail.supplier).toBeDefined();
@@ -801,11 +801,11 @@ describe('ShoppingController (e2e)', () => {
         });
       });
     });
-    it('should return the specified number of shopping passed by the query (max total)', async () => {
+    it('should return the specified number of shopping passed by the query (max value_pay)', async () => {
       const queryData = {
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.MAX,
-        total: 60_000,
+        filter_by_value_pay: true,
+        type_filter_value_pay: TypeFilterNumber.MAX,
+        value_pay: 60_000,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -822,8 +822,8 @@ describe('ShoppingController (e2e)', () => {
       response.body.records.forEach((shopping: SuppliesShopping) => {
         expect(shopping).toHaveProperty('id');
         expect(shopping).toHaveProperty('date');
-        expect(shopping).toHaveProperty('total');
-        expect(shopping.total).toBeGreaterThan(queryData.total);
+        expect(shopping).toHaveProperty('value_pay');
+        expect(shopping.value_pay).toBeGreaterThan(queryData.value_pay);
         expect(shopping).toHaveProperty('createdDate');
         expect(shopping).toHaveProperty('updatedDate');
         expect(shopping).toHaveProperty('deletedDate');
@@ -832,7 +832,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping.details.length).toBeGreaterThan(0);
         shopping.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('supplier');
           expect(detail.supplier).toBeDefined();
@@ -849,11 +849,11 @@ describe('ShoppingController (e2e)', () => {
         });
       });
     });
-    it('should return the specified number of shopping passed by the query (min total)', async () => {
+    it('should return the specified number of shopping passed by the query (min value_pay)', async () => {
       const queryData = {
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.MIN,
-        total: 180_000,
+        filter_by_value_pay: true,
+        type_filter_value_pay: TypeFilterNumber.MIN,
+        value_pay: 180_000,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -870,8 +870,8 @@ describe('ShoppingController (e2e)', () => {
       response.body.records.forEach((shopping: SuppliesShopping) => {
         expect(shopping).toHaveProperty('id');
         expect(shopping).toHaveProperty('date');
-        expect(shopping).toHaveProperty('total');
-        expect(shopping.total).toBeLessThan(queryData.total);
+        expect(shopping).toHaveProperty('value_pay');
+        expect(shopping.value_pay).toBeLessThan(queryData.value_pay);
         expect(shopping).toHaveProperty('createdDate');
         expect(shopping).toHaveProperty('updatedDate');
         expect(shopping).toHaveProperty('deletedDate');
@@ -880,7 +880,7 @@ describe('ShoppingController (e2e)', () => {
         expect(shopping.details.length).toBeGreaterThan(0);
         shopping.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('supplier');
           expect(detail.supplier).toBeDefined();
@@ -907,38 +907,38 @@ describe('ShoppingController (e2e)', () => {
       beforeAll(async () => {
         const data1: CreateShoppingSuppliesDto = {
           date: dateShopping1,
-          total: 360_000,
+          value_pay: 360_000,
           details: [
             {
               supplier: { id: supplier1.id },
               supply: { id: supply1.id },
               amount: 3000,
-              total: 180_000,
+              value_pay: 180_000,
             } as ShoppingSuppliesDetailsDto,
             {
               supplier: { id: supplier2.id },
               supply: { id: supply2.id },
               amount: 3000,
-              total: 180_000,
+              value_pay: 180_000,
             } as ShoppingSuppliesDetailsDto,
           ],
         };
 
         const data2: CreateShoppingSuppliesDto = {
           date: dateShopping1,
-          total: 300_000,
+          value_pay: 300_000,
           details: [
             {
               supplier: { id: supplier1.id },
               supply: { id: supply1.id },
               amount: 2500,
-              total: 150_000,
+              value_pay: 150_000,
             } as ShoppingSuppliesDetailsDto,
             {
               supplier: { id: supplier2.id },
               supply: { id: supply2.id },
               amount: 2500,
-              total: 150_000,
+              value_pay: 150_000,
             } as ShoppingSuppliesDetailsDto,
           ],
         };
@@ -947,15 +947,15 @@ describe('ShoppingController (e2e)', () => {
         const shopping2 = await shoppingController.create(data2);
       }, 10_000);
 
-      it('should return the specified number of shopping passed by the query (EQUAL date, total, supplies, suppliers)', async () => {
+      it('should return the specified number of shopping passed by the query (EQUAL date, value_pay, supplies, suppliers)', async () => {
         const queryData = {
           filter_by_date: true,
           type_filter_date: TypeFilterDate.EQUAL,
           date: dateShopping1,
 
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.EQUAL,
-          total: 300_000,
+          filter_by_value_pay: true,
+          type_filter_value_pay: TypeFilterNumber.EQUAL,
+          value_pay: 300_000,
 
           supplies: supply1.id,
           suppliers: supplier1.id,
@@ -978,8 +978,8 @@ describe('ShoppingController (e2e)', () => {
           expect(shopping.date.split('T')[0]).toBe(
             new Date(queryData.date).toISOString().split('T')[0],
           );
-          expect(shopping).toHaveProperty('total');
-          expect(shopping.total).toBe(queryData.total);
+          expect(shopping).toHaveProperty('value_pay');
+          expect(shopping.value_pay).toBe(queryData.value_pay);
           expect(shopping).toHaveProperty('createdDate');
           expect(shopping).toHaveProperty('updatedDate');
           expect(shopping).toHaveProperty('deletedDate');
@@ -988,7 +988,7 @@ describe('ShoppingController (e2e)', () => {
           expect(shopping.details.length).toBeGreaterThan(0);
           shopping.details.forEach((detail) => {
             expect(detail).toHaveProperty('id');
-            expect(detail).toHaveProperty('total');
+            expect(detail).toHaveProperty('value_pay');
             expect(detail).toHaveProperty('amount');
             expect(detail).toHaveProperty('supplier');
             expect(detail.supplier).toBeDefined();
@@ -1020,15 +1020,15 @@ describe('ShoppingController (e2e)', () => {
         });
       });
 
-      it('should return the specified number of shopping passed by the query (MAX date, total, supplies, suppliers)', async () => {
+      it('should return the specified number of shopping passed by the query (MAX date, value_pay, supplies, suppliers)', async () => {
         const queryData = {
           filter_by_date: true,
           type_filter_date: TypeFilterDate.AFTER,
           date: dateShopping2,
 
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.MAX,
-          total: 60_000,
+          filter_by_value_pay: true,
+          type_filter_value_pay: TypeFilterNumber.MAX,
+          value_pay: 60_000,
 
           supplies: supply2.id,
           suppliers: supplier2.id,
@@ -1049,8 +1049,8 @@ describe('ShoppingController (e2e)', () => {
           expect(shopping).toHaveProperty('id');
           expect(shopping).toHaveProperty('date');
           expect(new Date(shopping.date) > new Date(queryData.date)).toBe(true);
-          expect(shopping).toHaveProperty('total');
-          expect(shopping.total).toBeGreaterThan(queryData.total);
+          expect(shopping).toHaveProperty('value_pay');
+          expect(shopping.value_pay).toBeGreaterThan(queryData.value_pay);
           expect(shopping).toHaveProperty('createdDate');
           expect(shopping).toHaveProperty('updatedDate');
           expect(shopping).toHaveProperty('deletedDate');
@@ -1059,7 +1059,7 @@ describe('ShoppingController (e2e)', () => {
           expect(shopping.details.length).toBeGreaterThan(0);
           shopping.details.forEach((detail) => {
             expect(detail).toHaveProperty('id');
-            expect(detail).toHaveProperty('total');
+            expect(detail).toHaveProperty('value_pay');
             expect(detail).toHaveProperty('amount');
             expect(detail).toHaveProperty('supplier');
             expect(detail.supplier).toBeDefined();
@@ -1088,15 +1088,15 @@ describe('ShoppingController (e2e)', () => {
           expect(flatSuppliers).toContain(queryData.suppliers);
         });
       });
-      it('should return the specified number of shopping passed by the query (MIN date, total, supplies, suppliers)', async () => {
+      it('should return the specified number of shopping passed by the query (MIN date, value_pay, supplies, suppliers)', async () => {
         const queryData = {
           filter_by_date: true,
           type_filter_date: TypeFilterDate.BEFORE,
           date: dateShopping1,
 
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.MIN,
-          total: 360_000,
+          filter_by_value_pay: true,
+          type_filter_value_pay: TypeFilterNumber.MIN,
+          value_pay: 360_000,
 
           supplies: supply1.id,
           suppliers: supplier1.id,
@@ -1117,8 +1117,8 @@ describe('ShoppingController (e2e)', () => {
           expect(shopping).toHaveProperty('id');
           expect(shopping).toHaveProperty('date');
           expect(new Date(shopping.date) < new Date(queryData.date)).toBe(true);
-          expect(shopping).toHaveProperty('total');
-          expect(shopping.total).toBeLessThan(queryData.total);
+          expect(shopping).toHaveProperty('value_pay');
+          expect(shopping.value_pay).toBeLessThan(queryData.value_pay);
           expect(shopping).toHaveProperty('createdDate');
           expect(shopping).toHaveProperty('updatedDate');
           expect(shopping).toHaveProperty('deletedDate');
@@ -1127,7 +1127,7 @@ describe('ShoppingController (e2e)', () => {
           expect(shopping.details.length).toBeGreaterThan(0);
           shopping.details.forEach((detail) => {
             expect(detail).toHaveProperty('id');
-            expect(detail).toHaveProperty('total');
+            expect(detail).toHaveProperty('value_pay');
             expect(detail).toHaveProperty('amount');
             expect(detail).toHaveProperty('supplier');
             expect(detail.supplier).toBeDefined();
@@ -1216,7 +1216,7 @@ describe('ShoppingController (e2e)', () => {
       const shopping = response.body;
       expect(shopping).toHaveProperty('id');
       expect(shopping).toHaveProperty('date');
-      expect(shopping).toHaveProperty('total');
+      expect(shopping).toHaveProperty('value_pay');
       expect(shopping).toHaveProperty('createdDate');
       expect(shopping).toHaveProperty('updatedDate');
       expect(shopping).toHaveProperty('deletedDate');
@@ -1225,7 +1225,7 @@ describe('ShoppingController (e2e)', () => {
       expect(shopping.details.length).toBeGreaterThan(0);
       shopping.details.forEach((detail) => {
         expect(detail).toHaveProperty('id');
-        expect(detail).toHaveProperty('total');
+        expect(detail).toHaveProperty('value_pay');
         expect(detail).toHaveProperty('amount');
         expect(detail).toHaveProperty('supplier');
         expect(detail.supplier).toBeDefined();
@@ -1312,13 +1312,13 @@ describe('ShoppingController (e2e)', () => {
 
       const bodyRequest: UpdateSuppliesShoppingDto = {
         ...rest,
-        total: rest.total + 2000 * record.details.length,
+        value_pay: rest.value_pay + 2000 * record.details.length,
         details: record.details.map((detail) => ({
           id: detail.id,
           supplier: { id: detail.supplier.id },
           supply: { id: detail.supply.id },
           amount: detail.amount + 500,
-          total: detail.total + 2000,
+          value_pay: detail.value_pay + 2000,
         })) as ShoppingSuppliesDetailsDto[],
       };
 
@@ -1331,8 +1331,8 @@ describe('ShoppingController (e2e)', () => {
 
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('date');
-      expect(body).toHaveProperty('total');
-      expect(body.total).toBe(bodyRequest.total);
+      expect(body).toHaveProperty('value_pay');
+      expect(body.value_pay).toBe(bodyRequest.value_pay);
       expect(body).toHaveProperty('createdDate');
       expect(body).toHaveProperty('updatedDate');
       expect(body).toHaveProperty('deletedDate');
@@ -1342,7 +1342,7 @@ describe('ShoppingController (e2e)', () => {
       expect(body.details.length).toBeGreaterThan(0);
       body.details.forEach((detail) => {
         expect(detail).toHaveProperty('id');
-        expect(detail).toHaveProperty('total');
+        expect(detail).toHaveProperty('value_pay');
         expect(detail).toHaveProperty('amount');
         expect(detail).toHaveProperty('supplier');
         expect(detail.supplier).toBeDefined();
@@ -1371,19 +1371,19 @@ describe('ShoppingController (e2e)', () => {
       const data: CreateShoppingSuppliesDto = {
         date: new Date().toISOString(),
 
-        total: 120_000,
+        value_pay: 120_000,
         details: [
           {
             supplier: { id: supplier1.id },
             supply: { id: supply1.id },
             amount: 1000,
-            total: 60_000,
+            value_pay: 60_000,
           } as ShoppingSuppliesDetailsDto,
           {
             supplier: { id: supplier2.id },
             supply: { id: supply2.id },
             amount: 1000,
-            total: 60_000,
+            value_pay: 60_000,
           } as ShoppingSuppliesDetailsDto,
         ],
       };
@@ -1398,7 +1398,7 @@ describe('ShoppingController (e2e)', () => {
 
       const bodyRequest = {
         ...rest,
-        total: 60_000,
+        value_pay: 60_000,
         details: record.details
           .filter((detail) => detail.id !== idShoppingDetail)
           .map(({ createdDate, updatedDate, deletedDate, ...rest }) => ({

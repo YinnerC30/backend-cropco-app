@@ -27,16 +27,16 @@ export class QueryParamsShopping extends QueryParamsDto {
 
   @IsOptional()
   @IsBooleanString()
-  filter_by_total?: boolean;
+  filter_by_value_pay?: boolean;
 
   @IsOptional()
   @IsEnum(TypeFilterNumber)
-  type_filter_total?: TypeFilterNumber;
+  type_filter_value_pay?: TypeFilterNumber;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  total?: number;
+  value_pay?: number;
 
   @IsOptional()
   @IsArray()

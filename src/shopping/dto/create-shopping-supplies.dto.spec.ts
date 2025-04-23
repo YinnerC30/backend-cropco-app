@@ -5,7 +5,7 @@ import { CreateShoppingSuppliesDto } from './create-shopping-supplies.dto';
 describe('CreateShoppingSuppliesDto', () => {
   const dtoTemplate: CreateShoppingSuppliesDto = {
     date: '2023-07-20',
-    total: 100,
+    value_pay: 100,
     details: [
       {
         id: '6bccd56e-2123-4b95-b186-d4bdc416d868',
@@ -13,7 +13,7 @@ describe('CreateShoppingSuppliesDto', () => {
         supply: { id: '6bccd56e-2123-4b95-b186-d4bdc416d868' },
         supplier: { id: '6bccd56e-2123-4b95-b186-d4bdc416d868' },
         amount: 10_000,
-        total: 100,
+        value_pay: 100,
       },
     ],
   };
@@ -32,17 +32,17 @@ describe('CreateShoppingSuppliesDto', () => {
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should fail with invalid total', async () => {
+  it('should fail with invalid value_pay', async () => {
     const dto = plainToClass(CreateShoppingSuppliesDto, dtoTemplate);
-    dto.total = 112;
+    dto.value_pay = 112;
 
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should fail with negative total', async () => {
+  it('should fail with negative value_pay', async () => {
     const dto = plainToClass(CreateShoppingSuppliesDto, dtoTemplate);
-    dto.total = -100;
+    dto.value_pay = -100;
 
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
@@ -56,17 +56,17 @@ describe('CreateShoppingSuppliesDto', () => {
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should fail when details total does not match shopping total', async () => {
+  it('should fail when details value_pay does not match shopping value_pay', async () => {
     const dto = plainToClass(CreateShoppingSuppliesDto, dtoTemplate);
-    dto.total = 200;
+    dto.value_pay = 200;
 
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should fail with non-integer total', async () => {
+  it('should fail with non-integer value_pay', async () => {
     const dto = plainToClass(CreateShoppingSuppliesDto, dtoTemplate);
-    dto.total = 100.5;
+    dto.value_pay = 100.5;
 
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);

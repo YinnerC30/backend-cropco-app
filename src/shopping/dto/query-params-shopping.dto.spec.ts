@@ -11,9 +11,9 @@ describe('QueryParamsShopping', () => {
       filter_by_date: 'true',
       type_filter_date: TypeFilterDate.EQUAL,
       date: '2023-01-01',
-      filter_by_total: 'true',
-      type_filter_total: TypeFilterNumber.EQUAL,
-      total: 100,
+      filter_by_value_pay: 'true',
+      type_filter_value_pay: TypeFilterNumber.EQUAL,
+      value_pay: 100,
       suppliers: [
         'f7314366-5f63-4f2b-9639-744eb652c26b',
         '8b73400f-be8e-454d-902a-4b37c9bd23d4',
@@ -58,11 +58,11 @@ describe('QueryParamsShopping', () => {
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should transform string to number for total', async () => {
+  it('should transform string to number for value_pay', async () => {
     const dto = plainToClass(QueryParamsShopping, {
-      total: '100',
+      value_pay: '100',
     });
-    expect(typeof dto.total).toBe('number');
+    expect(typeof dto.value_pay).toBe('number');
   });
 
   it('should transform comma-separated string to UUID array', async () => {

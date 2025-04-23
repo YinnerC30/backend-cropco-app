@@ -9,7 +9,7 @@ describe('UpdateSuppliesShoppingDto', () => {
 
   it('should allow partial updates', async () => {
     const updateShoppingDto = plainToClass(UpdateSuppliesShoppingDto, {
-      total: 200,
+      value_pay: 200,
     });
     const errors = await validate(updateShoppingDto);
     expect(errors.length).toBe(0);

@@ -24,7 +24,7 @@ export class SuppliesShoppingDetails {
   @Column({
     type: 'int4',
   })
-  total: number;
+  value_pay: number;
 
   // Internal relations
   @ManyToOne(

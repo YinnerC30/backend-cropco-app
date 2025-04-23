@@ -11,7 +11,7 @@ describe('ShoppingSuppliesDetailsDto', () => {
     dto.supply = { id: '6bccd56e-2123-4b95-b186-d4bdc416d868' };
     dto.supplier = { id: '6bccd56e-2123-4b95-b186-d4bdc416d868' };
     dto.amount = 10;
-    dto.total = 100;
+    dto.value_pay = 100;
   });
 
   it('should validate with correct data', async () => {
@@ -43,14 +43,14 @@ describe('ShoppingSuppliesDetailsDto', () => {
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should fail with non-integer total', async () => {
-    dto.total = 100.5;
+  it('should fail with non-integer value_pay', async () => {
+    dto.value_pay = 100.5;
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should fail with negative total', async () => {
-    dto.total = -100;
+  it('should fail with negative value_pay', async () => {
+    dto.value_pay = -100;
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
   });

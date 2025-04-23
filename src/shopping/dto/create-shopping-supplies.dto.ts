@@ -17,11 +17,11 @@ export class CreateShoppingSuppliesDto {
   @IsInt()
   @IsPositive()
   @IsMultipleOf(50, { message: 'The value must be a multiple of 50' })
-  total: number;
+  value_pay: number;
 
   @ArrayNotEmpty()
   @MatchTotals({
-    fields: ['total'],
+    fields: ['value_pay'],
     nameArrayToCalculate: 'details',
   })
   @ValidateNested({ each: true })
