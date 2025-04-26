@@ -6,13 +6,17 @@ import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
 import { AuthModule } from './auth.module';
 import { AuthService } from './auth.service';
+import { SeedService } from 'src/seed/seed.service';
+import { SeedModule } from 'src/seed/seed.module';
 
 describe('Auth Service (e2e)', () => {
   let app: INestApplication;
   let authService: AuthService;
+  let seedService: SeedService;
   let userTest: User;
   let token: string;
-  let tokenExpired: string;
+  const tokenExpired =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImU0NDk3YmFhLTZiN2YtNDMzMS04ZDIzLWYyZTRhOGU4NWNiMyIsImlhdCI6MTc0NTcxMDU1OCwiZXhwIjoxNzQ1NzMyMTU4fQ.jEWpc0xnqLYKluFrlkuj6p2P7MZ4uV3fhFteUY2Y-Og';
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -38,15 +42,12 @@ describe('Auth Service (e2e)', () => {
           },
         }),
         AuthModule,
+        SeedModule,
       ],
     }).compile();
 
     authService = moduleFixture.get<AuthService>(AuthService);
-    userTest = await authService.createUserToTests();
-    token = authService.generateJwtToken({
-      id: userTest.id,
-    });
-    tokenExpired = authService.generateJwtToken({ id: userTest.id });
+    seedService = moduleFixture.get<SeedService>(SeedService);
 
     app = moduleFixture.createNestApplication();
 
@@ -60,6 +61,11 @@ describe('Auth Service (e2e)', () => {
     );
 
     await app.init();
+
+    userTest = (await seedService.CreateUser({})) as User;
+    token = authService.generateJwtToken({
+      id: userTest.id,
+    });
   });
 
   afterAll(async () => {
@@ -84,22 +90,24 @@ describe('Auth Service (e2e)', () => {
       expect(body.message).toBe('Credentials are not valid (email)');
     });
     it('should throw an exception because the user does not have permissions to log in to the system.', async () => {
+      const user = await seedService.CreateUser({});
       const { body } = await request
         .default(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: userTest.email, password: '123456' })
+        .send({ email: user.email, password: '123456' })
         .expect(403);
       expect(body.message).toBe(
         'The user does not have enough permissions to access',
       );
     });
     it('should log in correctly to the system', async () => {
-      await authService.givePermissionsToModule(userTest.id, 'clients');
+      const user = await seedService.CreateUser({});
+      await authService.givePermissionsToModule(user.id, 'clients');
 
       const { body } = await request
         .default(app.getHttpServer())
         .post('/auth/login')
-        .send({ email: userTest.email, password: '123456' })
+        .send({ email: user.email, password: '123456' })
         .expect(201);
 
       expect(body).toHaveProperty('id');
@@ -112,6 +120,7 @@ describe('Auth Service (e2e)', () => {
       expect(body).not.toHaveProperty('password');
     });
   });
+
   describe('/auth/renew-token (PATCH)', () => {
     it('should throw an exception for not sending a JWT to the protected path /auth/renew-token', async () => {
       const { body } = await request
@@ -139,6 +148,7 @@ describe('Auth Service (e2e)', () => {
       expect(body.token).toBeDefined();
     });
   });
+
   describe('/auth/check-status (GET)', () => {
     it('should throw an exception for not sending a JWT to the protected path /auth/check-status', async () => {
       const { body } = await request
@@ -166,14 +176,16 @@ describe('Auth Service (e2e)', () => {
       expect(body.message).toBe('Token valid');
       expect(body.statusCode).toBe(200);
     });
-    // it('should throw exception for sending an expired token.', async () => {
-    //   await request
-    //     .default(app.getHttpServer())
-    //     .get('/auth/check-status')
-    //     .set('Authorization', `Bearer ${tokenExpired}`)
-    //     .expect(401);
-    // });
+
+    it('should throw exception for sending an expired token.', async () => {
+      await request
+        .default(app.getHttpServer())
+        .get('/auth/check-status')
+        .set('Authorization', `Bearer ${tokenExpired}`)
+        .expect(401);
+    });
   });
+
   describe('/auth/modules/all (GET)', () => {
     it('should return an array of modules with their actions', async () => {
       const { body } = await request
