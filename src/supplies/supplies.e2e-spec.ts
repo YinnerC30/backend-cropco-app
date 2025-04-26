@@ -595,13 +595,13 @@ describe('SuppliesController e2e', () => {
 
       await shoppingController.create({
         date: new Date().toISOString(),
-        total: 20_000,
+        value_pay: 20_000,
         details: [
           {
             supply: { id: supply.id },
             supplier: { id: supplier.id },
             amount: 4000,
-            total: 20_000,
+            value_pay: 20_000,
           },
         ],
       } as CreateShoppingSuppliesDto);
@@ -695,26 +695,26 @@ describe('SuppliesController e2e', () => {
 
       await shoppingController.create({
         date: new Date().toISOString(),
-        total: 20_000,
+        value_pay: 20_000,
         details: [
           {
             supply: { id: supply1.id },
             supplier: { id: supplier.id },
             amount: 4000,
-            total: 20_000,
+            value_pay: 20_000,
           },
         ],
       } as CreateShoppingSuppliesDto);
 
       await shoppingController.create({
         date: new Date().toISOString(),
-        total: 20_000,
+        value_pay: 20_000,
         details: [
           {
             supply: { id: supply2.id },
             supplier: { id: supplier.id },
             amount: 4000,
-            total: 20_000,
+            value_pay: 20_000,
           },
         ],
       } as CreateShoppingSuppliesDto);

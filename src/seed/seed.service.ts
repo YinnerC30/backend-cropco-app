@@ -28,7 +28,11 @@ import { DeepPartial } from 'typeorm';
 import { UsersService } from './../users/users.service';
 import { initialData } from './data/seed-data';
 import { HarvestProcessedDto } from 'src/harvest/dto/harvest-processed.dto';
+import { User } from 'src/users/entities/user.entity';
+import { UserDto } from 'src/users/dto/user.dto';
 // import { AuthService } from 'src/auth/auth.service';
+import { v4 as uuidv4 } from 'uuid';
+import { UUID } from 'crypto';
 
 @Injectable()
 export class SeedService {
@@ -91,6 +95,40 @@ export class SeedService {
     await this.cropsService.deleteAllCrops();
     await this.employeesService.deleteAllEmployees();
     await this.salesService.deleteAllSales();
+  }
+
+  async CreateUser({
+    mapperToDto = false,
+    convertToAdmin = false,
+  }): Promise<User | (UserDto & { id: string })> {
+    const randomId = uuidv4();
+
+    const data: UserDto = {
+      first_name: `User First Name ${randomId}`,
+      last_name: `User Last Name ${randomId}`,
+      email: `user_email_${randomId}@mail.com`,
+      password: '123456',
+      cell_phone_number: '3145236789',
+      actions: [],
+    };
+
+    const user = await this.usersService.create(data);
+
+    if (convertToAdmin) {
+      await this.authService.convertToAdmin(user.id);
+    }
+
+    if (!mapperToDto) return user;
+
+    return {
+      id: user.id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      password: user.password,
+      cell_phone_number: user.cell_phone_number,
+      actions: user.actions,
+    };
   }
 
   async insertNewUsers() {

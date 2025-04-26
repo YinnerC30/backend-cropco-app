@@ -5,7 +5,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
-  Patch,
+  Put,
   Post,
   Query,
 } from '@nestjs/common';
@@ -15,11 +15,11 @@ import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { GetPropertyFromToken } from 'src/auth/decorators/get-property-from-user-token.decorator';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 export const pathsUsersController: PathsController = {
   createUser: {
@@ -92,7 +92,7 @@ export class UsersController {
   }
 
   @Post(createUser.path)
-  create(@Body() createUserDto: CreateUserDto) {
+  create(@Body() createUserDto: UserDto) {
     return this.usersService.create(createUserDto);
   }
 
@@ -101,7 +101,7 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
-  @Patch(updateUser.path)
+  @Put(updateUser.path)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -109,7 +109,7 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @Patch(toggleStatusUser.path)
+  @Put(toggleStatusUser.path)
   toggleStatusUser(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.toggleStatusUser(id);
   }
@@ -124,12 +124,12 @@ export class UsersController {
     return this.usersService.removeBulk(removeBulkUsersDto);
   }
 
-  @Patch(resetPassword.path)
+  @Put(resetPassword.path)
   resetPassword(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.resetPassword(id);
   }
 
-  @Patch(changePassword.path)
+  @Put(changePassword.path)
   changePassword(
     @GetPropertyFromToken('id', ParseUUIDPipe) id: string,
     @Body() changePasswordDto: ChangePasswordDto,

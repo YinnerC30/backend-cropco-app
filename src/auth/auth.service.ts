@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
@@ -30,9 +31,12 @@ import { ModuleActions } from './entities/module-actions.entity';
 import { Module } from './entities/module.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { UserActions } from 'src/users/entities/user-actions.entity';
+import { UserDto } from 'src/users/dto/user.dto';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger('AuthService');
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
@@ -44,7 +48,10 @@ export class AuthService {
     private readonly moduleActionsRepository: Repository<ModuleActions>,
     private readonly jwtService: JwtService,
     private readonly userService: UsersService,
-  ) {}
+    private readonly handlerError: HandlerErrorService,
+  ) {
+    this.handlerError.setLogger(this.logger);
+  }
 
   async login(
     loginUserDto: LoginUserDto,
@@ -248,7 +255,7 @@ export class AuthService {
       },
     })) as UserActionDto[];
 
-    return await this.userService.update(id, { ...user, actions });
+    return await this.userService.update(id, { ...user, actions } as UserDto);
   }
 
   async givePermissionsToModule(
@@ -269,7 +276,7 @@ export class AuthService {
     return await this.userService.update(id, {
       ...user,
       actions: actions.flatMap((action) => ({ id: action.id })),
-    });
+    } as UserDto);
   }
 
   async removePermissionsToModule(
@@ -330,10 +337,14 @@ export class AuthService {
 
     if (userHasAction) return;
 
-    await this.userActionsRepository.delete({
-      user: { id: userId },
-      id: action.id,
-    });
+    try {
+      await this.userActionsRepository.delete({
+        user: { id: userId },
+        id: action.id,
+      });
+    } catch (error) {
+      this.handlerError.handle(error);
+    }
   }
 
   async convertToAdminUserSeed(): Promise<

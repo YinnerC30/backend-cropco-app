@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 import { UserActionDto } from './user-action.dto';
 
-export class CreateUserDto {
+export class UserDto {
   @IsString()
   @MaxLength(100)
   first_name: string;
