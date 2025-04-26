@@ -12,7 +12,7 @@ import { CommonModule } from 'src/common/common.module';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { CropsService } from 'src/crops/crops.service';
 import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
-import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
+import { HarvestDto } from 'src/harvest/dto/harvest.dto';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
@@ -606,7 +606,7 @@ describe('EmployeesController (e2e)', () => {
         observation: 'description demo test creation harvest...',
       };
 
-      await harvestService.create(harvestData as CreateHarvestDto);
+      await harvestService.create(harvestData as HarvestDto);
 
       await workService.create({
         date: new Date().toISOString(),
@@ -768,7 +768,7 @@ describe('EmployeesController (e2e)', () => {
         observation: 'description demo test creation harvest...',
       };
 
-      await harvestService.create(harvestData as CreateHarvestDto);
+      await harvestService.create(harvestData as HarvestDto);
 
       await workService.create({
         date: new Date().toISOString(),

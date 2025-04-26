@@ -16,7 +16,7 @@ import { Crop } from './entities/crop.entity';
 import { EmployeesService } from 'src/employees/employees.service';
 import { HarvestService } from 'src/harvest/harvest.service';
 
-import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
+import { HarvestDto } from 'src/harvest/dto/harvest.dto';
 import { ClientsService } from 'src/clients/clients.service';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
@@ -611,7 +611,7 @@ describe('CropsController e2e', () => {
       };
 
       const harvest = await harvestService.create(
-        harvestData as CreateHarvestDto,
+        harvestData as HarvestDto,
       );
 
       // Agregar stock al cultivo
@@ -758,7 +758,7 @@ describe('CropsController e2e', () => {
       };
 
       const harvest1 = await harvestService.create(
-        harvestData1 as CreateHarvestDto,
+        harvestData1 as HarvestDto,
       );
 
       // Agregar stock al cultivo
@@ -780,7 +780,7 @@ describe('CropsController e2e', () => {
         observation: 'description demo test creation harvest...',
       };
       const harvest2 = await harvestService.create(
-        harvestData2 as CreateHarvestDto,
+        harvestData2 as HarvestDto,
       );
 
       // Agregar stock al cultivo

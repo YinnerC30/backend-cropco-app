@@ -23,7 +23,7 @@ import { CropsService } from 'src/crops/crops.service';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { EmployeesService } from 'src/employees/employees.service';
 import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
-import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
+import { HarvestDto } from 'src/harvest/dto/harvest.dto';
 import { CreateSaleDto } from 'src/sales/dto/create-sale.dto';
 
 describe('ClientsController (e2e)', () => {
@@ -634,7 +634,7 @@ describe('ClientsController (e2e)', () => {
       };
 
       const harvest = await harvestService.create(
-        harvestData as CreateHarvestDto,
+        harvestData as HarvestDto,
       );
 
       // Agregar stock al cultivo
@@ -843,7 +843,7 @@ describe('ClientsController (e2e)', () => {
       };
 
       const harvest = await harvestService.create(
-        harvestData as CreateHarvestDto,
+        harvestData as HarvestDto,
       );
 
       // Agregar stock al cultivo

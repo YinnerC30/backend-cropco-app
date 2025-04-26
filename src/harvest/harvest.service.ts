@@ -7,13 +7,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
-import { CreateHarvestDto } from './dto/create-harvest.dto';
-import { UpdateHarvestDto } from './dto/update-harvest.dto';
+import { HarvestDto } from './dto/harvest.dto';
+
 import { HarvestDetails } from './entities/harvest-details.entity';
 import { Harvest } from './entities/harvest.entity';
 
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organize-ids-to-update-entity';
-import { HarvestDetailsDto } from './dto/create-harvest-details.dto';
+import { HarvestDetailsDto } from './dto/harvest-details.dto';
 
 import { UUID } from 'node:crypto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
@@ -21,16 +21,17 @@ import { TemplateGetAllRecords } from 'src/common/interfaces/TemplateGetAllRecor
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { PrinterService } from 'src/printer/printer.service';
-import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
+
 import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
 import { QueryParamsTotalHarvestsInYearDto } from './dto/query-params-total-harvests-year';
-import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
+
 import { HarvestProcessed } from './entities/harvest-processed.entity';
 import { HarvestStock } from './entities/harvest-stock.entity';
 import { InsufficientHarvestStockException } from './exceptions/insufficient-harvest-stock';
 import { calculateGrowthHarvest } from './helpers/calculateGrowthHarvest';
 import { getHarvestReport } from './reports/get-harvest';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
+import { HarvestProcessedDto } from './dto/harvest-processed.dto';
 
 @Injectable()
 export class HarvestService {
@@ -50,7 +51,7 @@ export class HarvestService {
     this.handlerError.setLogger(this.logger);
   }
 
-  async create(createHarvestDto: CreateHarvestDto) {
+  async create(createHarvestDto: HarvestDto) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -185,7 +186,7 @@ export class HarvestService {
     return { ...harvest, total_processed };
   }
 
-  async update(id: string, updateHarvestDto: UpdateHarvestDto) {
+  async update(id: string, updateHarvestDto: HarvestDto) {
     const harvest = await this.findOne(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -272,7 +273,7 @@ export class HarvestService {
         const recordToCreate = queryRunner.manager.create(HarvestDetails, {
           harvest: id,
           ...dataRecord,
-        });
+        } as HarvestDetailsDto);
 
         await queryRunner.manager.save(recordToCreate);
       }
@@ -403,9 +404,7 @@ export class HarvestService {
     }
   }
 
-  async createHarvestProcessed(
-    createHarvestProcessedDto: CreateHarvestProcessedDto,
-  ) {
+  async createHarvestProcessed(createHarvestProcessedDto: HarvestProcessedDto) {
     const queryRunner = this.dataSource.createQueryRunner();
 
     await this.validateTotalProcessed({
@@ -453,7 +452,7 @@ export class HarvestService {
 
   async updateHarvestProcessed(
     id: string,
-    updateHarvestProcessedDto: UpdateHarvestProcessedDto,
+    updateHarvestProcessedDto: HarvestProcessedDto,
   ) {
     const harvestProcessed = await this.findOneHarvestProcessed(id);
 

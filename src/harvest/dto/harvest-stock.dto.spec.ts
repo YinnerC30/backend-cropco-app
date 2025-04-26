@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { validate } from 'class-validator';
-import { HarvestStockDto } from './create-harvest-stock.dto';
+import { HarvestStockDto } from './harvest-stock.dto';
 
 describe('HarvestStockDto', () => {
   let dto: HarvestStockDto;

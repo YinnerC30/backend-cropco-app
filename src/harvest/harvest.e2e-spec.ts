@@ -17,16 +17,13 @@ import { SeedService } from 'src/seed/seed.service';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
 import { IsNull, Not, Repository } from 'typeorm';
-import { HarvestDetailsDto } from './dto/create-harvest-details.dto';
-import { CreateHarvestDto } from './dto/create-harvest.dto';
+import { HarvestDetailsDto } from './dto/harvest-details.dto';
+import { HarvestDto } from './dto/harvest.dto';
 import { Harvest } from './entities/harvest.entity';
 import { HarvestController } from './harvest.controller';
 import { HarvestModule } from './harvest.module';
 import { HarvestService } from './harvest.service';
-import { UpdateHarvestDto } from './dto/update-harvest.dto';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
-import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
+
 import { HarvestProcessed } from './entities/harvest-processed.entity';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
@@ -34,6 +31,8 @@ import { HarvestDetails } from './entities/harvest-details.entity';
 import { PaymentsController } from 'src/payments/payments.controller';
 import { MethodOfPayment } from 'src/payments/entities/payment.entity';
 import { PaymentCategoriesDto } from 'src/payments/dto/payment-categories.dto';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { HarvestProcessedDto } from './dto/harvest-processed.dto';
 
 describe('HarvestsController (e2e)', () => {
   let app: INestApplication;
@@ -135,7 +134,7 @@ describe('HarvestsController (e2e)', () => {
 
   describe('harvests/create (POST)', () => {
     it('should throw an exception for not sending a JWT to the protected path /harvests/create', async () => {
-      const data: CreateHarvestProcessedDto = {
+      const data: HarvestProcessedDto = {
         date: '',
         crop: { id: '' },
         harvest: { id: '' },
@@ -152,7 +151,7 @@ describe('HarvestsController (e2e)', () => {
     it('should throw an exception because the user JWT does not have permissions for this action /harvests/create', async () => {
       await authService.removePermission(userTest.id, 'create_harvest');
 
-      const data: CreateHarvestDto = {
+      const data: HarvestDto = {
         date: '',
         crop: { id: '' },
         total: 0,
@@ -198,7 +197,7 @@ describe('HarvestsController (e2e)', () => {
         address: 'no address',
       });
 
-      const data: CreateHarvestDto = {
+      const data: HarvestDto = {
         date: new Date().toISOString(),
         crop: { id: crop.id },
         total: 200,
@@ -276,7 +275,7 @@ describe('HarvestsController (e2e)', () => {
         address: 'no address',
       });
 
-      const data1: CreateHarvestDto = {
+      const data1: HarvestDto = {
         date: new Date().toISOString(),
         crop: { id: crop1.id },
         total: 100,
@@ -306,7 +305,7 @@ describe('HarvestsController (e2e)', () => {
         address: 'no address',
       });
 
-      const data2: CreateHarvestDto = {
+      const data2: HarvestDto = {
         date: new Date(
           new Date().setDate(new Date().getDate() + 5),
         ).toISOString(),
@@ -322,7 +321,7 @@ describe('HarvestsController (e2e)', () => {
           } as HarvestDetailsDto,
         ],
       };
-      const data3: CreateHarvestDto = {
+      const data3: HarvestDto = {
         date: new Date(
           new Date().setDate(new Date().getDate() + 10),
         ).toISOString(),
@@ -1190,7 +1189,7 @@ describe('HarvestsController (e2e)', () => {
 
     describe('should return the specified number of harvests passed by the query mix filter', () => {
       beforeAll(async () => {
-        const data1: CreateHarvestDto = {
+        const data1: HarvestDto = {
           date: new Date(
             new Date().setDate(new Date().getDate() + 3),
           ).toISOString(),
@@ -1212,7 +1211,7 @@ describe('HarvestsController (e2e)', () => {
           ],
         };
 
-        const data2: CreateHarvestDto = {
+        const data2: HarvestDto = {
           date: new Date(
             new Date().setDate(new Date().getDate() + 3),
           ).toISOString(),
@@ -1671,12 +1670,12 @@ describe('HarvestsController (e2e)', () => {
     });
   });
 
-  describe('harvests/update/one/:id (PATCH)', () => {
+  describe('harvests/update/one/:id (PUT)', () => {
     const harvestId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
     it('should throw an exception for not sending a JWT to the protected path harvests/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${harvestId}`)
+        .put(`/harvests/update/one/${harvestId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -1685,7 +1684,7 @@ describe('HarvestsController (e2e)', () => {
       await authService.removePermission(userTest.id, 'find_one_harvest');
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${harvestId}`)
+        .put(`/harvests/update/one/${harvestId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -1704,7 +1703,7 @@ describe('HarvestsController (e2e)', () => {
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
-      const bodyRequest: UpdateHarvestDto = {
+      const bodyRequest: HarvestDto = {
         ...rest,
         total: rest.total + 10 * record.details.length,
         value_pay: rest.value_pay + 2000 * record.details.length,
@@ -1720,7 +1719,7 @@ describe('HarvestsController (e2e)', () => {
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${record.id}`)
+        .put(`/harvests/update/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(200);
@@ -1766,7 +1765,7 @@ describe('HarvestsController (e2e)', () => {
         .records;
       const crop = (await cropController.findAll({})).records[0];
 
-      const data: CreateHarvestDto = {
+      const data: HarvestDto = {
         date: new Date().toISOString(),
         crop: { id: crop.id },
         total: 200,
@@ -1796,7 +1795,7 @@ describe('HarvestsController (e2e)', () => {
         payment_is_pending: false,
       });
 
-      const bodyRequest: UpdateHarvestDto = {
+      const bodyRequest: HarvestDto = {
         ...rest,
         total: 100,
         value_pay: 60_000,
@@ -1814,7 +1813,7 @@ describe('HarvestsController (e2e)', () => {
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${record.id}`)
+        .put(`/harvests/update/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(400);
@@ -1831,7 +1830,7 @@ describe('HarvestsController (e2e)', () => {
         .records;
       const crop = (await cropController.findAll({})).records[0];
 
-      const data: CreateHarvestDto = {
+      const data: HarvestDto = {
         date: new Date().toISOString(),
         crop: { id: crop.id },
         total: 200,
@@ -1859,7 +1858,7 @@ describe('HarvestsController (e2e)', () => {
 
       await harvestDetailsRepository.softDelete(idHarvestDetail);
 
-      const bodyRequest: UpdateHarvestDto = {
+      const bodyRequest: HarvestDto = {
         ...rest,
         total: 100,
         value_pay: 60_000,
@@ -1877,7 +1876,7 @@ describe('HarvestsController (e2e)', () => {
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${record.id}`)
+        .put(`/harvests/update/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(400);
@@ -1902,7 +1901,7 @@ describe('HarvestsController (e2e)', () => {
         payment_is_pending: false,
       });
 
-      const bodyRequest: UpdateHarvestDto = {
+      const bodyRequest: HarvestDto = {
         ...rest,
         total: rest.total + 10 * record.details.length,
         value_pay: rest.value_pay + 2000 * record.details.length,
@@ -1918,7 +1917,7 @@ describe('HarvestsController (e2e)', () => {
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${record.id}`)
+        .put(`/harvests/update/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(400);
@@ -1935,23 +1934,23 @@ describe('HarvestsController (e2e)', () => {
     it('You should throw an exception for attempting to modify a record that has been cascaded out.', async () => {
       await authService.addPermission(userTest.id, 'update_one_harvest');
 
-      const record = (
+      const harvest = (
         await harvestService.findAll({
           limit: 1,
         })
       ).records[0];
 
-      const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
+      const { id, createdDate, updatedDate, deletedDate, ...rest } = harvest;
 
-      await harvestDetailsRepository.softDelete(record.details[0].id);
+      await harvestDetailsRepository.softDelete(harvest.details[0].id);
 
-      const bodyRequest: UpdateHarvestDto = {
+      const bodyRequest: HarvestDto = {
         ...rest,
-        total: rest.total + 10 * record.details.length,
-        value_pay: rest.value_pay + 2000 * record.details.length,
+        total: rest.total + 10 * harvest.details.length,
+        value_pay: rest.value_pay + 2000 * harvest.details.length,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
-        details: record.details.map((detail) => ({
+        details: harvest.details.map((detail) => ({
           id: detail.id,
           employee: { id: detail.employee.id },
           total: detail.total + 10,
@@ -1961,22 +1960,42 @@ describe('HarvestsController (e2e)', () => {
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${record.id}`)
+        .put(`/harvests/update/one/${harvest.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(400);
 
       expect(body.message).toBe(
-        `You cannot update the record with id ${record.details[0].id} , it is linked to other records.`,
+        `You cannot update the record with id ${harvest.details[0].id} , it is linked to other records.`,
       );
     });
 
     it('should throw exception for not finding harvest to update', async () => {
+      const harvest = (
+        await harvestService.findAll({
+          limit: 1,
+        })
+      ).records[0];
+
+      const bodyRequest: HarvestDto = {
+        date: harvest.date,
+        crop: { id: harvest.crop.id },
+        total: harvest.total,
+        value_pay: harvest.value_pay,
+        observation: harvest.observation,
+        details: harvest.details.map((h) => ({
+          id: h.id,
+          employee: { id: h.employee.id },
+          total: h.total,
+          value_pay: h.value_pay,
+        })),
+      };
+
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .put(`/harvests/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ observation: 'Observation updated 2' })
+        .send(bodyRequest)
         .expect(404);
       expect(body.message).toEqual(
         'Harvest with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
@@ -1986,7 +2005,7 @@ describe('HarvestsController (e2e)', () => {
     it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .put(`/harvests/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
         .set('Authorization', `Bearer ${token}`)
         .send({ year: 2025 })
         .expect(400);
@@ -2322,7 +2341,7 @@ describe('HarvestsController (e2e)', () => {
 
   describe('harvests/processed/create (POST)', () => {
     it('should throw an exception for not sending a JWT to the protected path /harvests/processed/create', async () => {
-      const data: CreateHarvestProcessedDto = {
+      const data: HarvestProcessedDto = {
         date: '',
         crop: { id: '' },
         harvest: { id: '' },
@@ -2339,7 +2358,7 @@ describe('HarvestsController (e2e)', () => {
     it('should throw an exception because the user JWT does not have permissions for this action /harvests/create', async () => {
       await authService.removePermission(userTest.id, 'create_harvest');
 
-      const data: CreateHarvestProcessedDto = {
+      const data: HarvestProcessedDto = {
         date: '',
         crop: { id: '' },
         harvest: { id: '' },
@@ -2366,7 +2385,7 @@ describe('HarvestsController (e2e)', () => {
         })
       ).records[0];
 
-      const data: CreateHarvestProcessedDto = {
+      const data: HarvestProcessedDto = {
         date: new Date().toISOString(),
         crop: { id: harvest.crop.id },
         harvest: { id: harvest.id },
@@ -2399,12 +2418,12 @@ describe('HarvestsController (e2e)', () => {
         })
       ).records[0];
 
-      const data: CreateHarvestProcessedDto = {
+      const data: HarvestProcessedDto = {
         date: new Date().toISOString(),
         crop: { id: harvest.crop.id },
         harvest: { id: harvest.id },
         total: harvest.total + 50,
-      };
+      } as HarvestProcessedDto;
 
       const { body } = await request
         .default(app.getHttpServer())
@@ -2439,12 +2458,12 @@ describe('HarvestsController (e2e)', () => {
     });
   });
 
-  describe('harvests/processed/update/one/:id (PATCH)', () => {
+  describe('harvests/processed/update/one/:id (PUT)', () => {
     const harvestProcessedId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
     it('should throw an exception for not sending a JWT to the protected path harvests/processed/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/processed/update/one/${harvestProcessedId}`)
+        .put(`/harvests/processed/update/one/${harvestProcessedId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -2456,7 +2475,7 @@ describe('HarvestsController (e2e)', () => {
       );
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/processed/update/one/${harvestProcessedId}`)
+        .put(`/harvests/processed/update/one/${harvestProcessedId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -2479,16 +2498,23 @@ describe('HarvestsController (e2e)', () => {
         },
       });
 
-      const bodyRequest: UpdateHarvestProcessedDto = {
-        total: 23,
+      const harvestProcessed = harvest.processed[0];
+
+      const bodyRequest: HarvestProcessedDto = {
+        date: harvestProcessed.date,
+        crop: { id: harvest.crop.id },
+        harvest: { id: harvest.id },
+        total: harvestProcessed.total,
       };
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/processed/update/one/${harvest.processed[0].id}`)
+        .put(`/harvests/processed/update/one/${harvestProcessed.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(200);
+
+      console.log(body);
 
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('date');
@@ -2499,11 +2525,30 @@ describe('HarvestsController (e2e)', () => {
     });
 
     it('should throw exception for not finding harvest processed to update', async () => {
+      const harvest = await harvestRepository.findOne({
+        relations: { processed: true, crop: true },
+        where: {
+          processed: {
+            id: Not(IsNull()),
+          },
+        },
+      });
+
+      const harvestProcessed = harvest.processed[0];
+
+      const bodyRequest: HarvestProcessedDto = {
+        date: harvestProcessed.date,
+        crop: { id: harvest.crop.id },
+        harvest: { id: harvest.id },
+        total: harvestProcessed.total,
+      };
+
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(
+        .put(
           `/harvests/processed/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`,
         )
+        .send(bodyRequest)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
       expect(body.message).toEqual(
@@ -2514,7 +2559,7 @@ describe('HarvestsController (e2e)', () => {
     it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(
+        .put(
           `/harvests/processed/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`,
         )
         .set('Authorization', `Bearer ${token}`)
@@ -2552,7 +2597,7 @@ describe('HarvestsController (e2e)', () => {
         'remove_one_harvest_processed',
       );
 
-      const { processed } = await harvestRepository.findOne({
+      const harvests = await harvestRepository.find({
         relations: { processed: true, crop: true },
         where: {
           processed: {
@@ -2560,6 +2605,8 @@ describe('HarvestsController (e2e)', () => {
           },
         },
       });
+
+      const { processed } = harvests[0];
 
       await request
         .default(app.getHttpServer())

@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { validate } from 'class-validator';
-import { HarvestDetailsDto } from './create-harvest-details.dto';
+import { HarvestDetailsDto } from './harvest-details.dto';
 
 describe('HarvestDetailsDto', () => {
   it('should validate a complete valid dto', async () => {

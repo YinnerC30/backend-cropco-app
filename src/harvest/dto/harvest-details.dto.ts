@@ -27,15 +27,15 @@ export class HarvestDetailsDto {
   @Type(() => ValidateUUID)
   employee: DeepPartial<Employee>;
 
-  @ApiPropertyOptional({
-    description: 'Cosecha asociada a los detalles (opcional)',
-    type: () => ValidateUUID,
-    required: false,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => ValidateUUID)
-  harvest: DeepPartial<Harvest>;
+  // @ApiPropertyOptional({
+  //   description: 'Cosecha asociada a los detalles (opcional)',
+  //   type: () => ValidateUUID,
+  //   required: false,
+  // })
+  // @IsOptional()
+  // @ValidateNested()
+  // @Type(() => ValidateUUID)
+  // harvest: DeepPartial<Harvest>;
 
   @ApiProperty({
     description: 'Cantidad total asociada a estos detalles',

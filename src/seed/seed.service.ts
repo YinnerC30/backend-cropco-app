@@ -3,8 +3,8 @@ import { ClientsService } from 'src/clients/clients.service';
 import { CropsService } from 'src/crops/crops.service';
 import { EmployeesService } from 'src/employees/employees.service';
 import { Employee } from 'src/employees/entities/employee.entity';
-import { CreateHarvestProcessedDto } from 'src/harvest/dto/create-harvest-processed.dto';
-import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
+
+import { HarvestDto } from 'src/harvest/dto/harvest.dto';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { CreatePaymentDto } from 'src/payments/dto/create-payment.dto';
@@ -27,6 +27,7 @@ import { WorkService } from 'src/work/work.service';
 import { DeepPartial } from 'typeorm';
 import { UsersService } from './../users/users.service';
 import { initialData } from './data/seed-data';
+import { HarvestProcessedDto } from 'src/harvest/dto/harvest-processed.dto';
 // import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
@@ -199,7 +200,7 @@ export class SeedService {
     const insertPromises = [];
 
     for (let index = 0; index < 3; index++) {
-      const objectToCreate: CreateHarvestDto = {
+      const objectToCreate: HarvestDto = {
         ...rest,
         crop: crops[index],
         details: [
@@ -242,7 +243,7 @@ export class SeedService {
     const insertPromises = [];
 
     for (let index = 0; index < 3; index++) {
-      const objectToCreate: CreateHarvestProcessedDto = {
+      const objectToCreate: HarvestProcessedDto = {
         ...initialHarvest,
         crop: { id: crops[index] },
         harvest: { id: harvests[index] },

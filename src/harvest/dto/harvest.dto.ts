@@ -12,11 +12,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
-import { HarvestDetailsDto } from './create-harvest-details.dto';
+import { HarvestDetailsDto } from './harvest-details.dto';
 import { MatchTotals } from 'src/common/decorators/match-totals.decorator';
 import { UniqueRecordIdInArray } from 'src/common/decorators/unique-id-in-array.decorator';
 
-export class CreateHarvestDto {
+export class HarvestDto {
   @ApiProperty({
     description: 'Fecha de la cosecha',
     format: 'date',
