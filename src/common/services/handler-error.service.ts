@@ -20,7 +20,7 @@ export class HandlerErrorService {
       throw new Error('Logger not set in HandlerErrorService');
     }
     this.logger.error(error);
-    // console.log(error);
+    console.log(error);
     if (error.code === '23503') {
       throw new BadRequestException(
         `Foreign key constraint violation, ${error.detail}`,

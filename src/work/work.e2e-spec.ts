@@ -350,10 +350,9 @@ describe('WorksController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .get('/works/all')
-        .set('Authorization', `Bearer ${token}`);
+        .set('Authorization', `Bearer ${token}`)
 
-      console.log(response.body);
-      // .expect(200);
+        .expect(200);
       expect(response.body.total_row_count).toEqual(18);
       expect(response.body.current_row_count).toEqual(10);
       expect(response.body.total_page_count).toEqual(2);

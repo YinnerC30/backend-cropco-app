@@ -304,9 +304,11 @@ export class AuthService {
   async addPermission(userId: string, actionName: string) {
     const user = await this.userService.findOne(userId);
 
+
     const action = await this.moduleActionsRepository.findOne({
       where: { name: actionName },
     });
+
 
     if (!action) {
       throw new BadRequestException('Action not found');
@@ -327,7 +329,7 @@ export class AuthService {
 
   async removePermission(userId: string, actionName: string) {
     const user = await this.userService.findOne(userId);
-    const action = await this.moduleActionsRepository.findOne({
+    const [action] = await this.moduleActionsRepository.find({
       where: { name: actionName },
     });
 

@@ -44,6 +44,8 @@ import { HarvestDetailsDto } from 'src/harvest/dto/harvest-details.dto';
 import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity';
 import { Sale } from 'src/sales/entities/sale.entity';
 import { SaleDetailsDto } from 'src/sales/dto/sale-details.dto';
+import { CreateSupplierDto } from 'src/suppliers/dto/create-supplier.dto';
+import { Supplier } from 'src/suppliers/entities/supplier.entity';
 
 @Injectable()
 export class SeedService {
@@ -162,6 +164,30 @@ export class SeedService {
       email: client.email,
       cell_phone_number: client.cell_phone_number,
       address: client.address,
+    };
+  }
+  async CreateSupplier({
+    mapperToDto = false,
+  }): Promise<Supplier | EntityConvertedToDto<Supplier>> {
+    const data: CreateSupplierDto = {
+      first_name: InformationGenerator.generateFirstName(),
+      last_name: InformationGenerator.generateLastName(),
+      email: InformationGenerator.generateEmail(),
+      cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
+      address: InformationGenerator.generateAddress(),
+    };
+
+    const supplier = await this.suppliersService.create(data);
+
+    if (!mapperToDto) return supplier;
+
+    return {
+      id: supplier.id,
+      first_name: supplier.first_name,
+      last_name: supplier.last_name,
+      email: supplier.email,
+      cell_phone_number: supplier.cell_phone_number,
+      address: supplier.address,
     };
   }
 

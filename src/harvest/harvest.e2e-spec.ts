@@ -2514,8 +2514,6 @@ describe('HarvestsController (e2e)', () => {
         .send(bodyRequest)
         .expect(200);
 
-      console.log(body);
-
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('date');
       expect(body).toHaveProperty('total');

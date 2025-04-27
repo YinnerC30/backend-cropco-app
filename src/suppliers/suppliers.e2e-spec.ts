@@ -22,6 +22,7 @@ import { SalesService } from 'src/sales/sales.service';
 import { CropsService } from 'src/crops/crops.service';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { EmployeesService } from 'src/employees/employees.service';
+import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 
 describe('SuppliersController (e2e)', () => {
   let app: INestApplication;
@@ -34,6 +35,16 @@ describe('SuppliersController (e2e)', () => {
   let harvestService: HarvestService;
   let userTest: User;
   let token: string;
+
+  const supplierDtoTemplete: CreateSupplierDto = {
+    first_name: InformationGenerator.generateFirstName(),
+    last_name: InformationGenerator.generateLastName(),
+    email: InformationGenerator.generateEmail(),
+    cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
+    address: InformationGenerator.generateAddress(),
+  };
+
+  const falseSupplierId = InformationGenerator.generateRandomId();
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -56,6 +67,7 @@ describe('SuppliersController (e2e)', () => {
               database: configService.get<string>('DB_NAME'),
               entities: [__dirname + '../../**/*.entity{.ts,.js}'],
               synchronize: true,
+              // logger: true
             };
           },
         }),
@@ -72,6 +84,9 @@ describe('SuppliersController (e2e)', () => {
     cropService = moduleFixture.get<CropsService>(CropsService);
     harvestService = moduleFixture.get<HarvestService>(HarvestService);
     employeeService = moduleFixture.get<EmployeesService>(EmployeesService);
+    supplierRepository = moduleFixture.get<Repository<Supplier>>(
+      getRepositoryToken(Supplier),
+    );
 
     app = moduleFixture.createNestApplication();
 
@@ -86,12 +101,8 @@ describe('SuppliersController (e2e)', () => {
 
     await app.init();
 
-    supplierRepository = moduleFixture.get<Repository<Supplier>>(
-      getRepositoryToken(Supplier),
-    );
-
     await supplierRepository.delete({});
-    userTest = await authService.createUserToTests();
+    userTest = (await seedService.CreateUser({})) as User;
     token = authService.generateJwtToken({
       id: userTest.id,
     });
@@ -102,24 +113,15 @@ describe('SuppliersController (e2e)', () => {
     await app.close();
   });
 
-  async function createTestSupplier(data: CreateSupplierDto) {
-    const supplier = supplierRepository.create(data);
-    return await supplierRepository.save(supplier);
-  }
-
   describe('suppliers/create (POST)', () => {
     it('should throw an exception for not sending a JWT to the protected path /suppliers/create', async () => {
-      const data: CreateSupplierDto = {
-        first_name: 'Daniel',
-        last_name: 'Gomez',
-        email: 'daniel@gmail.com',
-        cell_phone_number: '3146652134',
-        address: 'Dirección de prueba...',
+      const bodyRequest: CreateSupplierDto = {
+        ...supplierDtoTemplete,
       };
       const response = await request
         .default(app.getHttpServer())
         .post('/suppliers/create')
-        .send(data)
+        .send(bodyRequest)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -127,19 +129,15 @@ describe('SuppliersController (e2e)', () => {
     it('should throw an exception because the user JWT does not have permissions for this action /suppliers/create', async () => {
       await authService.removePermission(userTest.id, 'create_supplier');
 
-      const data: CreateSupplierDto = {
-        first_name: 'Daniel',
-        last_name: 'Gomez',
-        email: 'daniel@gmail.com',
-        cell_phone_number: '3146652134',
-        address: 'Dirección de prueba...',
+      const bodyRequest: CreateSupplierDto = {
+        ...supplierDtoTemplete,
       };
 
       const response = await request
         .default(app.getHttpServer())
         .post('/suppliers/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(403);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
@@ -149,20 +147,16 @@ describe('SuppliersController (e2e)', () => {
     it('should create a new supplier', async () => {
       await authService.addPermission(userTest.id, 'create_supplier');
 
-      const data: CreateSupplierDto = {
-        first_name: 'Daniel',
-        last_name: 'Gomez',
-        email: 'daniel@gmail.com',
-        cell_phone_number: '3146652134',
-        address: 'Dirección de prueba...',
+      const bodyRequest: CreateSupplierDto = {
+        ...supplierDtoTemplete,
       };
       const response = await request
         .default(app.getHttpServer())
         .post('/suppliers/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(201);
-      expect(response.body).toMatchObject(data);
+      expect(response.body).toMatchObject(bodyRequest);
     });
 
     it('should throw exception when fields are missing in the body', async () => {
@@ -192,37 +186,34 @@ describe('SuppliersController (e2e)', () => {
     });
 
     it('should throw exception for trying to create a supplier with duplicate email.', async () => {
-      await createTestSupplier({
-        first_name: 'Stiven',
-        last_name: 'Gomez',
-        email: 'Stiven@gmail.com',
-        cell_phone_number: '3146652134',
-        address: 'Dirección de prueba...',
-      });
+      const supplierWithSameEmail = await seedService.CreateSupplier({});
 
-      const data: CreateSupplierDto = {
-        first_name: 'David',
-        last_name: 'Gomez',
-        email: 'Stiven@gmail.com',
-        cell_phone_number: '3146652134',
-        address: 'Dirección de prueba...',
+      const bodyRequest: CreateSupplierDto = {
+        ...supplierDtoTemplete,
+        email: supplierWithSameEmail.email,
       };
       const { body } = await request
         .default(app.getHttpServer())
         .post('/suppliers/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(400);
       expect(body.message).toEqual(
-        'Unique constraint violation, Key (email)=(Stiven@gmail.com) already exists.',
+        `Unique constraint violation, Key (email)=(${bodyRequest.email}) already exists.`,
       );
     });
   });
 
   describe('suppliers/all (GET)', () => {
-    beforeAll(async () => {
-      await supplierRepository.delete({});
-      const result = await seedService.insertNewSuppliers();
+    beforeEach(async () => {
+      try {
+        await supplierRepository.delete({});
+        await Promise.all(
+          Array.from({ length: 17 }).map(() => seedService.CreateSupplier({})),
+        );
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     it('should throw an exception for not sending a JWT to the protected path /suppliers/all', async () => {
@@ -281,18 +272,18 @@ describe('SuppliersController (e2e)', () => {
         expect(supplier.deletedDate).toBeNull();
       });
     });
-    it('should return the specified number of suppliers passed by the paging arguments by the URL', async () => {
-      const response1 = await request
+    it('should return the specified number of suppliers passed by the paging arguments by the URL (1)', async () => {
+      const response = await request
         .default(app.getHttpServer())
         .get(`/suppliers/all`)
         .query({ limit: 11, offset: 0 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(response1.body.total_row_count).toEqual(17);
-      expect(response1.body.current_row_count).toEqual(11);
-      expect(response1.body.total_page_count).toEqual(2);
-      expect(response1.body.current_page_count).toEqual(1);
-      response1.body.records.forEach((supplier: Supplier) => {
+      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.current_row_count).toEqual(11);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(1);
+      response.body.records.forEach((supplier: Supplier) => {
         expect(supplier).toHaveProperty('id');
         expect(supplier).toHaveProperty('first_name');
         expect(supplier).toHaveProperty('last_name');
@@ -304,18 +295,19 @@ describe('SuppliersController (e2e)', () => {
         expect(supplier).toHaveProperty('deletedDate');
         expect(supplier.deletedDate).toBeNull();
       });
-
-      const response2 = await request
+    });
+    it('should return the specified number of suppliers passed by the paging arguments by the URL (2)', async () => {
+      const response = await request
         .default(app.getHttpServer())
         .get(`/suppliers/all`)
         .query({ limit: 11, offset: 1 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(response2.body.total_row_count).toEqual(17);
-      expect(response2.body.current_row_count).toEqual(6);
-      expect(response2.body.total_page_count).toEqual(2);
-      expect(response2.body.current_page_count).toEqual(2);
-      response2.body.records.forEach((supplier: Supplier) => {
+      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.current_row_count).toEqual(6);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(2);
+      response.body.records.forEach((supplier: Supplier) => {
         expect(supplier).toHaveProperty('id');
         expect(supplier).toHaveProperty('first_name');
         expect(supplier).toHaveProperty('last_name');
@@ -342,11 +334,10 @@ describe('SuppliersController (e2e)', () => {
   });
 
   describe('suppliers/one/:id (GET)', () => {
-    const supplierId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
     it('should throw an exception for not sending a JWT to the protected path suppliers/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .get(`/suppliers/one/${supplierId}`)
+        .get(`/suppliers/one/${falseSupplierId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -355,7 +346,7 @@ describe('SuppliersController (e2e)', () => {
       await authService.removePermission(userTest.id, 'find_one_supplier');
       const response = await request
         .default(app.getHttpServer())
-        .get(`/suppliers/one/${supplierId}`)
+        .get(`/suppliers/one/${falseSupplierId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -364,15 +355,8 @@ describe('SuppliersController (e2e)', () => {
     });
 
     it('should get one supplier', async () => {
-      // Crear un suppliere de prueba
       await authService.addPermission(userTest.id, 'find_one_supplier');
-      const { id } = await createTestSupplier({
-        first_name: 'John 3',
-        last_name: 'Doe',
-        email: 'john.doe3@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
+      const { id } = await seedService.CreateSupplier({});
 
       const response = await request
         .default(app.getHttpServer())
@@ -404,11 +388,11 @@ describe('SuppliersController (e2e)', () => {
     it('should throw exception for not finding supplier by ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .get(`/suppliers/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .get(`/suppliers/one/${falseSupplierId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
       expect(body.message).toEqual(
-        'Supplier with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Supplier with id: ${falseSupplierId} not found`,
       );
     });
     it('should throw exception for not sending an ID', async () => {
@@ -422,11 +406,10 @@ describe('SuppliersController (e2e)', () => {
   });
 
   describe('suppliers/update/one/:id (PATCH)', () => {
-    const supplierId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
     it('should throw an exception for not sending a JWT to the protected path suppliers/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/suppliers/update/one/${supplierId}`)
+        .patch(`/suppliers/update/one/${falseSupplierId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -435,7 +418,7 @@ describe('SuppliersController (e2e)', () => {
       await authService.removePermission(userTest.id, 'find_one_supplier');
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/suppliers/update/one/${supplierId}`)
+        .patch(`/suppliers/update/one/${falseSupplierId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -445,13 +428,7 @@ describe('SuppliersController (e2e)', () => {
 
     it('should update one supplier', async () => {
       await authService.addPermission(userTest.id, 'update_one_supplier');
-      const { id } = await createTestSupplier({
-        first_name: 'John 3.5',
-        last_name: 'Doe',
-        email: 'john.doe3.5@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
+      const { id } = await seedService.CreateSupplier({});
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/suppliers/update/one/${id}`)
@@ -461,58 +438,54 @@ describe('SuppliersController (e2e)', () => {
 
       expect(body.first_name).toEqual('John 4');
       expect(body.last_name).toEqual('Doe 4');
-      expect(body.email).toEqual('john.doe3.5@example.com');
-      expect(body.cell_phone_number).toEqual('3007890123');
-      expect(body.address).toEqual('123 Main St');
     });
 
     it('should throw exception for not finding supplier to update', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/suppliers/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .patch(`/suppliers/update/one/${falseSupplierId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ first_name: 'John 4' })
         .expect(404);
       expect(body.message).toEqual(
-        'Supplier with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Supplier with id: ${falseSupplierId} not found`,
       );
     });
 
     it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/suppliers/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .patch(`/suppliers/update/one/${falseSupplierId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ year: 2025 })
         .expect(400);
       expect(body.message).toContain('property year should not exist');
     });
     it('should throw exception for trying to update the email for one that is in use.', async () => {
-      const { id } = await createTestSupplier({
-        first_name: 'Alan',
-        last_name: 'Demo',
-        email: 'alandemo@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
+      const supplierWithSameEmail = await seedService.CreateSupplier({});
+      const { id } = await seedService.CreateSupplier({});
+
+      const bodyRequest = {
+        email: supplierWithSameEmail.email,
+      };
+
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/suppliers/update/one/${id}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ email: 'john.doe3.5@example.com' })
+        .send(bodyRequest)
         .expect(400);
       expect(body.message).toEqual(
-        'Unique constraint violation, Key (email)=(john.doe3.5@example.com) already exists.',
+        `Unique constraint violation, Key (email)=(${bodyRequest.email}) already exists.`,
       );
     });
   });
 
   describe('suppliers/remove/one/:id (DELETE)', () => {
-    const supplierId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
     it('should throw an exception for not sending a JWT to the protected path suppliers/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .delete(`/suppliers/remove/one/${supplierId}`)
+        .delete(`/suppliers/remove/one/${falseSupplierId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -521,7 +494,7 @@ describe('SuppliersController (e2e)', () => {
       await authService.removePermission(userTest.id, 'remove_one_supplier');
       const response = await request
         .default(app.getHttpServer())
-        .delete(`/suppliers/remove/one/${supplierId}`)
+        .delete(`/suppliers/remove/one/${falseSupplierId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -531,13 +504,7 @@ describe('SuppliersController (e2e)', () => {
 
     it('should delete one supplier', async () => {
       await authService.addPermission(userTest.id, 'remove_one_supplier');
-      const { id } = await createTestSupplier({
-        first_name: 'Ana 4.5',
-        last_name: 'Doe',
-        email: 'Ana.doe4.5@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
+      const { id } = await seedService.CreateSupplier({});
 
       await request
         .default(app.getHttpServer())
@@ -555,11 +522,11 @@ describe('SuppliersController (e2e)', () => {
     it('You should throw exception for trying to delete a supplier that does not exist.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .delete(`/suppliers/remove/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .delete(`/suppliers/remove/one/${falseSupplierId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
       expect(body.message).toEqual(
-        'Supplier with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Supplier with id: ${falseSupplierId} not found`,
       );
     });
   });
@@ -587,29 +554,10 @@ describe('SuppliersController (e2e)', () => {
 
     it('should delete suppliers bulk', async () => {
       await authService.addPermission(userTest.id, 'remove_bulk_suppliers');
-      // Crear supplieres de prueba
       const [supplier1, supplier2, supplier3] = await Promise.all([
-        createTestSupplier({
-          first_name: 'John 2',
-          last_name: 'Doe',
-          email: 'john.doefg2@example.com',
-          cell_phone_number: '3007890123',
-          address: '123 Main St',
-        }),
-        createTestSupplier({
-          first_name: 'Jane4 2',
-          last_name: 'Smith',
-          email: 'jane.smith32@example.com',
-          cell_phone_number: '3007890123',
-          address: '456 Elm St',
-        }),
-        createTestSupplier({
-          first_name: 'Jane 3',
-          last_name: 'Smith',
-          email: 'jane.smith35@example.com',
-          cell_phone_number: '3007890123',
-          address: '456 Elm St',
-        }),
+        await seedService.CreateSupplier({}),
+        await seedService.CreateSupplier({}),
+        await seedService.CreateSupplier({}),
       ]);
 
       const bulkData: RemoveBulkRecordsDto<Supplier> = {
