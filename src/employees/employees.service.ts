@@ -227,7 +227,7 @@ export class EmployeesService {
       )
     ) {
       throw new ConflictException(
-        'Cannot remove employee with harvests pending payment',
+        `Employee with id ${employee.id} cannot be removed, has unpaid harvests`,
       );
     }
 
@@ -237,7 +237,7 @@ export class EmployeesService {
       )
     ) {
       throw new ConflictException(
-        'Cannot remove employee with works pending payment',
+        `Employee with id ${employee.id} cannot be removed, has unpaid works`,
       );
     }
 

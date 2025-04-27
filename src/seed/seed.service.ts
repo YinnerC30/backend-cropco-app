@@ -273,6 +273,41 @@ export class SeedService {
     return harvestProcessed;
   }
 
+  async CreateWork({
+    // mapperToDto = false,
+    quantityEmployees = 1,
+  }): Promise<{ employees: Employee[]; crop: Crop; work: Work }> {
+    const employees = (await Promise.all(
+      Array.from({ length: quantityEmployees }).map(() =>
+        this.CreateEmployee({}),
+      ),
+    )) as Employee[];
+
+    const crop = (await this.CreateCrop({})) as Crop;
+    const data: CreateWorkDto = {
+      date: InformationGenerator.generateRandomDate(),
+      crop: { id: crop.id },
+      details: employees.map((employee) => {
+        return {
+          employee: { id: employee.id },
+          value_pay: 90_000,
+        } as HarvestDetailsDto;
+      }),
+      value_pay: 90_000 * quantityEmployees,
+      description: InformationGenerator.generateDescription(),
+    };
+
+    const work = await this.workService.create(data);
+
+    // if (!mapperToDto) return { employees, crop, work };
+
+    return {
+      employees,
+      crop,
+      work,
+    };
+  }
+
   async CreateSale({
     cropId,
     isReceivable = false,
