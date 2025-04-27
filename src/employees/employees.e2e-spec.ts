@@ -10,30 +10,20 @@ import { AuthModule } from 'src/auth/auth.module';
 import { AuthService } from 'src/auth/auth.service';
 import { CommonModule } from 'src/common/common.module';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { CropsService } from 'src/crops/crops.service';
-import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
-import { HarvestDto } from 'src/harvest/dto/harvest.dto';
-import { HarvestService } from 'src/harvest/harvest.service';
+import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
 import { User } from 'src/users/entities/user.entity';
-import { WorkService } from 'src/work/work.service';
 import { Repository } from 'typeorm';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeesModule } from './employees.module';
 import { Employee } from './entities/employee.entity';
-import { CreateWorkDto } from 'src/work/dto/create-work.dto';
-import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
-import e from 'express';
 
 describe('EmployeesController (e2e)', () => {
   let app: INestApplication;
   let employeeRepository: Repository<Employee>;
   let seedService: SeedService;
   let authService: AuthService;
-  let cropService: CropsService;
-  let harvestService: HarvestService;
-  let workService: WorkService;
   let userTest: User;
   let token: string;
 
@@ -79,10 +69,9 @@ describe('EmployeesController (e2e)', () => {
 
     seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
-    workService = moduleFixture.get<WorkService>(WorkService);
-    cropService = moduleFixture.get<CropsService>(CropsService);
-    harvestService = moduleFixture.get<HarvestService>(HarvestService);
-    // employeeService = moduleFixture.get<EmployeesService>(EmployeesService);
+    employeeRepository = moduleFixture.get<Repository<Employee>>(
+      getRepositoryToken(Employee),
+    );
 
     app = moduleFixture.createNestApplication();
 
@@ -97,10 +86,6 @@ describe('EmployeesController (e2e)', () => {
 
     await app.init();
 
-    employeeRepository = moduleFixture.get<Repository<Employee>>(
-      getRepositoryToken(Employee),
-    );
-
     await employeeRepository.delete({});
     userTest = (await seedService.CreateUser({})) as User;
     token = authService.generateJwtToken({
@@ -112,11 +97,6 @@ describe('EmployeesController (e2e)', () => {
     await authService.deleteUserToTests(userTest.id);
     await app.close();
   });
-
-  async function createTestEmployee(data: CreateEmployeeDto) {
-    const employee = employeeRepository.create(data);
-    return await employeeRepository.save(employee);
-  }
 
   describe('employees/create (POST)', () => {
     it('should throw an exception for not sending a JWT to the protected path /employees/create', async () => {

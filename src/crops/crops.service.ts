@@ -211,7 +211,7 @@ export class CropsService {
     const crop = await this.findOne(id);
 
     if (crop.harvests_stock !== null && crop.harvests_stock.total > 0) {
-      throw new ConflictException('Crop has stock available');
+      throw new ConflictException(`Crop with id ${crop.id} has stock available`);
     }
     await this.cropRepository.softRemove(crop);
   }
