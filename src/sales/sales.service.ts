@@ -62,6 +62,7 @@ export class SalesService {
       await queryRunner.manager.save(sale);
 
       await queryRunner.commitTransaction();
+      return sale;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.handleDBExceptions(error);
@@ -345,7 +346,7 @@ export class SalesService {
 
     const docDefinition = getSaleReport({ data: sale });
 
-    return this.printerService.createPdf({docDefinition});
+    return this.printerService.createPdf({ docDefinition });
   }
 
   async findTotalSalesInYear({

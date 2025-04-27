@@ -18,6 +18,7 @@ import { UsersModule } from './users.module';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import * as request from 'supertest';
 import { User } from './entities/user.entity';
+import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 
 describe('UsersController e2e', () => {
   let app: INestApplication;
@@ -28,11 +29,11 @@ describe('UsersController e2e', () => {
   let token: string;
 
   const userDtoTemplete: UserDto = {
-    first_name: 'User first name',
-    last_name: 'User last name',
-    email: 'user_email_@gmail.com',
+    first_name: InformationGenerator.generateFirstName(),
+    last_name: InformationGenerator.generateLastName(),
+    email: InformationGenerator.generateEmail(),
+    cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
     password: '123456',
-    cell_phone_number: '3124567865',
     actions: [],
   };
 
@@ -71,6 +72,10 @@ describe('UsersController e2e', () => {
     seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
 
+    userRepository = moduleFixture.get<Repository<User>>(
+      getRepositoryToken(User),
+    );
+
     app = moduleFixture.createNestApplication();
 
     app.useGlobalPipes(
@@ -84,11 +89,8 @@ describe('UsersController e2e', () => {
 
     await app.init();
 
-    userRepository = moduleFixture.get<Repository<User>>(
-      getRepositoryToken(User),
-    );
-
     await userRepository.delete({});
+
     userTest = (await seedService.CreateUser({})) as User;
     token = authService.generateJwtToken({
       id: userTest.id,
@@ -180,12 +182,8 @@ describe('UsersController e2e', () => {
       const userWithInitialEmail = await seedService.CreateUser({});
 
       const bodyRequest: UserDto = {
-        first_name: 'David',
-        last_name: 'Gomez',
+        ...userDtoTemplete,
         email: userWithInitialEmail.email,
-        cell_phone_number: '3146652134',
-        password: '123456',
-        actions: [],
       };
       const { body } = await request
         .default(app.getHttpServer())

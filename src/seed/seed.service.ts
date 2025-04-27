@@ -17,22 +17,33 @@ import { AuthService } from 'src/auth/auth.service';
 import { ConsumptionsService } from 'src/consumptions/consumptions.service';
 import { CreateConsumptionSuppliesDto } from 'src/consumptions/dto/create-consumption-supplies.dto';
 
+import { HarvestProcessedDto } from 'src/harvest/dto/harvest-processed.dto';
 import { CreateShoppingSuppliesDto } from 'src/shopping/dto/create-shopping-supplies.dto';
 import { ShoppingService } from 'src/shopping/shopping.service';
 import { SuppliesService } from 'src/supplies/supplies.service';
-import { CreateWorkDto } from 'src/work/dto/create-work.dto';
+import { UserDto } from 'src/users/dto/user.dto';
+import { User } from 'src/users/entities/user.entity';
 import { WorkDetailsDto } from 'src/work/dto/create-work-details.dto';
+import { CreateWorkDto } from 'src/work/dto/create-work.dto';
 import { Work } from 'src/work/entities/work.entity';
 import { WorkService } from 'src/work/work.service';
 import { DeepPartial } from 'typeorm';
 import { UsersService } from './../users/users.service';
 import { initialData } from './data/seed-data';
-import { HarvestProcessedDto } from 'src/harvest/dto/harvest-processed.dto';
-import { User } from 'src/users/entities/user.entity';
-import { UserDto } from 'src/users/dto/user.dto';
 // import { AuthService } from 'src/auth/auth.service';
-import { v4 as uuidv4 } from 'uuid';
-import { UUID } from 'crypto';
+import { CreateClientDto } from 'src/clients/dto/create-client.dto';
+
+import { Client } from 'src/clients/entities/client.entity';
+import { EntityConvertedToDto } from './interfaces/EntityConvertedToDto';
+import { PersonalInformation } from 'src/common/entities/personal-information.entity';
+import { InformationGenerator } from './helpers/InformationGenerator';
+import { CreateEmployeeDto } from 'src/employees/dto/create-employee.dto';
+import { Crop } from 'src/crops/entities/crop.entity';
+import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
+import { HarvestDetailsDto } from 'src/harvest/dto/harvest-details.dto';
+import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity';
+import { Sale } from 'src/sales/entities/sale.entity';
+import { SaleDetailsDto } from 'src/sales/dto/sale-details.dto';
 
 @Injectable()
 export class SeedService {
@@ -100,15 +111,13 @@ export class SeedService {
   async CreateUser({
     mapperToDto = false,
     convertToAdmin = false,
-  }): Promise<User | (UserDto & { id: string })> {
-    const randomId = uuidv4();
-
+  }): Promise<User | EntityConvertedToDto<User>> {
     const data: UserDto = {
-      first_name: `User First Name ${randomId}`,
-      last_name: `User Last Name ${randomId}`,
-      email: `user_email_${randomId}@mail.com`,
+      first_name: InformationGenerator.generateFirstName(),
+      last_name: InformationGenerator.generateLastName(),
+      email: InformationGenerator.generateEmail(),
       password: '123456',
-      cell_phone_number: '3145236789',
+      cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
       actions: [],
     };
 
@@ -131,19 +140,169 @@ export class SeedService {
     };
   }
 
-  async insertNewUsers() {
-    const users = initialData.users;
+  async CreateClient({
+    mapperToDto = false,
+  }): Promise<Client | EntityConvertedToDto<Client>> {
+    const data: CreateClientDto = {
+      first_name: InformationGenerator.generateFirstName(),
+      last_name: InformationGenerator.generateLastName(),
+      email: InformationGenerator.generateEmail(),
+      cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
+      address: InformationGenerator.generateAddress(),
+    };
 
-    const insertPromises = [];
+    const client = await this.clientsService.create(data);
 
-    users.forEach((user) => {
-      insertPromises.push(this.usersService.create({ ...user, actions: [] }));
-    });
+    if (!mapperToDto) return client;
 
-    await Promise.all(insertPromises);
-
-    return true;
+    return {
+      id: client.id,
+      first_name: client.first_name,
+      last_name: client.last_name,
+      email: client.email,
+      cell_phone_number: client.cell_phone_number,
+      address: client.address,
+    };
   }
+
+  async CreateCrop({
+    mapperToDto = false,
+  }): Promise<Crop | EntityConvertedToDto<Crop>> {
+    const data: CreateCropDto = {
+      name: 'Crop ' + InformationGenerator.generateRandomId(),
+      description: InformationGenerator.generateDescription(),
+      units: 1000,
+      location: InformationGenerator.generateAddress(),
+      date_of_creation: InformationGenerator.generateRandomDate(),
+    } as CreateCropDto;
+
+    const crop = await this.cropsService.create(data);
+
+    if (!mapperToDto) return crop;
+
+    return {
+      id: crop.id,
+      name: crop.name,
+      description: crop.description,
+      units: crop.units,
+      location: crop.location,
+      date_of_creation: crop.date_of_creation,
+      date_of_termination: crop.date_of_termination,
+    };
+  }
+  async CreateEmployee({
+    mapperToDto = false,
+  }): Promise<Employee | EntityConvertedToDto<Employee>> {
+    const data: CreateEmployeeDto = {
+      first_name: InformationGenerator.generateFirstName(),
+      last_name: InformationGenerator.generateLastName(),
+      email: InformationGenerator.generateEmail(),
+      cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
+      address: InformationGenerator.generateAddress(),
+    };
+
+    const employee = await this.employeesService.create(data);
+
+    if (!mapperToDto) return employee;
+
+    return {
+      id: employee.id,
+      first_name: employee.first_name,
+      last_name: employee.last_name,
+      email: employee.email,
+      cell_phone_number: employee.cell_phone_number,
+      address: employee.address,
+    };
+  }
+
+  async CreateHarvest({
+    // mapperToDto = false,
+    quantityEmployees = 1,
+  }): Promise<{ employees: Employee[]; crop: Crop; harvest: Harvest }> {
+    const employees = (await Promise.all(
+      Array.from({ length: quantityEmployees }).map(() =>
+        this.CreateEmployee({}),
+      ),
+    )) as Employee[];
+
+    const crop = (await this.CreateCrop({})) as Crop;
+    const data: HarvestDto = {
+      date: InformationGenerator.generateRandomDate(),
+      crop: { id: crop.id },
+      details: employees.map((employee) => {
+        return {
+          employee: { id: employee.id },
+          total: 150,
+          value_pay: 90_000,
+        } as HarvestDetailsDto;
+      }),
+      total: 150 * quantityEmployees,
+      value_pay: 90_000 * quantityEmployees,
+      observation: InformationGenerator.generateObservation(),
+    };
+
+    const harvest = await this.harvestsService.create(data);
+
+    // if (!mapperToDto) return { employees, crop, harvest };
+
+    return {
+      employees,
+      crop,
+      harvest,
+    };
+  }
+  async CreateHarvestProcessed({
+    cropId,
+    harvestId,
+    total,
+  }: {
+    cropId: string;
+    harvestId: string;
+    total: number;
+  }): Promise<HarvestProcessed> {
+    const data: HarvestProcessedDto = {
+      date: InformationGenerator.generateRandomDate(),
+      crop: { id: cropId },
+      harvest: { id: harvestId },
+      total,
+    };
+
+    const harvestProcessed =
+      await this.harvestsService.createHarvestProcessed(data);
+
+    return harvestProcessed;
+  }
+
+  async CreateSale({
+    cropId,
+    isReceivable = false,
+    quantity = 15,
+  }: {
+    cropId: string;
+    isReceivable?: boolean;
+    quantity?: number;
+  }): Promise<{ sale: Sale; client: Client }> {
+    const client = (await this.CreateClient({})) as Client;
+
+    const data: CreateSaleDto = {
+      date: InformationGenerator.generateRandomDate(),
+      quantity,
+      total: 840_000,
+      details: [
+        {
+          quantity,
+          total: 840_000,
+          crop: { id: cropId },
+          client: { id: client.id },
+          is_receivable: isReceivable,
+        } as SaleDetailsDto,
+      ],
+    };
+
+    const sale = await this.salesService.create(data);
+    return { client, sale };
+  }
+
   async insertNewCrops() {
     const crops = initialData.crops;
 

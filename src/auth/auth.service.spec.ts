@@ -1,15 +1,16 @@
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { JwtService, TokenExpiredError } from '@nestjs/jwt';
-import { Repository } from 'typeorm';
-import { AuthService } from './auth.service';
-import { User } from '../users/entities/user.entity';
-import { Module } from './entities/module.entity';
-import { ModuleActions } from './entities/module-actions.entity';
-import { UsersService } from '../users/users.service';
-import { UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { UserActions } from 'src/users/entities/user-actions.entity';
+import { Repository } from 'typeorm';
+import { User } from '../users/entities/user.entity';
+import { UsersService } from '../users/users.service';
+import { AuthService } from './auth.service';
+import { ModuleActions } from './entities/module-actions.entity';
+import { Module } from './entities/module.entity';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 
 jest.mock('bcrypt', () => ({
   compareSync: jest.fn(),
@@ -19,11 +20,8 @@ jest.mock('bcrypt', () => ({
 describe('AuthService', () => {
   let service: AuthService;
   let userRepository: Repository<User>;
-  let userActionsRepository: Repository<UserActions>;
-  let moduleRepository: Repository<Module>;
-  let moduleActionsRepository: Repository<ModuleActions>;
   let jwtService: JwtService;
-  let usersService: UsersService;
+  let handlerError: HandlerErrorService;
 
   const mockUserRepository = {
     findOne: jest.fn(),
@@ -87,22 +85,20 @@ describe('AuthService', () => {
           provide: UsersService,
           useValue: mockUsersService,
         },
+        {
+          provide: HandlerErrorService,
+          useValue: {
+            handle: jest.fn(),
+            setLogger: jest.fn(), // Añade el método setLogger al mock
+          },
+        },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-    userActionsRepository = module.get<Repository<UserActions>>(
-      getRepositoryToken(UserActions),
-    );
-    moduleRepository = module.get<Repository<Module>>(
-      getRepositoryToken(Module),
-    );
-    moduleActionsRepository = module.get<Repository<ModuleActions>>(
-      getRepositoryToken(ModuleActions),
-    );
+
     jwtService = module.get<JwtService>(JwtService);
-    usersService = module.get<UsersService>(UsersService);
 
     // Reset all mocks before each test
     jest.clearAllMocks();
