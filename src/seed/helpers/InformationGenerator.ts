@@ -1,3 +1,4 @@
+import { UnitOfMeasure } from 'src/supplies/entities';
 import { v4 as uuidv4 } from 'uuid';
 
 const colombianPhoneNumbers: string[] = [
@@ -72,6 +73,42 @@ const fakeAddresses: string[] = [
   'Avenida Este # 123-45 Casa Verde',
 ];
 
+// const fakeSuppliesNames: string[] = [
+//   'Fertilizante NPK',
+//   'Insecticida Orgánico',
+//   'Abono Compuesto',
+//   'Herbicida Natural',
+//   'Plaguicida Biológico',
+//   'Fungicida Ecológico',
+//   'Nutrientes Foliares',
+//   'Sustrato Premium',
+//   'Hormona de Crecimiento',
+//   'Calcio Líquido',
+//   'Boro Soluble',
+//   'Zinc Quelado',
+//   'Magnesio Foliar',
+//   'Potasio Soluble',
+//   'Fósforo Líquido',
+// ];
+
+const fakeSupplyBrands: string[] = [
+  'Bayer',
+  'Syngenta',
+  'BASF',
+  'Corteva',
+  'FMC',
+  'Yara',
+  'Nutrien',
+  'Mosaic',
+  'UPL',
+  'Adama',
+  'Monsanto',
+  'DuPont',
+  'Dow AgroSciences',
+  'Valent',
+  'Nufarm',
+];
+
 export class InformationGenerator {
   static generateRandomIndex(lengthArray: number): number {
     const randomIndex = Math.floor(Math.random() * lengthArray);
@@ -117,5 +154,15 @@ export class InformationGenerator {
 
   static generateRandomDate = () => {
     return new Date().toISOString();
+  };
+
+  static generateSupplyBrand = (): string => {
+    const randomIndex = this.generateRandomIndex(fakeSupplyBrands.length);
+    return fakeSupplyBrands[randomIndex];
+  };
+  static generateUnitOfMeasure = (): UnitOfMeasure => {
+    const units = ['GRAMOS', 'MILILITROS'];
+    const randomIndex = this.generateRandomIndex(units.length);
+    return units[randomIndex] as UnitOfMeasure;
   };
 }

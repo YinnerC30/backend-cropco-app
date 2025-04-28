@@ -146,7 +146,7 @@ export class SuppliesService {
 
     if (supply.stock !== null && supply.stock.amount > 0) {
       throw new ConflictException(
-        `Supply with id ${supply.name} has stock available`,
+        `Supply with id ${supply.id} has stock available`,
       );
     }
 

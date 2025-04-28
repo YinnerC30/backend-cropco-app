@@ -34,18 +34,23 @@ import { initialData } from './data/seed-data';
 import { CreateClientDto } from 'src/clients/dto/create-client.dto';
 
 import { Client } from 'src/clients/entities/client.entity';
-import { EntityConvertedToDto } from './interfaces/EntityConvertedToDto';
-import { PersonalInformation } from 'src/common/entities/personal-information.entity';
-import { InformationGenerator } from './helpers/InformationGenerator';
-import { CreateEmployeeDto } from 'src/employees/dto/create-employee.dto';
-import { Crop } from 'src/crops/entities/crop.entity';
 import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
+import { Crop } from 'src/crops/entities/crop.entity';
+import { CreateEmployeeDto } from 'src/employees/dto/create-employee.dto';
 import { HarvestDetailsDto } from 'src/harvest/dto/harvest-details.dto';
 import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity';
-import { Sale } from 'src/sales/entities/sale.entity';
 import { SaleDetailsDto } from 'src/sales/dto/sale-details.dto';
+import { Sale } from 'src/sales/entities/sale.entity';
+import { ShoppingSuppliesDetailsDto } from 'src/shopping/dto/shopping-supplies-details.dto';
+import { SuppliesShopping } from 'src/shopping/entities';
 import { CreateSupplierDto } from 'src/suppliers/dto/create-supplier.dto';
 import { Supplier } from 'src/suppliers/entities/supplier.entity';
+import { CreateSupplyDto } from 'src/supplies/dto/create-supply.dto';
+import { Supply } from 'src/supplies/entities/supply.entity';
+import { InformationGenerator } from './helpers/InformationGenerator';
+import { EntityConvertedToDto } from './interfaces/EntityConvertedToDto';
+import { ConsumptionSuppliesDetailsDto } from 'src/consumptions/dto/consumption-supplies-details.dto';
+import { SuppliesConsumption } from 'src/consumptions/entities/supplies-consumption.entity';
 
 @Injectable()
 export class SeedService {
@@ -362,6 +367,94 @@ export class SeedService {
 
     const sale = await this.salesService.create(data);
     return { client, sale };
+  }
+
+  async CreateSupply({
+    mapperToDto = false,
+  }): Promise<Supply | EntityConvertedToDto<Supply>> {
+    const data: CreateSupplyDto = {
+      name: 'Supply ' + InformationGenerator.generateRandomId(),
+      brand: InformationGenerator.generateSupplyBrand(),
+      unit_of_measure: InformationGenerator.generateUnitOfMeasure(),
+      observation: InformationGenerator.generateObservation(),
+    };
+
+    const supply = await this.suppliesService.create(data);
+
+    if (!mapperToDto) return supply;
+
+    return {
+      ...data,
+      id: supply.id,
+    };
+  }
+
+  async CreateConsumption({
+    supplyId,
+    cropId,
+    amount = 2000,
+  }: {
+    supplyId?: string;
+    cropId?: string;
+    amount?: number;
+  }): Promise<{
+    consumption: SuppliesConsumption;
+    crop: Crop;
+    supply: Supply;
+  }> {
+    let supply: Supply;
+    let crop: Crop;
+
+    if (!supplyId) {
+      supply = (await this.CreateSupply({})) as Supply;
+    }
+    if (!cropId) {
+      crop = (await this.CreateCrop({})) as Crop;
+    }
+
+    const data: CreateConsumptionSuppliesDto = {
+      date: InformationGenerator.generateRandomDate(),
+      details: [
+        {
+          supply: { id: supplyId || supply.id },
+          crop: { id: cropId || crop.id },
+          amount,
+        } as ConsumptionSuppliesDetailsDto,
+      ],
+    };
+
+    const consumption = await this.consumptionsService.createConsumption(data);
+    return { crop, consumption, supply };
+  }
+  async CreateShopping({
+    supplyId,
+    valuePay = 250_000,
+  }: {
+    supplyId?: string;
+    valuePay?: number;
+  }): Promise<{
+    shopping: SuppliesShopping;
+    supplier: Supplier;
+    supply: Supply;
+  }> {
+    const supplier = (await this.CreateSupplier({})) as Supplier;
+    const supply = (await this.CreateSupply({})) as Supply;
+
+    const data: CreateShoppingSuppliesDto = {
+      date: InformationGenerator.generateRandomDate(),
+      value_pay: valuePay,
+      details: [
+        {
+          supply: { id: supplyId || supply.id },
+          supplier: { id: supplier.id },
+          amount: 4000,
+          value_pay: valuePay,
+        } as ShoppingSuppliesDetailsDto,
+      ],
+    };
+
+    const shopping = await this.shoppingService.createShopping(data);
+    return { supplier, shopping, supply };
   }
 
   async insertNewCrops() {

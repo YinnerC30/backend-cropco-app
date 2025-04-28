@@ -10,29 +10,21 @@ import { AuthModule } from 'src/auth/auth.module';
 import { AuthService } from 'src/auth/auth.service';
 import { CommonModule } from 'src/common/common.module';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { SalesModule } from 'src/sales/sales.module';
+import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
-import { SuppliersModule } from './suppliers.module';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { Supplier } from './entities/supplier.entity';
-import { SalesModule } from 'src/sales/sales.module';
-import { SalesService } from 'src/sales/sales.service';
-import { CropsService } from 'src/crops/crops.service';
-import { HarvestService } from 'src/harvest/harvest.service';
-import { EmployeesService } from 'src/employees/employees.service';
-import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
+import { SuppliersModule } from './suppliers.module';
 
 describe('SuppliersController (e2e)', () => {
   let app: INestApplication;
   let supplierRepository: Repository<Supplier>;
   let seedService: SeedService;
   let authService: AuthService;
-  let employeeService: EmployeesService;
-  let saleService: SalesService;
-  let cropService: CropsService;
-  let harvestService: HarvestService;
   let userTest: User;
   let token: string;
 
@@ -80,10 +72,6 @@ describe('SuppliersController (e2e)', () => {
 
     seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
-    saleService = moduleFixture.get<SalesService>(SalesService);
-    cropService = moduleFixture.get<CropsService>(CropsService);
-    harvestService = moduleFixture.get<HarvestService>(HarvestService);
-    employeeService = moduleFixture.get<EmployeesService>(EmployeesService);
     supplierRepository = moduleFixture.get<Repository<Supplier>>(
       getRepositoryToken(Supplier),
     );

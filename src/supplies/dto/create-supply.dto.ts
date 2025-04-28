@@ -7,7 +7,7 @@ export class CreateSupplyDto {
   name: string;
 
   @IsString()
-  @Length(10, 100)
+  @Length(3, 100)
   brand: string;
 
   @IsString()

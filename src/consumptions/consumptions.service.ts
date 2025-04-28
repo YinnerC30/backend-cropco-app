@@ -80,7 +80,7 @@ export class ConsumptionsService {
       }
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
+      return consumption;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.handleDBExceptions(error);
