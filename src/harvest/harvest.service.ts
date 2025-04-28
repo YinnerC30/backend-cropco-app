@@ -296,13 +296,13 @@ export class HarvestService {
 
     if (harvest.processed.length > 0) {
       throw new ConflictException(
-        'The record cannot be deleted because it has processed records linked to it.',
+        `The record with id ${harvest.id} cannot be deleted because it has processed records linked to it.`,
       );
     }
 
     if (harvest.details.some((item) => item.payments_harvest !== null)) {
       throw new ConflictException(
-        'The record cannot be deleted because it has payments linked to it.',
+        `The record with id ${harvest.id} cannot be deleted because it has payments linked to it.`,
       );
     }
 
@@ -399,7 +399,7 @@ export class HarvestService {
 
     if (processedSum - data.oldAmount + data.currentAmount > harvest.total) {
       throw new BadRequestException(
-        'You cannot add more processed harvest records, it exceeds the value of the harvest.',
+        `You cannot add more processed harvest records, it exceeds the value of the harvest with id ${harvest.id}.`,
       );
     }
   }

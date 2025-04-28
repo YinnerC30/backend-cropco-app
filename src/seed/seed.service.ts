@@ -274,8 +274,6 @@ export class SeedService {
 
     const harvest = await this.harvestsService.create(data);
 
-    // if (!mapperToDto) return { employees, crop, harvest };
-
     return {
       employees,
       crop,

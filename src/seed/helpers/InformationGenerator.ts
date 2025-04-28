@@ -152,8 +152,10 @@ export class InformationGenerator {
     return 'This is a simple description of the record for testing.';
   };
 
-  static generateRandomDate = () => {
-    return new Date().toISOString();
+  static generateRandomDate = (daysToAdd: number = 0): string => {
+    const date = new Date();
+    date.setDate(date.getDate() + daysToAdd);
+    return date.toISOString();
   };
 
   static generateSupplyBrand = (): string => {
