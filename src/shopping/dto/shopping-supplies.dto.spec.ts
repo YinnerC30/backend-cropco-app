@@ -1,9 +1,10 @@
 import { plainToClass } from 'class-transformer';
 import { validate } from 'class-validator';
-import { CreateShoppingSuppliesDto } from './create-shopping-supplies.dto';
+import { ShoppingSuppliesDto } from './shopping-supplies.dto';
+
 
 describe('CreateShoppingSuppliesDto', () => {
-  const dtoTemplate: CreateShoppingSuppliesDto = {
+  const dtoTemplate: ShoppingSuppliesDto = {
     date: '2023-07-20',
     value_pay: 100,
     details: [
@@ -19,13 +20,13 @@ describe('CreateShoppingSuppliesDto', () => {
   };
 
   it('should validate with correct data', async () => {
-    const dto = plainToClass(CreateShoppingSuppliesDto, dtoTemplate);
+    const dto = plainToClass(ShoppingSuppliesDto, dtoTemplate);
     const errors = await validate(dto);
     expect(errors.length).toBe(0);
   });
 
   it('should fail with invalid date format', async () => {
-    const dto = plainToClass(CreateShoppingSuppliesDto, dtoTemplate);
+    const dto = plainToClass(ShoppingSuppliesDto, dtoTemplate);
     dto.date = 'invalid-date';
 
     const errors = await validate(dto);
@@ -33,7 +34,7 @@ describe('CreateShoppingSuppliesDto', () => {
   });
 
   it('should fail with invalid value_pay', async () => {
-    const dto = plainToClass(CreateShoppingSuppliesDto, dtoTemplate);
+    const dto = plainToClass(ShoppingSuppliesDto, dtoTemplate);
     dto.value_pay = 112;
 
     const errors = await validate(dto);
@@ -41,7 +42,7 @@ describe('CreateShoppingSuppliesDto', () => {
   });
 
   it('should fail with negative value_pay', async () => {
-    const dto = plainToClass(CreateShoppingSuppliesDto, dtoTemplate);
+    const dto = plainToClass(ShoppingSuppliesDto, dtoTemplate);
     dto.value_pay = -100;
 
     const errors = await validate(dto);
@@ -49,7 +50,7 @@ describe('CreateShoppingSuppliesDto', () => {
   });
 
   it('should fail with empty details array', async () => {
-    const dto = plainToClass(CreateShoppingSuppliesDto, dtoTemplate);
+    const dto = plainToClass(ShoppingSuppliesDto, dtoTemplate);
     dto.details = [];
 
     const errors = await validate(dto);
@@ -57,7 +58,7 @@ describe('CreateShoppingSuppliesDto', () => {
   });
 
   it('should fail when details value_pay does not match shopping value_pay', async () => {
-    const dto = plainToClass(CreateShoppingSuppliesDto, dtoTemplate);
+    const dto = plainToClass(ShoppingSuppliesDto, dtoTemplate);
     dto.value_pay = 200;
 
     const errors = await validate(dto);
@@ -65,7 +66,7 @@ describe('CreateShoppingSuppliesDto', () => {
   });
 
   it('should fail with non-integer value_pay', async () => {
-    const dto = plainToClass(CreateShoppingSuppliesDto, dtoTemplate);
+    const dto = plainToClass(ShoppingSuppliesDto, dtoTemplate);
     dto.value_pay = 100.5;
 
     const errors = await validate(dto);

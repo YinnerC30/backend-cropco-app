@@ -5,31 +5,27 @@ import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
 import { AuthService } from 'src/auth/auth.service';
 import { CommonModule } from 'src/common/common.module';
-import { SuppliersController } from 'src/suppliers/suppliers.controller';
 
 import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
-import { SuppliersService } from 'src/suppliers/suppliers.service';
 import { User } from 'src/users/entities/user.entity';
-import { IsNull, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { SuppliesShopping, SuppliesShoppingDetails } from './entities';
 import { ShoppingController } from './shopping.controller';
 import { ShoppingModule } from './shopping.module';
 import { ShoppingService } from './shopping.service';
 
-import { CreateSupplyDto } from 'src/supplies/dto/create-supply.dto';
-import { SuppliesController } from 'src/supplies/supplies.controller';
-import { SuppliesService } from 'src/supplies/supplies.service';
-
-import * as request from 'supertest';
-import { CreateShoppingSuppliesDto } from './dto/create-shopping-supplies.dto';
-import { ShoppingSuppliesDetailsDto } from './dto/shopping-supplies-details.dto';
-import { UpdateSuppliesShoppingDto } from './dto/update-supplies-shopping.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { Supplier } from 'src/suppliers/entities/supplier.entity';
-import { Supply } from 'src/supplies/entities';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
+import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
+import { Supplier } from 'src/suppliers/entities/supplier.entity';
+import { Supply } from 'src/supplies/entities';
+import { SuppliesController } from 'src/supplies/supplies.controller';
+import { SuppliesModule } from 'src/supplies/supplies.module';
+import * as request from 'supertest';
+import { ShoppingSuppliesDetailsDto } from './dto/shopping-supplies-details.dto';
+import { ShoppingSuppliesDto } from './dto/shopping-supplies.dto';
 
 describe('ShoppingController (e2e)', () => {
   let app: INestApplication;
@@ -40,17 +36,27 @@ describe('ShoppingController (e2e)', () => {
   let seedService: SeedService;
   let authService: AuthService;
 
-  let suppliesService: SuppliesService;
-  let suppliesController: SuppliesController;
-
-  let supplierService: SuppliersService;
-  let supplierController: SuppliersController;
-
   let shoppingService: ShoppingService;
   let shoppingController: ShoppingController;
+  let suppliesController: SuppliesController;
 
   let userTest: User;
   let token: string;
+
+  const shoppingDtoTemplete: ShoppingSuppliesDto = {
+    date: InformationGenerator.generateRandomDate(),
+    value_pay: 90_000,
+    details: [
+      {
+        supply: { id: InformationGenerator.generateRandomId() },
+        supplier: { id: InformationGenerator.generateRandomId() },
+        amount: 10_000,
+        value_pay: 90_000,
+      } as ShoppingSuppliesDetailsDto,
+    ],
+  };
+
+  const falseShoppingId = InformationGenerator.generateRandomId();
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -79,6 +85,7 @@ describe('ShoppingController (e2e)', () => {
         CommonModule,
         SeedModule,
         AuthModule,
+        SuppliesModule,
       ],
     }).compile();
 
@@ -88,16 +95,17 @@ describe('ShoppingController (e2e)', () => {
     shoppingService = moduleFixture.get<ShoppingService>(ShoppingService);
     shoppingController =
       moduleFixture.get<ShoppingController>(ShoppingController);
-
-    suppliesService = moduleFixture.get<SuppliesService>(SuppliesService);
     suppliesController =
-      moduleFixture.get<SuppliesController>(SuppliersController);
-
-    supplierService = moduleFixture.get<SuppliersService>(SuppliersService);
-    supplierController =
-      moduleFixture.get<SuppliersController>(SuppliersController);
+      moduleFixture.get<SuppliesController>(SuppliesController);
 
     app = moduleFixture.createNestApplication();
+
+    shoppingRepository = moduleFixture.get<Repository<SuppliesShopping>>(
+      getRepositoryToken(SuppliesShopping),
+    );
+    shoppingDetailsRepository = moduleFixture.get<
+      Repository<SuppliesShoppingDetails>
+    >(getRepositoryToken(SuppliesShoppingDetails));
 
     app.useGlobalPipes(
       new ValidationPipe({
@@ -110,16 +118,7 @@ describe('ShoppingController (e2e)', () => {
 
     await app.init();
 
-    shoppingRepository = moduleFixture.get<Repository<SuppliesShopping>>(
-      getRepositoryToken(SuppliesShopping),
-    );
-    shoppingDetailsRepository = moduleFixture.get<
-      Repository<SuppliesShoppingDetails>
-    >(getRepositoryToken(SuppliesShoppingDetails));
-
     await shoppingRepository.delete({});
-    await suppliesService.deleteAllSupplies();
-    await supplierService.deleteAllSupplier();
 
     userTest = await authService.createUserToTests();
     token = authService.generateJwtToken({
@@ -129,21 +128,18 @@ describe('ShoppingController (e2e)', () => {
 
   afterAll(async () => {
     await authService.deleteUserToTests(userTest.id);
-    // await shoppingRepository.delete({});
     await app.close();
   });
 
   describe('shopping/create (POST)', () => {
     it('should throw an exception for not sending a JWT to the protected path /shopping/create', async () => {
-      const data: CreateShoppingSuppliesDto = {
-        date: '',
-        value_pay: 0,
-        details: [],
+      const bodyRequest: ShoppingSuppliesDto = {
+        ...shoppingDtoTemplete,
       };
       const response = await request
         .default(app.getHttpServer())
         .post('/shopping/create')
-        .send(data)
+        .send(bodyRequest)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -151,17 +147,15 @@ describe('ShoppingController (e2e)', () => {
     it('should throw an exception because the user JWT does not have permissions for this action /shopping/create', async () => {
       await authService.removePermission(userTest.id, 'create_supply_shopping');
 
-      const data: CreateShoppingSuppliesDto = {
-        date: '',
-        value_pay: 0,
-        details: [],
+      const bodyRequest: ShoppingSuppliesDto = {
+        ...shoppingDtoTemplete,
       };
 
       const response = await request
         .default(app.getHttpServer())
         .post('/shopping/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(403);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
@@ -171,38 +165,17 @@ describe('ShoppingController (e2e)', () => {
     it('should create a new shopping', async () => {
       await authService.addPermission(userTest.id, 'create_supply_shopping');
 
-      const supply1 = await suppliesService.create({
-        name: 'supply name 1',
-        brand: 'brand name',
-        unit_of_measure: 'GRAMOS',
-        observation: 'none observation',
-      } as CreateSupplyDto);
+      const supply1: Supply = (await seedService.CreateSupply({})) as Supply;
+      const supply2: Supply = (await seedService.CreateSupply({})) as Supply;
+      const supplier1: Supplier = (await seedService.CreateSupplier(
+        {},
+      )) as Supplier;
+      const supplier2: Supplier = (await seedService.CreateSupplier(
+        {},
+      )) as Supplier;
 
-      const supply2 = await suppliesService.create({
-        name: 'supply name 2',
-        brand: 'brand name',
-        unit_of_measure: 'MILILITROS',
-        observation: 'none observation',
-      } as CreateSupplyDto);
-
-      const supplier1 = await supplierController.create({
-        first_name: 'Supplier test1',
-        last_name: 'Supplier test',
-        email: 'suppliertest123@mail.com',
-        cell_phone_number: '3127836149',
-        address: 'no address',
-      });
-
-      const supplier2 = await supplierController.create({
-        first_name: 'Supplier test2',
-        last_name: 'Supplier test',
-        email: 'suppliertest1234@mail.com',
-        cell_phone_number: '3127836149',
-        address: 'no address',
-      });
-
-      const data: CreateShoppingSuppliesDto = {
-        date: new Date().toISOString(),
+      const data: ShoppingSuppliesDto = {
+        date: InformationGenerator.generateRandomDate(),
         value_pay: 110_000,
         details: [
           {
@@ -262,11 +235,24 @@ describe('ShoppingController (e2e)', () => {
     beforeAll(async () => {
       await shoppingRepository.delete({});
 
-      [supply1, supply2] = (await suppliesService.findAll({})).records;
-      [supplier1, supplier2] = (await supplierService.findAll({})).records;
+      const supplies = await Promise.all([
+        seedService.CreateSupply({}),
+        seedService.CreateSupply({}),
+      ]);
 
-      const data1: CreateShoppingSuppliesDto = {
-        date: new Date().toISOString(),
+      supply1 = supplies[0] as Supply;
+      supply2 = supplies[1] as Supply;
+
+      const suppliers = await Promise.all([
+        seedService.CreateSupplier({}),
+        seedService.CreateSupplier({}),
+      ]);
+
+      supplier1 = suppliers[0] as Supplier;
+      supplier2 = suppliers[1] as Supplier;
+
+      const data1: ShoppingSuppliesDto = {
+        date: InformationGenerator.generateRandomDate(),
         value_pay: 60_000,
         details: [
           {
@@ -277,11 +263,8 @@ describe('ShoppingController (e2e)', () => {
           } as ShoppingSuppliesDetailsDto,
         ],
       };
-
-      const data2: CreateShoppingSuppliesDto = {
-        date: new Date(
-          new Date().setDate(new Date().getDate() + 5),
-        ).toISOString(),
+      const data2: ShoppingSuppliesDto = {
+        date: InformationGenerator.generateRandomDate(5),
         value_pay: 90_000,
         details: [
           {
@@ -292,10 +275,8 @@ describe('ShoppingController (e2e)', () => {
           } as ShoppingSuppliesDetailsDto,
         ],
       };
-      const data3: CreateShoppingSuppliesDto = {
-        date: new Date(
-          new Date().setDate(new Date().getDate() + 10),
-        ).toISOString(),
+      const data3: ShoppingSuppliesDto = {
+        date: InformationGenerator.generateRandomDate(10),
         value_pay: 180_000,
         details: [
           {
@@ -607,7 +588,7 @@ describe('ShoppingController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.AFTER,
-        date: new Date().toISOString(),
+        date: InformationGenerator.generateRandomDate(0),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -655,9 +636,7 @@ describe('ShoppingController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.BEFORE,
-        date: new Date(
-          new Date().setDate(new Date().getDate() + 1),
-        ).toISOString(),
+        date: InformationGenerator.generateRandomDate(1),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -705,9 +684,7 @@ describe('ShoppingController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.EQUAL,
-        date: new Date(
-          new Date().setDate(new Date().getDate() + 5),
-        ).toISOString(),
+        date: InformationGenerator.generateRandomDate(5),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -899,13 +876,11 @@ describe('ShoppingController (e2e)', () => {
     });
 
     describe('should return the specified number of shopping passed by the query mix filter', () => {
-      let dateShopping1 = new Date(
-        new Date().setDate(new Date().getDate() + 3),
-      ).toISOString();
-      let dateShopping2 = new Date().toISOString();
+      let dateShopping1 = InformationGenerator.generateRandomDate(3);
+      let dateShopping2 = InformationGenerator.generateRandomDate();
 
       beforeAll(async () => {
-        const data1: CreateShoppingSuppliesDto = {
+        const data1: ShoppingSuppliesDto = {
           date: dateShopping1,
           value_pay: 360_000,
           details: [
@@ -924,7 +899,7 @@ describe('ShoppingController (e2e)', () => {
           ],
         };
 
-        const data2: CreateShoppingSuppliesDto = {
+        const data2: ShoppingSuppliesDto = {
           date: dateShopping1,
           value_pay: 300_000,
           details: [
@@ -943,8 +918,10 @@ describe('ShoppingController (e2e)', () => {
           ],
         };
 
-        const shopping1 = await shoppingController.create(data1);
-        const shopping2 = await shoppingController.create(data2);
+        await Promise.all([
+          shoppingController.create(data1),
+          shoppingController.create(data2),
+        ]);
       }, 10_000);
 
       it('should return the specified number of shopping passed by the query (EQUAL date, value_pay, supplies, suppliers)', async () => {
@@ -1172,11 +1149,10 @@ describe('ShoppingController (e2e)', () => {
   });
 
   describe('shopping/one/:id (GET)', () => {
-    const shoppingId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
     it('should throw an exception for not sending a JWT to the protected path shopping/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .get(`/shopping/one/${shoppingId}`)
+        .get(`/shopping/one/${falseShoppingId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -1188,7 +1164,7 @@ describe('ShoppingController (e2e)', () => {
       );
       const response = await request
         .default(app.getHttpServer())
-        .get(`/shopping/one/${shoppingId}`)
+        .get(`/shopping/one/${falseShoppingId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -1202,11 +1178,7 @@ describe('ShoppingController (e2e)', () => {
         'find_one_supplies_shopping',
       );
 
-      const record = (
-        await shoppingService.findAllShopping({
-          limit: 1,
-        })
-      ).records[0];
+      const record = (await seedService.CreateShopping({})).shopping;
 
       const response = await request
         .default(app.getHttpServer())
@@ -1253,11 +1225,11 @@ describe('ShoppingController (e2e)', () => {
     it('should throw exception for not finding shopping by ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .get(`/shopping/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .get(`/shopping/one/${falseShoppingId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
       expect(body.message).toEqual(
-        'Supplies Shopping with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Supplies Shopping with id: ${falseShoppingId} not found`,
       );
     });
 
@@ -1272,11 +1244,10 @@ describe('ShoppingController (e2e)', () => {
   });
 
   describe('shopping/update/one/:id (PATCH)', () => {
-    const shoppingId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
     it('should throw an exception for not sending a JWT to the protected path shopping/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/shopping/update/one/${shoppingId}`)
+        .patch(`/shopping/update/one/${falseShoppingId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -1288,7 +1259,7 @@ describe('ShoppingController (e2e)', () => {
       );
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/shopping/update/one/${shoppingId}`)
+        .patch(`/shopping/update/one/${falseShoppingId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -1302,15 +1273,11 @@ describe('ShoppingController (e2e)', () => {
         'update_one_supplies_shopping',
       );
 
-      const record = (
-        await shoppingService.findAllShopping({
-          limit: 1,
-        })
-      ).records[0];
+      const record = (await seedService.CreateShopping({})).shopping;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
-      const bodyRequest: UpdateSuppliesShoppingDto = {
+      const bodyRequest: ShoppingSuppliesDto = {
         ...rest,
         value_pay: rest.value_pay + 2000 * record.details.length,
         details: record.details.map((detail) => ({
@@ -1364,31 +1331,9 @@ describe('ShoppingController (e2e)', () => {
         'update_one_supplies_shopping',
       );
 
-      const [supplier1, supplier2] = (await supplierController.findAll({}))
-        .records;
-      const [supply1, supply2] = (await suppliesService.findAll({})).records;
-
-      const data: CreateShoppingSuppliesDto = {
-        date: new Date().toISOString(),
-
-        value_pay: 120_000,
-        details: [
-          {
-            supplier: { id: supplier1.id },
-            supply: { id: supply1.id },
-            amount: 1000,
-            value_pay: 60_000,
-          } as ShoppingSuppliesDetailsDto,
-          {
-            supplier: { id: supplier2.id },
-            supply: { id: supply2.id },
-            amount: 1000,
-            value_pay: 60_000,
-          } as ShoppingSuppliesDetailsDto,
-        ],
-      };
-
-      const record = await shoppingService.createShopping(data);
+      const record = (
+        await seedService.CreateShoppingExtended({ quantitySupplies: 3 })
+      ).shopping;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
@@ -1398,13 +1343,14 @@ describe('ShoppingController (e2e)', () => {
 
       const bodyRequest = {
         ...rest,
-        value_pay: 60_000,
+        value_pay: rest.value_pay - record.details[0].value_pay,
         details: record.details
           .filter((detail) => detail.id !== idShoppingDetail)
           .map(({ createdDate, updatedDate, deletedDate, ...rest }) => ({
             ...rest,
           })) as ShoppingSuppliesDetailsDto[],
       };
+      console.log('🚀 ~ it ~ bodyRequest:', bodyRequest);
 
       const { body } = await request
         .default(app.getHttpServer())
@@ -1424,11 +1370,7 @@ describe('ShoppingController (e2e)', () => {
         'update_one_supplies_shopping',
       );
 
-      const record = (
-        await shoppingService.findAllShopping({
-          limit: 1,
-        })
-      ).records[0];
+      const record = (await seedService.CreateShopping({})).shopping;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
@@ -1465,19 +1407,19 @@ describe('ShoppingController (e2e)', () => {
       );
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/shopping/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .patch(`/shopping/update/one/${falseShoppingId}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ date: new Date().toISOString() })
+        .send(shoppingDtoTemplete)
         .expect(404);
       expect(body.message).toEqual(
-        'Supplies Shopping with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Supplies Shopping with id: ${falseShoppingId} not found`,
       );
     });
 
     it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/shopping/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .patch(`/shopping/update/one/${falseShoppingId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ year: 2025 })
         .expect(400);
@@ -1486,7 +1428,6 @@ describe('ShoppingController (e2e)', () => {
   });
 
   describe('shopping/export/one/pdf/:id (GET)', () => {
-    const shoppingId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
     it('should throw an exception for not sending a JWT to the protected path shopping/export/one/pdf/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1499,7 +1440,7 @@ describe('ShoppingController (e2e)', () => {
       await authService.removePermission(userTest.id, 'export_shopping_to_pdf');
       const response = await request
         .default(app.getHttpServer())
-        .get(`/shopping/export/one/pdf/${shoppingId}`)
+        .get(`/shopping/export/one/pdf/${falseShoppingId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -1509,11 +1450,7 @@ describe('ShoppingController (e2e)', () => {
 
     it('should export one shopping in PDF format', async () => {
       await authService.addPermission(userTest.id, 'export_shopping_to_pdf');
-      const record = (
-        await shoppingService.findAllShopping({
-          limit: 1,
-        })
-      ).records[0];
+      const record = (await seedService.CreateShopping({})).shopping;
       const response = await request
         .default(app.getHttpServer())
         .get(`/shopping/export/one/pdf/${record.id}`)
@@ -1526,11 +1463,10 @@ describe('ShoppingController (e2e)', () => {
   });
 
   describe('shopping/remove/one/:id (DELETE)', () => {
-    const shoppingId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
     it('should throw an exception for not sending a JWT to the protected path shopping/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .delete(`/shopping/remove/one/${shoppingId}`)
+        .delete(`/shopping/remove/one/${falseShoppingId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -1542,7 +1478,7 @@ describe('ShoppingController (e2e)', () => {
       );
       const response = await request
         .default(app.getHttpServer())
-        .delete(`/shopping/remove/one/${shoppingId}`)
+        .delete(`/shopping/remove/one/${falseShoppingId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -1555,17 +1491,14 @@ describe('ShoppingController (e2e)', () => {
         userTest.id,
         'remove_one_supplies_shopping',
       );
-      const { id, details } = (
-        await shoppingService.findAllShopping({
-          limit: 1,
-        })
-      ).records[0];
+      const { id, details } = (await seedService.CreateShopping({})).shopping;
 
       const suppliesID = details.map((detail) => detail.supply.id);
 
       const previousStock = await Promise.all(
         suppliesID.map(async (supplyID) => {
-          const { id, name, stock } = await suppliesService.findOne(supplyID);
+          const { id, name, stock } =
+            await suppliesController.findOne(supplyID);
           return { id, name, stock };
         }),
       );
@@ -1579,7 +1512,8 @@ describe('ShoppingController (e2e)', () => {
       // validar que el stock cambio
       const currentStock = await Promise.all(
         suppliesID.map(async (supplyID) => {
-          const { id, name, stock } = await suppliesService.findOne(supplyID);
+          const { id, name, stock } =
+            await suppliesController.findOne(supplyID);
           return { id, name, stock };
         }),
       );
@@ -1610,11 +1544,11 @@ describe('ShoppingController (e2e)', () => {
     it('You should throw exception for trying to delete a shopping that does not exist.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .delete(`/shopping/remove/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .delete(`/shopping/remove/one/${falseShoppingId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
       expect(body.message).toEqual(
-        'Supplies Shopping with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Supplies Shopping with id: ${falseShoppingId} not found`,
       );
     });
   });
@@ -1648,12 +1582,15 @@ describe('ShoppingController (e2e)', () => {
         userTest.id,
         'remove_bulk_supplies_shopping',
       );
-      const [shopping1, shopping2, shopping3] = (
-        await shoppingService.findAllShopping({
-          limit: 3,
-          offset: 0,
-        })
-      ).records;
+      const [
+        { shopping: shopping1 },
+        { shopping: shopping2 },
+        { shopping: shopping3 },
+      ] = await Promise.all([
+        seedService.CreateShopping({}),
+        seedService.CreateShopping({}),
+        seedService.CreateShopping({}),
+      ]);
 
       const bulkData: RemoveBulkRecordsDto<SuppliesShopping> = {
         recordsIds: [{ id: shopping1.id }, { id: shopping2.id }],

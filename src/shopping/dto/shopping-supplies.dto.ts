@@ -10,7 +10,7 @@ import { ShoppingSuppliesDetailsDto } from './shopping-supplies-details.dto';
 import { IsMultipleOf } from 'src/common/decorators/is-multiple-of.decorator';
 import { MatchTotals } from 'src/common/decorators/match-totals.decorator';
 
-export class CreateShoppingSuppliesDto {
+export class ShoppingSuppliesDto {
   @IsDateString()
   date: string;
 

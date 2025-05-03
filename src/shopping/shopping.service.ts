@@ -7,21 +7,18 @@ import {
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
-import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 import { organizeIDsToUpdateEntity } from 'src/common/helpers';
+import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { PrinterService } from 'src/printer/printer.service';
 import { Condition } from 'src/supplies/interfaces/condition.interface';
 import { SuppliesService } from 'src/supplies/supplies.service';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
-import { CreateShoppingSuppliesDto } from './dto/create-shopping-supplies.dto';
 import { QueryParamsShopping } from './dto/query-params-shopping.dto';
 import { ShoppingSuppliesDetailsDto } from './dto/shopping-supplies-details.dto';
-import { UpdateSuppliesShoppingDto } from './dto/update-supplies-shopping.dto';
+import { ShoppingSuppliesDto } from './dto/shopping-supplies.dto';
 import { SuppliesShopping, SuppliesShoppingDetails } from './entities';
 import { getShoppingReport } from './reports/get-shopping';
-import { HandlerErrorService } from 'src/common/services/handler-error.service';
-import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 
 @Injectable()
 export class ShoppingService {
@@ -51,6 +48,7 @@ export class ShoppingService {
       data,
     );
     await queryRunner.manager.save(SuppliesShoppingDetails, recordToSave);
+    return recordToSave;
   }
 
   async updateShoppingDetails(
@@ -58,14 +56,14 @@ export class ShoppingService {
     condition: Condition,
     data: ShoppingSuppliesDetailsDto,
   ) {
-    await queryRunner.manager.update(SuppliesShoppingDetails, condition, data);
+    return await queryRunner.manager.update(SuppliesShoppingDetails, condition, data);
   }
 
   async removeShoppingDetails(queryRunner: QueryRunner, condition: Condition) {
-    await queryRunner.manager.delete(SuppliesShoppingDetails, condition);
+    return await queryRunner.manager.delete(SuppliesShoppingDetails, condition);
   }
 
-  async createShopping(createShoppingSuppliesDto: CreateShoppingSuppliesDto) {
+  async createShopping(createShoppingSuppliesDto: ShoppingSuppliesDto) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -209,7 +207,7 @@ export class ShoppingService {
 
   async updateShopping(
     id: string,
-    updateSuppliesShoppingDto: UpdateSuppliesShoppingDto,
+    updateSuppliesShoppingDto: ShoppingSuppliesDto,
   ) {
     const shopping = await this.findOneShopping(id);
 

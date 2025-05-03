@@ -18,7 +18,6 @@ import { ConsumptionsService } from 'src/consumptions/consumptions.service';
 import { CreateConsumptionSuppliesDto } from 'src/consumptions/dto/create-consumption-supplies.dto';
 
 import { HarvestProcessedDto } from 'src/harvest/dto/harvest-processed.dto';
-import { CreateShoppingSuppliesDto } from 'src/shopping/dto/create-shopping-supplies.dto';
 import { ShoppingService } from 'src/shopping/shopping.service';
 import { SuppliesService } from 'src/supplies/supplies.service';
 import { UserDto } from 'src/users/dto/user.dto';
@@ -42,7 +41,10 @@ import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity'
 import { SaleDetailsDto } from 'src/sales/dto/sale-details.dto';
 import { Sale } from 'src/sales/entities/sale.entity';
 import { ShoppingSuppliesDetailsDto } from 'src/shopping/dto/shopping-supplies-details.dto';
-import { SuppliesShopping } from 'src/shopping/entities';
+import {
+  SuppliesShopping,
+  SuppliesShoppingDetails,
+} from 'src/shopping/entities';
 import { CreateSupplierDto } from 'src/suppliers/dto/create-supplier.dto';
 import { Supplier } from 'src/suppliers/entities/supplier.entity';
 import { CreateSupplyDto } from 'src/supplies/dto/create-supply.dto';
@@ -56,6 +58,7 @@ import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { WorkDetails } from 'src/work/entities/work-details.entity';
 import { validate } from 'class-validator';
 import { plainToClass } from 'class-transformer';
+import { ShoppingSuppliesDto } from 'src/shopping/dto/shopping-supplies.dto';
 
 @Injectable()
 export class SeedService {
@@ -429,6 +432,7 @@ export class SeedService {
     const consumption = await this.consumptionsService.createConsumption(data);
     return { crop, consumption, supply };
   }
+
   async CreateShopping({
     supplyId,
     valuePay = 250_000,
@@ -443,7 +447,7 @@ export class SeedService {
     const supplier = (await this.CreateSupplier({})) as Supplier;
     const supply = (await this.CreateSupply({})) as Supply;
 
-    const data: CreateShoppingSuppliesDto = {
+    const data: ShoppingSuppliesDto = {
       date: InformationGenerator.generateRandomDate(),
       value_pay: valuePay,
       details: [
@@ -458,6 +462,38 @@ export class SeedService {
 
     const shopping = await this.shoppingService.createShopping(data);
     return { supplier, shopping, supply };
+  }
+  async CreateShoppingExtended({
+    quantitySupplies = 1,
+    valuePay = 250_000,
+  }: {
+    quantitySupplies?: number;
+    valuePay?: number;
+  }): Promise<{
+    shopping: SuppliesShopping;
+    supplier: Supplier;
+    supplies: Supply[];
+  }> {
+    const supplier = (await this.CreateSupplier({})) as Supplier;
+    const supplies = (await Promise.all(
+      Array.from({ length: quantitySupplies }).map(() => this.CreateSupply({})),
+    )) as Supply[];
+
+    const data: ShoppingSuppliesDto = {
+      date: InformationGenerator.generateRandomDate(),
+      value_pay: valuePay * supplies.length,
+      details: supplies.map((supply) => {
+        return {
+          supply: { id: supply.id },
+          supplier: { id: supplier.id },
+          amount: 4_000,
+          value_pay: valuePay,
+        } as ShoppingSuppliesDetailsDto;
+      }),
+    };
+
+    const shopping = await this.shoppingService.createShopping(data);
+    return { supplier, shopping, supplies };
   }
 
   async CreatePayment({
@@ -649,7 +685,7 @@ export class SeedService {
     const { details, ...rest } = initialShopping;
 
     for (let index = 0; index < 3; index++) {
-      const objectToCreate: CreateShoppingSuppliesDto = {
+      const objectToCreate: ShoppingSuppliesDto = {
         ...rest,
         details: [
           {
