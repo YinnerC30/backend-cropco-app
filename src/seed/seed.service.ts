@@ -23,8 +23,8 @@ import { ShoppingService } from 'src/shopping/shopping.service';
 import { SuppliesService } from 'src/supplies/supplies.service';
 import { UserDto } from 'src/users/dto/user.dto';
 import { User } from 'src/users/entities/user.entity';
-import { WorkDetailsDto } from 'src/work/dto/create-work-details.dto';
-import { CreateWorkDto } from 'src/work/dto/create-work.dto';
+import { WorkDetailsDto } from 'src/work/dto/work-details.dto';
+import { WorkDto } from 'src/work/dto/work.dto';
 import { Work } from 'src/work/entities/work.entity';
 import { WorkService } from 'src/work/work.service';
 import { DeepPartial } from 'typeorm';
@@ -51,6 +51,11 @@ import { InformationGenerator } from './helpers/InformationGenerator';
 import { EntityConvertedToDto } from './interfaces/EntityConvertedToDto';
 import { ConsumptionSuppliesDetailsDto } from 'src/consumptions/dto/consumption-supplies-details.dto';
 import { SuppliesConsumption } from 'src/consumptions/entities/supplies-consumption.entity';
+import { MethodOfPayment } from 'src/payments/entities/payment.entity';
+import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
+import { WorkDetails } from 'src/work/entities/work-details.entity';
+import { validate } from 'class-validator';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class SeedService {
@@ -313,7 +318,7 @@ export class SeedService {
     )) as Employee[];
 
     const crop = (await this.CreateCrop({})) as Crop;
-    const data: CreateWorkDto = {
+    const data: WorkDto = {
       date: InformationGenerator.generateRandomDate(),
       crop: { id: crop.id },
       details: employees.map((employee) => {
@@ -453,6 +458,34 @@ export class SeedService {
 
     const shopping = await this.shoppingService.createShopping(data);
     return { supplier, shopping, supply };
+  }
+
+  async CreatePayment({
+    employeeId,
+    methodOfPayment = MethodOfPayment.EFECTIVO,
+    worksId = [],
+    harvestsId = [],
+    total,
+  }: {
+    employeeId?: string;
+    methodOfPayment?: MethodOfPayment;
+    worksId?: string[];
+    harvestsId?: string[];
+    total: number;
+  }) {
+    const data: CreatePaymentDto = plainToClass(CreatePaymentDto, {
+      date: InformationGenerator.generateRandomDate(),
+      employee: { id: employeeId },
+      method_of_payment: methodOfPayment,
+      total,
+      categories: {
+        harvests: [...(harvestsId as DeepPartial<HarvestDetails>[])],
+        works: [...(worksId as DeepPartial<WorkDetails>[])],
+      },
+    });
+    const errors = await validate(data);
+
+    return await this.paymentsService.create(data);
   }
 
   async insertNewCrops() {
@@ -688,7 +721,7 @@ export class SeedService {
     const works = initialData.works;
     const insertPromises = [];
     works.forEach((work, index) => {
-      const recordToCreate: CreateWorkDto = {
+      const recordToCreate: WorkDto = {
         ...work,
         crop: { id: crops[index] },
         details: [

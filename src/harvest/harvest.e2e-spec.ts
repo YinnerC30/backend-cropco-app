@@ -21,9 +21,6 @@ import { HarvestModule } from './harvest.module';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
-import { PaymentCategoriesDto } from 'src/payments/dto/payment-categories.dto';
-import { MethodOfPayment } from 'src/payments/entities/payment.entity';
-import { PaymentsController } from 'src/payments/payments.controller';
 import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 import { HarvestProcessedDto } from './dto/harvest-processed.dto';
 import { HarvestDetails } from './entities/harvest-details.entity';
@@ -37,7 +34,6 @@ describe('HarvestsController (e2e)', () => {
   let seedService: SeedService;
   let authService: AuthService;
 
-  let paymentsController: PaymentsController;
   let harvestController: HarvestController;
   let userTest: User;
   let token: string;
@@ -99,8 +95,6 @@ describe('HarvestsController (e2e)', () => {
     seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
     harvestController = moduleFixture.get<HarvestController>(HarvestController);
-    paymentsController =
-      moduleFixture.get<PaymentsController>(PaymentsController);
 
     harvestRepository = moduleFixture.get<Repository<Harvest>>(
       getRepositoryToken(Harvest),
@@ -1956,15 +1950,10 @@ describe('HarvestsController (e2e)', () => {
         quantityEmployees: 2,
       });
 
-      await paymentsController.create({
-        date: InformationGenerator.generateRandomDate(),
-        employee: { id: employees[0].id },
-        method_of_payment: MethodOfPayment.EFECTIVO,
+      await seedService.CreatePayment({
+        employeeId: employees[0].id,
+        harvestsId: [harvest.details[0].id],
         total: harvest.details[0].value_pay,
-        categories: {
-          harvests: [harvest.details[0].id],
-          works: [],
-        } as PaymentCategoriesDto,
       });
 
       const { body } = await request
@@ -2107,15 +2096,10 @@ describe('HarvestsController (e2e)', () => {
         seedService.CreateHarvest({}),
       ]);
 
-      await paymentsController.create({
-        date: InformationGenerator.generateRandomDate(),
-        employee: { id: harvest1.details[0].employee.id },
-        method_of_payment: MethodOfPayment.EFECTIVO,
+      await seedService.CreatePayment({
+        harvestsId: [harvest1.details[0].id],
+        employeeId: harvest1.details[0].employee.id,
         total: harvest1.details[0].value_pay,
-        categories: {
-          harvests: [harvest1.details[0].id],
-          works: [],
-        } as PaymentCategoriesDto,
       });
 
       const { body } = await request

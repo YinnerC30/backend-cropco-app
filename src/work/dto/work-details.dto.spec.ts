@@ -1,6 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { WorkDetailsDto } from './create-work-details.dto';
+import { WorkDetailsDto } from './work-details.dto';
 
 describe('WorkDetailsDto', () => {
   let dto: WorkDetailsDto;

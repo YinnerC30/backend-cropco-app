@@ -59,6 +59,8 @@ export class PaymentsService {
       const record = await queryRunner.manager
         .getRepository(WorkDetails)
         .findOne({ where: { id: `${id}` } });
+
+
       totalValuePayWork.push(record.value_pay);
     }
 
@@ -105,7 +107,9 @@ export class PaymentsService {
 
       await queryRunner.manager.save(Payment, payment);
       await queryRunner.commitTransaction();
+      return payment;
     } catch (error) {
+      await queryRunner.rollbackTransaction();
       this.handleDBExceptions(error);
     } finally {
       await queryRunner.release();
@@ -254,6 +258,6 @@ export class PaymentsService {
 
     const docDefinition = getPaymentReport({ data: payment });
 
-    return this.printerService.createPdf({docDefinition});
+    return this.printerService.createPdf({ docDefinition });
   }
 }

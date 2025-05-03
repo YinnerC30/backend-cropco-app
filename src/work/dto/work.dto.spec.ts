@@ -1,12 +1,12 @@
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
-import { CreateWorkDto } from './create-work.dto';
+import { WorkDto } from './work.dto';
 
 describe('CreateWorkDto', () => {
-  let dto: CreateWorkDto;
+  let dto: WorkDto;
 
   beforeEach(() => {
-    dto = plainToInstance(CreateWorkDto, {
+    dto = plainToInstance(WorkDto, {
       date: '2023-01-01',
       description: 'Test work'.repeat(10),
       value_pay: 100,

@@ -12,11 +12,10 @@ import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { PrinterService } from 'src/printer/printer.service';
 import { DataSource, Repository } from 'typeorm';
-import { WorkDetailsDto } from './dto/create-work-details.dto';
-import { CreateWorkDto } from './dto/create-work.dto';
+import { WorkDetailsDto } from './dto/work-details.dto';
+import { WorkDto } from './dto/work.dto';
 
 import { QueryParamsWork } from './dto/query-params-work.dto';
-import type { UpdateWorkDto } from './dto/update-work.dto';
 import { WorkDetails } from './entities/work-details.entity';
 import { Work } from './entities/work.entity';
 import { getWorkReport } from './reports/get-work';
@@ -37,7 +36,7 @@ export class WorkService {
     this.handlerError.setLogger(this.logger);
   }
 
-  async create(createWorkDto: CreateWorkDto) {
+  async create(createWorkDto: WorkDto) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -147,7 +146,7 @@ export class WorkService {
     return work;
   }
 
-  async update(id: string, updateWorkDto: UpdateWorkDto) {
+  async update(id: string, updateWorkDto: WorkDto) {
     const work = await this.findOne(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -245,7 +244,7 @@ export class WorkService {
 
     if (work.details.some((item) => item.payments_work !== null)) {
       throw new ConflictException(
-        'The record cannot be deleted because it has payments linked to it.',
+        `The record with id ${id} cannot be deleted because it has payments linked to it.`,
       );
     }
     await this.workRepository.remove(work);

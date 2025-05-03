@@ -12,10 +12,10 @@ import {
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
-import { WorkDetailsDto } from './create-work-details.dto';
+import { WorkDetailsDto } from './work-details.dto';
 import { MatchTotals } from 'src/common/decorators/match-totals.decorator';
 
-export class CreateWorkDto {
+export class WorkDto {
   @IsDateString()
   date: string;
 

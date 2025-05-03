@@ -5,17 +5,12 @@ import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
 import { AuthService } from 'src/auth/auth.service';
 import { CommonModule } from 'src/common/common.module';
-import { CropsController } from 'src/crops/crops.controller';
-import { CropsService } from 'src/crops/crops.service';
-import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
-import { EmployeesController } from 'src/employees/employees.controller';
-import { EmployeesService } from 'src/employees/employees.service';
 import { SeedModule } from 'src/seed/seed.module';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
-import { IsNull, Repository } from 'typeorm';
-import { WorkDetailsDto } from './dto/create-work-details.dto';
-import { CreateWorkDto } from './dto/create-work.dto';
+import { Repository } from 'typeorm';
+import { WorkDetailsDto } from './dto/work-details.dto';
+import { WorkDto } from './dto/work.dto';
 import { Work } from './entities/work.entity';
 import { WorkController } from './work.controller';
 import { WorkModule } from './work.module';
@@ -26,10 +21,8 @@ import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
-import { PaymentCategoriesDto } from 'src/payments/dto/payment-categories.dto';
-import { MethodOfPayment } from 'src/payments/entities/payment.entity';
-import { PaymentsController } from 'src/payments/payments.controller';
-import { UpdateWorkDto } from './dto/update-work.dto';
+import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
+import { SeedService } from 'src/seed/seed.service';
 import { WorkDetails } from './entities/work-details.entity';
 
 describe('WorksController (e2e)', () => {
@@ -37,16 +30,27 @@ describe('WorksController (e2e)', () => {
   let workRepository: Repository<Work>;
   let workDetailsRepository: Repository<WorkDetails>;
   let authService: AuthService;
+  let seedService: SeedService;
 
-  let employeeService: EmployeesService;
-  let employeeController: EmployeesController;
-  let paymentsController: PaymentsController;
-  let cropService: CropsService;
-  let cropController: CropsController;
   let workService: WorkService;
   let workController: WorkController;
   let userTest: User;
   let token: string;
+
+  const workDtoTemplete: WorkDto = {
+    date: InformationGenerator.generateRandomDate(),
+    crop: { id: InformationGenerator.generateRandomId() },
+    value_pay: 90_000,
+    description: InformationGenerator.generateObservation(),
+    details: [
+      {
+        employee: { id: InformationGenerator.generateRandomId() },
+        value_pay: 90_000,
+      } as WorkDetailsDto,
+    ],
+  };
+
+  const falseWorkId = InformationGenerator.generateRandomId();
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -79,15 +83,16 @@ describe('WorksController (e2e)', () => {
     }).compile();
 
     authService = moduleFixture.get<AuthService>(AuthService);
-    cropService = moduleFixture.get<CropsService>(CropsService);
-    cropController = moduleFixture.get<CropsController>(CropsController);
+    seedService = moduleFixture.get<SeedService>(SeedService);
     workService = moduleFixture.get<WorkService>(WorkService);
     workController = moduleFixture.get<WorkController>(WorkController);
-    employeeService = moduleFixture.get<EmployeesService>(EmployeesService);
-    employeeController =
-      moduleFixture.get<EmployeesController>(EmployeesController);
-    paymentsController =
-      moduleFixture.get<PaymentsController>(PaymentsController);
+
+    workRepository = moduleFixture.get<Repository<Work>>(
+      getRepositoryToken(Work),
+    );
+    workDetailsRepository = moduleFixture.get<Repository<WorkDetails>>(
+      getRepositoryToken(WorkDetails),
+    );
 
     app = moduleFixture.createNestApplication();
 
@@ -102,16 +107,7 @@ describe('WorksController (e2e)', () => {
 
     await app.init();
 
-    workRepository = moduleFixture.get<Repository<Work>>(
-      getRepositoryToken(Work),
-    );
-    workDetailsRepository = moduleFixture.get<Repository<WorkDetails>>(
-      getRepositoryToken(WorkDetails),
-    );
-
     await workRepository.delete({});
-    await cropService.deleteAllCrops();
-    await employeeService.deleteAllEmployees();
     userTest = await authService.createUserToTests();
     token = authService.generateJwtToken({
       id: userTest.id,
@@ -126,17 +122,13 @@ describe('WorksController (e2e)', () => {
 
   describe('works/create (POST)', () => {
     it('should throw an exception for not sending a JWT to the protected path /works/create', async () => {
-      const data: CreateWorkDto = {
-        date: '',
-        description: '',
-        value_pay: 0,
-        crop: { id: '' },
-        details: [],
+      const bodyRequest: WorkDto = {
+        ...workDtoTemplete,
       };
       const response = await request
         .default(app.getHttpServer())
         .post('/works/create')
-        .send(data)
+        .send(bodyRequest)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -144,19 +136,15 @@ describe('WorksController (e2e)', () => {
     it('should throw an exception because the user JWT does not have permissions for this action /works/create', async () => {
       await authService.removePermission(userTest.id, 'create_work');
 
-      const data: CreateWorkDto = {
-        date: '',
-        description: '',
-        value_pay: 0,
-        crop: { id: '' },
-        details: [],
+      const bodyRequest: WorkDto = {
+        ...workDtoTemplete,
       };
 
       const response = await request
         .default(app.getHttpServer())
         .post('/works/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(403);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
@@ -166,34 +154,14 @@ describe('WorksController (e2e)', () => {
     it('should create a new work', async () => {
       await authService.addPermission(userTest.id, 'create_work');
 
-      const crop = await cropController.create({
-        name: 'Crop test',
-        description: 'No description',
-        units: 10,
-        location: 'No location',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
+      const crop = await seedService.CreateCrop({});
+      const employee1 = await seedService.CreateEmployee({});
+      const employee2 = await seedService.CreateEmployee({});
 
-      const employee1 = await employeeController.create({
-        first_name: 'Employee test',
-        last_name: 'Employee test',
-        email: 'employeetest123@mail.com',
-        cell_phone_number: '3127836149',
-        address: 'no address',
-      });
-      const employee2 = await employeeController.create({
-        first_name: 'Employee test',
-        last_name: 'Employee test',
-        email: 'employeetest1234@mail.com',
-        cell_phone_number: '3127836149',
-        address: 'no address',
-      });
-
-      const data: CreateWorkDto = {
-        date: new Date().toISOString(),
+      const bodyRequest: WorkDto = {
+        ...workDtoTemplete,
         crop: { id: crop.id },
         value_pay: 120_000,
-        description: 'No description',
         details: [
           {
             employee: { id: employee1.id },
@@ -210,9 +178,9 @@ describe('WorksController (e2e)', () => {
         .default(app.getHttpServer())
         .post('/works/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(201);
-      expect(response.body).toMatchObject(data);
+      expect(response.body).toMatchObject(bodyRequest);
     });
 
     it('should throw exception when fields are missing in the body', async () => {
@@ -245,27 +213,17 @@ describe('WorksController (e2e)', () => {
     let employee2: Employee;
     beforeAll(async () => {
       await workRepository.delete({});
-      crop1 = await cropController.create({
-        name: 'Crop test 1',
-        description: 'No description',
-        units: 10,
-        location: 'No location',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
+      crop1 = (await seedService.CreateCrop({})) as Crop;
+      crop2 = (await seedService.CreateCrop({})) as Crop;
 
-      employee1 = await employeeController.create({
-        first_name: 'Employee test',
-        last_name: 'Employee test',
-        email: 'employeetest1@mail.com',
-        cell_phone_number: '3127836149',
-        address: 'no address',
-      });
+      employee1 = (await seedService.CreateEmployee({})) as Employee;
+      employee2 = (await seedService.CreateEmployee({})) as Employee;
 
-      const data1: CreateWorkDto = {
-        date: new Date().toISOString(),
+      const data1: WorkDto = {
+        date: InformationGenerator.generateRandomDate(),
         crop: { id: crop1.id },
         value_pay: 60_000,
-        description: 'No description',
+        description: InformationGenerator.generateDescription(),
         details: [
           {
             employee: { id: employee1.id },
@@ -273,29 +231,12 @@ describe('WorksController (e2e)', () => {
           } as WorkDetailsDto,
         ],
       };
-      crop2 = await cropController.create({
-        name: 'Crop test 2',
-        description: 'No description',
-        units: 10,
-        location: 'No location',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
 
-      employee2 = await employeeController.create({
-        first_name: 'Employee test',
-        last_name: 'Employee test',
-        email: 'employeetest2@mail.com',
-        cell_phone_number: '3127836149',
-        address: 'no address',
-      });
-
-      const data2: CreateWorkDto = {
-        date: new Date(
-          new Date().setDate(new Date().getDate() + 5),
-        ).toISOString(),
+      const data2: WorkDto = {
+        date: InformationGenerator.generateRandomDate(5),
         crop: { id: crop2.id },
         value_pay: 90_000,
-        description: 'No description',
+        description: InformationGenerator.generateDescription(),
         details: [
           {
             employee: { id: employee2.id },
@@ -303,13 +244,11 @@ describe('WorksController (e2e)', () => {
           } as WorkDetailsDto,
         ],
       };
-      const data3: CreateWorkDto = {
-        date: new Date(
-          new Date().setDate(new Date().getDate() + 10),
-        ).toISOString(),
+      const data3: WorkDto = {
+        date: InformationGenerator.generateRandomDate(10),
         crop: { id: crop2.id },
         value_pay: 180_000,
-        description: 'No description',
+        description: InformationGenerator.generateDescription(),
         details: [
           {
             employee: { id: employee2.id },
@@ -319,9 +258,11 @@ describe('WorksController (e2e)', () => {
       };
 
       for (let i = 0; i < 6; i++) {
-        await workController.create(data1);
-        await workController.create(data2);
-        await workController.create(data3);
+        await Promise.all([
+          await workController.create(data1),
+          await workController.create(data2),
+          await workController.create(data3),
+        ]);
       }
     });
 
@@ -622,7 +563,7 @@ describe('WorksController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.AFTER,
-        date: new Date().toISOString(),
+        date: InformationGenerator.generateRandomDate(),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -671,9 +612,7 @@ describe('WorksController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.BEFORE,
-        date: new Date(
-          new Date().setDate(new Date().getDate() + 1),
-        ).toISOString(),
+        date: InformationGenerator.generateRandomDate(1),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -722,9 +661,7 @@ describe('WorksController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.EQUAL,
-        date: new Date(
-          new Date().setDate(new Date().getDate() + 5),
-        ).toISOString(),
+        date: InformationGenerator.generateRandomDate(5),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -993,13 +930,11 @@ describe('WorksController (e2e)', () => {
 
     describe('should return the specified number of works passed by the query mix filter', () => {
       beforeAll(async () => {
-        const data1: CreateWorkDto = {
-          date: new Date(
-            new Date().setDate(new Date().getDate() + 3),
-          ).toISOString(),
+        const data1: WorkDto = {
+          date: InformationGenerator.generateRandomDate(3),
           crop: { id: crop1.id },
           value_pay: 360_000,
-          description: 'No description',
+          description: InformationGenerator.generateDescription(),
           details: [
             {
               employee: { id: employee1.id },
@@ -1012,13 +947,11 @@ describe('WorksController (e2e)', () => {
           ],
         };
 
-        const data2: CreateWorkDto = {
-          date: new Date(
-            new Date().setDate(new Date().getDate() + 3),
-          ).toISOString(),
+        const data2: WorkDto = {
+          date: InformationGenerator.generateRandomDate(3),
           crop: { id: crop1.id },
           value_pay: 300_000,
-          description: 'No description',
+          description: InformationGenerator.generateDescription(),
           details: [
             {
               employee: { id: employee1.id },
@@ -1031,8 +964,10 @@ describe('WorksController (e2e)', () => {
           ],
         };
 
-        const work1 = await workController.create(data1);
-        const work2 = await workController.create(data2);
+        await Promise.all([
+          await workController.create(data1),
+          await workController.create(data2),
+        ]);
       });
 
       it('should return the specified number of works passed by the query (EQUAL 1 date , value_pay)', async () => {
@@ -1136,11 +1071,10 @@ describe('WorksController (e2e)', () => {
   });
 
   describe('works/one/:id (GET)', () => {
-    const workId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
     it('should throw an exception for not sending a JWT to the protected path works/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .get(`/works/one/${workId}`)
+        .get(`/works/one/${falseWorkId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -1149,7 +1083,7 @@ describe('WorksController (e2e)', () => {
       await authService.removePermission(userTest.id, 'find_one_work');
       const response = await request
         .default(app.getHttpServer())
-        .get(`/works/one/${workId}`)
+        .get(`/works/one/${falseWorkId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -1160,11 +1094,7 @@ describe('WorksController (e2e)', () => {
     it('should get one work', async () => {
       await authService.addPermission(userTest.id, 'find_one_work');
 
-      const record = (
-        await workService.findAll({
-          limit: 1,
-        })
-      ).records[0];
+      const record = (await seedService.CreateWork({})).work;
 
       const response = await request
         .default(app.getHttpServer())
@@ -1172,6 +1102,7 @@ describe('WorksController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
       const work = response.body;
+
       expect(work).toHaveProperty('id');
       expect(work).toHaveProperty('date');
       expect(work).toHaveProperty('value_pay');
@@ -1213,12 +1144,10 @@ describe('WorksController (e2e)', () => {
     it('should throw exception for not finding work by ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .get(`/works/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .get(`/works/one/${falseWorkId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
-      expect(body.message).toEqual(
-        'Work with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
-      );
+      expect(body.message).toEqual(`Work with id: ${falseWorkId} not found`);
     });
 
     it('should throw exception for not sending an ID', async () => {
@@ -1232,11 +1161,10 @@ describe('WorksController (e2e)', () => {
   });
 
   describe('works/update/one/:id (PATCH)', () => {
-    const workId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
     it('should throw an exception for not sending a JWT to the protected path works/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/works/update/one/${workId}`)
+        .patch(`/works/update/one/${falseWorkId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -1245,7 +1173,7 @@ describe('WorksController (e2e)', () => {
       await authService.removePermission(userTest.id, 'find_one_work');
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/works/update/one/${workId}`)
+        .patch(`/works/update/one/${falseWorkId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -1256,15 +1184,11 @@ describe('WorksController (e2e)', () => {
     it('should update one work', async () => {
       await authService.addPermission(userTest.id, 'update_one_work');
 
-      const record = (
-        await workService.findAll({
-          limit: 1,
-        })
-      ).records[0];
+      const record = (await seedService.CreateWork({})).work;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
-      const bodyRequest: UpdateWorkDto = {
+      const bodyRequest: WorkDto = {
         ...rest,
         value_pay: rest.value_pay + 2000 * record.details.length,
         crop: { id: rest.crop.id },
@@ -1317,28 +1241,8 @@ describe('WorksController (e2e)', () => {
     it(' should throw an exception for trying to delete a record that is already paid for.', async () => {
       await authService.addPermission(userTest.id, 'update_one_work');
 
-      const [employee1, employee2] = (await employeeController.findAll({}))
-        .records;
-      const crop = (await cropController.findAll({})).records[0];
-
-      const data: CreateWorkDto = {
-        date: new Date().toISOString(),
-        crop: { id: crop.id },
-        value_pay: 120_000,
-        description: 'No description',
-        details: [
-          {
-            employee: { id: employee1.id },
-            value_pay: 60_000,
-          } as WorkDetailsDto,
-          {
-            employee: { id: employee2.id },
-            value_pay: 60_000,
-          } as WorkDetailsDto,
-        ],
-      };
-
-      const record = await workService.create(data);
+      const record = (await seedService.CreateWork({ quantityEmployees: 2 }))
+        .work;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
@@ -1348,7 +1252,7 @@ describe('WorksController (e2e)', () => {
         payment_is_pending: false,
       });
 
-      const bodyRequest: UpdateWorkDto = {
+      const bodyRequest: WorkDto = {
         ...rest,
         value_pay: 60_000,
         crop: { id: rest.crop.id },
@@ -1377,28 +1281,8 @@ describe('WorksController (e2e)', () => {
     it('You should throw an exception for attempting to delete a record that has been cascaded out.', async () => {
       await authService.addPermission(userTest.id, 'update_one_work');
 
-      const [employee1, employee2] = (await employeeController.findAll({}))
-        .records;
-      const crop = (await cropController.findAll({})).records[0];
-
-      const data: CreateWorkDto = {
-        date: new Date().toISOString(),
-        crop: { id: crop.id },
-        value_pay: 120_000,
-        description: 'No description',
-        details: [
-          {
-            employee: { id: employee1.id },
-            value_pay: 60_000,
-          } as WorkDetailsDto,
-          {
-            employee: { id: employee2.id },
-            value_pay: 60_000,
-          } as WorkDetailsDto,
-        ],
-      };
-
-      const record = await workService.create(data);
+      const record = (await seedService.CreateWork({ quantityEmployees: 2 }))
+        .work;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
@@ -1406,7 +1290,7 @@ describe('WorksController (e2e)', () => {
 
       await workDetailsRepository.softDelete(idWorkDetail);
 
-      const bodyRequest: UpdateWorkDto = {
+      const bodyRequest: WorkDto = {
         ...rest,
         value_pay: 60_000,
         crop: { id: rest.crop.id },
@@ -1432,14 +1316,11 @@ describe('WorksController (e2e)', () => {
       );
     });
 
-    it(' should throw an exception for trying to modify a record that is already paid for.', async () => {
+    it('should throw an exception for trying to modify a record that is already paid for.', async () => {
       await authService.addPermission(userTest.id, 'update_one_work');
 
-      const record = (
-        await workService.findAll({
-          limit: 1,
-        })
-      ).records[0];
+      const record = (await seedService.CreateWork({ quantityEmployees: 2 }))
+        .work;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
@@ -1447,7 +1328,7 @@ describe('WorksController (e2e)', () => {
         payment_is_pending: false,
       });
 
-      const bodyRequest: UpdateWorkDto = {
+      const bodyRequest: WorkDto = {
         ...rest,
         value_pay: rest.value_pay + 2000 * record.details.length,
         crop: { id: rest.crop.id },
@@ -1478,17 +1359,14 @@ describe('WorksController (e2e)', () => {
     it('You should throw an exception for attempting to modify a record that has been cascaded out.', async () => {
       await authService.addPermission(userTest.id, 'update_one_work');
 
-      const record = (
-        await workService.findAll({
-          limit: 1,
-        })
-      ).records[0];
+      const record = (await seedService.CreateWork({ quantityEmployees: 2 }))
+        .work;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
       await workDetailsRepository.softDelete(record.details[0].id);
 
-      const bodyRequest: UpdateWorkDto = {
+      const bodyRequest: WorkDto = {
         ...rest,
         value_pay: rest.value_pay + 2000 * record.details.length,
         crop: { id: rest.crop.id },
@@ -1515,19 +1393,17 @@ describe('WorksController (e2e)', () => {
     it('should throw exception for not finding work to update', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/works/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .patch(`/works/update/one/${falseWorkId}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ description: 'Observation updated 2' })
+        .send(workDtoTemplete)
         .expect(404);
-      expect(body.message).toEqual(
-        'Work with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
-      );
+      expect(body.message).toEqual(`Work with id: ${falseWorkId} not found`);
     });
 
     it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/works/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .patch(`/works/update/one/${falseWorkId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ year: 2025 })
         .expect(400);
@@ -1536,11 +1412,10 @@ describe('WorksController (e2e)', () => {
   });
 
   describe('works/remove/one/:id (DELETE)', () => {
-    const workId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
     it('should throw an exception for not sending a JWT to the protected path works/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .delete(`/works/remove/one/${workId}`)
+        .delete(`/works/remove/one/${falseWorkId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -1549,7 +1424,7 @@ describe('WorksController (e2e)', () => {
       await authService.removePermission(userTest.id, 'remove_one_work');
       const response = await request
         .default(app.getHttpServer())
-        .delete(`/works/remove/one/${workId}`)
+        .delete(`/works/remove/one/${falseWorkId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -1559,11 +1434,8 @@ describe('WorksController (e2e)', () => {
 
     it('should delete one work', async () => {
       await authService.addPermission(userTest.id, 'remove_one_work');
-      const { id } = (
-        await workService.findAll({
-          limit: 1,
-        })
-      ).records[0];
+      const { id } = (await seedService.CreateWork({ quantityEmployees: 2 }))
+        .work;
 
       await request
         .default(app.getHttpServer())
@@ -1582,33 +1454,20 @@ describe('WorksController (e2e)', () => {
     it('You should throw exception for trying to delete a work that does not exist.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .delete(`/works/remove/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .delete(`/works/remove/one/${falseWorkId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
-      expect(body.message).toEqual(
-        'Work with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
-      );
+      expect(body.message).toEqual(`Work with id: ${falseWorkId} not found`);
     });
 
     it('should throw an exception when trying to delete a work with payments records', async () => {
-      const work = (
-        await workService.findAll({
-          limit: 1,
-          offset: 1,
-        })
-      ).records[0];
+      await authService.addPermission(userTest.id, 'remove_one_work');
+      const work = (await seedService.CreateWork({})).work;
 
-      const [employee] = (await employeeController.findAll({})).records;
-
-      await paymentsController.create({
-        date: new Date().toISOString(),
-        employee: { id: employee.id },
-        method_of_payment: MethodOfPayment.EFECTIVO,
+      await seedService.CreatePayment({
+        employeeId: work.details[0].employee.id,
+        worksId: [work.details[0].id],
         total: work.details[0].value_pay,
-        categories: {
-          works: [work.details[0].id],
-          harvests: [],
-        } as PaymentCategoriesDto,
       });
 
       const { body } = await request
@@ -1618,7 +1477,7 @@ describe('WorksController (e2e)', () => {
         .expect(409);
 
       expect(body.message).toEqual(
-        `The record cannot be deleted because it has payments linked to it.`,
+        `The record with id ${work.id} cannot be deleted because it has payments linked to it.`,
       );
     });
   });
@@ -1646,12 +1505,12 @@ describe('WorksController (e2e)', () => {
 
     it('should delete works bulk', async () => {
       await authService.addPermission(userTest.id, 'remove_bulk_works');
-      const [work1, work2, work3] = (
-        await workService.findAll({
-          limit: 3,
-          offset: 1,
-        })
-      ).records;
+      const [{ work: work1 }, { work: work2 }, { work: work3 }] =
+        await Promise.all([
+          seedService.CreateWork({}),
+          seedService.CreateWork({}),
+          seedService.CreateWork({}),
+        ]);
 
       const bulkData: RemoveBulkRecordsDto<Work> = {
         recordsIds: [{ id: work1.id }, { id: work2.id }],
@@ -1686,30 +1545,17 @@ describe('WorksController (e2e)', () => {
     });
 
     it('should throw a multi-state code when trying to delete a work with payment records and other unrestricted records.', async () => {
-      const [work1, work2, work3] = await workRepository.find({
-        relations: {
-          crop: true,
-          details: { employee: true },
-        },
-        where: {
-          details: {
-            payments_work: {
-              id: IsNull(),
-            },
-          },
-        },
-        take: 3,
-      });
+      const [{ work: work1 }, { work: work2 }, { work: work3 }] =
+        await Promise.all([
+          seedService.CreateWork({}),
+          seedService.CreateWork({}),
+          seedService.CreateWork({}),
+        ]);
 
-      await paymentsController.create({
-        date: new Date().toISOString(),
-        employee: { id: work1.details[0].employee.id },
-        method_of_payment: MethodOfPayment.EFECTIVO,
+      await seedService.CreatePayment({
+        employeeId: work1.details[0].employee.id,
+        worksId: [work1.details[0].id],
         total: work1.details[0].value_pay,
-        categories: {
-          works: [work1.details[0].id],
-          harvests: [],
-        } as PaymentCategoriesDto,
       });
 
       const { body } = await request
@@ -1726,7 +1572,7 @@ describe('WorksController (e2e)', () => {
           {
             id: work1.id,
             error:
-              'The record cannot be deleted because it has payments linked to it.',
+              `The record with id ${work1.id} cannot be deleted because it has payments linked to it.`,
           },
         ],
       });
@@ -1734,7 +1580,6 @@ describe('WorksController (e2e)', () => {
   });
 
   describe('works/export/one/pdf/:id (GET)', () => {
-    const workId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
     it('should throw an exception for not sending a JWT to the protected path works/export/one/pdf/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1747,7 +1592,7 @@ describe('WorksController (e2e)', () => {
       await authService.removePermission(userTest.id, 'export_work_to_pdf');
       const response = await request
         .default(app.getHttpServer())
-        .get(`/works/export/one/pdf/${workId}`)
+        .get(`/works/export/one/pdf/${falseWorkId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
