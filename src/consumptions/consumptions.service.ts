@@ -8,28 +8,25 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
-import {
-  handleDBExceptions,
-  organizeIDsToUpdateEntity,
-} from 'src/common/helpers';
+import { organizeIDsToUpdateEntity } from 'src/common/helpers';
 
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { Supply } from 'src/supplies/entities/supply.entity';
 import { Condition } from 'src/supplies/interfaces/condition.interface';
 import { SuppliesService } from 'src/supplies/supplies.service';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { ConsumptionSuppliesDetailsDto } from './dto/consumption-supplies-details.dto';
-import { CreateConsumptionSuppliesDto } from './dto/create-consumption-supplies.dto';
+import { ConsumptionSuppliesDto } from './dto/consumption-supplies.dto';
 import { QueryParamsConsumption } from './dto/query-params-consumption.dto';
-import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.dto';
 import { SuppliesConsumptionDetails } from './entities/supplies-consumption-details.entity';
 import { SuppliesConsumption } from './entities/supplies-consumption.entity';
-import { monthNamesES } from 'src/common/utils/monthNamesEs';
+import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 
 @Injectable()
 export class ConsumptionsService {
   private readonly logger = new Logger('ConsumptionsService');
-  private handleDBExceptions = (error: any, logger = this.logger) =>
-    handleDBExceptions(error, logger);
+
   constructor(
     @InjectRepository(Supply)
     private readonly supplyRepository: Repository<Supply>,
@@ -39,12 +36,15 @@ export class ConsumptionsService {
     private readonly suppliesConsumptionDetailsRepository: Repository<SuppliesConsumptionDetails>,
 
     private readonly suppliesService: SuppliesService,
+    private readonly handlerError: HandlerErrorService,
 
     private dataSource: DataSource,
-  ) {}
+  ) {
+    this.handlerError.setLogger(this.logger);
+  }
 
   async createConsumption(
-    createConsumptionSuppliesDto: CreateConsumptionSuppliesDto,
+    createConsumptionSuppliesDto: ConsumptionSuppliesDto,
   ) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -83,7 +83,7 @@ export class ConsumptionsService {
       return consumption;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     } finally {
       await queryRunner.release();
     }
@@ -93,10 +93,11 @@ export class ConsumptionsService {
     const {
       limit = 10,
       offset = 0,
-      query: search = '',
+
       filter_by_date = false,
       type_filter_date,
       date,
+
       crops = [],
       supplies = [],
     } = queryParams;
@@ -111,19 +112,13 @@ export class ConsumptionsService {
       .take(limit)
       .skip(offset * limit);
 
-    if (filter_by_date) {
-      const operation =
-        TypeFilterDate.AFTER == type_filter_date
-          ? '>'
-          : TypeFilterDate.EQUAL == type_filter_date
-            ? '='
-            : '<';
-      queryBuilder.andWhere(`supplies_consumption.date ${operation} :date`, {
-        date,
-      });
-    }
+    filter_by_date &&
+      queryBuilder.andWhere(
+        `supplies_consumption.date ${getComparisonOperator(type_filter_date)} :date`,
+        { date },
+      );
 
-    if (crops.length > 0) {
+    crops.length > 0 &&
       queryBuilder.andWhere((qb) => {
         const subQuery = qb
           .subQuery()
@@ -135,9 +130,8 @@ export class ConsumptionsService {
           .getQuery();
         return 'supplies_consumption.id IN ' + subQuery;
       });
-    }
 
-    if (supplies.length > 0) {
+    supplies.length > 0 &&
       queryBuilder.andWhere((qb) => {
         const subQuery = qb
           .subQuery()
@@ -149,14 +143,21 @@ export class ConsumptionsService {
           .getQuery();
         return 'supplies_consumption.id IN ' + subQuery;
       });
-    }
 
     const [consumptions, count] = await queryBuilder.getManyAndCount();
 
+    if (consumptions.length === 0 && count > 0) {
+      throw new NotFoundException(
+        'There are no consumption records with the requested pagination',
+      );
+    }
+
     return {
-      rowCount: count,
-      rows: consumptions,
-      pageCount: Math.ceil(count / limit),
+      total_row_count: count,
+      current_row_count: consumptions.length,
+      total_page_count: Math.ceil(count / limit),
+      current_page_count: consumptions.length > 0 ? offset + 1 : 0,
+      records: consumptions,
     };
   }
 
@@ -186,7 +187,10 @@ export class ConsumptionsService {
       SuppliesConsumptionDetails,
       object,
     );
-    await queryRunner.manager.save(SuppliesConsumptionDetails, recordToSave);
+    return await queryRunner.manager.save(
+      SuppliesConsumptionDetails,
+      recordToSave,
+    );
   }
 
   async updateConsumptionDetails(
@@ -194,7 +198,7 @@ export class ConsumptionsService {
     condition: Condition,
     object: ConsumptionSuppliesDetailsDto,
   ) {
-    await queryRunner.manager.update(
+    return await queryRunner.manager.update(
       SuppliesConsumptionDetails,
       condition,
       object,
@@ -205,12 +209,15 @@ export class ConsumptionsService {
     queryRunner: QueryRunner,
     condition: Condition,
   ) {
-    await queryRunner.manager.delete(SuppliesConsumptionDetails, condition);
+    return await queryRunner.manager.delete(
+      SuppliesConsumptionDetails,
+      condition,
+    );
   }
 
   async updateConsumption(
     id: string,
-    updateSuppliesConsumptionDto: UpdateSuppliesConsumptionDto,
+    updateSuppliesConsumptionDto: ConsumptionSuppliesDto,
   ) {
     const consumption: SuppliesConsumption = await this.findOneConsumption(id);
 
@@ -242,18 +249,18 @@ export class ConsumptionsService {
 
         if (oldRecordData.deletedDate !== null) {
           throw new BadRequestException(
-            'You cannot delete this record, it is linked to other records.',
+            `You cannot delete the record with id ${detailId}, it is linked to other records.`,
           );
         }
-
-        await this.removeConsumptionDetails(queryRunner, {
-          id: detailId,
-        });
 
         await this.suppliesService.updateStock(queryRunner, {
           supplyId: oldRecordData.supply.id,
           amount: oldRecordData.amount,
           type_update: 'increment',
+        });
+
+        await this.removeConsumptionDetails(queryRunner, {
+          id: detailId,
         });
       }
 
@@ -263,7 +270,9 @@ export class ConsumptionsService {
         );
 
         if (oldRecordData.deletedDate !== null) {
-          continue;
+          throw new BadRequestException(
+            `You cannot update the record with id ${detailId} , it is linked to other records.`,
+          );
         }
 
         await this.suppliesService.updateStock(queryRunner, {
@@ -310,9 +319,12 @@ export class ConsumptionsService {
       await queryRunner.manager.update(SuppliesConsumption, { id }, rest);
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
+      return await this.findOneConsumption(id);
     } catch (error) {
-      this.handleDBExceptions(error);
+      await queryRunner.rollbackTransaction();
+      this.handlerError.handle(error);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -338,12 +350,12 @@ export class ConsumptionsService {
           type_update: 'increment',
         });
       }
-      await queryRunner.manager.softRemove(consumptionSupply);
+      await queryRunner.manager.remove(consumptionSupply);
 
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     } finally {
       await queryRunner.release();
     }
@@ -353,16 +365,26 @@ export class ConsumptionsService {
     try {
       await this.suppliesConsumptionRepository.delete({});
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 
   async removeBulkConsumption(
     removeBulkConsumptionDto: RemoveBulkRecordsDto<SuppliesConsumption>,
   ) {
+    const success: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+
     for (const { id } of removeBulkConsumptionDto.recordsIds) {
-      await this.removeConsumption(id);
+      try {
+        await this.removeConsumption(id);
+        success.push(id);
+      } catch (error) {
+        failed.push({ id, error: error.message });
+      }
     }
+
+    return { success, failed };
   }
 
   async findTotalConsumptionsInYearAndPreviousYear({

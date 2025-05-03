@@ -8,17 +8,18 @@ import {
   Patch,
   Post,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ConsumptionsService } from './consumptions.service';
 
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 
-import { CreateConsumptionSuppliesDto } from './dto/create-consumption-supplies.dto';
+import { ConsumptionSuppliesDto } from './dto/consumption-supplies.dto';
 import { QueryParamsConsumption } from './dto/query-params-consumption.dto';
-import { UpdateSuppliesConsumptionDto } from './dto/update-supplies-consumption.dto';
 import { SuppliesConsumption } from './entities/supplies-consumption.entity';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
 
 export const pathsConsumptionController: PathsController = {
   createConsumption: {
@@ -71,9 +72,7 @@ export class ConsumptionsController {
   constructor(private readonly consumptionsService: ConsumptionsService) {}
 
   @Post(createConsumption.path)
-  create(
-    @Body() createConsumptionSuppliesDto: CreateConsumptionSuppliesDto,
-  ) {
+  create(@Body() createConsumptionSuppliesDto: ConsumptionSuppliesDto) {
     return this.consumptionsService.createConsumption(
       createConsumptionSuppliesDto,
     );
@@ -92,7 +91,7 @@ export class ConsumptionsController {
   @Patch(updateConsumption.path)
   updateConsumption(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateSuppliesConsumptionDto: UpdateSuppliesConsumptionDto,
+    @Body() updateSuppliesConsumptionDto: ConsumptionSuppliesDto,
   ) {
     return this.consumptionsService.updateConsumption(
       id,
@@ -106,6 +105,7 @@ export class ConsumptionsController {
   }
 
   @Delete(removeBulkConsumptions.path)
+  @UseInterceptors(ResponseStatusInterceptor)
   removeBulkConsumption(
     @Body() removeBulkConsumptionDto: RemoveBulkRecordsDto<SuppliesConsumption>,
   ) {

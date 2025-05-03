@@ -15,7 +15,7 @@ import { SuppliersService } from 'src/suppliers/suppliers.service';
 
 import { AuthService } from 'src/auth/auth.service';
 import { ConsumptionsService } from 'src/consumptions/consumptions.service';
-import { CreateConsumptionSuppliesDto } from 'src/consumptions/dto/create-consumption-supplies.dto';
+import { ConsumptionSuppliesDto } from 'src/consumptions/dto/consumption-supplies.dto';
 
 import { HarvestProcessedDto } from 'src/harvest/dto/harvest-processed.dto';
 import { ShoppingService } from 'src/shopping/shopping.service';
@@ -413,12 +413,13 @@ export class SeedService {
 
     if (!supplyId) {
       supply = (await this.CreateSupply({})) as Supply;
+      await this.CreateShopping({ supplyId: supply.id, amount: 10_000 });
     }
     if (!cropId) {
       crop = (await this.CreateCrop({})) as Crop;
     }
 
-    const data: CreateConsumptionSuppliesDto = {
+    const data: ConsumptionSuppliesDto = {
       date: InformationGenerator.generateRandomDate(),
       details: [
         {
@@ -432,12 +433,51 @@ export class SeedService {
     const consumption = await this.consumptionsService.createConsumption(data);
     return { crop, consumption, supply };
   }
+  async CreateConsumptionExtended({
+    quantitySupplies = 2,
+    amountForItem = 2000,
+  }: {
+    quantitySupplies?: number;
+    amountForItem?: number;
+  }): Promise<{
+    consumption: SuppliesConsumption;
+    crop: Crop;
+    supplies: Supply[];
+  }> {
+    const crop: Crop = (await this.CreateCrop({})) as Crop;
+
+    const supplies = (await Promise.all(
+      Array.from({ length: quantitySupplies }).map(async () => {
+        const supply = await this.CreateSupply({});
+
+        await this.CreateShopping({ supplyId: supply.id });
+
+        return supply;
+      }),
+    )) as Supply[];
+
+    const data: ConsumptionSuppliesDto = {
+      date: InformationGenerator.generateRandomDate(),
+      details: supplies.map((supply) => {
+        return {
+          supply: { id: supply.id },
+          crop: { id: crop.id },
+          amount: amountForItem,
+        } as ConsumptionSuppliesDetailsDto;
+      }),
+    };
+
+    const consumption = await this.consumptionsService.createConsumption(data);
+    return { crop, consumption, supplies };
+  }
 
   async CreateShopping({
     supplyId,
+    amount = 4000,
     valuePay = 250_000,
   }: {
     supplyId?: string;
+    amount?: number;
     valuePay?: number;
   }): Promise<{
     shopping: SuppliesShopping;
@@ -454,7 +494,7 @@ export class SeedService {
         {
           supply: { id: supplyId || supply.id },
           supplier: { id: supplier.id },
-          amount: 4000,
+          amount,
           value_pay: valuePay,
         } as ShoppingSuppliesDetailsDto,
       ],
@@ -465,9 +505,11 @@ export class SeedService {
   }
   async CreateShoppingExtended({
     quantitySupplies = 1,
+    amountForItem = 4_000,
     valuePay = 250_000,
   }: {
     quantitySupplies?: number;
+    amountForItem?: number;
     valuePay?: number;
   }): Promise<{
     shopping: SuppliesShopping;
@@ -486,7 +528,7 @@ export class SeedService {
         return {
           supply: { id: supply.id },
           supplier: { id: supplier.id },
-          amount: 4_000,
+          amount: amountForItem,
           value_pay: valuePay,
         } as ShoppingSuppliesDetailsDto;
       }),
@@ -720,7 +762,7 @@ export class SeedService {
     const { details, ...rest } = initialConsumption;
 
     for (let index = 0; index < 3; index++) {
-      const objectToCreate: CreateConsumptionSuppliesDto = {
+      const objectToCreate: ConsumptionSuppliesDto = {
         ...rest,
         details: [
           {

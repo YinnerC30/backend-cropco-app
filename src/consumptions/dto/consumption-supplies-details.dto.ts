@@ -1,6 +1,7 @@
 
 import { DeepPartial } from 'typeorm';
 import {
+  IsDefined,
   IsInt,
   IsOptional,
   IsPositive,
@@ -22,10 +23,12 @@ export class ConsumptionSuppliesDetailsDto {
   @Type(() => ValidateUUID)
   consumption: DeepPartial<SuppliesConsumption>;
 
+  @IsDefined()
   @ValidateNested()
   @Type(() => ValidateUUID)
   supply: DeepPartial<Supply>;
 
+  @IsDefined()
   @ValidateNested()
   @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;

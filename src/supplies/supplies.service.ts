@@ -185,6 +185,90 @@ export class SuppliesService {
     };
   }
 
+  async findOneStock(supplyId: string) {
+    const supplyStock = await this.suppliesStockRepository.findOne({
+      where: {
+        supply: { id: supplyId },
+      },
+    });
+
+    return supplyStock;
+  }
+
+  async updateStockManual(id: string, amount: number) {
+    return await this.suppliesStockRepository.update(id, { amount });
+  }
+
+  // async updateStock(
+  //   queryRunner: QueryRunner,
+  //   info: {
+  //     supplyId: any;
+  //     amount: number;
+  //     type_update: 'increment' | 'decrement';
+  //   },
+  // ) {
+  //   const { supplyId, amount, type_update } = info;
+
+  //   const supply = await queryRunner.manager.findOne(Supply, {
+  //     where: { id: supplyId },
+  //   });
+  //   if (!supply) {
+  //     throw new NotFoundException(`Supply with id: ${supplyId} not found`);
+  //   }
+
+  //   const recordSupplyStock = await queryRunner.manager.findOne(SuppliesStock, {
+  //     where: { supply: { id: supplyId } },
+  //     relations: { supply: true },
+  //   });
+
+  //   if (!recordSupplyStock || recordSupplyStock === null) {
+  //     const recordToSave = queryRunner.manager.create(SuppliesStock, {
+  //       supply: supplyId,
+  //       amount: 0,
+  //     });
+
+  //     await queryRunner.manager.save(SuppliesStock, recordToSave);
+  //   }
+
+  //   if (type_update === 'increment') {
+  //     const result = await queryRunner.manager.increment(
+  //       SuppliesStock,
+  //       { supply: supplyId },
+  //       'amount',
+  //       amount,
+  //     );
+
+  //     if (result.affected === 0) {
+  //       throw new NotFoundException(
+  //         `Supply with id: ${supplyId} not incremented stock`,
+  //       );
+  //     }
+  //   } else if (type_update === 'decrement') {
+  //     const amountActually = recordSupplyStock?.amount || 0;
+
+  //     if (amountActually < amount) {
+  //       throw new InsufficientSupplyStockException(
+  //         amountActually,
+  //         supply.name,
+  //         supply.unit_of_measure,
+  //       );
+  //     }
+
+  //     const result = await queryRunner.manager.decrement(
+  //       SuppliesStock,
+  //       { supply: supplyId },
+  //       'amount',
+  //       amount,
+  //     );
+
+  //     if (result.affected === 0) {
+  //       throw new NotFoundException(
+  //         `Supply with id: ${supplyId} not decremented stock`,
+  //       );
+  //     }
+  //   }
+  // }
+
   async updateStock(
     queryRunner: QueryRunner,
     info: {
@@ -195,50 +279,80 @@ export class SuppliesService {
   ) {
     const { supplyId, amount, type_update } = info;
 
-    const supply = await this.findOne(supplyId);
+    this.logger.log(
+      `Actualizando stock para supplyId: ${supplyId} con tipo: ${type_update} y cantidad: ${amount}`,
+    );
 
-    const recordSupplyStock = await this.suppliesStockRepository.findOne({
-      where: {
-        supply: { id: supplyId },
-      },
+    // Cargar la entidad Supply
+    const supply = await queryRunner.manager.findOne(Supply, {
+      where: { id: supplyId },
+    });
+
+    if (!supply) {
+      throw new NotFoundException(`Supply with id: ${supplyId} not found`);
+    }
+
+    // Buscar el registro de stock
+    let recordSupplyStock = await queryRunner.manager.findOne(SuppliesStock, {
+      where: { supply: { id: supplyId } },
+      relations: ['supply'],
     });
 
     if (!recordSupplyStock) {
-      const recordToSave = queryRunner.manager.create(SuppliesStock, {
-        supply: supplyId,
+      this.logger.warn(
+        `Creando nuevo registro de stock para supplyId: ${supplyId}`,
+      );
+
+      const newRecord = queryRunner.manager.create(SuppliesStock, {
+        supply: supply, // <-- Usamos la entidad completa
         amount: 0,
       });
 
-      await queryRunner.manager.save(SuppliesStock, recordToSave);
+      await queryRunner.manager.save(SuppliesStock, newRecord);
+
+      recordSupplyStock = newRecord;
     }
 
-    switch (type_update) {
-      case 'increment':
-        return await queryRunner.manager.increment(
-          SuppliesStock,
-          { supply: supplyId },
-          'amount',
-          amount,
+    if (type_update === 'increment') {
+      const result = await queryRunner.manager.increment(
+        SuppliesStock,
+        { supply: supplyId },
+        'amount',
+        amount,
+      );
+
+      this.logger.verbose('Increment result:', result);
+
+      if (result.affected === 0) {
+        throw new NotFoundException(
+          `Supply with id: ${supplyId} not incremented`,
         );
-      case 'decrement':
-        const amountActually = recordSupplyStock?.amount || 0;
+      }
+    } else if (type_update === 'decrement') {
+      const amountActually = recordSupplyStock.amount;
 
-        if (amountActually < amount) {
-          throw new InsufficientSupplyStockException(
-            amountActually,
-            supply?.name,
-          );
-        }
-
-        return await queryRunner.manager.decrement(
-          SuppliesStock,
-          { supply: supplyId },
-          'amount',
-          amount,
+      if (amountActually < amount) {
+        throw new InsufficientSupplyStockException(
+          amountActually,
+          supply.name,
+          supply.unit_of_measure,
         );
+      }
 
-      default:
-        throw new Error('Invalid type_update value');
+      const result = await queryRunner.manager.decrement(
+        SuppliesStock,
+        { supply: supplyId },
+        'amount',
+        amount,
+      );
+
+      this.logger.verbose('Decrement result:', result);
+
+      if (result.affected === 0) {
+        throw new NotFoundException(
+          `Supply with id: ${supplyId} not decremented`,
+        );
+      }
     }
   }
 
