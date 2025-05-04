@@ -8,7 +8,7 @@ describe('HarvestDetailsDto', () => {
       id: '123e4567-e89b-12d3-a456-426614174000',
       employee: { id: '123e4567-e89b-12d3-a456-426614174001' },
       harvest: { id: '123e4567-e89b-12d3-a456-426614174002' },
-      total: 100,
+      amount: 100,
       value_pay: 500,
       // payment_is_pending: true,
     });
@@ -20,7 +20,7 @@ describe('HarvestDetailsDto', () => {
   it('should validate with optional fields missing', async () => {
     const dto = plainToClass(HarvestDetailsDto, {
       employee: { id: '123e4567-e89b-12d3-a456-426614174001' },
-      total: 100,
+      amount: 100,
       value_pay: 500,
     });
 
@@ -32,7 +32,7 @@ describe('HarvestDetailsDto', () => {
     const dto = plainToClass(HarvestDetailsDto, {
       id: 'invalid-uuid',
       employee: { id: '123e4567-e89b-12d3-a456-426614174001' },
-      total: 100,
+      amount: 100,
       value_pay: 500,
     });
 
@@ -43,7 +43,7 @@ describe('HarvestDetailsDto', () => {
   it('should fail with negative numbers', async () => {
     const dto = plainToClass(HarvestDetailsDto, {
       employee: { id: '123e4567-e89b-12d3-a456-426614174001' },
-      total: -100,
+      amount: -100,
       value_pay: -500,
     });
 
@@ -54,7 +54,7 @@ describe('HarvestDetailsDto', () => {
   it('should fail with non-integer numbers', async () => {
     const dto = plainToClass(HarvestDetailsDto, {
       employee: { id: '123e4567-e89b-12d3-a456-426614174001' },
-      total: 100.5,
+      amount: 100.5,
       value_pay: 500.5,
     });
 

@@ -60,7 +60,6 @@ export class PaymentsService {
         .getRepository(WorkDetails)
         .findOne({ where: { id: `${id}` } });
 
-
       totalValuePayWork.push(record.value_pay);
     }
 
@@ -69,7 +68,7 @@ export class PaymentsService {
       ...totalValuePayWork,
     ].reduce((accumulator, currentValue) => accumulator + currentValue, 0);
 
-    if (totalVerify !== createPaymentDto.total) {
+    if (totalVerify !== createPaymentDto.value_pay) {
       throw new BadRequestException(
         `Total payment is not correct, correct value is ${totalVerify}`,
       );
@@ -127,9 +126,9 @@ export class PaymentsService {
       type_filter_date,
       date,
 
-      filter_by_total = false,
-      type_filter_total,
-      total,
+      filter_by_value_pay = false,
+      type_filter_value_pay,
+      value_pay,
       filter_by_method_of_payment = false,
       method_of_payment = MethodOfPayment.EFECTIVO,
     } = queryParams;
@@ -158,14 +157,16 @@ export class PaymentsService {
       queryBuilder.andWhere(`payment.date ${operation} :date`, { date });
     }
 
-    if (filter_by_total) {
+    if (filter_by_value_pay) {
       const operation =
-        TypeFilterNumber.MAX == type_filter_total
+        TypeFilterNumber.MAX == type_filter_value_pay
           ? '>'
-          : TypeFilterNumber.EQUAL == type_filter_total
+          : TypeFilterNumber.EQUAL == type_filter_value_pay
             ? '='
             : '<';
-      queryBuilder.andWhere(`payment.total ${operation} :total`, { total });
+      queryBuilder.andWhere(`payment.value_pay ${operation} :value_pay`, {
+        value_pay,
+      });
     }
 
     if (filter_by_method_of_payment) {

@@ -8,7 +8,7 @@ describe('HarvestProcessedDto', () => {
       date: '2024-07-11',
       crop: { id: '123e4567-e89b-12d3-a456-426614174000' },
       harvest: { id: '123e4567-e89b-12d3-a456-426614174001' },
-      total: 100,
+      amount: 100,
     });
 
     const errors = await validate(dto);
@@ -20,7 +20,7 @@ describe('HarvestProcessedDto', () => {
       date: 'invalid-date',
       crop: { id: '123e4567-e89b-12d3-a456-426614174000' },
       harvest: { id: '123e4567-e89b-12d3-a456-426614174001' },
-      total: 100,
+      amount: 100,
     });
 
     const errors = await validate(dto);
@@ -28,12 +28,12 @@ describe('HarvestProcessedDto', () => {
     expect(errors[0].constraints).toHaveProperty('isDateString');
   });
 
-  it('should fail with negative total', async () => {
+  it('should fail with negative amount', async () => {
     const dto = plainToClass(HarvestProcessedDto, {
       date: '2024-07-11',
       crop: { id: '123e4567-e89b-12d3-a456-426614174000' },
       harvest: { id: '123e4567-e89b-12d3-a456-426614174001' },
-      total: -100,
+      amount: -100,
     });
 
     const errors = await validate(dto);
@@ -41,12 +41,12 @@ describe('HarvestProcessedDto', () => {
     expect(errors[0].constraints).toHaveProperty('isPositive');
   });
 
-  it('should fail with non-integer total', async () => {
+  it('should fail with non-integer amount', async () => {
     const dto = plainToClass(HarvestProcessedDto, {
       date: '2024-07-11',
       crop: { id: '123e4567-e89b-12d3-a456-426614174000' },
       harvest: { id: '123e4567-e89b-12d3-a456-426614174001' },
-      total: 100.5,
+      amount: 100.5,
     });
 
     const errors = await validate(dto);

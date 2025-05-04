@@ -54,7 +54,7 @@ export const getPaymentReport = (
           body: [
             [
               'Total a pagar: ',
-              { text: FormatMoneyValue(data.total), style: 'boldText' },
+              { text: FormatMoneyValue(data.value_pay), style: 'boldText' },
             ],
             [
               'Metodo de pago: ',
@@ -121,7 +121,7 @@ export const getPaymentReport = (
                           style: 'tableCell',
                         },
                         {
-                          text: FormatNumber(harvests_detail.total) + ' Kg',
+                          text: FormatNumber(harvests_detail.amount) + ' Kg',
                           style: 'tableCell',
                           alignment: 'center',
                         },

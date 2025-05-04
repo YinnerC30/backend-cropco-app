@@ -12,6 +12,7 @@ export class HandlerErrorService {
   private logger: Logger; // Logger como propiedad
 
   setLogger(logger: Logger) {
+    console.log('Se cambio el logger');
     this.logger = logger; // Método para establecer el Logger
   }
 
@@ -21,7 +22,7 @@ export class HandlerErrorService {
     }
     this.logger.error(error);
 
-    // console.log(error);
+    console.log(error);
     if (error.code === '23503') {
       throw new BadRequestException(
         `Foreign key constraint violation, ${error.detail}`,

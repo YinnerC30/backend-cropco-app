@@ -536,7 +536,7 @@ describe('CropsController e2e', () => {
       await seedService.CreateHarvestProcessed({
         cropId: crop.id,
         harvestId: harvest.id,
-        total: 50,
+        amount: 50,
       });
 
       const { body } = await request
@@ -618,7 +618,7 @@ describe('CropsController e2e', () => {
       await seedService.CreateHarvestProcessed({
         cropId: crop1.id,
         harvestId: harvest1.id,
-        total: 50,
+        amount: 50,
       });
 
       const { crop: crop2, harvest: harvest2 } =
@@ -626,7 +626,7 @@ describe('CropsController e2e', () => {
       await seedService.CreateHarvestProcessed({
         cropId: crop2.id,
         harvestId: harvest2.id,
-        total: 50,
+        amount: 50,
       });
 
       const crop3 = await seedService.CreateCrop({});

@@ -60,7 +60,7 @@ export class HarvestProcessed {
     type: Number,
   })
   @Column({ type: 'int4' })
-  total: number;
+  amount: number;
 
   @CreateDateColumn()
   createdDate: Date;

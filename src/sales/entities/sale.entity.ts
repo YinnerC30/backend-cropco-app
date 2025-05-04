@@ -27,7 +27,7 @@ export class Sale {
   @Column({
     type: 'int4',
   })
-  quantity: number;
+  amount: number;
 
   @ApiProperty({
     example: 100,
@@ -36,7 +36,7 @@ export class Sale {
   @Column({
     type: 'int4',
   })
-  total: number;
+  value_pay: number;
 
   @ApiProperty({
     type: () => [SaleDetails],

@@ -51,7 +51,7 @@ export class Payment {
 
   @ApiProperty({ example: 1000, description: 'Total del pago' })
   @Column({ type: 'int4' })
-  total: number;
+  value_pay: number;
 
   @ApiProperty({
     type: () => [PaymentHarvest],

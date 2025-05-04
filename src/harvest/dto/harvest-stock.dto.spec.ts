@@ -8,7 +8,7 @@ describe('HarvestStockDto', () => {
   beforeEach(() => {
     dto = plainToClass(HarvestStockDto, {
       crop: { id: '123e4567-e89b-12d3-a456-426614174000' },
-      total: 100,
+      amount: 100,
     });
   });
 
@@ -20,25 +20,25 @@ describe('HarvestStockDto', () => {
   it('should fail with invalid crop uuid', async () => {
     dto = plainToClass(HarvestStockDto, {
       crop: { id: 'invalid-uuid' },
-      total: 100,
+      amount: 100,
     });
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should fail with non-integer total', async () => {
+  it('should fail with non-integer amount', async () => {
     dto = plainToClass(HarvestStockDto, {
       crop: { id: '123e4567-e89b-12d3-a456-426614174000' },
-      total: 10.5,
+      amount: 10.5,
     });
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should fail with negative total', async () => {
+  it('should fail with negative amount', async () => {
     dto = plainToClass(HarvestStockDto, {
       crop: { id: '123e4567-e89b-12d3-a456-426614174000' },
-      total: -100,
+      amount: -100,
     });
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
@@ -46,14 +46,14 @@ describe('HarvestStockDto', () => {
 
   it('should fail when crop is missing', async () => {
     dto = plainToClass(HarvestStockDto, {
-      total: 100,
+      amount: 100,
     });
 
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should fail when total is missing', async () => {
+  it('should fail when amount is missing', async () => {
     dto = plainToClass(HarvestStockDto, {
       crop: { id: '123e4567-e89b-12d3-a456-426614174000' },
     });

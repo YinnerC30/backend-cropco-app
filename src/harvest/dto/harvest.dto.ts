@@ -42,7 +42,7 @@ export class HarvestDto {
   })
   @IsInt()
   @IsPositive()
-  total: number;
+  amount: number;
 
   @ApiProperty({
     description: 'Valor de pago por la cosecha',
@@ -67,7 +67,7 @@ export class HarvestDto {
   })
   @ArrayNotEmpty()
   @MatchTotals({
-    fields: ['total', 'value_pay'],
+    fields: ['amount', 'value_pay'],
     nameArrayToCalculate: 'details',
   })
   @UniqueRecordIdInArray('employee')

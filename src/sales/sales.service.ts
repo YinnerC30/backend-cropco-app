@@ -7,37 +7,36 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
-import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
-import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organize-ids-to-update-entity';
-import { validateTotalInArray } from 'src/common/helpers/validate-total-in-array';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { HarvestService } from 'src/harvest/harvest.service';
+import { PrinterService } from 'src/printer/printer.service';
 import { DataSource, Repository } from 'typeorm';
-import { CreateSaleDto } from './dto/create-sale.dto';
 import { QueryParamsSale } from './dto/query-params-sale.dto';
+import { QueryTotalSalesInYearDto } from './dto/query-total-sales-year';
 import { SaleDetailsDto } from './dto/sale-details.dto';
-import { UpdateSaleDto } from './dto/update-sale.dto';
+import { SaleDto } from './dto/sale.dto';
 import { SaleDetails } from './entities/sale-details.entity';
 import { Sale } from './entities/sale.entity';
 import { getSaleReport } from './reports/get-sale';
-import { PrinterService } from 'src/printer/printer.service';
-import { monthNamesES } from 'src/common/utils/monthNamesEs';
-import { QueryTotalSalesInYearDto } from './dto/query-total-sales-year';
 
 @Injectable()
 export class SalesService {
   private readonly logger = new Logger('SalesService');
-  private handleDBExceptions = (error: any, logger = this.logger) =>
-    handleDBExceptions(error, logger);
+
   constructor(
     @InjectRepository(Sale)
     private readonly saleRepository: Repository<Sale>,
     private readonly dataSource: DataSource,
     private readonly harvestService: HarvestService,
     private readonly printerService: PrinterService,
-  ) {}
+    private readonly handlerError: HandlerErrorService,
+  ) {
+    this.handlerError.setLogger(this.logger);
+  }
 
-  async create(createSaleDto: CreateSaleDto) {
+  async create(createSaleDto: SaleDto) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -51,12 +50,11 @@ export class SalesService {
       });
 
       for (const item of details) {
-        await this.harvestService.updateStock(
-          queryRunner,
-          item.crop.id,
-          item.quantity,
-          false,
-        );
+        await this.harvestService.updateStock(queryRunner, {
+          cropId: item.crop.id,
+          amount: item.amount,
+          type_update: 'decrement',
+        });
       }
 
       await queryRunner.manager.save(sale);
@@ -65,7 +63,7 @@ export class SalesService {
       return sale;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     } finally {
       await queryRunner.release();
     }
@@ -80,16 +78,17 @@ export class SalesService {
       type_filter_date,
       date,
 
-      filter_by_total = false,
-      type_filter_total,
-      total,
+      filter_by_value_pay = false,
+      type_filter_value_pay,
+      value_pay,
 
-      filter_by_quantity = false,
-      type_filter_quantity,
-      quantity,
+      filter_by_amount = false,
+      type_filter_amount,
+      amount,
 
       filter_by_is_receivable = false,
       is_receivable,
+
       clients = [],
       crops = [],
     } = queryParams;
@@ -114,26 +113,26 @@ export class SalesService {
       queryBuilder.andWhere(`sale.date ${operation} :date`, { date });
     }
 
-    if (filter_by_total) {
-      const operation =
-        TypeFilterNumber.MAX == type_filter_total
-          ? '>'
-          : TypeFilterNumber.EQUAL == type_filter_total
-            ? '='
-            : '<';
-      queryBuilder.andWhere(`sale.total ${operation} :total`, { total });
-    }
-    if (filter_by_quantity) {
-      const operation =
-        TypeFilterNumber.MAX == type_filter_quantity
-          ? '>'
-          : TypeFilterNumber.EQUAL == type_filter_quantity
-            ? '='
-            : '<';
-      queryBuilder.andWhere(`sale.quantity ${operation} :quantity`, {
-        quantity,
-      });
-    }
+    // if (filter_by_total) {
+    //   const operation =
+    //     TypeFilterNumber.MAX == type_filter_total
+    //       ? '>'
+    //       : TypeFilterNumber.EQUAL == type_filter_total
+    //         ? '='
+    //         : '<';
+    //   queryBuilder.andWhere(`sale.total ${operation} :total`, { total });
+    // }
+    // if (filter_by_quantity) {
+    //   const operation =
+    //     TypeFilterNumber.MAX == type_filter_quantity
+    //       ? '>'
+    //       : TypeFilterNumber.EQUAL == type_filter_quantity
+    //         ? '='
+    //         : '<';
+    //   queryBuilder.andWhere(`sale.quantity ${operation} :quantity`, {
+    //     quantity,
+    //   });
+    // }
 
     if (clients.length > 0) {
       queryBuilder.andWhere((qb) => {
@@ -194,13 +193,8 @@ export class SalesService {
     return sale;
   }
 
-  async update(id: string, updateSaleDto: UpdateSaleDto) {
+  async update(id: string, updateSaleDto: SaleDto) {
     const sale: Sale = await this.findOne(id);
-
-    validateTotalInArray(updateSaleDto, {
-      propertyNameArray: 'details',
-      namesPropertiesToSum: ['total'],
-    });
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -232,12 +226,11 @@ export class SalesService {
           );
         }
 
-        await this.harvestService.updateStock(
-          queryRunner,
-          oldData.crop.id,
-          oldData.quantity,
-          true,
-        );
+        await this.harvestService.updateStock(queryRunner, {
+          cropId: oldData.crop.id,
+          amount: oldData.amount,
+          type_update: 'increment',
+        });
 
         await queryRunner.manager.delete(SaleDetails, { id: saleDetailId });
       }
@@ -249,21 +242,19 @@ export class SalesService {
           continue;
         }
 
-        await this.harvestService.updateStock(
-          queryRunner,
-          oldData.crop.id,
-          oldData.quantity,
-          true,
-        );
+        await this.harvestService.updateStock(queryRunner, {
+          cropId: oldData.crop.id,
+          amount: oldData.amount,
+          type_update: 'increment',
+        });
 
         const newData = newDetails.find((record) => record.id === saleDetailId);
 
-        await this.harvestService.updateStock(
-          queryRunner,
-          newData.crop.id,
-          newData.quantity,
-          false,
-        );
+        await this.harvestService.updateStock(queryRunner, {
+          cropId: newData.crop.id,
+          amount: newData.amount,
+          type_update: 'decrement',
+        });
 
         await queryRunner.manager.update(
           SaleDetails,
@@ -274,14 +265,13 @@ export class SalesService {
 
       for (const saleDetailId of toCreate) {
         const newData = newDetails.find((record) => record.id === saleDetailId);
-        await this.harvestService.updateStock(
-          queryRunner,
-          newData.crop.id,
-          newData.quantity,
-          false,
-        );
+        await this.harvestService.updateStock(queryRunner, {
+          cropId: newData.crop.id,
+          amount: newData.amount,
+          type_update: 'decrement',
+        });
         const record = queryRunner.manager.create(SaleDetails, {
-          sale: sale.id,
+          sale: { id: sale.id },
           ...newData,
         });
         await queryRunner.manager.save(record);
@@ -292,7 +282,7 @@ export class SalesService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     } finally {
     }
   }
@@ -309,19 +299,18 @@ export class SalesService {
           continue;
         }
 
-        await this.harvestService.updateStock(
-          queryRunner,
-          item.crop.id,
-          item.quantity,
-          true,
-        );
+        await this.harvestService.updateStock(queryRunner, {
+          cropId: item.crop.id,
+          amount: item.amount,
+          type_update: 'increment',
+        });
       }
 
       await queryRunner.manager.remove(Sale, sale);
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     } finally {
       await queryRunner.release();
     }
@@ -331,7 +320,7 @@ export class SalesService {
     try {
       await this.saleRepository.delete({});
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error);
     }
   }
 

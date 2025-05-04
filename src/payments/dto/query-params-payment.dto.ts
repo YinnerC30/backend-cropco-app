@@ -44,14 +44,14 @@ export class QueryParamsPayment extends QueryParamsDto {
 
   @IsOptional()
   @IsBooleanString()
-  filter_by_total?: boolean;
+  filter_by_value_pay?: boolean;
 
   @IsOptional()
   @IsEnum(TypeFilterNumber)
-  type_filter_total?: TypeFilterNumber;
+  type_filter_value_pay?: TypeFilterNumber;
 
   @IsOptional()
   @Type(() => Number) // Transformará el valor a un número
   @IsInt()
-  total?: number;
+  value_pay?: number;
 }

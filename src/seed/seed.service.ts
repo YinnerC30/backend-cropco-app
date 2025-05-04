@@ -9,7 +9,7 @@ import { Harvest } from 'src/harvest/entities/harvest.entity';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { CreatePaymentDto } from 'src/payments/dto/create-payment.dto';
 import { PaymentsService } from 'src/payments/payments.service';
-import { CreateSaleDto } from 'src/sales/dto/create-sale.dto';
+import { SaleDto } from 'src/sales/dto/sale.dto';
 import { SalesService } from 'src/sales/sales.service';
 import { SuppliersService } from 'src/suppliers/suppliers.service';
 
@@ -271,11 +271,11 @@ export class SeedService {
       details: employees.map((employee) => {
         return {
           employee: { id: employee.id },
-          total: 150,
+          amount: 150,
           value_pay: 90_000,
         } as HarvestDetailsDto;
       }),
-      total: 150 * quantityEmployees,
+      amount: 150 * quantityEmployees,
       value_pay: 90_000 * quantityEmployees,
       observation: InformationGenerator.generateObservation(),
     };
@@ -291,17 +291,17 @@ export class SeedService {
   async CreateHarvestProcessed({
     cropId,
     harvestId,
-    total,
+    amount,
   }: {
     cropId: string;
     harvestId: string;
-    total: number;
+    amount: number;
   }): Promise<HarvestProcessed> {
     const data: HarvestProcessedDto = {
       date: InformationGenerator.generateRandomDate(),
       crop: { id: cropId },
       harvest: { id: harvestId },
-      total,
+      amount,
     };
 
     const harvestProcessed =
@@ -356,14 +356,14 @@ export class SeedService {
   }): Promise<{ sale: Sale; client: Client }> {
     const client = (await this.CreateClient({})) as Client;
 
-    const data: CreateSaleDto = {
+    const data: SaleDto = {
       date: InformationGenerator.generateRandomDate(),
-      quantity,
-      total: 840_000,
+      amount: quantity,
+      value_pay: 840_000,
       details: [
         {
-          quantity,
-          total: 840_000,
+          amount: quantity,
+          value_pay: 840_000,
           crop: { id: cropId },
           client: { id: client.id },
           is_receivable: isReceivable,
@@ -543,25 +543,24 @@ export class SeedService {
     methodOfPayment = MethodOfPayment.EFECTIVO,
     worksId = [],
     harvestsId = [],
-    total,
+    value_pay,
   }: {
     employeeId?: string;
     methodOfPayment?: MethodOfPayment;
     worksId?: string[];
     harvestsId?: string[];
-    total: number;
+    value_pay: number;
   }) {
     const data: CreatePaymentDto = plainToClass(CreatePaymentDto, {
       date: InformationGenerator.generateRandomDate(),
       employee: { id: employeeId },
       method_of_payment: methodOfPayment,
-      total,
+      value_pay,
       categories: {
         harvests: [...(harvestsId as DeepPartial<HarvestDetails>[])],
         works: [...(worksId as DeepPartial<WorkDetails>[])],
       },
     });
-    const errors = await validate(data);
 
     return await this.paymentsService.create(data);
   }
@@ -826,7 +825,7 @@ export class SeedService {
 
     const { details, ...rest } = initialSale;
 
-    const objectToCreate: CreateSaleDto = {
+    const objectToCreate: SaleDto = {
       ...rest,
       details: [
         {
@@ -851,30 +850,30 @@ export class SeedService {
     return true;
   }
 
-  private async insertNewPayments() {
-    const initialPayment = initialData.payments[0];
+  // private async insertNewPayments() {
+  //   const initialPayment = initialData.payments[0];
 
-    const [employee1]: DeepPartial<Employee>[] = this.employeeIds;
+  //   const [employee1]: DeepPartial<Employee>[] = this.employeeIds;
 
-    const [work1]: DeepPartial<Work>[] = this.worksIds;
+  //   const [work1]: DeepPartial<Work>[] = this.worksIds;
 
-    const harvestDetails: any = this.harvestDetails;
+  //   const harvestDetails: any = this.harvestDetails;
 
-    const objectToCreate: CreatePaymentDto = {
-      date: initialPayment.date,
-      method_of_payment: initialPayment.method_of_payment,
-      employee: employee1,
-      total: 185000,
-      categories: {
-        harvests: [
-          harvestDetails[0][0].id,
-          harvestDetails[1][0].id,
-          harvestDetails[2][0].id,
-        ],
-        works: [work1],
-      },
-    };
+  //   const objectToCreate: CreatePaymentDto = {
+  //     date: initialPayment.date,
+  //     method_of_payment: initialPayment.method_of_payment,
+  //     employee: employee1,
+  //     total: 185000,
+  //     categories: {
+  //       harvests: [
+  //         harvestDetails[0][0].id,
+  //         harvestDetails[1][0].id,
+  //         harvestDetails[2][0].id,
+  //       ],
+  //       works: [work1],
+  //     },
+  //   };
 
-    await this.paymentsService.create(objectToCreate);
-  }
+  //   await this.paymentsService.create(objectToCreate);
+  // }
 }

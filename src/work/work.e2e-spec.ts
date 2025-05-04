@@ -1467,7 +1467,7 @@ describe('WorksController (e2e)', () => {
       await seedService.CreatePayment({
         employeeId: work.details[0].employee.id,
         worksId: [work.details[0].id],
-        total: work.details[0].value_pay,
+        value_pay: work.details[0].value_pay,
       });
 
       const { body } = await request
@@ -1555,7 +1555,7 @@ describe('WorksController (e2e)', () => {
       await seedService.CreatePayment({
         employeeId: work1.details[0].employee.id,
         worksId: [work1.details[0].id],
-        total: work1.details[0].value_pay,
+        value_pay: work1.details[0].value_pay,
       });
 
       const { body } = await request

@@ -34,16 +34,16 @@ export class QueryParamsHarvest extends QueryParamsDto {
 
   @IsOptional()
   @IsBooleanString()
-  filter_by_total?: boolean;
+  filter_by_amount?: boolean;
 
   @IsOptional()
   @IsEnum(TypeFilterNumber)
-  type_filter_total?: TypeFilterNumber;
+  type_filter_amount?: TypeFilterNumber;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  total?: number;
+  amount?: number;
 
   @IsOptional()
   @IsBooleanString()

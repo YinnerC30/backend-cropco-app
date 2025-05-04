@@ -34,7 +34,7 @@ export class HarvestDetails {
     type: Number,
   })
   @Column({ type: 'int4' })
-  total: number;
+  amount: number;
 
   @ApiProperty({
     description: 'Valor de pago asociado a estos detalles',

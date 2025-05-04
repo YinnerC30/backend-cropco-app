@@ -48,7 +48,7 @@ export class CreatePaymentDto {
   })
   @IsInt()
   @IsPositive()
-  total: number;
+  value_pay: number;
 
   @ApiProperty({
     description: 'Categorías de pago',

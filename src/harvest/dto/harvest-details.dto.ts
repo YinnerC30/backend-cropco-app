@@ -6,7 +6,7 @@ import {
   IsOptional,
   IsPositive,
   IsUUID,
-  ValidateNested
+  ValidateNested,
 } from 'class-validator';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { Employee } from 'src/employees/entities/employee.entity';
@@ -44,7 +44,7 @@ export class HarvestDetailsDto {
   })
   @IsInt()
   @IsPositive()
-  total: number;
+  amount: number;
 
   @ApiProperty({
     description: 'Valor de pago asociado a estos detalles',

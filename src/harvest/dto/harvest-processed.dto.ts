@@ -47,5 +47,5 @@ export class HarvestProcessedDto {
   })
   @IsInt()
   @IsPositive()
-  total: number;
+  amount: number;
 }

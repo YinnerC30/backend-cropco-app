@@ -9,6 +9,7 @@ import {
   Post,
   Query,
   Res,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -19,14 +20,14 @@ import {
 } from '@nestjs/swagger';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
-import { CreateSaleDto } from './dto/create-sale.dto';
+import { SaleDto } from './dto/sale.dto';
 import { QueryParamsSale } from './dto/query-params-sale.dto';
-import { UpdateSaleDto } from './dto/update-sale.dto';
 import { SalesService } from './sales.service';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Sale } from './entities/sale.entity';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Response } from 'express';
+import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
 
 export const pathsSalesController: PathsController = {
   createSale: {
@@ -89,7 +90,7 @@ export class SalesController {
     description: 'The sale has been successfully created.',
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
-  create(@Body() createSaleDto: CreateSaleDto) {
+  create(@Body() createSaleDto: SaleDto) {
     return this.salesService.create(createSaleDto);
   }
 
@@ -133,7 +134,7 @@ export class SalesController {
   @ApiParam({ name: 'id', type: 'string', description: 'Sale id' })
   update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateSaleDto: UpdateSaleDto,
+    @Body() updateSaleDto: SaleDto,
   ) {
     return this.salesService.update(id, updateSaleDto);
   }
@@ -151,6 +152,7 @@ export class SalesController {
   }
 
   @Delete(removeSales.path)
+  @UseInterceptors(ResponseStatusInterceptor)
   removeBulk(@Body() removeBulkSalesDto: RemoveBulkRecordsDto<Sale>) {
     return this.salesService.removeBulk(removeBulkSalesDto);
   }

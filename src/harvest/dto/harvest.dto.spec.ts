@@ -9,7 +9,7 @@ describe('CreateHarvestDto', () => {
   const validDetail = {
     id: '123e4567-e89b-12d3-a456-426614174002',
     employee: { id: employeeId1 },
-    total: 100,
+    amount: 100,
     value_pay: 500,
     payment_is_pending: false,
   };
@@ -17,7 +17,7 @@ describe('CreateHarvestDto', () => {
   const validDto = {
     date: '2024-07-11',
     crop: { id: '123e4567-e89b-12d3-a456-426614174000' },
-    total: 100,
+    amount: 100,
     value_pay: 500,
     observation: 'Cosecha de alta calidad',
     details: [validDetail],
@@ -44,7 +44,7 @@ describe('CreateHarvestDto', () => {
   it('should validate when all employee IDs in details are unique', async () => {
     const dto = plainToClass(HarvestDto, {
       ...validDto,
-      total: 200,
+      amount: 200,
       value_pay: 1000,
       details: [
         {
@@ -64,11 +64,11 @@ describe('CreateHarvestDto', () => {
   it('should fail when details total does not match harvest total', async () => {
     const dto = plainToClass(HarvestDto, {
       ...validDto,
-      total: 100,
+      amount: 100,
       details: [
         {
           ...validDetail,
-          total: 50,
+          amount: 50,
         },
       ],
     });
@@ -94,18 +94,18 @@ describe('CreateHarvestDto', () => {
   it('should validate when multiple details sum matches harvest totals', async () => {
     const dto = plainToClass(HarvestDto, {
       ...validDto,
-      total: 150,
+      amount: 150,
       value_pay: 750,
       details: [
         {
           ...validDetail,
-          total: 100,
+          amount: 100,
           value_pay: 500,
         },
         {
           ...validDetail,
           employee: { id: employeeId2 }, // Different ID
-          total: 50,
+          amount: 50,
           value_pay: 250,
         },
       ],
@@ -130,10 +130,10 @@ describe('CreateHarvestDto', () => {
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should fail with negative total', async () => {
+  it('should fail with negative amount', async () => {
     const dto = plainToClass(HarvestDto, {
       ...validDto,
-      total: -100,
+      amount: -100,
     });
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
@@ -158,13 +158,13 @@ describe('CreateHarvestDto', () => {
   });
 
   describe('HarvestDetails validation', () => {
-    it('should fail with negative total in details', async () => {
+    it('should fail with negative amount in details', async () => {
       const dto = plainToClass(HarvestDto, {
         ...validDto,
         details: [
           {
             ...validDetail,
-            total: -50,
+            amount: -50,
           },
         ],
       });

@@ -41,13 +41,13 @@ describe('HarvestsController (e2e)', () => {
   const harvestDtoTemplete: HarvestDto = {
     date: InformationGenerator.generateRandomDate(),
     crop: { id: InformationGenerator.generateRandomId() },
-    total: 150,
+    amount: 150,
     value_pay: 90_000,
     observation: InformationGenerator.generateObservation(),
     details: [
       {
         employee: { id: InformationGenerator.generateRandomId() },
-        total: 150,
+        amount: 150,
         value_pay: 90_000,
       } as HarvestDetailsDto,
     ],
@@ -57,7 +57,7 @@ describe('HarvestsController (e2e)', () => {
     date: InformationGenerator.generateRandomDate(),
     crop: { id: InformationGenerator.generateRandomId() },
     harvest: { id: InformationGenerator.generateRandomId() },
-    total: 50,
+    amount: 50,
   };
 
   const falseHarvestId = InformationGenerator.generateRandomId();
@@ -173,17 +173,17 @@ describe('HarvestsController (e2e)', () => {
       const bodyRequest: HarvestDto = {
         ...harvestDtoTemplete,
         crop: { id: crop.id },
-        total: 200,
+        amount: 200,
         value_pay: 120_000,
         details: [
           {
             employee: { id: employee1.id },
-            total: 100,
+            amount: 100,
             value_pay: 60_000,
           } as HarvestDetailsDto,
           {
             employee: { id: employee2.id },
-            total: 100,
+            amount: 100,
             value_pay: 60_000,
           } as HarvestDetailsDto,
         ],
@@ -202,13 +202,13 @@ describe('HarvestsController (e2e)', () => {
       const errorMessage = [
         'date must be a valid ISO 8601 date string',
         'crop should not be null or undefined',
-        'total must be a positive number',
-        'total must be an integer number',
+        'amount must be a positive number',
+        'amount must be an integer number',
         'value_pay must be a positive number',
         'value_pay must be an integer number',
         'observation must be a string',
         'The array contains duplicate employees. Each employee id must be unique.',
-        "The sum of fields [total, value_pay] in 'details' must match the corresponding top-level values.",
+        "The sum of fields [amount, value_pay] in 'details' must match the corresponding top-level values.",
         'details should not be empty',
       ];
 
@@ -242,13 +242,13 @@ describe('HarvestsController (e2e)', () => {
       const data1: HarvestDto = {
         date: InformationGenerator.generateRandomDate(),
         crop: { id: crop1.id },
-        total: 100,
+        amount: 100,
         value_pay: 60_000,
         observation: 'No observation',
         details: [
           {
             employee: { id: employee1.id },
-            total: 100,
+            amount: 100,
             value_pay: 60_000,
           } as HarvestDetailsDto,
         ],
@@ -257,13 +257,13 @@ describe('HarvestsController (e2e)', () => {
       const data2: HarvestDto = {
         date: InformationGenerator.generateRandomDate(5),
         crop: { id: crop2.id },
-        total: 150,
+        amount: 150,
         value_pay: 90_000,
         observation: 'No observation',
         details: [
           {
             employee: { id: employee2.id },
-            total: 150,
+            amount: 150,
             value_pay: 90_000,
           } as HarvestDetailsDto,
         ],
@@ -272,13 +272,13 @@ describe('HarvestsController (e2e)', () => {
       const data3: HarvestDto = {
         date: InformationGenerator.generateRandomDate(10),
         crop: { id: crop2.id },
-        total: 300,
+        amount: 300,
         value_pay: 180_000,
         observation: 'No observation',
         details: [
           {
             employee: { id: employee2.id },
-            total: 300,
+            amount: 300,
             value_pay: 180_000,
           } as HarvestDetailsDto,
         ],
@@ -340,7 +340,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -355,7 +355,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -383,7 +383,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -398,7 +398,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -428,7 +428,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -444,7 +444,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -474,7 +474,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -490,7 +490,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -520,7 +520,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -535,7 +535,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -567,7 +567,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -583,7 +583,7 @@ describe('HarvestsController (e2e)', () => {
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
           expect(detail.employee.id).toBe(employee2.id);
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -620,7 +620,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
         expect(new Date(harvest.date) > new Date(queryData.date)).toBe(true);
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -635,7 +635,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -671,7 +671,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
         expect(new Date(harvest.date) < new Date(queryData.date)).toBe(true);
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -686,7 +686,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -724,7 +724,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.date.split('T')[0]).toBe(
           new Date(queryData.date).toISOString().split('T')[0],
         );
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -739,7 +739,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -753,11 +753,11 @@ describe('HarvestsController (e2e)', () => {
         });
       });
     });
-    it('should return the specified number of harvests passed by the query (equal total)', async () => {
+    it('should return the specified number of harvests passed by the query (equal amount)', async () => {
       const queryData = {
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.EQUAL,
-        total: 100,
+        filter_by_amount: true,
+        type_filter_amount: TypeFilterNumber.EQUAL,
+        amount: 100,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -774,8 +774,8 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
-        expect(harvest.total).toBe(queryData.total);
+        expect(harvest).toHaveProperty('amount');
+        expect(harvest.amount).toBe(queryData.amount);
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -790,7 +790,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -804,11 +804,11 @@ describe('HarvestsController (e2e)', () => {
         });
       });
     });
-    it('should return the specified number of harvests passed by the query (max total)', async () => {
+    it('should return the specified number of harvests passed by the query (max amount)', async () => {
       const queryData = {
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.MAX,
-        total: 100,
+        filter_by_amount: true,
+        type_filter_amount: TypeFilterNumber.MAX,
+        amount: 100,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -825,8 +825,8 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
-        expect(harvest.total).toBeGreaterThan(queryData.total);
+        expect(harvest).toHaveProperty('amount');
+        expect(harvest.amount).toBeGreaterThan(queryData.amount);
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -841,7 +841,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -855,11 +855,11 @@ describe('HarvestsController (e2e)', () => {
         });
       });
     });
-    it('should return the specified number of harvests passed by the query (min total)', async () => {
+    it('should return the specified number of harvests passed by the query (min amount)', async () => {
       const queryData = {
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.MIN,
-        total: 300,
+        filter_by_amount: true,
+        type_filter_amount: TypeFilterNumber.MIN,
+        amount: 300,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -876,8 +876,8 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
-        expect(harvest.total).toBeLessThan(queryData.total);
+        expect(harvest).toHaveProperty('amount');
+        expect(harvest.amount).toBeLessThan(queryData.amount);
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -892,7 +892,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -927,7 +927,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest.value_pay).toBe(queryData.value_pay);
         expect(harvest).toHaveProperty('observation');
@@ -943,7 +943,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -978,7 +978,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest.value_pay).toBeGreaterThan(queryData.value_pay);
         expect(harvest).toHaveProperty('observation');
@@ -994,7 +994,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -1029,7 +1029,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest.value_pay).toBeLessThan(queryData.value_pay);
         expect(harvest).toHaveProperty('observation');
@@ -1045,7 +1045,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -1081,7 +1081,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest.value_pay).toBeLessThan(queryData.value_pay);
         expect(harvest).toHaveProperty('observation');
@@ -1098,7 +1098,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -1137,18 +1137,18 @@ describe('HarvestsController (e2e)', () => {
         const data1: HarvestDto = {
           date: InformationGenerator.generateRandomDate(3),
           crop: { id: crop1.id },
-          total: 600,
+          amount: 600,
           value_pay: 360_000,
           observation: 'No observation',
           details: [
             {
               employee: { id: employee1.id },
-              total: 300,
+              amount: 300,
               value_pay: 180_000,
             } as HarvestDetailsDto,
             {
               employee: { id: employee2.id },
-              total: 300,
+              amount: 300,
               value_pay: 180_000,
             } as HarvestDetailsDto,
           ],
@@ -1157,18 +1157,18 @@ describe('HarvestsController (e2e)', () => {
         const data2: HarvestDto = {
           date: InformationGenerator.generateRandomDate(3),
           crop: { id: crop1.id },
-          total: 500,
+          amount: 500,
           value_pay: 300_000,
           observation: 'No observation',
           details: [
             {
               employee: { id: employee1.id },
-              total: 250,
+              amount: 250,
               value_pay: 150_000,
             } as HarvestDetailsDto,
             {
               employee: { id: employee2.id },
-              total: 250,
+              amount: 250,
               value_pay: 150_000,
             } as HarvestDetailsDto,
           ],
@@ -1180,14 +1180,14 @@ describe('HarvestsController (e2e)', () => {
         ]);
       });
 
-      it('should return the specified number of harvests passed by the query (MAX value_pay , total)', async () => {
+      it('should return the specified number of harvests passed by the query (MAX value_pay , amount)', async () => {
         const queryData = {
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.MAX,
           value_pay: 200_000,
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.MAX,
-          total: 400,
+          filter_by_amount: true,
+          type_filter_amount: TypeFilterNumber.MAX,
+          amount: 400,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1204,8 +1204,8 @@ describe('HarvestsController (e2e)', () => {
         response.body.records.forEach((harvest: Harvest) => {
           expect(harvest).toHaveProperty('id');
           expect(harvest).toHaveProperty('date');
-          expect(harvest).toHaveProperty('total');
-          expect(harvest.total).toBeGreaterThan(queryData.total);
+          expect(harvest).toHaveProperty('amount');
+          expect(harvest.amount).toBeGreaterThan(queryData.amount);
           expect(harvest).toHaveProperty('value_pay');
           expect(harvest.value_pay).toBeGreaterThan(queryData.value_pay);
           expect(harvest).toHaveProperty('observation');
@@ -1222,7 +1222,7 @@ describe('HarvestsController (e2e)', () => {
           expect(harvest.details.length).toBeGreaterThan(0);
           harvest.details.forEach((detail) => {
             expect(detail).toHaveProperty('id');
-            expect(detail).toHaveProperty('total');
+            expect(detail).toHaveProperty('amount');
             expect(detail).toHaveProperty('value_pay');
             expect(detail).toHaveProperty('payment_is_pending');
             expect(detail).toHaveProperty('employee');
@@ -1236,14 +1236,14 @@ describe('HarvestsController (e2e)', () => {
           });
         });
       });
-      it('should return the specified number of harvests passed by the query (MIN 1 value_pay , total)', async () => {
+      it('should return the specified number of harvests passed by the query (MIN 1 value_pay , amount)', async () => {
         const queryData = {
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.MIN,
           value_pay: 400_000,
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.MIN,
-          total: 500,
+          filter_by_amount: true,
+          type_filter_amount: TypeFilterNumber.MIN,
+          amount: 500,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1260,8 +1260,8 @@ describe('HarvestsController (e2e)', () => {
         response.body.records.forEach((harvest: Harvest) => {
           expect(harvest).toHaveProperty('id');
           expect(harvest).toHaveProperty('date');
-          expect(harvest).toHaveProperty('total');
-          expect(harvest.total).toBeLessThan(queryData.total);
+          expect(harvest).toHaveProperty('amount');
+          expect(harvest.amount).toBeLessThan(queryData.amount);
           expect(harvest).toHaveProperty('value_pay');
           expect(harvest.value_pay).toBeLessThan(queryData.value_pay);
           expect(harvest).toHaveProperty('observation');
@@ -1278,7 +1278,7 @@ describe('HarvestsController (e2e)', () => {
           expect(harvest.details.length).toBeGreaterThan(0);
           harvest.details.forEach((detail) => {
             expect(detail).toHaveProperty('id');
-            expect(detail).toHaveProperty('total');
+            expect(detail).toHaveProperty('amount');
             expect(detail).toHaveProperty('value_pay');
             expect(detail).toHaveProperty('payment_is_pending');
             expect(detail).toHaveProperty('employee');
@@ -1292,15 +1292,15 @@ describe('HarvestsController (e2e)', () => {
           });
         });
       });
-      it('should return the specified number of harvests passed by the query (MIN 2 value_pay , total)', async () => {
+      it('should return the specified number of harvests passed by the query (MIN 2 value_pay , amount)', async () => {
         const queryData = {
           offset: 1,
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.MIN,
           value_pay: 400_000,
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.MIN,
-          total: 500,
+          filter_by_amount: true,
+          type_filter_amount: TypeFilterNumber.MIN,
+          amount: 500,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1317,8 +1317,8 @@ describe('HarvestsController (e2e)', () => {
         response.body.records.forEach((harvest: Harvest) => {
           expect(harvest).toHaveProperty('id');
           expect(harvest).toHaveProperty('date');
-          expect(harvest).toHaveProperty('total');
-          expect(harvest.total).toBeLessThan(queryData.total);
+          expect(harvest).toHaveProperty('amount');
+          expect(harvest.amount).toBeLessThan(queryData.amount);
           expect(harvest).toHaveProperty('value_pay');
           expect(harvest.value_pay).toBeLessThan(queryData.value_pay);
           expect(harvest).toHaveProperty('observation');
@@ -1335,7 +1335,7 @@ describe('HarvestsController (e2e)', () => {
           expect(harvest.details.length).toBeGreaterThan(0);
           harvest.details.forEach((detail) => {
             expect(detail).toHaveProperty('id');
-            expect(detail).toHaveProperty('total');
+            expect(detail).toHaveProperty('amount');
             expect(detail).toHaveProperty('value_pay');
             expect(detail).toHaveProperty('payment_is_pending');
             expect(detail).toHaveProperty('employee');
@@ -1349,16 +1349,16 @@ describe('HarvestsController (e2e)', () => {
           });
         });
       });
-      it('should return the specified number of harvests passed by the query (MIN 3 value_pay , total)', async () => {
+      it('should return the specified number of harvests passed by the query (MIN 3 value_pay , amount)', async () => {
         const queryData = {
           limit: 12,
           offset: 1,
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.MIN,
           value_pay: 400_000,
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.MIN,
-          total: 500,
+          filter_by_amount: true,
+          type_filter_amount: TypeFilterNumber.MIN,
+          amount: 500,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1375,8 +1375,8 @@ describe('HarvestsController (e2e)', () => {
         response.body.records.forEach((harvest: Harvest) => {
           expect(harvest).toHaveProperty('id');
           expect(harvest).toHaveProperty('date');
-          expect(harvest).toHaveProperty('total');
-          expect(harvest.total).toBeLessThan(queryData.total);
+          expect(harvest).toHaveProperty('amount');
+          expect(harvest.amount).toBeLessThan(queryData.amount);
           expect(harvest).toHaveProperty('value_pay');
           expect(harvest.value_pay).toBeLessThan(queryData.value_pay);
           expect(harvest).toHaveProperty('observation');
@@ -1393,7 +1393,7 @@ describe('HarvestsController (e2e)', () => {
           expect(harvest.details.length).toBeGreaterThan(0);
           harvest.details.forEach((detail) => {
             expect(detail).toHaveProperty('id');
-            expect(detail).toHaveProperty('total');
+            expect(detail).toHaveProperty('amount');
             expect(detail).toHaveProperty('value_pay');
             expect(detail).toHaveProperty('payment_is_pending');
             expect(detail).toHaveProperty('employee');
@@ -1407,7 +1407,7 @@ describe('HarvestsController (e2e)', () => {
           });
         });
       });
-      it('should return the specified number of harvests passed by the query (EQUAL 1 date, value_pay , total)', async () => {
+      it('should return the specified number of harvests passed by the query (EQUAL 1 date, value_pay , amount)', async () => {
         const queryData = {
           crop: crop2.id,
           filter_by_date: true,
@@ -1416,9 +1416,9 @@ describe('HarvestsController (e2e)', () => {
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.EQUAL,
           value_pay: 360_000,
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.EQUAL,
-          total: 600,
+          filter_by_amount: true,
+          type_filter_amount: TypeFilterNumber.EQUAL,
+          amount: 600,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1432,7 +1432,7 @@ describe('HarvestsController (e2e)', () => {
         expect(response.body.total_page_count).toEqual(0);
         expect(response.body.current_page_count).toEqual(0);
       });
-      it('should return the specified number of harvests passed by the query (EQUAL 2 date, value_pay , total)', async () => {
+      it('should return the specified number of harvests passed by the query (EQUAL 2 date, value_pay , amount)', async () => {
         const queryData = {
           crop: crop1.id,
           filter_by_date: true,
@@ -1441,9 +1441,9 @@ describe('HarvestsController (e2e)', () => {
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.EQUAL,
           value_pay: 360_000,
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.EQUAL,
-          total: 600,
+          filter_by_amount: true,
+          type_filter_amount: TypeFilterNumber.EQUAL,
+          amount: 600,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1464,8 +1464,8 @@ describe('HarvestsController (e2e)', () => {
           expect(harvest.date.split('T')[0]).toBe(
             new Date(queryData.date).toISOString().split('T')[0],
           );
-          expect(harvest).toHaveProperty('total');
-          expect(harvest.total).toBe(queryData.total);
+          expect(harvest).toHaveProperty('amount');
+          expect(harvest.amount).toBe(queryData.amount);
           expect(harvest).toHaveProperty('value_pay');
           expect(harvest.value_pay).toBe(queryData.value_pay);
           expect(harvest).toHaveProperty('observation');
@@ -1482,7 +1482,7 @@ describe('HarvestsController (e2e)', () => {
           expect(harvest.details.length).toBeGreaterThan(0);
           harvest.details.forEach((detail) => {
             expect(detail).toHaveProperty('id');
-            expect(detail).toHaveProperty('total');
+            expect(detail).toHaveProperty('amount');
             expect(detail).toHaveProperty('value_pay');
             expect(detail).toHaveProperty('payment_is_pending');
             expect(detail).toHaveProperty('employee');
@@ -1547,7 +1547,7 @@ describe('HarvestsController (e2e)', () => {
       const harvest = response.body;
       expect(harvest).toHaveProperty('id');
       expect(harvest).toHaveProperty('date');
-      expect(harvest).toHaveProperty('total');
+      expect(harvest).toHaveProperty('amount');
       expect(harvest).toHaveProperty('value_pay');
       expect(harvest).toHaveProperty('observation');
       expect(harvest).toHaveProperty('createdDate');
@@ -1562,7 +1562,7 @@ describe('HarvestsController (e2e)', () => {
       expect(harvest.details.length).toBeGreaterThan(0);
       harvest.details.forEach((detail) => {
         expect(detail).toHaveProperty('id');
-        expect(detail).toHaveProperty('total');
+        expect(detail).toHaveProperty('amount');
         expect(detail).toHaveProperty('value_pay');
         expect(detail).toHaveProperty('payment_is_pending');
         expect(detail).toHaveProperty('employee');
@@ -1636,14 +1636,14 @@ describe('HarvestsController (e2e)', () => {
 
       const bodyRequest: HarvestDto = {
         ...rest,
-        total: rest.total + 10 * record.details.length,
+        amount: rest.amount + 10 * record.details.length,
         value_pay: rest.value_pay + 2000 * record.details.length,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
         details: record.details.map((detail) => ({
           id: detail.id,
           employee: { id: detail.employee.id },
-          total: detail.total + 10,
+          amount: detail.amount + 10,
           value_pay: detail.value_pay + 2000,
         })) as HarvestDetailsDto[],
       };
@@ -1657,8 +1657,8 @@ describe('HarvestsController (e2e)', () => {
 
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('date');
-      expect(body).toHaveProperty('total');
-      expect(body.total).toBe(bodyRequest.total);
+      expect(body).toHaveProperty('amount');
+      expect(body.amount).toBe(bodyRequest.amount);
       expect(body).toHaveProperty('value_pay');
       expect(body.value_pay).toBe(bodyRequest.value_pay);
       expect(body).toHaveProperty('observation');
@@ -1675,7 +1675,7 @@ describe('HarvestsController (e2e)', () => {
       expect(body.details.length).toBeGreaterThan(0);
       body.details.forEach((detail) => {
         expect(detail).toHaveProperty('id');
-        expect(detail).toHaveProperty('total');
+        expect(detail).toHaveProperty('amount');
         expect(detail).toHaveProperty('value_pay');
         expect(detail).toHaveProperty('payment_is_pending');
         expect(detail).toHaveProperty('employee');
@@ -1705,7 +1705,7 @@ describe('HarvestsController (e2e)', () => {
 
       const bodyRequest: HarvestDto = {
         date: rest.date,
-        total: 100,
+        amount: 100,
         value_pay: 60_000,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
@@ -1714,7 +1714,7 @@ describe('HarvestsController (e2e)', () => {
           .map((detail) => ({
             id: detail.id,
             employee: { id: detail.employee.id },
-            total: 100,
+            amount: 100,
             value_pay: 60_000,
           })) as HarvestDetailsDto[],
       };
@@ -1745,7 +1745,7 @@ describe('HarvestsController (e2e)', () => {
 
       const bodyRequest: HarvestDto = {
         date: rest.date,
-        total: 100,
+        amount: 100,
         value_pay: 60_000,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
@@ -1754,7 +1754,7 @@ describe('HarvestsController (e2e)', () => {
           .map((detail) => ({
             id: detail.id,
             employee: { id: detail.employee.id },
-            total: 100,
+            amount: 100,
             value_pay: 60_000,
           })) as HarvestDetailsDto[],
       };
@@ -1785,14 +1785,14 @@ describe('HarvestsController (e2e)', () => {
 
       const bodyRequest: HarvestDto = {
         ...rest,
-        total: rest.total + 10 * record.details.length,
+        amount: rest.amount + 10 * record.details.length,
         value_pay: rest.value_pay + 2000 * record.details.length,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
         details: record.details.map((detail) => ({
           id: detail.id,
           employee: { id: detail.employee.id },
-          total: detail.total + 10,
+          amount: detail.amount + 10,
           value_pay: detail.value_pay + 2000,
         })) as HarvestDetailsDto[],
       };
@@ -1824,14 +1824,14 @@ describe('HarvestsController (e2e)', () => {
 
       const bodyRequest: HarvestDto = {
         ...rest,
-        total: rest.total + 10 * harvest.details.length,
+        amount: rest.amount + 10 * harvest.details.length,
         value_pay: rest.value_pay + 2000 * harvest.details.length,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
         details: harvest.details.map((detail) => ({
           id: detail.id,
           employee: { id: detail.employee.id },
-          total: detail.total + 10,
+          amount: detail.amount + 10,
           value_pay: detail.value_pay + 2000,
         })) as HarvestDetailsDto[],
       };
@@ -1931,7 +1931,7 @@ describe('HarvestsController (e2e)', () => {
       await seedService.CreateHarvestProcessed({
         harvestId: harvest.id,
         cropId: crop.id,
-        total: 50,
+        amount: 50,
       });
 
       const { body } = await request
@@ -1953,7 +1953,7 @@ describe('HarvestsController (e2e)', () => {
       await seedService.CreatePayment({
         employeeId: employees[0].id,
         harvestsId: [harvest.details[0].id],
-        total: harvest.details[0].value_pay,
+        value_pay: harvest.details[0].value_pay,
       });
 
       const { body } = await request
@@ -2049,12 +2049,12 @@ describe('HarvestsController (e2e)', () => {
         seedService.CreateHarvestProcessed({
           harvestId: harvest1.id,
           cropId: harvest1.crop.id,
-          total: 50,
+          amount: 50,
         }),
         seedService.CreateHarvestProcessed({
           harvestId: harvest2.id,
           cropId: harvest2.crop.id,
-          total: 50,
+          amount: 50,
         }),
       ]);
 
@@ -2099,7 +2099,7 @@ describe('HarvestsController (e2e)', () => {
       await seedService.CreatePayment({
         harvestsId: [harvest1.details[0].id],
         employeeId: harvest1.details[0].employee.id,
-        total: harvest1.details[0].value_pay,
+        value_pay: harvest1.details[0].value_pay,
       });
 
       const { body } = await request
@@ -2201,7 +2201,7 @@ describe('HarvestsController (e2e)', () => {
         date: InformationGenerator.generateRandomDate(),
         crop: { id: harvest.crop.id },
         harvest: { id: harvest.id },
-        total: 50,
+        amount: 50,
       };
 
       const { body } = await request
@@ -2213,31 +2213,31 @@ describe('HarvestsController (e2e)', () => {
 
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('date');
-      expect(body).toHaveProperty('total');
-      expect(body.total).toBe(bodyRequest.total);
+      expect(body).toHaveProperty('amount');
+      expect(body.amount).toBe(bodyRequest.amount);
       expect(body).toHaveProperty('crop');
       expect(body.crop.id).toBe(bodyRequest.crop.id);
       expect(body).toHaveProperty('harvest');
       expect(body.harvest.id).toBe(bodyRequest.harvest.id);
     });
 
-    it('Should throw an exception for attempting to create a processed harvest that exceeds the total value of the harvest.', async () => {
+    it('Should throw an exception for attempting to create a processed harvest that exceeds the amount value of the harvest.', async () => {
       await authService.addPermission(userTest.id, 'create_harvest_processed');
 
       const { harvest } = await seedService.CreateHarvest({});
 
-      const data: HarvestProcessedDto = {
-        date: new Date().toISOString(),
+      const bodyRequest: HarvestProcessedDto = {
+        date: InformationGenerator.generateRandomDate(),
         crop: { id: harvest.crop.id },
         harvest: { id: harvest.id },
-        total: harvest.total + 50,
+        amount: harvest.amount + 50,
       } as HarvestProcessedDto;
 
       const { body } = await request
         .default(app.getHttpServer())
         .post('/harvests/processed/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(400);
 
       expect(body.message).toBe(
@@ -2250,8 +2250,8 @@ describe('HarvestsController (e2e)', () => {
         'date must be a valid ISO 8601 date string',
         'crop should not be null or undefined',
         'harvest should not be null or undefined',
-        'total must be a positive number',
-        'total must be an integer number',
+        'amount must be a positive number',
+        'amount must be an integer number',
       ];
 
       const { body } = await request
@@ -2301,14 +2301,14 @@ describe('HarvestsController (e2e)', () => {
       const harvestProcessed = await seedService.CreateHarvestProcessed({
         harvestId: harvest.id,
         cropId: harvest.crop.id,
-        total: 50,
+        amount: 50,
       });
 
       const bodyRequest: HarvestProcessedDto = {
         date: harvestProcessed.date,
         crop: { id: harvest.crop.id },
         harvest: { id: harvest.id },
-        total: harvestProcessed.total - 5,
+        amount: harvestProcessed.amount - 5,
       };
 
       const { body } = await request
@@ -2320,8 +2320,8 @@ describe('HarvestsController (e2e)', () => {
 
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('date');
-      expect(body).toHaveProperty('total');
-      expect(body.total).toBe(bodyRequest.total);
+      expect(body).toHaveProperty('amount');
+      expect(body.amount).toBe(bodyRequest.amount);
       expect(body).toHaveProperty('crop');
       expect(body).toHaveProperty('harvest');
     });
@@ -2385,7 +2385,7 @@ describe('HarvestsController (e2e)', () => {
       const harvestProcessed = await seedService.CreateHarvestProcessed({
         harvestId: harvest.id,
         cropId: harvest.crop.id,
-        total: 50,
+        amount: 50,
       });
 
       await request
