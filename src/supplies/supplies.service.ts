@@ -34,9 +34,7 @@ export class SuppliesService {
     @InjectRepository(SuppliesStock)
     private readonly suppliesStockRepository: Repository<SuppliesStock>,
     private readonly handlerError: HandlerErrorService,
-  ) {
-    
-  }
+  ) {}
 
   async create(createSupply: CreateSupplyDto) {
     try {
@@ -198,76 +196,6 @@ export class SuppliesService {
   async updateStockManual(id: string, amount: number) {
     return await this.suppliesStockRepository.update(id, { amount });
   }
-
-  // async updateStock(
-  //   queryRunner: QueryRunner,
-  //   info: {
-  //     supplyId: any;
-  //     amount: number;
-  //     type_update: 'increment' | 'decrement';
-  //   },
-  // ) {
-  //   const { supplyId, amount, type_update } = info;
-
-  //   const supply = await queryRunner.manager.findOne(Supply, {
-  //     where: { id: supplyId },
-  //   });
-  //   if (!supply) {
-  //     throw new NotFoundException(`Supply with id: ${supplyId} not found`);
-  //   }
-
-  //   const recordSupplyStock = await queryRunner.manager.findOne(SuppliesStock, {
-  //     where: { supply: { id: supplyId } },
-  //     relations: { supply: true },
-  //   });
-
-  //   if (!recordSupplyStock || recordSupplyStock === null) {
-  //     const recordToSave = queryRunner.manager.create(SuppliesStock, {
-  //       supply: supplyId,
-  //       amount: 0,
-  //     });
-
-  //     await queryRunner.manager.save(SuppliesStock, recordToSave);
-  //   }
-
-  //   if (type_update === 'increment') {
-  //     const result = await queryRunner.manager.increment(
-  //       SuppliesStock,
-  //       { supply: supplyId },
-  //       'amount',
-  //       amount,
-  //     );
-
-  //     if (result.affected === 0) {
-  //       throw new NotFoundException(
-  //         `Supply with id: ${supplyId} not incremented stock`,
-  //       );
-  //     }
-  //   } else if (type_update === 'decrement') {
-  //     const amountActually = recordSupplyStock?.amount || 0;
-
-  //     if (amountActually < amount) {
-  //       throw new InsufficientSupplyStockException(
-  //         amountActually,
-  //         supply.name,
-  //         supply.unit_of_measure,
-  //       );
-  //     }
-
-  //     const result = await queryRunner.manager.decrement(
-  //       SuppliesStock,
-  //       { supply: supplyId },
-  //       'amount',
-  //       amount,
-  //     );
-
-  //     if (result.affected === 0) {
-  //       throw new NotFoundException(
-  //         `Supply with id: ${supplyId} not decremented stock`,
-  //       );
-  //     }
-  //   }
-  // }
 
   async updateStock(
     queryRunner: QueryRunner,

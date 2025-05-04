@@ -32,6 +32,7 @@ import { getHarvestReport } from './reports/get-harvest';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 import { HarvestProcessedDto } from './dto/harvest-processed.dto';
 import { QueryParamsTotalHarvestsInYearDto } from './dto/query-params-total-harvests-year';
+import { Crop } from 'src/crops/entities/crop.entity';
 
 @Injectable()
 export class HarvestService {
@@ -47,9 +48,7 @@ export class HarvestService {
     private readonly dataSource: DataSource,
     private readonly printerService: PrinterService,
     private handlerError: HandlerErrorService,
-  ) {
-    
-  }
+  ) {}
 
   async create(createHarvestDto: HarvestDto) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -340,19 +339,37 @@ export class HarvestService {
   ) {
     const { cropId, amount, type_update } = info;
 
-    const recordHarvestCropStock = await queryRunner.manager
-      .getRepository(HarvestStock)
-      .findOne({
+    this.logger.log(
+      `Actualizando stock para cropId: ${cropId} con tipo: ${type_update} y cantidad: ${amount}`,
+    );
+
+    const crop = await queryRunner.manager.findOne(Crop, {
+      where: { id: cropId },
+    });
+
+    if (!crop) {
+      throw new NotFoundException(`Crop with id: ${cropId} not found`);
+    }
+
+    let recordHarvestCropStock = await queryRunner.manager
+    .getRepository(HarvestStock)
+    .findOne({
         relations: { crop: true },
         where: { crop: { id: cropId } },
       });
 
     if (!recordHarvestCropStock) {
-      const recordToSave = queryRunner.manager.create(HarvestStock, {
-        crop: cropId,
+      this.logger.warn(
+        `Creando nuevo registro de stock para cropId: ${cropId}`,
+      );
+      const newRecord = queryRunner.manager.create(HarvestStock, {
+        crop: {id: cropId},
         amount: 0,
       });
-      await queryRunner.manager.save(HarvestStock, recordToSave);
+
+      await queryRunner.manager.save(HarvestStock, newRecord);
+
+      recordHarvestCropStock = newRecord;
     }
     if (type_update === 'increment') {
       return await queryRunner.manager.increment(
@@ -361,20 +378,22 @@ export class HarvestService {
         'amount',
         amount,
       );
-    }
-    const amountActually = recordHarvestCropStock?.amount ?? 0;
-    if (amountActually < amount) {
-      throw new InsufficientHarvestStockException(
-        amountActually,
-        recordHarvestCropStock.crop.name,
+    } else if (type_update === 'decrement') {
+      const amountActually = recordHarvestCropStock?.amount ?? 0;
+      if (amountActually < amount) {
+        
+        throw new InsufficientHarvestStockException(
+          amountActually,
+          recordHarvestCropStock.crop.id,
+        );
+      }
+      await queryRunner.manager.decrement(
+        HarvestStock,
+        { crop: cropId },
+        'amount',
+        amount,
       );
     }
-    await queryRunner.manager.decrement(
-      HarvestStock,
-      { crop: cropId },
-      'amount',
-      amount,
-    );
   }
 
   async validateTotalProcessed(data: {

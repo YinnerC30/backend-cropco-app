@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { SaleDetails } from './sale-details.entity';
 
 @Entity({ name: 'sales' })
@@ -46,4 +46,14 @@ export class Sale {
     cascade: true,
   })
   details: SaleDetails[];
+
+
+  @CreateDateColumn()
+    createdDate: Date;
+  
+    @UpdateDateColumn()
+    updatedDate: Date;
+  
+    @DeleteDateColumn()
+    deletedDate: Date;
 }

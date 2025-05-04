@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsDefined,
   IsInt,
   IsOptional,
   IsPositive,
@@ -38,6 +39,7 @@ export class SaleDetailsDto {
     type: ValidateUUID,
     description: 'Información del cultivo asociado a este detalle de venta',
   })
+  @IsDefined()
   @ValidateNested()
   @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;
@@ -46,6 +48,7 @@ export class SaleDetailsDto {
     type: ValidateUUID,
     description: 'Información del cliente asociado a este detalle de venta',
   })
+  @IsDefined()
   @ValidateNested()
   @Type(() => ValidateUUID)
   client: DeepPartial<Client>;

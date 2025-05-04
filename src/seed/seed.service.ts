@@ -255,8 +255,11 @@ export class SeedService {
   }
 
   async CreateHarvest({
-    // mapperToDto = false,
     quantityEmployees = 1,
+    amount = 150,
+  }: {
+    quantityEmployees: number;
+    amount?: number;
   }): Promise<{ employees: Employee[]; crop: Crop; harvest: Harvest }> {
     const employees = (await Promise.all(
       Array.from({ length: quantityEmployees }).map(() =>
@@ -271,11 +274,11 @@ export class SeedService {
       details: employees.map((employee) => {
         return {
           employee: { id: employee.id },
-          amount: 150,
+          amount: amount,
           value_pay: 90_000,
         } as HarvestDetailsDto;
       }),
-      amount: 150 * quantityEmployees,
+      amount: amount * quantityEmployees,
       value_pay: 90_000 * quantityEmployees,
       observation: InformationGenerator.generateObservation(),
     };

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
@@ -20,6 +21,7 @@ import { SaleDto } from './dto/sale.dto';
 import { SaleDetails } from './entities/sale-details.entity';
 import { Sale } from './entities/sale.entity';
 import { getSaleReport } from './reports/get-sale';
+import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 
 @Injectable()
 export class SalesService {
@@ -101,38 +103,27 @@ export class SalesService {
       .take(limit)
       .skip(offset * limit);
 
-    if (filter_by_date) {
-      const operation =
-        TypeFilterDate.AFTER == type_filter_date
-          ? '>'
-          : TypeFilterDate.EQUAL == type_filter_date
-            ? '='
-            : '<';
-      queryBuilder.andWhere(`sale.date ${operation} :date`, { date });
-    }
+    filter_by_date &&
+      queryBuilder.andWhere(
+        `sale.date ${getComparisonOperator(type_filter_date)} :date`,
+        { date },
+      );
 
-    // if (filter_by_total) {
-    //   const operation =
-    //     TypeFilterNumber.MAX == type_filter_total
-    //       ? '>'
-    //       : TypeFilterNumber.EQUAL == type_filter_total
-    //         ? '='
-    //         : '<';
-    //   queryBuilder.andWhere(`sale.total ${operation} :total`, { total });
-    // }
-    // if (filter_by_quantity) {
-    //   const operation =
-    //     TypeFilterNumber.MAX == type_filter_quantity
-    //       ? '>'
-    //       : TypeFilterNumber.EQUAL == type_filter_quantity
-    //         ? '='
-    //         : '<';
-    //   queryBuilder.andWhere(`sale.quantity ${operation} :quantity`, {
-    //     quantity,
-    //   });
-    // }
+    filter_by_amount &&
+      queryBuilder.andWhere(
+        `sale.amount ${getComparisonOperator(type_filter_amount)} :amount`,
+        { amount },
+      );
 
-    if (clients.length > 0) {
+    filter_by_value_pay &&
+      queryBuilder.andWhere(
+        `sale.value_pay ${getComparisonOperator(type_filter_value_pay)} :value_pay`,
+        {
+          value_pay,
+        },
+      );
+
+    clients.length > 0 &&
       queryBuilder.andWhere((qb) => {
         const subQuery = qb
           .subQuery()
@@ -144,8 +135,8 @@ export class SalesService {
           .getQuery();
         return 'sale.id IN ' + subQuery;
       });
-    }
-    if (crops.length > 0) {
+
+    crops.length > 0 &&
       queryBuilder.andWhere((qb) => {
         const subQuery = qb
           .subQuery()
@@ -157,20 +148,26 @@ export class SalesService {
           .getQuery();
         return 'sale.id IN ' + subQuery;
       });
-    }
 
-    if (filter_by_is_receivable) {
+    filter_by_is_receivable &&
       queryBuilder.andWhere(`sale.is_receivable = :is_receivable`, {
         is_receivable,
       });
-    }
 
     const [sales, count] = await queryBuilder.getManyAndCount();
 
+    if (sales.length === 0 && count > 0) {
+      throw new NotFoundException(
+        'There are no sale records with the requested pagination',
+      );
+    }
+
     return {
-      rowCount: count,
-      rows: sales,
-      pageCount: Math.ceil(count / limit),
+      total_row_count: count,
+      current_row_count: sales.length,
+      total_page_count: Math.ceil(count / limit),
+      current_page_count: sales.length > 0 ? offset + 1 : 0,
+      records: sales,
     };
   }
 
@@ -218,9 +215,15 @@ export class SalesService {
       for (const saleDetailId of toDelete) {
         const oldData = oldDetails.find((record) => record.id === saleDetailId);
 
+        // if (oldData.is_receivable === true) {
+        //   throw new BadRequestException(
+        //     `You cannot delete the record with id ${saleDetailId} , it is unpaid sale.`,
+        //   );
+        // }
+
         if (oldData.deletedDate !== null) {
           throw new BadRequestException(
-            'You cannot delete this record, it is linked to other records.',
+            `You cannot delete the record with id ${saleDetailId} , it is linked to other records.`,
           );
         }
 
@@ -234,30 +237,39 @@ export class SalesService {
       }
 
       for (const saleDetailId of toUpdate) {
-        const oldData = oldDetails.find((record) => record.id === saleDetailId);
+        const oldRecordData = oldDetails.find(
+          (record) => record.id === saleDetailId,
+        );
+        const dataRecordNew = newDetails.find(
+          (record) => record.id === saleDetailId,
+        );
 
-        if (oldData.deletedDate !== null) {
-          continue;
+        const valuesAreDifferent =
+          dataRecordNew.value_pay !== oldRecordData.value_pay ||
+          dataRecordNew.amount !== oldRecordData.amount;
+
+        if (valuesAreDifferent && oldRecordData.deletedDate !== null) {
+          throw new BadRequestException(
+            `You cannot update the record with id ${saleDetailId} , it is linked to other records.`,
+          );
         }
 
         await this.harvestService.updateStock(queryRunner, {
-          cropId: oldData.crop.id,
-          amount: oldData.amount,
+          cropId: oldRecordData.crop.id,
+          amount: oldRecordData.amount,
           type_update: 'increment',
         });
 
-        const newData = newDetails.find((record) => record.id === saleDetailId);
-
         await this.harvestService.updateStock(queryRunner, {
-          cropId: newData.crop.id,
-          amount: newData.amount,
+          cropId: dataRecordNew.crop.id,
+          amount: dataRecordNew.amount,
           type_update: 'decrement',
         });
 
         await queryRunner.manager.update(
           SaleDetails,
           { id: saleDetailId },
-          newData,
+          dataRecordNew,
         );
       }
 
@@ -278,6 +290,7 @@ export class SalesService {
       await queryRunner.manager.update(Sale, { id }, rest);
 
       await queryRunner.commitTransaction();
+      return await this.findOne(id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.handlerError.handle(error, this.logger);
@@ -287,6 +300,13 @@ export class SalesService {
 
   async remove(id: string) {
     const sale = await this.findOne(id);
+
+    if (sale.details.some((item) => item.is_receivable === true)) {
+      throw new ConflictException(
+        `The record with id ${sale.id} cannot be deleted because it has unpaid sales`,
+      );
+    }
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -323,9 +343,19 @@ export class SalesService {
   }
 
   async removeBulk(removeBulkSalesDto: RemoveBulkRecordsDto<Sale>) {
+    const success: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+
     for (const { id } of removeBulkSalesDto.recordsIds) {
-      await this.remove(id);
+      try {
+        await this.remove(id);
+        success.push(id);
+      } catch (error) {
+        failed.push({ id, error: error.message });
+      }
     }
+
+    return { success, failed };
   }
 
   async exportSaleToPDF(id: string) {

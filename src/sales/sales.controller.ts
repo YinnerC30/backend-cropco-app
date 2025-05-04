@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
   Res,
   UseInterceptors,
@@ -123,7 +124,7 @@ export class SalesController {
     return this.salesService.findOne(id);
   }
 
-  @Patch(updateSale.path)
+  @Put(updateSale.path)
   @ApiOperation({ summary: 'Update a sale' })
   @ApiResponse({
     status: 200,
