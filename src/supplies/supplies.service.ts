@@ -35,7 +35,7 @@ export class SuppliesService {
     private readonly suppliesStockRepository: Repository<SuppliesStock>,
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.handlerError.setLogger(this.logger);
+    
   }
 
   async create(createSupply: CreateSupplyDto) {
@@ -44,7 +44,7 @@ export class SuppliesService {
       await this.supplyRepository.save(supply);
       return supply;
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -137,7 +137,7 @@ export class SuppliesService {
       await this.supplyRepository.update(id, updateSupplyDto);
       return await this.findOne(id);
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -157,7 +157,7 @@ export class SuppliesService {
     try {
       await this.supplyRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -360,7 +360,7 @@ export class SuppliesService {
     try {
       await this.suppliesStockRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 

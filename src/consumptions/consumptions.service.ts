@@ -40,7 +40,7 @@ export class ConsumptionsService {
 
     private dataSource: DataSource,
   ) {
-    this.handlerError.setLogger(this.logger);
+    
   }
 
   async createConsumption(
@@ -83,7 +83,7 @@ export class ConsumptionsService {
       return consumption;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -322,7 +322,7 @@ export class ConsumptionsService {
       return await this.findOneConsumption(id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -355,7 +355,7 @@ export class ConsumptionsService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -365,7 +365,7 @@ export class ConsumptionsService {
     try {
       await this.suppliesConsumptionRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 

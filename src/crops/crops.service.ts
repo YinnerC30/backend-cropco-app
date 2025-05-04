@@ -23,7 +23,7 @@ export class CropsService {
     private readonly cropRepository: Repository<Crop>,
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.handlerError.setLogger(this.logger);
+    
   }
 
   async create(createCropDto: CreateCropDto) {
@@ -32,7 +32,7 @@ export class CropsService {
       await this.cropRepository.save(crop);
       return crop;
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -203,7 +203,7 @@ export class CropsService {
       await this.cropRepository.update(id, updateCropDto);
       return await this.findOne(id);
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -221,7 +221,7 @@ export class CropsService {
     try {
       await this.cropRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 

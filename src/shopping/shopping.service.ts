@@ -36,7 +36,7 @@ export class ShoppingService {
     private printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.handlerError.setLogger(this.logger);
+    
   }
 
   async createShoppingDetails(
@@ -97,7 +97,7 @@ export class ShoppingService {
       return shopping;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -315,7 +315,7 @@ export class ShoppingService {
       return await this.findOneShopping(id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -347,7 +347,7 @@ export class ShoppingService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -375,7 +375,7 @@ export class ShoppingService {
     try {
       await this.suppliesShoppingRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 

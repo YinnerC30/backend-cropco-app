@@ -17,7 +17,7 @@ export class SuppliersService {
     private readonly supplierRepository: Repository<Supplier>,
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.handlerError.setLogger(this.logger);
+    
   }
 
   async create(createSupplierDto: CreateSupplierDto) {
@@ -26,7 +26,7 @@ export class SuppliersService {
       await this.supplierRepository.save(supplier);
       return supplier;
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -102,7 +102,7 @@ export class SuppliersService {
       await this.supplierRepository.update(id, updateSupplierDto);
       return await this.findOne(id);
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -115,7 +115,7 @@ export class SuppliersService {
     try {
       await this.supplierRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 

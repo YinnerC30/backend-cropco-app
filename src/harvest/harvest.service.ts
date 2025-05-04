@@ -48,7 +48,7 @@ export class HarvestService {
     private readonly printerService: PrinterService,
     private handlerError: HandlerErrorService,
   ) {
-    this.handlerError.setLogger(this.logger);
+    
   }
 
   async create(createHarvestDto: HarvestDto) {
@@ -68,7 +68,7 @@ export class HarvestService {
       return harvest;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -285,7 +285,7 @@ export class HarvestService {
       return await this.findOne(id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -316,7 +316,7 @@ export class HarvestService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -326,7 +326,7 @@ export class HarvestService {
     try {
       await this.harvestRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -438,7 +438,7 @@ export class HarvestService {
       return await this.findOneHarvestProcessed(harvestProcessed.id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -501,7 +501,7 @@ export class HarvestService {
       return await this.findOneHarvestProcessed(harvestProcessed.id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -529,7 +529,7 @@ export class HarvestService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }

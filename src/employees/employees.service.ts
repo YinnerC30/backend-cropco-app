@@ -30,7 +30,7 @@ export class EmployeesService {
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.handlerError.setLogger(this.logger);
+    
   }
 
   async findOneCertification(id: string) {
@@ -56,7 +56,7 @@ export class EmployeesService {
       await this.employeeRepository.save(employee);
       return employee;
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -214,7 +214,7 @@ export class EmployeesService {
       await this.employeeRepository.update(id, updateEmployeeDto);
       return await this.findOne(id);
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -264,7 +264,7 @@ export class EmployeesService {
     try {
       await this.employeeRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 

@@ -33,7 +33,7 @@ export class WorkService {
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.handlerError.setLogger(this.logger);
+    
   }
 
   async create(createWorkDto: WorkDto) {
@@ -55,7 +55,7 @@ export class WorkService {
       return work;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -233,7 +233,7 @@ export class WorkService {
       return this.findOne(id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -254,7 +254,7 @@ export class WorkService {
     try {
       await this.workRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 

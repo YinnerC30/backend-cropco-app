@@ -28,7 +28,7 @@ export class ClientsService {
     private readonly handlerError: HandlerErrorService, // Inyecta HandlerErrorService
   ) {
     // Proporciona el Logger personalizado a HandlerErrorService
-    this.handlerError.setLogger(this.logger);
+    
   }
   async create(createClientDto: CreateClientDto) {
     try {
@@ -36,7 +36,7 @@ export class ClientsService {
       await this.clientRepository.save(client);
       return client;
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -108,7 +108,7 @@ export class ClientsService {
       await this.clientRepository.update(id, updateClientDto);
       return await this.findOne(id);
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -117,7 +117,7 @@ export class ClientsService {
     try {
       await this.clientRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 

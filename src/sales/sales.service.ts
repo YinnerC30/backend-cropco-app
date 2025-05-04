@@ -32,9 +32,7 @@ export class SalesService {
     private readonly harvestService: HarvestService,
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
-  ) {
-    this.handlerError.setLogger(this.logger);
-  }
+  ) {}
 
   async create(createSaleDto: SaleDto) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -63,7 +61,7 @@ export class SalesService {
       return sale;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -282,7 +280,7 @@ export class SalesService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
     }
   }
@@ -310,7 +308,7 @@ export class SalesService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -320,7 +318,7 @@ export class SalesService {
     try {
       await this.saleRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 

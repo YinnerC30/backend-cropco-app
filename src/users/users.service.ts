@@ -35,10 +35,8 @@ export class UsersService {
     @InjectRepository(Module)
     private readonly modulesRepository: Repository<Module>,
 
-    private readonly handleError: HandlerErrorService,
-  ) {
-    this.handleError.setLogger(this.logger);
-  }
+    private readonly handlerError: HandlerErrorService,
+  ) {}
 
   async create(createUserDto: UserDto): Promise<User> {
     try {
@@ -58,7 +56,7 @@ export class UsersService {
       delete user.password;
       return user;
     } catch (error) {
-      this.handleError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -166,7 +164,7 @@ export class UsersService {
 
       return await this.findOne(id);
     } catch (error) {
-      this.handleError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -195,7 +193,7 @@ export class UsersService {
     try {
       await this.usersRepository.delete({});
     } catch (error) {
-      this.handleError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 

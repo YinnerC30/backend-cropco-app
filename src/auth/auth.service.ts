@@ -50,7 +50,7 @@ export class AuthService {
     private readonly userService: UsersService,
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.handlerError.setLogger(this.logger);
+    
   }
 
   async login(
@@ -345,7 +345,7 @@ export class AuthService {
         id: action.id,
       });
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
