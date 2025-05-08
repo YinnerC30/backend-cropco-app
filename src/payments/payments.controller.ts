@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   Res,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,7 +18,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
-import { CreatePaymentDto } from './dto/create-payment.dto';
+import { PaymentDto } from './dto/payment.dto';
 import { PaymentsService } from './payments.service';
 import { QueryParamsPayment } from './dto/query-params-payment.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
@@ -25,6 +26,7 @@ import { Payment } from './entities/payment.entity';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Response } from 'express';
+import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
 
 export const pathsPaymentsController: PathsController = {
   createPayment: {
@@ -65,7 +67,7 @@ const {
   findOnePayment,
   removePayment,
   removePayments,
-  exportPaymentToPDF
+  exportPaymentToPDF,
 } = pathsPaymentsController;
 
 @Auth()
@@ -81,7 +83,7 @@ export class PaymentsController {
     description: 'The payment has been successfully created.',
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
-  create(@Body() createPaymentDto: CreatePaymentDto) {
+  create(@Body() createPaymentDto: PaymentDto) {
     return this.paymentsService.create(createPaymentDto);
   }
 
@@ -103,16 +105,16 @@ export class PaymentsController {
   }
 
   @Get(exportPaymentToPDF.path)
-    async exportWorkToPDF(
-      @Param('id', ParseUUIDPipe) id: string,
-      @Res() response: Response,
-    ) {
-      const pdfDoc = await this.paymentsService.exportPaymentToPDF(id);
-      response.setHeader('Content-Type', 'application/pdf');
-      pdfDoc.info.Title = 'Registro de pago';
-      pdfDoc.pipe(response);
-      pdfDoc.end();
-    }
+  async exportWorkToPDF(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() response: Response,
+  ) {
+    const pdfDoc = await this.paymentsService.exportPaymentToPDF(id);
+    response.setHeader('Content-Type', 'application/pdf');
+    pdfDoc.info.Title = 'Registro de pago';
+    pdfDoc.pipe(response);
+    pdfDoc.end();
+  }
 
   @Delete(removePayment.path)
   @ApiOperation({ summary: 'Delete a payment' })
@@ -127,6 +129,7 @@ export class PaymentsController {
   }
 
   @Delete(removePayments.path)
+  @UseInterceptors(ResponseStatusInterceptor)
   @ApiResponse({
     status: 200,
     description: 'Pagos eliminados exitosamente',

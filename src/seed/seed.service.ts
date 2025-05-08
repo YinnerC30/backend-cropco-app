@@ -7,7 +7,7 @@ import { Employee } from 'src/employees/entities/employee.entity';
 import { HarvestDto } from 'src/harvest/dto/harvest.dto';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
 import { HarvestService } from 'src/harvest/harvest.service';
-import { CreatePaymentDto } from 'src/payments/dto/create-payment.dto';
+import { PaymentDto } from 'src/payments/dto/payment.dto';
 import { PaymentsService } from 'src/payments/payments.service';
 import { SaleDto } from 'src/sales/dto/sale.dto';
 import { SalesService } from 'src/sales/sales.service';
@@ -257,9 +257,11 @@ export class SeedService {
   async CreateHarvest({
     quantityEmployees = 1,
     amount = 150,
+    valuePay = 90_000,
   }: {
-    quantityEmployees: number;
+    quantityEmployees?: number;
     amount?: number;
+    valuePay?: number;
   }): Promise<{ employees: Employee[]; crop: Crop; harvest: Harvest }> {
     const employees = (await Promise.all(
       Array.from({ length: quantityEmployees }).map(() =>
@@ -275,11 +277,11 @@ export class SeedService {
         return {
           employee: { id: employee.id },
           amount: amount,
-          value_pay: 90_000,
+          value_pay: valuePay,
         } as HarvestDetailsDto;
       }),
       amount: amount * quantityEmployees,
-      value_pay: 90_000 * quantityEmployees,
+      value_pay: valuePay * quantityEmployees,
       observation: InformationGenerator.generateObservation(),
     };
 
@@ -314,8 +316,8 @@ export class SeedService {
   }
 
   async CreateWork({
-    // mapperToDto = false,
     quantityEmployees = 1,
+    valuePay = 90_000,
   }): Promise<{ employees: Employee[]; crop: Crop; work: Work }> {
     const employees = (await Promise.all(
       Array.from({ length: quantityEmployees }).map(() =>
@@ -330,10 +332,10 @@ export class SeedService {
       details: employees.map((employee) => {
         return {
           employee: { id: employee.id },
-          value_pay: 90_000,
+          value_pay: valuePay,
         } as HarvestDetailsDto;
       }),
-      value_pay: 90_000 * quantityEmployees,
+      value_pay: valuePay * quantityEmployees,
       description: InformationGenerator.generateDescription(),
     };
 
@@ -343,6 +345,32 @@ export class SeedService {
 
     return {
       employees,
+      crop,
+      work,
+    };
+  }
+  async CreateWorkForEmployee({
+    employeeId,
+  }: {
+    employeeId: string;
+  }): Promise<{ crop: Crop; work: Work }> {
+    const crop = (await this.CreateCrop({})) as Crop;
+    const data: WorkDto = {
+      date: InformationGenerator.generateRandomDate(),
+      crop: { id: crop.id },
+      details: [
+        {
+          employee: { id: employeeId },
+          value_pay: 90_000,
+        } as WorkDetailsDto,
+      ],
+      value_pay: 90_000,
+      description: InformationGenerator.generateDescription(),
+    };
+
+    const work = await this.workService.create(data);
+
+    return {
       crop,
       work,
     };
@@ -542,20 +570,22 @@ export class SeedService {
   }
 
   async CreatePayment({
+    datePayment = InformationGenerator.generateRandomDate(),
     employeeId,
     methodOfPayment = MethodOfPayment.EFECTIVO,
     worksId = [],
     harvestsId = [],
     value_pay,
   }: {
+    datePayment?: string;
     employeeId?: string;
     methodOfPayment?: MethodOfPayment;
     worksId?: string[];
     harvestsId?: string[];
     value_pay: number;
   }) {
-    const data: CreatePaymentDto = plainToClass(CreatePaymentDto, {
-      date: InformationGenerator.generateRandomDate(),
+    const data: PaymentDto = plainToClass(PaymentDto, {
+      date: datePayment,
       employee: { id: employeeId },
       method_of_payment: methodOfPayment,
       value_pay,

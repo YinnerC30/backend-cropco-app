@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Work } from './work.entity';
-import { PaymentWork } from 'src/payments/entities/payment-work.entity';
+import { PaymentsWork } from 'src/payments/entities/payment-work.entity';
 
 @Entity({ name: 'works_detail' })
 export class WorkDetails {
@@ -41,10 +41,10 @@ export class WorkDetails {
   work: Work;
 
   // External relations
-  @OneToOne(() => PaymentWork, (payments_work) => payments_work.works_detail, {
+  @OneToOne(() => PaymentsWork, (payments_work) => payments_work.works_detail, {
     cascade: true,
   })
-  payments_work: PaymentWork;
+  payments_work: PaymentsWork;
 
   @CreateDateColumn()
   createdDate: Date;

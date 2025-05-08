@@ -49,9 +49,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly userService: UsersService,
     private readonly handlerError: HandlerErrorService,
-  ) {
-    
-  }
+  ) {}
 
   async login(
     loginUserDto: LoginUserDto,
@@ -304,11 +302,9 @@ export class AuthService {
   async addPermission(userId: string, actionName: string) {
     const user = await this.userService.findOne(userId);
 
-
     const action = await this.moduleActionsRepository.findOne({
       where: { name: actionName },
     });
-
 
     if (!action) {
       throw new BadRequestException('Action not found');
@@ -329,21 +325,26 @@ export class AuthService {
 
   async removePermission(userId: string, actionName: string) {
     const user = await this.userService.findOne(userId);
-    const [action] = await this.moduleActionsRepository.find({
+
+    const action = await this.moduleActionsRepository.findOne({
       where: { name: actionName },
     });
 
-    const userHasAction = user.actions.some(
-      (userAction) => userAction.id === action.id,
-    );
+    if (!action) {
+      throw new BadRequestException('Action not found');
+    }
 
-    if (userHasAction) return;
+    const userAction = await this.userActionsRepository.findOne({
+      where: { action: { id: action.id }, user: { id: user.id } },
+    });
+
+    if (!userAction) return;
 
     try {
-      await this.userActionsRepository.delete({
-        user: { id: userId },
-        id: action.id,
+      const result = await this.userActionsRepository.delete({
+        id: userAction.id,
       });
+      return result;
     } catch (error) {
       this.handlerError.handle(error, this.logger);
     }

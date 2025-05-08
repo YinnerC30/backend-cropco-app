@@ -10,7 +10,7 @@ import { Payment } from './payment.entity';
 import { WorkDetails } from 'src/work/entities/work-details.entity';
 
 @Entity({ name: 'payments_work' })
-export class PaymentWork {
+export class PaymentsWork {
   @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
     description: 'Identificador único del pago por trabajo',

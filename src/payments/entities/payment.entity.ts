@@ -10,8 +10,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { PaymentHarvest } from './payment-harvest.entity';
-import { PaymentWork } from './payment-work.entity';
+import { PaymentsHarvest } from './payment-harvest.entity';
+import { PaymentsWork } from './payment-work.entity';
 
 export enum MethodOfPayment {
   EFECTIVO = 'EFECTIVO',
@@ -54,26 +54,26 @@ export class Payment {
   value_pay: number;
 
   @ApiProperty({
-    type: () => [PaymentHarvest],
+    type: () => [PaymentsHarvest],
     description: 'Pagos de cosecha asociados',
   })
   @OneToMany(
-    () => PaymentHarvest,
+    () => PaymentsHarvest,
     (payments_harvest) => payments_harvest.payment,
     {
       cascade: true,
     },
   )
-  payments_harvest: PaymentHarvest[];
+  payments_harvest: PaymentsHarvest[];
 
   @ApiProperty({
-    type: () => [PaymentWork],
+    type: () => [PaymentsWork],
     description: 'Pagos de trabajo asociados',
   })
-  @OneToMany(() => PaymentWork, (payments_work) => payments_work.payment, {
+  @OneToMany(() => PaymentsWork, (payments_work) => payments_work.payment, {
     cascade: true,
   })
-  payments_work: PaymentWork[];
+  payments_work: PaymentsWork[];
 
   @CreateDateColumn()
   createdDate: Date;
