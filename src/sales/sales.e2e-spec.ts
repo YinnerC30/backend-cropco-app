@@ -4,9 +4,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
 import { AuthService } from 'src/auth/auth.service';
+import { Client } from 'src/clients/entities/client.entity';
 import { CommonModule } from 'src/common/common.module';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
+import { Crop } from 'src/crops/entities/crop.entity';
 import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
@@ -19,10 +22,6 @@ import { SaleDetails } from './entities/sale-details.entity';
 import { Sale } from './entities/sale.entity';
 import { SalesController } from './sales.controller';
 import { SalesModule } from './sales.module';
-import exp from 'node:constants';
-import { Client } from 'src/clients/entities/client.entity';
-import { Crop } from 'src/crops/entities/crop.entity';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 
 describe('SalesController (e2e)', () => {
   let app: INestApplication;
@@ -119,6 +118,10 @@ describe('SalesController (e2e)', () => {
   });
 
   describe('sales/create (POST)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_sale');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path /sales/create', async () => {
       const bodyRequest: SaleDto = {
         ...saleDtoTemplete,
@@ -131,27 +134,7 @@ describe('SalesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /sales/create', async () => {
-      await authService.removePermission(userTest.id, 'create_sale');
-
-      const bodyRequest: SaleDto = {
-        ...saleDtoTemplete,
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/sales/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(bodyRequest)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should create a new sale', async () => {
-      await authService.addPermission(userTest.id, 'create_sale');
-
       const client1 = await seedService.CreateClient({});
       const client2 = await seedService.CreateClient({});
 
@@ -312,6 +295,7 @@ describe('SalesController (e2e)', () => {
           await saleController.create(data3),
         ]);
       }
+      await authService.addPermission(userTest.id, 'find_all_sales');
     }, 15_000);
 
     it('should throw an exception for not sending a JWT to the protected path /sales/all', async () => {
@@ -322,20 +306,7 @@ describe('SalesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /sales/all', async () => {
-      await authService.removePermission(userTest.id, 'find_all_sales');
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/sales/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get only 10 sales for default by not sending paging parameters', async () => {
-      await authService.addPermission(userTest.id, 'find_all_sales');
       const response = await request
         .default(app.getHttpServer())
         .get('/sales/all')
@@ -1544,6 +1515,10 @@ describe('SalesController (e2e)', () => {
   });
 
   describe('sales/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'find_one_sale');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path sales/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1552,21 +1527,7 @@ describe('SalesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action sales/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_sale');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/sales/one/${falseSaleId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get one sale', async () => {
-      await authService.addPermission(userTest.id, 'find_one_sale');
-
       const { harvest, crop } = await seedService.CreateHarvest({
         quantityEmployees: 15,
         amount: 2500,
@@ -1650,6 +1611,10 @@ describe('SalesController (e2e)', () => {
   });
 
   describe('sales/update/one/:id (PUT)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'update_one_sale');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path sales/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1658,21 +1623,7 @@ describe('SalesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action sales/update/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_sale');
-      const response = await request
-        .default(app.getHttpServer())
-        .put(`/sales/update/one/${falseSaleId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should update one sale', async () => {
-      await authService.addPermission(userTest.id, 'update_one_sale');
-
       const { harvest, crop } = await seedService.CreateHarvest({
         quantityEmployees: 15,
         amount: 2500,
@@ -1748,8 +1699,6 @@ describe('SalesController (e2e)', () => {
     });
 
     it('You should throw an exception for attempting to modify a record that has been cascaded out.', async () => {
-      await authService.addPermission(userTest.id, 'update_one_sale');
-
       const { harvest, crop } = await seedService.CreateHarvest({
         quantityEmployees: 15,
         amount: 2500,
@@ -1824,6 +1773,10 @@ describe('SalesController (e2e)', () => {
   });
 
   describe('sales/remove/one/:id (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_one_sale');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path sales/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1832,21 +1785,7 @@ describe('SalesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action sales/remove/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'remove_one_sale');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/sales/remove/one/${falseSaleId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete one sale', async () => {
-      await authService.addPermission(userTest.id, 'remove_one_sale');
-
       const { harvest, crop } = await seedService.CreateHarvest({
         quantityEmployees: 15,
         amount: 2500,
@@ -1918,6 +1857,10 @@ describe('SalesController (e2e)', () => {
   });
 
   describe('sales/remove/bulk (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_bulk_sales');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path sales/remove/bulk ', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1926,21 +1869,7 @@ describe('SalesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action sales/remove/bulk ', async () => {
-      await authService.removePermission(userTest.id, 'remove_bulk_sales');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/sales/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete sales bulk', async () => {
-      await authService.addPermission(userTest.id, 'remove_bulk_sales');
-
       const { harvest, crop } = await seedService.CreateHarvest({
         quantityEmployees: 15,
         amount: 2500,
@@ -2057,6 +1986,10 @@ describe('SalesController (e2e)', () => {
   });
 
   describe('sales/export/one/pdf/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'export_sale_to_pdf');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path sales/export/one/pdf/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -2065,20 +1998,7 @@ describe('SalesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action sales/export/one/pdf/:id', async () => {
-      await authService.removePermission(userTest.id, 'export_sale_to_pdf');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/sales/export/one/pdf/${falseSaleId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should export one sale in PDF format', async () => {
-      await authService.addPermission(userTest.id, 'export_sale_to_pdf');
       const { harvest, crop } = await seedService.CreateHarvest({
         quantityEmployees: 15,
         amount: 2500,
@@ -2103,6 +2023,103 @@ describe('SalesController (e2e)', () => {
       expect(response.body).toBeDefined();
       expect(response.headers['content-type']).toEqual('application/pdf');
       expect(response.body).toBeInstanceOf(Buffer);
+    });
+  });
+
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      await Promise.all([
+        authService.removePermission(userTest.id, 'create_sale'),
+        authService.removePermission(userTest.id, 'find_all_sales'),
+        authService.removePermission(userTest.id, 'find_one_sale'),
+        authService.removePermission(userTest.id, 'update_one_sale'),
+        authService.removePermission(userTest.id, 'remove_one_sale'),
+        authService.removePermission(userTest.id, 'remove_bulk_sales'),
+        authService.removePermission(userTest.id, 'export_sale_to_pdf'),
+      ]);
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /sales/create', async () => {
+      const bodyRequest: SaleDto = {
+        ...saleDtoTemplete,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/sales/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /sales/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/sales/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action sales/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/sales/one/${falseSaleId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action sales/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/sales/update/one/${falseSaleId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action sales/remove/one/:id', async () => {
+      await authService.removePermission(userTest.id, 'remove_one_sale');
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/sales/remove/one/${falseSaleId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action sales/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/sales/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action sales/export/one/pdf/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/sales/export/one/pdf/${falseSaleId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
     });
   });
 });
