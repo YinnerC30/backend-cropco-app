@@ -117,6 +117,10 @@ describe('PaymentsController (e2e)', () => {
   });
 
   describe('payments/create (POST)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_payment');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path /payments/create', async () => {
       const bodyRequest: PaymentDto = {
         ...paymentDtoTemplete,
@@ -129,27 +133,7 @@ describe('PaymentsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /payments/create', async () => {
-      await authService.removePermission(userTest.id, 'create_payment');
-
-      const bodyRequest: PaymentDto = {
-        ...paymentDtoTemplete,
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/payments/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(bodyRequest)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should create a new payment', async () => {
-      await authService.addPermission(userTest.id, 'create_payment');
-
       const { employees, harvest } = await seedService.CreateHarvest({});
       const { work } = await seedService.CreateWorkForEmployee({
         employeeId: employees[0].id,
@@ -199,7 +183,6 @@ describe('PaymentsController (e2e)', () => {
     });
 
     it('should throw exception when fields are missing in the body', async () => {
-      await authService.addPermission(userTest.id, 'create_payment');
       const errorMessage = [
         'date must be a valid ISO 8601 date string',
         'employee should not be null or undefined',
@@ -226,13 +209,6 @@ describe('PaymentsController (e2e)', () => {
   describe('payments/all (GET)', () => {
     let employeesHarvest: Employee[];
     let employeesWork: Employee[];
-
-    beforeEach(async () => {
-      await authService.addPermission(userTest.id, 'find_all_payments');
-    });
-    afterEach(async () => {
-      await authService.removePermission(userTest.id, 'find_all_payments');
-    });
 
     beforeAll(async () => {
       await paymentRepository.delete({});
@@ -262,6 +238,7 @@ describe('PaymentsController (e2e)', () => {
           }),
         ]);
       }
+      await authService.addPermission(userTest.id, 'find_all_payments');
     });
 
     it('should throw an exception for not sending a JWT to the protected path /payments/all', async () => {
@@ -270,19 +247,6 @@ describe('PaymentsController (e2e)', () => {
         .get('/payments/all')
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action /payments/all', async () => {
-      await authService.removePermission(userTest.id, 'find_all_payments');
-
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/payments/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
     });
 
     it('should get only 10 payments for default by not sending paging parameters', async () => {
@@ -837,11 +801,8 @@ describe('PaymentsController (e2e)', () => {
   });
 
   describe('payments/one/:id (GET)', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
       await authService.addPermission(userTest.id, 'find_one_payment');
-    });
-    afterEach(async () => {
-      await authService.removePermission(userTest.id, 'find_one_payment');
     });
 
     it('should throw an exception for not sending a JWT to the protected path payments/one/:id', async () => {
@@ -850,18 +811,6 @@ describe('PaymentsController (e2e)', () => {
         .get(`/payments/one/${falsePaymentId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action payments/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_payment');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/payments/one/${falsePaymentId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
     });
 
     it('should get one payment', async () => {
@@ -937,30 +886,16 @@ describe('PaymentsController (e2e)', () => {
   });
 
   describe('payments/remove/one/:id (DELETE)', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
       await authService.addPermission(userTest.id, 'remove_one_payment');
     });
-    afterEach(async () => {
-      await authService.removePermission(userTest.id, 'remove_one_payment');
-    });
+
     it('should throw an exception for not sending a JWT to the protected path payments/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
         .delete(`/payments/remove/one/${falsePaymentId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action payments/remove/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'remove_one_payment');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/payments/remove/one/${falsePaymentId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
     });
 
     it('should delete one payment', async () => {
@@ -982,14 +917,8 @@ describe('PaymentsController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
-      await authService.addPermission(userTest.id, 'find_one_payment');
-
-      const { notFound } = await request
-        .default(app.getHttpServer())
-        .get(`/payments/one/${id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(404);
-      expect(notFound).toBe(true);
+      const payment = await paymentRepository.findOne({ where: { id } });
+      expect(payment).toBeNull();
     });
 
     it('You should throw exception for trying to delete a payment that does not exist.', async () => {
@@ -1005,12 +934,10 @@ describe('PaymentsController (e2e)', () => {
   });
 
   describe('payments/remove/bulk (DELETE)', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
       await authService.addPermission(userTest.id, 'remove_bulk_payments');
     });
-    afterEach(async () => {
-      await authService.removePermission(userTest.id, 'remove_bulk_payments');
-    });
+
     it('should throw an exception for not sending a JWT to the protected path payments/remove/bulk ', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1019,21 +946,7 @@ describe('PaymentsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action payments/remove/bulk ', async () => {
-      await authService.removePermission(userTest.id, 'remove_bulk_payments');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/payments/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete payments bulk', async () => {
-      await authService.addPermission(userTest.id, 'remove_bulk_payments');
-
       const resultHarvest = await seedService.CreateHarvest({
         quantityEmployees: 3,
         valuePay: 120_000,
@@ -1095,11 +1008,8 @@ describe('PaymentsController (e2e)', () => {
   });
 
   describe('payments/export/one/pdf/:id (GET)', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
       await authService.addPermission(userTest.id, 'export_payment_to_pdf');
-    });
-    afterEach(async () => {
-      await authService.removePermission(userTest.id, 'export_payment_to_pdf');
     });
 
     it('should throw an exception for not sending a JWT to the protected path payments/export/one/pdf/:id', async () => {
@@ -1108,18 +1018,6 @@ describe('PaymentsController (e2e)', () => {
         .get('/payments/export/one/pdf/:id')
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action payments/export/one/pdf/:id', async () => {
-      await authService.removePermission(userTest.id, 'export_payment_to_pdf');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/payments/export/one/pdf/${falsePaymentId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
     });
 
     it('should export one payment in PDF format', async () => {
@@ -1143,6 +1041,90 @@ describe('PaymentsController (e2e)', () => {
       expect(response.body).toBeDefined();
       expect(response.headers['content-type']).toEqual('application/pdf');
       expect(response.body).toBeInstanceOf(Buffer);
+    });
+  });
+
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      await Promise.all([
+        authService.removePermission(userTest.id, 'create_payment'),
+        authService.removePermission(userTest.id, 'find_all_payments'),
+        authService.removePermission(userTest.id, 'find_one_payment'),
+        authService.removePermission(userTest.id, 'remove_one_payment'),
+        authService.removePermission(userTest.id, 'remove_bulk_payments'),
+        authService.removePermission(userTest.id, 'export_payment_to_pdf'),
+      ]);
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /payments/create', async () => {
+      const bodyRequest: PaymentDto = {
+        ...paymentDtoTemplete,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/payments/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /payments/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/payments/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action payments/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/payments/one/${falsePaymentId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action payments/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/payments/remove/one/${falsePaymentId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action payments/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/payments/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action payments/export/one/pdf/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/payments/export/one/pdf/${falsePaymentId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
     });
   });
 });
