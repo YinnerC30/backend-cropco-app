@@ -132,6 +132,10 @@ describe('ShoppingController (e2e)', () => {
   });
 
   describe('shopping/create (POST)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_supply_shopping');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path /shopping/create', async () => {
       const bodyRequest: ShoppingSuppliesDto = {
         ...shoppingDtoTemplete,
@@ -144,27 +148,7 @@ describe('ShoppingController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /shopping/create', async () => {
-      await authService.removePermission(userTest.id, 'create_supply_shopping');
-
-      const bodyRequest: ShoppingSuppliesDto = {
-        ...shoppingDtoTemplete,
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/shopping/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(bodyRequest)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should create a new shopping', async () => {
-      await authService.addPermission(userTest.id, 'create_supply_shopping');
-
       const supply1: Supply = (await seedService.CreateSupply({})) as Supply;
       const supply2: Supply = (await seedService.CreateSupply({})) as Supply;
       const supplier1: Supplier = (await seedService.CreateSupplier(
@@ -293,6 +277,10 @@ describe('ShoppingController (e2e)', () => {
         await shoppingService.createShopping(data2);
         await shoppingService.createShopping(data3);
       }
+      await authService.addPermission(
+        userTest.id,
+        'find_all_supplies_shopping',
+      );
     }, 10_000);
 
     it('should throw an exception for not sending a JWT to the protected path /shopping/all', async () => {
@@ -303,26 +291,7 @@ describe('ShoppingController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /shopping/all', async () => {
-      await authService.removePermission(
-        userTest.id,
-        'find_all_supplies_shopping',
-      );
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/shopping/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get only 10 shopping for default by not sending paging parameters', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'find_all_supplies_shopping',
-      );
       const response = await request
         .default(app.getHttpServer())
         .get('/shopping/all')
@@ -1149,6 +1118,13 @@ describe('ShoppingController (e2e)', () => {
   });
 
   describe('shopping/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'find_one_supplies_shopping',
+      );
+    });
+
     it('should throw an exception for not sending a JWT to the protected path shopping/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1157,27 +1133,7 @@ describe('ShoppingController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action shopping/one/:id', async () => {
-      await authService.removePermission(
-        userTest.id,
-        'find_one_supplies_shopping',
-      );
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/shopping/one/${falseShoppingId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get one shopping', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'find_one_supplies_shopping',
-      );
-
       const record = (await seedService.CreateShopping({})).shopping;
 
       const response = await request
@@ -1244,6 +1200,13 @@ describe('ShoppingController (e2e)', () => {
   });
 
   describe('shopping/update/one/:id (PATCH)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'update_one_supplies_shopping',
+      );
+    });
+
     it('should throw an exception for not sending a JWT to the protected path shopping/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1252,27 +1215,7 @@ describe('ShoppingController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action shopping/update/one/:id', async () => {
-      await authService.removePermission(
-        userTest.id,
-        'find_one_supplies_shopping',
-      );
-      const response = await request
-        .default(app.getHttpServer())
-        .patch(`/shopping/update/one/${falseShoppingId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should update one shopping', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'update_one_supplies_shopping',
-      );
-
       const record = (await seedService.CreateShopping({})).shopping;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
@@ -1428,6 +1371,10 @@ describe('ShoppingController (e2e)', () => {
   });
 
   describe('shopping/export/one/pdf/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'export_shopping_to_pdf');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path shopping/export/one/pdf/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1436,20 +1383,7 @@ describe('ShoppingController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action shopping/export/one/pdf/:id', async () => {
-      await authService.removePermission(userTest.id, 'export_shopping_to_pdf');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/shopping/export/one/pdf/${falseShoppingId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should export one shopping in PDF format', async () => {
-      await authService.addPermission(userTest.id, 'export_shopping_to_pdf');
       const record = (await seedService.CreateShopping({})).shopping;
       const response = await request
         .default(app.getHttpServer())
@@ -1463,6 +1397,13 @@ describe('ShoppingController (e2e)', () => {
   });
 
   describe('shopping/remove/one/:id (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'remove_one_supplies_shopping',
+      );
+    });
+
     it('should throw an exception for not sending a JWT to the protected path shopping/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1471,26 +1412,7 @@ describe('ShoppingController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action shopping/remove/one/:id', async () => {
-      await authService.removePermission(
-        userTest.id,
-        'remove_one_supplies_shopping',
-      );
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/shopping/remove/one/${falseShoppingId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete one shopping', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'remove_one_supplies_shopping',
-      );
       const { id, details } = (await seedService.CreateShopping({})).shopping;
 
       const suppliesID = details.map((detail) => detail.supply.id);
@@ -1554,27 +1476,19 @@ describe('ShoppingController (e2e)', () => {
   });
 
   describe('shopping/remove/bulk (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'remove_bulk_supplies_shopping',
+      );
+    });
+
     it('should throw an exception for not sending a JWT to the protected path shopping/remove/bulk ', async () => {
       const response = await request
         .default(app.getHttpServer())
         .delete('/shopping/remove/bulk')
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action shopping/remove/bulk ', async () => {
-      await authService.removePermission(
-        userTest.id,
-        'remove_bulk_supplies_shopping',
-      );
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/shopping/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
     });
 
     it('should delete shopping bulk', async () => {
@@ -1623,6 +1537,108 @@ describe('ShoppingController (e2e)', () => {
         .send({ recordsIds: [] })
         .expect(400);
       expect(body.message[0]).toEqual('recordsIds should not be empty');
+    });
+  });
+
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      await Promise.all([
+        authService.removePermission(
+          userTest.id,
+          'remove_bulk_supplies_shopping',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'remove_one_supplies_shopping',
+        ),
+        authService.removePermission(userTest.id, 'export_shopping_to_pdf'),
+        authService.removePermission(
+          userTest.id,
+          'update_one_supplies_shopping',
+        ),
+        authService.removePermission(userTest.id, 'find_one_supplies_shopping'),
+        authService.removePermission(userTest.id, 'find_all_supplies_shopping'),
+        authService.removePermission(userTest.id, 'create_supply_shopping'),
+      ]);
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action shopping/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/shopping/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action shopping/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/shopping/remove/one/${falseShoppingId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action shopping/export/one/pdf/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/shopping/export/one/pdf/${falseShoppingId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action shopping/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/shopping/update/one/${falseShoppingId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action shopping/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/shopping/one/${falseShoppingId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /shopping/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/shopping/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /shopping/create', async () => {
+      const bodyRequest: ShoppingSuppliesDto = {
+        ...shoppingDtoTemplete,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/shopping/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
     });
   });
 });
