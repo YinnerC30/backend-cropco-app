@@ -188,7 +188,6 @@ describe('ShoppingController (e2e)', () => {
     });
 
     it('should throw exception when fields are missing in the body', async () => {
-      await authService.addPermission(userTest.id, 'create_supply_shopping');
       const errorMessage = [
         'date must be a valid ISO 8601 date string',
         'The value must be a multiple of 50',
@@ -1269,11 +1268,6 @@ describe('ShoppingController (e2e)', () => {
     });
 
     it('You should throw an exception for attempting to delete a record that has been cascaded out.', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'update_one_supplies_shopping',
-      );
-
       const record = (
         await seedService.CreateShoppingExtended({ quantitySupplies: 3 })
       ).shopping;
@@ -1308,11 +1302,6 @@ describe('ShoppingController (e2e)', () => {
     });
 
     it('You should throw an exception for attempting to modify a record that has been cascaded out.', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'update_one_supplies_shopping',
-      );
-
       const record = (await seedService.CreateShopping({})).shopping;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
@@ -1344,10 +1333,6 @@ describe('ShoppingController (e2e)', () => {
     });
 
     it('should throw exception for not finding shopping to update', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'update_one_supplies_shopping',
-      );
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/shopping/update/one/${falseShoppingId}`)
@@ -1492,10 +1477,6 @@ describe('ShoppingController (e2e)', () => {
     });
 
     it('should delete shopping bulk', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'remove_bulk_supplies_shopping',
-      );
       const [
         { shopping: shopping1 },
         { shopping: shopping2 },

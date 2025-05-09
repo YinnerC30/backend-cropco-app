@@ -32,9 +32,7 @@ export class WorkService {
     private readonly dataSource: DataSource,
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
-  ) {
-    
-  }
+  ) {}
 
   async create(createWorkDto: WorkDto) {
     const queryRunner = this.dataSource.createQueryRunner();
