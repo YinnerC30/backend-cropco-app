@@ -9,6 +9,7 @@ import {
   Post,
   Query,
   Res,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -19,6 +20,7 @@ import { QueryParamsWork } from './dto/query-params-work.dto';
 import { Work } from './entities/work.entity';
 import { WorkService } from './work.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
 
 export const pathsWorksController: PathsController = {
   createWork: {
@@ -114,14 +116,8 @@ export class WorkController {
   }
 
   @Delete(removeWorks.path)
-  async removeBulk(
-    @Body() removeBulkWorksDto: RemoveBulkRecordsDto<Work>,
-    @Res() response: Response,
-  ) {
-    const result = await this.workService.removeBulk(removeBulkWorksDto);
-    if (result.failed && result.failed.length > 0) {
-      return response.status(207).json(result);
-    }
-    return response.status(200).json(result);
+  @UseInterceptors(ResponseStatusInterceptor)
+  async removeBulk(@Body() removeBulkWorksDto: RemoveBulkRecordsDto<Work>) {
+    return this.workService.removeBulk(removeBulkWorksDto);
   }
 }

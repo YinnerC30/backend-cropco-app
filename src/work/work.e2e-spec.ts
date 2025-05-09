@@ -121,6 +121,10 @@ describe('WorksController (e2e)', () => {
   });
 
   describe('works/create (POST)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_work');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path /works/create', async () => {
       const bodyRequest: WorkDto = {
         ...workDtoTemplete,
@@ -133,27 +137,7 @@ describe('WorksController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /works/create', async () => {
-      await authService.removePermission(userTest.id, 'create_work');
-
-      const bodyRequest: WorkDto = {
-        ...workDtoTemplete,
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/works/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(bodyRequest)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should create a new work', async () => {
-      await authService.addPermission(userTest.id, 'create_work');
-
       const crop = await seedService.CreateCrop({});
       const employee1 = await seedService.CreateEmployee({});
       const employee2 = await seedService.CreateEmployee({});
@@ -264,6 +248,7 @@ describe('WorksController (e2e)', () => {
           await workController.create(data3),
         ]);
       }
+      await authService.addPermission(userTest.id, 'find_all_works');
     });
 
     it('should throw an exception for not sending a JWT to the protected path /works/all', async () => {
@@ -274,20 +259,7 @@ describe('WorksController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /works/all', async () => {
-      await authService.removePermission(userTest.id, 'find_all_works');
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/works/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get only 10 works for default by not sending paging parameters', async () => {
-      await authService.addPermission(userTest.id, 'find_all_works');
       const response = await request
         .default(app.getHttpServer())
         .get('/works/all')
@@ -1071,6 +1043,10 @@ describe('WorksController (e2e)', () => {
   });
 
   describe('works/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'find_one_work');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path works/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1079,21 +1055,7 @@ describe('WorksController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action works/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_work');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/works/one/${falseWorkId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get one work', async () => {
-      await authService.addPermission(userTest.id, 'find_one_work');
-
       const record = (await seedService.CreateWork({})).work;
 
       const response = await request
@@ -1161,6 +1123,10 @@ describe('WorksController (e2e)', () => {
   });
 
   describe('works/update/one/:id (PATCH)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'update_one_work');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path works/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1169,21 +1135,7 @@ describe('WorksController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action works/update/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_work');
-      const response = await request
-        .default(app.getHttpServer())
-        .patch(`/works/update/one/${falseWorkId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should update one work', async () => {
-      await authService.addPermission(userTest.id, 'update_one_work');
-
       const record = (await seedService.CreateWork({})).work;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
@@ -1239,8 +1191,6 @@ describe('WorksController (e2e)', () => {
     });
 
     it(' should throw an exception for trying to delete a record that is already paid for.', async () => {
-      await authService.addPermission(userTest.id, 'update_one_work');
-
       const record = (await seedService.CreateWork({ quantityEmployees: 2 }))
         .work;
 
@@ -1279,8 +1229,6 @@ describe('WorksController (e2e)', () => {
     });
 
     it('You should throw an exception for attempting to delete a record that has been cascaded out.', async () => {
-      await authService.addPermission(userTest.id, 'update_one_work');
-
       const record = (await seedService.CreateWork({ quantityEmployees: 2 }))
         .work;
 
@@ -1317,8 +1265,6 @@ describe('WorksController (e2e)', () => {
     });
 
     it('should throw an exception for trying to modify a record that is already paid for.', async () => {
-      await authService.addPermission(userTest.id, 'update_one_work');
-
       const record = (await seedService.CreateWork({ quantityEmployees: 2 }))
         .work;
 
@@ -1357,8 +1303,6 @@ describe('WorksController (e2e)', () => {
     });
 
     it('You should throw an exception for attempting to modify a record that has been cascaded out.', async () => {
-      await authService.addPermission(userTest.id, 'update_one_work');
-
       const record = (await seedService.CreateWork({ quantityEmployees: 2 }))
         .work;
 
@@ -1412,6 +1356,10 @@ describe('WorksController (e2e)', () => {
   });
 
   describe('works/remove/one/:id (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_one_work');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path works/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1420,20 +1368,7 @@ describe('WorksController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action works/remove/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'remove_one_work');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/works/remove/one/${falseWorkId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete one work', async () => {
-      await authService.addPermission(userTest.id, 'remove_one_work');
       const { id } = (await seedService.CreateWork({ quantityEmployees: 2 }))
         .work;
 
@@ -1443,12 +1378,8 @@ describe('WorksController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
-      const { notFound } = await request
-        .default(app.getHttpServer())
-        .get(`/works/one/${id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(404);
-      expect(notFound).toBe(true);
+      const work = await workRepository.findOne({ where: { id } });
+      expect(work).toBeNull();
     });
 
     it('You should throw exception for trying to delete a work that does not exist.', async () => {
@@ -1461,7 +1392,6 @@ describe('WorksController (e2e)', () => {
     });
 
     it('should throw an exception when trying to delete a work with payments records', async () => {
-      await authService.addPermission(userTest.id, 'remove_one_work');
       const work = (await seedService.CreateWork({})).work;
 
       await seedService.CreatePayment({
@@ -1483,6 +1413,10 @@ describe('WorksController (e2e)', () => {
   });
 
   describe('works/remove/bulk (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_bulk_works');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path works/remove/bulk ', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1491,20 +1425,7 @@ describe('WorksController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action works/remove/bulk ', async () => {
-      await authService.removePermission(userTest.id, 'remove_bulk_works');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/works/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete works bulk', async () => {
-      await authService.addPermission(userTest.id, 'remove_bulk_works');
       const [{ work: work1 }, { work: work2 }, { work: work3 }] =
         await Promise.all([
           seedService.CreateWork({}),
@@ -1571,8 +1492,7 @@ describe('WorksController (e2e)', () => {
         failed: [
           {
             id: work1.id,
-            error:
-              `The record with id ${work1.id} cannot be deleted because it has payments linked to it.`,
+            error: `The record with id ${work1.id} cannot be deleted because it has payments linked to it.`,
           },
         ],
       });
@@ -1580,6 +1500,10 @@ describe('WorksController (e2e)', () => {
   });
 
   describe('works/export/one/pdf/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'export_work_to_pdf');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path works/export/one/pdf/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1588,20 +1512,7 @@ describe('WorksController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action works/export/one/pdf/:id', async () => {
-      await authService.removePermission(userTest.id, 'export_work_to_pdf');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/works/export/one/pdf/${falseWorkId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should export one work in PDF format', async () => {
-      await authService.addPermission(userTest.id, 'export_work_to_pdf');
       const record = (
         await workService.findAll({
           limit: 1,
@@ -1615,6 +1526,102 @@ describe('WorksController (e2e)', () => {
       expect(response.body).toBeDefined();
       expect(response.headers['content-type']).toEqual('application/pdf');
       expect(response.body).toBeInstanceOf(Buffer);
+    });
+  });
+
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      await Promise.all([
+        authService.removePermission(userTest.id, 'create_work'),
+        authService.removePermission(userTest.id, 'find_all_works'),
+        authService.removePermission(userTest.id, 'find_one_work'),
+        authService.removePermission(userTest.id, 'update_one_work'),
+        authService.removePermission(userTest.id, 'remove_one_work'),
+        authService.removePermission(userTest.id, 'remove_bulk_works'),
+        authService.removePermission(userTest.id, 'export_work_to_pdf'),
+      ]);
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /works/create', async () => {
+      const bodyRequest: WorkDto = {
+        ...workDtoTemplete,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/works/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /works/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/works/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action works/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/works/one/${falseWorkId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action works/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/works/update/one/${falseWorkId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action works/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/works/remove/one/${falseWorkId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action works/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/works/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action works/export/one/pdf/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/works/export/one/pdf/${falseWorkId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
     });
   });
 });
