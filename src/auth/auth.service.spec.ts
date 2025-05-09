@@ -328,7 +328,7 @@ describe('AuthService', () => {
     const mockNewUser = {
       id: '1',
       first_name: 'demo name',
-      last_name: 'demo lastname',
+      last_name: 'demo lastName',
       email: 'demouser@example.com',
       cell_phone_number: '3001234567',
       is_active: true,
@@ -349,7 +349,7 @@ describe('AuthService', () => {
 
       expect(mockUsersService.create).toHaveBeenCalledWith({
         first_name: 'demo name',
-        last_name: 'demo lastname',
+        last_name: 'demo lastName',
         email: 'demouser@example.com',
         password: '123456',
         cell_phone_number: '3001234567',
