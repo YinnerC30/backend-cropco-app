@@ -135,6 +135,9 @@ describe('ConsumptionController (e2e)', () => {
   });
 
   describe('consumptions/create (POST)', () => {
+
+    
+
     it('should throw an exception for not sending a JWT to the protected path /consumptions/create', async () => {
       const bodyRequest: ConsumptionSuppliesDto = {
         ...consumptionDtoTemplete,

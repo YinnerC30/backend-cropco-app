@@ -22,7 +22,6 @@ import { WorkDetails } from 'src/work/entities/work-details.entity';
 import { PaymentDto } from './dto/payment.dto';
 import { PaymentsHarvest } from './entities/payment-harvest.entity';
 import { PaymentsWork } from './entities/payment-work.entity';
-import { PaymentsController } from './payments.controller';
 import { PaymentsModule } from './payments.module';
 
 describe('PaymentsController (e2e)', () => {
@@ -33,7 +32,6 @@ describe('PaymentsController (e2e)', () => {
   let seedService: SeedService;
   let authService: AuthService;
 
-  let paymentController: PaymentsController;
   let userTest: User;
   let token: string;
 
@@ -82,8 +80,6 @@ describe('PaymentsController (e2e)', () => {
 
     seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
-    paymentController =
-      moduleFixture.get<PaymentsController>(PaymentsController);
 
     paymentRepository = moduleFixture.get<Repository<Payment>>(
       getRepositoryToken(Payment),

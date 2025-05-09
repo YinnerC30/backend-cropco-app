@@ -302,6 +302,10 @@ export class AuthService {
   async addPermission(userId: string, actionName: string) {
     const user = await this.userService.findOne(userId);
 
+    if (actionName === 'find_one_client') {
+      console.log('🚀 ~ addPermission ~ actionName:', actionName);
+    }
+
     const action = await this.moduleActionsRepository.findOne({
       where: { name: actionName },
     });
@@ -326,6 +330,10 @@ export class AuthService {
   async removePermission(userId: string, actionName: string) {
     const user = await this.userService.findOne(userId);
 
+    if (actionName === 'find_one_client') {
+      console.log('🚀 ~ removePermission ~ actionName:', actionName);
+    }
+
     const action = await this.moduleActionsRepository.findOne({
       where: { name: actionName },
     });
@@ -338,7 +346,7 @@ export class AuthService {
       where: { action: { id: action.id }, user: { id: user.id } },
     });
 
-    if (!userAction) return;
+    if (!userAction) return 'No fue necesario eliminar la acción';
 
     try {
       const result = await this.userActionsRepository.delete({
@@ -355,7 +363,7 @@ export class AuthService {
   > {
     const data = {
       first_name: 'demo name',
-      last_name: 'demo lastname',
+      last_name: 'demo lastName',
       email: 'demouser@example.com',
       password: '123456',
       cell_phone_number: '3001234567',

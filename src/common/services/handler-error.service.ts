@@ -12,7 +12,7 @@ export class HandlerErrorService {
   handle(error: any, logger: Logger): void {
     logger.error(error);
 
-    console.log(error);
+    // console.log(error);
 
     if (error instanceof HttpException) {
       throw error;

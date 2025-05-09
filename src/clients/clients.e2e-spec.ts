@@ -5,23 +5,18 @@ import * as request from 'supertest';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { describe } from 'node:test';
+
 import { AuthModule } from 'src/auth/auth.module';
 import { AuthService } from 'src/auth/auth.service';
 import { CommonModule } from 'src/common/common.module';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { CropsService } from 'src/crops/crops.service';
-import { EmployeesService } from 'src/employees/employees.service';
-import { HarvestService } from 'src/harvest/harvest.service';
 import { SalesModule } from 'src/sales/sales.module';
-import { SalesService } from 'src/sales/sales.service';
 import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { ClientsModule } from './clients.module';
-import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { Client } from './entities/client.entity';
 
@@ -33,7 +28,7 @@ describe('ClientsController (e2e)', () => {
   let userTest: User;
   let token: string;
 
-  const clientDtoTemplete: CreateClientDto = {
+  let clientDtoTemplete: CreateClientDto = {
     first_name: InformationGenerator.generateFirstName(),
     last_name: InformationGenerator.generateLastName(),
     email: InformationGenerator.generateEmail(),
@@ -41,7 +36,7 @@ describe('ClientsController (e2e)', () => {
     address: InformationGenerator.generateAddress(),
   };
 
-  const falseClientId = InformationGenerator.generateRandomId();
+  let falseClientId = InformationGenerator.generateRandomId();
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -106,110 +101,15 @@ describe('ClientsController (e2e)', () => {
     await app.close();
   });
 
-  describe('clients/create (POST)', () => {
-    it('should throw an exception for not sending a JWT to the protected path /clients/create', async () => {
-      const bodyRequest: CreateClientDto = {
-        ...clientDtoTemplete,
-      };
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/clients/create')
-        .send(bodyRequest)
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action /clients/create', async () => {
-      await authService.removePermission(userTest.id, 'create_client');
-
-      const bodyRequest: CreateClientDto = {
-        ...clientDtoTemplete,
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/clients/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(bodyRequest)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
-    it('should create a new client', async () => {
-      await authService.addPermission(userTest.id, 'create_client');
-
-      const bodyRequest: CreateClientDto = {
-        ...clientDtoTemplete,
-      };
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/clients/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(bodyRequest)
-        .expect(201);
-      expect(response.body).toMatchObject(bodyRequest);
-
-      // Delete record
-      // await clientRepository.delete({ id: response.body.id });
-    });
-
-    it('should throw exception when fields are missing in the body', async () => {
-      const errorMessage = [
-        'first_name must be shorter than or equal to 100 characters',
-        'first_name must be a string',
-        'last_name must be shorter than or equal to 100 characters',
-        'last_name must be a string',
-        'email must be shorter than or equal to 100 characters',
-        'email must be an email',
-        'email must be a string',
-        'cell_phone_number must be shorter than or equal to 10 characters',
-        'cell_phone_number must be a number string',
-        'address must be shorter than or equal to 200 characters',
-        'address must be a string',
-      ];
-
-      const { body } = await request
-        .default(app.getHttpServer())
-        .post('/clients/create')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(400);
-
-      errorMessage.forEach((msg) => {
-        expect(body.message).toContain(msg);
-      });
-    });
-
-    it('should throw exception for trying to create a client with duplicate email.', async () => {
-      const clientWithInitialEmail = await seedService.CreateClient({});
-
-      const bodyRequest: CreateClientDto = {
-        ...clientDtoTemplete,
-        email: clientWithInitialEmail.email,
-      };
-      const { body } = await request
-        .default(app.getHttpServer())
-        .post('/clients/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(bodyRequest)
-        .expect(400);
-      expect(body.message).toEqual(
-        `Unique constraint violation, Key (email)=(${clientWithInitialEmail.email}) already exists.`,
-      );
-
-      // Delete record
-      // await clientRepository.delete({ id: clientWithInitialEmail.id });
-    });
-  });
-
   describe('clients/all (GET)', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
       try {
         await clientRepository.delete({});
+
         await Promise.all(
           Array.from({ length: 17 }).map(() => seedService.CreateClient({})),
         );
+        await authService.addPermission(userTest.id, 'find_all_clients');
       } catch (error) {
         console.log(error);
       }
@@ -223,20 +123,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /clients/all', async () => {
-      await authService.removePermission(userTest.id, 'find_all_clients');
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/clients/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get only 10 clients for default by not sending paging parameters', async () => {
-      await authService.addPermission(userTest.id, 'find_all_clients');
       const response = await request
         .default(app.getHttpServer())
         .get('/clients/all')
@@ -363,7 +250,86 @@ describe('ClientsController (e2e)', () => {
     });
   });
 
+  describe('clients/create (POST)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_client');
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /clients/create', async () => {
+      const bodyRequest: CreateClientDto = {
+        ...clientDtoTemplete,
+      };
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/clients/create')
+        .send(bodyRequest)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should create a new client', async () => {
+      const bodyRequest: CreateClientDto = {
+        ...clientDtoTemplete,
+      };
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/clients/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(201);
+      expect(response.body).toMatchObject(bodyRequest);
+    });
+
+    it('should throw exception when fields are missing in the body', async () => {
+      const errorMessage = [
+        'first_name must be shorter than or equal to 100 characters',
+        'first_name must be a string',
+        'last_name must be shorter than or equal to 100 characters',
+        'last_name must be a string',
+        'email must be shorter than or equal to 100 characters',
+        'email must be an email',
+        'email must be a string',
+        'cell_phone_number must be shorter than or equal to 10 characters',
+        'cell_phone_number must be a number string',
+        'address must be shorter than or equal to 200 characters',
+        'address must be a string',
+      ];
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/clients/create')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(400);
+
+      errorMessage.forEach((msg) => {
+        expect(body.message).toContain(msg);
+      });
+    });
+
+    it('should throw exception for trying to create a client with duplicate email.', async () => {
+      const clientWithInitialEmail = await seedService.CreateClient({});
+
+      const bodyRequest: CreateClientDto = {
+        ...clientDtoTemplete,
+        email: clientWithInitialEmail.email,
+      };
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/clients/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(400);
+      expect(body.message).toEqual(
+        `Unique constraint violation, Key (email)=(${clientWithInitialEmail.email}) already exists.`,
+      );
+    });
+  });
+
   describe('clients/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'find_one_client');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path clients/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -372,20 +338,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action clients/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_client');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/clients/one/${falseClientId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get one client', async () => {
-      await authService.addPermission(userTest.id, 'find_one_client');
       const { id } = await seedService.CreateClient({});
       const response = await request
         .default(app.getHttpServer())
@@ -437,6 +390,10 @@ describe('ClientsController (e2e)', () => {
   });
 
   describe('clients/update/one/:id (PATCH)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'update_one_client');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path clients/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -445,20 +402,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action clients/update/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_client');
-      const response = await request
-        .default(app.getHttpServer())
-        .patch(`/clients/update/one/${falseClientId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should update one client', async () => {
-      await authService.addPermission(userTest.id, 'update_one_client');
       const { id } = await seedService.CreateClient({});
       const { body } = await request
         .default(app.getHttpServer())
@@ -508,6 +452,10 @@ describe('ClientsController (e2e)', () => {
   });
 
   describe('clients/remove/one/:id (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_one_client');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path clients/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -516,20 +464,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action clients/remove/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'remove_one_client');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/clients/remove/one/${falseClientId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete one client', async () => {
-      await authService.addPermission(userTest.id, 'remove_one_client');
       const { id } = await seedService.CreateClient({});
 
       await request
@@ -538,13 +473,8 @@ describe('ClientsController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
-      const { notFound } = await request
-        .default(app.getHttpServer())
-        .get(`/clients/one/${id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(404);
-
-      expect(notFound).toBe(true);
+      const client = await clientRepository.findOne({ where: { id } });
+      expect(client).toBeNull();
     });
 
     it('You should throw exception for trying to delete a client that does not exist.', async () => {
@@ -570,7 +500,6 @@ describe('ClientsController (e2e)', () => {
         isReceivable: true,
       });
 
-      // Intentar eliminar el cliente
       const { body } = await request
         .default(app.getHttpServer())
         .delete(`/clients/remove/one/${client.id}`)
@@ -583,6 +512,10 @@ describe('ClientsController (e2e)', () => {
   });
 
   describe('clients/export/all/pdf (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'export_clients_pdf');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path clients/export/all/pdf', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -591,20 +524,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action clients/export/all/pdf', async () => {
-      await authService.removePermission(userTest.id, 'export_clients_pdf');
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/clients/export/all/pdf')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should export all clients in PDF format', async () => {
-      await authService.addPermission(userTest.id, 'export_clients_pdf');
       const response = await request
         .default(app.getHttpServer())
         .get('/clients/export/all/pdf')
@@ -617,6 +537,9 @@ describe('ClientsController (e2e)', () => {
   });
 
   describe('clients/remove/bulk (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_bulk_clients');
+    });
     it('should throw an exception for not sending a JWT to the protected path clients/remove/bulk ', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -625,21 +548,7 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action clients/remove/bulk ', async () => {
-      await authService.removePermission(userTest.id, 'remove_bulk_clients');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/clients/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete clients bulk', async () => {
-      await authService.addPermission(userTest.id, 'remove_bulk_clients');
-      // Crear clientes de prueba
       const [client1, client2, client3] = await Promise.all([
         await seedService.CreateClient({}),
         await seedService.CreateClient({}),
@@ -697,7 +606,6 @@ describe('ClientsController (e2e)', () => {
 
       const client3 = await seedService.CreateClient({});
 
-      // Intentar eliminar el cliente
       const { body } = await request
         .default(app.getHttpServer())
         .delete(`/clients/remove/bulk`)
@@ -728,6 +636,13 @@ describe('ClientsController (e2e)', () => {
   });
 
   describe('clients/sales/all (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'find_all_clients_with_sales',
+      );
+    });
+
     it('should throw an exception for not sending a JWT to the protected path clients/sales/all', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -736,42 +651,22 @@ describe('ClientsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action clients/sales/all', async () => {
-      await authService.removePermission(
-        userTest.id,
-        'find_all_clients_with_sales',
-      );
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/clients/sales/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get all sales for all clients', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'find_all_clients_with_sales',
-      );
-
       const { harvest, crop } = await seedService.CreateHarvest({});
       await seedService.CreateHarvestProcessed({
         harvestId: harvest.id,
         cropId: crop.id,
         amount: 50,
       });
-      const sale1 = await seedService.CreateSale({
+      await seedService.CreateSale({
         cropId: crop.id,
         isReceivable: true,
       });
-      const sale2 = await seedService.CreateSale({
+      await seedService.CreateSale({
         cropId: crop.id,
         isReceivable: true,
       });
-      const sale3 = await seedService.CreateSale({
+      await seedService.CreateSale({
         cropId: crop.id,
         isReceivable: true,
       });
@@ -799,6 +694,117 @@ describe('ClientsController (e2e)', () => {
         expect(record.sales_detail).toBeInstanceOf(Array);
         expect(record.sales_detail.length).toBeGreaterThan(0);
       });
+    });
+  });
+
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      const result = await Promise.all([
+        authService.removePermission(userTest.id, 'create_client'),
+        authService.removePermission(userTest.id, 'find_all_clients'),
+        authService.removePermission(userTest.id, 'find_one_client'),
+        authService.removePermission(userTest.id, 'remove_bulk_clients'),
+        authService.removePermission(userTest.id, 'remove_one_client'),
+        authService.removePermission(userTest.id, 'update_one_client'),
+        authService.removePermission(
+          userTest.id,
+          'find_all_clients_with_sales',
+        ),
+        authService.removePermission(userTest.id, 'export_clients_pdf'),
+      ]);
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action clients/create', async () => {
+      const bodyRequest: CreateClientDto = {
+        ...clientDtoTemplete,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/clients/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action clients/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/clients/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action clients/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/clients/one/${falseClientId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action clients/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/clients/update/one/${falseClientId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action clients/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/clients/remove/one/${falseClientId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action clients/export/all/pdf', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/clients/export/all/pdf')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action clients/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/clients/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action clients/sales/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/clients/sales/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
     });
   });
 });
