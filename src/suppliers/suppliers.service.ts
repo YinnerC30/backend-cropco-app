@@ -16,9 +16,7 @@ export class SuppliersService {
     @InjectRepository(Supplier)
     private readonly supplierRepository: Repository<Supplier>,
     private readonly handlerError: HandlerErrorService,
-  ) {
-    
-  }
+  ) {}
 
   async create(createSupplierDto: CreateSupplierDto) {
     try {
@@ -68,7 +66,7 @@ export class SuppliersService {
   }
 
   async findAllSuppliersWithShopping() {
-    const suppliers = await this.supplierRepository.find({
+    const [suppliers, count] = await this.supplierRepository.findAndCount({
       where: {
         supplies_shopping_details: MoreThan(0),
       },
@@ -77,8 +75,11 @@ export class SuppliersService {
       },
     });
     return {
-      rowCount: suppliers.length,
-      rows: suppliers,
+      total_row_count: count,
+      current_row_count: suppliers.length,
+      total_page_count: 1,
+      current_page_count: 1,
+      records: suppliers,
     };
   }
 
