@@ -132,6 +132,10 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/create (POST)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_harvest');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path /harvests/create', async () => {
       const bodyRequest: HarvestDto = {
         ...harvestDtoTemplete,
@@ -144,27 +148,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /harvests/create', async () => {
-      await authService.removePermission(userTest.id, 'create_harvest');
-
-      const bodyRequest: HarvestDto = {
-        ...harvestDtoTemplete,
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/harvests/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(bodyRequest)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should create a new harvest', async () => {
-      await authService.addPermission(userTest.id, 'create_harvest');
-
       const crop = await seedService.CreateCrop({});
 
       const employee1 = await seedService.CreateEmployee({});
@@ -291,6 +275,8 @@ describe('HarvestsController (e2e)', () => {
           await harvestController.create(data3),
         ]);
       }
+
+      await authService.addPermission(userTest.id, 'find_all_harvests');
     });
 
     it('should throw an exception for not sending a JWT to the protected path /harvests/all', async () => {
@@ -301,20 +287,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /harvests/all', async () => {
-      await authService.removePermission(userTest.id, 'find_all_harvests');
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/harvests/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get only 10 harvests for default by not sending paging parameters', async () => {
-      await authService.addPermission(userTest.id, 'find_all_harvests');
       const response = await request
         .default(app.getHttpServer())
         .get('/harvests/all')
@@ -1512,6 +1485,10 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'find_one_harvest');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path harvests/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1520,21 +1497,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_harvest');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/harvests/one/${falseHarvestId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get one harvest', async () => {
-      await authService.addPermission(userTest.id, 'find_one_harvest');
-
       const {
         harvest: { id },
       } = await seedService.CreateHarvest({});
@@ -1607,6 +1570,10 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/update/one/:id (PUT)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'update_one_harvest');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path harvests/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1615,21 +1582,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/update/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_harvest');
-      const response = await request
-        .default(app.getHttpServer())
-        .put(`/harvests/update/one/${falseHarvestId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should update one harvest', async () => {
-      await authService.addPermission(userTest.id, 'update_one_harvest');
-
       const record = (await seedService.CreateHarvest({})).harvest as Harvest;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
@@ -1690,8 +1643,6 @@ describe('HarvestsController (e2e)', () => {
     });
 
     it(' should throw an exception for trying to delete a record that is already paid for.', async () => {
-      await authService.addPermission(userTest.id, 'update_one_harvest');
-
       const record = (await seedService.CreateHarvest({ quantityEmployees: 2 }))
         .harvest as Harvest;
 
@@ -1732,8 +1683,6 @@ describe('HarvestsController (e2e)', () => {
     });
 
     it('You should throw an exception for attempting to delete a record that has been cascaded out.', async () => {
-      await authService.addPermission(userTest.id, 'update_one_harvest');
-
       const record = (await seedService.CreateHarvest({ quantityEmployees: 2 }))
         .harvest as Harvest;
 
@@ -1772,8 +1721,6 @@ describe('HarvestsController (e2e)', () => {
     });
 
     it(' should throw an exception for trying to modify a record that is already paid for.', async () => {
-      await authService.addPermission(userTest.id, 'update_one_harvest');
-
       const record = (await seedService.CreateHarvest({ quantityEmployees: 3 }))
         .harvest as Harvest;
 
@@ -1814,8 +1761,6 @@ describe('HarvestsController (e2e)', () => {
     });
 
     it('You should throw an exception for attempting to modify a record that has been cascaded out.', async () => {
-      await authService.addPermission(userTest.id, 'update_one_harvest');
-
       const harvest = (await seedService.CreateHarvest({})).harvest as Harvest;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = harvest;
@@ -1876,6 +1821,10 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/remove/one/:id (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_one_harvest');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path harvests/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1884,20 +1833,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/remove/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'remove_one_harvest');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/harvests/remove/one/${falseHarvestId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete one harvest', async () => {
-      await authService.addPermission(userTest.id, 'remove_one_harvest');
       const { id } = (await seedService.CreateHarvest({})).harvest;
 
       await request
@@ -1969,6 +1905,10 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/remove/bulk (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_bulk_harvests');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path harvests/remove/bulk ', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1977,20 +1917,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/remove/bulk ', async () => {
-      await authService.removePermission(userTest.id, 'remove_bulk_harvests');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/harvests/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete harvests bulk', async () => {
-      await authService.addPermission(userTest.id, 'remove_bulk_harvests');
       const [
         { harvest: harvest1 },
         { harvest: harvest2 },
@@ -2127,6 +2054,10 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/export/one/pdf/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'export_harvest_to_pdf');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path harvests/export/one/pdf/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -2135,20 +2066,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/export/one/pdf/:id', async () => {
-      await authService.removePermission(userTest.id, 'export_harvest_to_pdf');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/harvests/export/one/pdf/${falseHarvestId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should export one harvest in PDF format', async () => {
-      await authService.addPermission(userTest.id, 'export_harvest_to_pdf');
       const record = (await seedService.CreateHarvest({})).harvest;
       const response = await request
         .default(app.getHttpServer())
@@ -2162,6 +2080,10 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/processed/create (POST)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_harvest_processed');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path /harvests/processed/create', async () => {
       const bodyRequest: HarvestProcessedDto = {
         ...harvestProcessedTemplateDto,
@@ -2174,27 +2096,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /harvests/create', async () => {
-      await authService.removePermission(userTest.id, 'create_harvest');
-
-      const bodyRequest: HarvestProcessedDto = {
-        ...harvestProcessedTemplateDto,
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/harvests/processed/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(bodyRequest)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should create a new harvest processed', async () => {
-      await authService.addPermission(userTest.id, 'create_harvest_processed');
-
       const { harvest } = await seedService.CreateHarvest({});
 
       const bodyRequest: HarvestProcessedDto = {
@@ -2222,8 +2124,6 @@ describe('HarvestsController (e2e)', () => {
     });
 
     it('Should throw an exception for attempting to create a processed harvest that exceeds the amount value of the harvest.', async () => {
-      await authService.addPermission(userTest.id, 'create_harvest_processed');
-
       const { harvest } = await seedService.CreateHarvest({});
 
       const bodyRequest: HarvestProcessedDto = {
@@ -2267,6 +2167,13 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/processed/update/one/:id (PUT)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'update_one_harvest_processed',
+      );
+    });
+
     it('should throw an exception for not sending a JWT to the protected path harvests/processed/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -2275,27 +2182,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/processed/update/one/:id', async () => {
-      await authService.removePermission(
-        userTest.id,
-        'update_one_harvest_processed',
-      );
-      const response = await request
-        .default(app.getHttpServer())
-        .put(`/harvests/processed/update/one/${falseHarvestId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should update one harvest processed', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'update_one_harvest_processed',
-      );
-
       const { harvest } = await seedService.CreateHarvest({});
 
       const harvestProcessed = await seedService.CreateHarvestProcessed({
@@ -2354,6 +2241,13 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/processed/remove/one/:id (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'remove_one_harvest_processed',
+      );
+    });
+
     it('should throw an exception for not sending a JWT to the protected path harvests/processed/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -2362,24 +2256,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/processed/remove/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'remove_one_harvest');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/harvests/processed/remove/one/${falseHarvestId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete one harvest processed', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'remove_one_harvest_processed',
-      );
-
       const { harvest } = await seedService.CreateHarvest({});
 
       const harvestProcessed = await seedService.CreateHarvestProcessed({
@@ -2409,6 +2286,149 @@ describe('HarvestsController (e2e)', () => {
         .expect(404);
       expect(body.message).toEqual(
         `Harvest processed with id: ${falseHarvestId} not found`,
+      );
+    });
+  });
+
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      await Promise.all([
+        authService.removePermission(userTest.id, 'create_harvest'),
+        authService.removePermission(userTest.id, 'find_all_harvests'),
+        authService.removePermission(userTest.id, 'find_one_harvest'),
+        authService.removePermission(userTest.id, 'update_one_harvest'),
+        authService.removePermission(userTest.id, 'remove_one_harvest'),
+        authService.removePermission(userTest.id, 'remove_bulk_harvests'),
+        authService.removePermission(userTest.id, 'export_harvest_to_pdf'),
+        authService.removePermission(userTest.id, 'create_harvest_processed'),
+        authService.removePermission(
+          userTest.id,
+          'update_one_harvest_processed',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'remove_one_harvest_processed',
+        ),
+      ]);
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /harvests/create', async () => {
+      const bodyRequest: HarvestDto = {
+        ...harvestDtoTemplete,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/harvests/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /harvests/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/harvests/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/harvests/one/${falseHarvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/harvests/update/one/${falseHarvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/remove/one/${falseHarvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/harvests/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/export/one/pdf/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/harvests/export/one/pdf/${falseHarvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /harvests/processed/create', async () => {
+      const bodyRequest: HarvestProcessedDto = {
+        ...harvestProcessedTemplateDto,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/harvests/processed/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/processed/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/harvests/processed/update/one/${falseHarvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/processed/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/processed/remove/one/${falseHarvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
       );
     });
   });
