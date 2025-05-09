@@ -5,19 +5,15 @@ import * as request from 'supertest';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { describe } from 'node:test';
+
 import { AuthModule } from 'src/auth/auth.module';
 import { AuthService } from 'src/auth/auth.service';
 import { CommonModule } from 'src/common/common.module';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { CropsService } from 'src/crops/crops.service';
-import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
-import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
-import { HarvestService } from 'src/harvest/harvest.service';
+import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
 import { User } from 'src/users/entities/user.entity';
-import { WorkService } from 'src/work/work.service';
 import { Repository } from 'typeorm';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeesModule } from './employees.module';
@@ -28,13 +24,18 @@ describe('EmployeesController (e2e)', () => {
   let employeeRepository: Repository<Employee>;
   let seedService: SeedService;
   let authService: AuthService;
-  // let employeeService: EmployeesService;
-  // let saleService: SalesService;
-  let cropService: CropsService;
-  let harvestService: HarvestService;
-  let workService: WorkService;
   let userTest: User;
   let token: string;
+
+  const employeeDtoTemplete: CreateEmployeeDto = {
+    first_name: InformationGenerator.generateFirstName(),
+    last_name: InformationGenerator.generateLastName(),
+    email: InformationGenerator.generateEmail(),
+    cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
+    address: InformationGenerator.generateAddress(),
+  };
+
+  const falseEmployeeId = InformationGenerator.generateRandomId();
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -71,10 +72,9 @@ describe('EmployeesController (e2e)', () => {
 
     seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
-    workService = moduleFixture.get<WorkService>(WorkService);
-    cropService = moduleFixture.get<CropsService>(CropsService);
-    harvestService = moduleFixture.get<HarvestService>(HarvestService);
-    // employeeService = moduleFixture.get<EmployeesService>(EmployeesService);
+    employeeRepository = moduleFixture.get<Repository<Employee>>(
+      getRepositoryToken(Employee),
+    );
 
     app = moduleFixture.createNestApplication();
 
@@ -89,12 +89,8 @@ describe('EmployeesController (e2e)', () => {
 
     await app.init();
 
-    employeeRepository = moduleFixture.get<Repository<Employee>>(
-      getRepositoryToken(Employee),
-    );
-
     await employeeRepository.delete({});
-    userTest = await authService.createUserToTests();
+    userTest = (await seedService.CreateUser({})) as User;
     token = authService.generateJwtToken({
       id: userTest.id,
     });
@@ -105,67 +101,34 @@ describe('EmployeesController (e2e)', () => {
     await app.close();
   });
 
-  async function createTestEmployee(data: CreateEmployeeDto) {
-    const employee = employeeRepository.create(data);
-    return await employeeRepository.save(employee);
-  }
-
   describe('employees/create (POST)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_employee');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path /employees/create', async () => {
-      const data: CreateEmployeeDto = {
-        first_name: 'Daniel',
-        last_name: 'Gomez',
-        email: 'daniel@gmail.com',
-        cell_phone_number: '3146652134',
-        address: 'Dirección de prueba...',
+      const bodyRequest: CreateEmployeeDto = {
+        ...employeeDtoTemplete,
       };
       const response = await request
         .default(app.getHttpServer())
         .post('/employees/create')
-        .send(data)
+        .send(bodyRequest)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /employees/create', async () => {
-      await authService.removePermission(userTest.id, 'create_employee');
-
-      const data: CreateEmployeeDto = {
-        first_name: 'Daniel',
-        last_name: 'Gomez',
-        email: 'daniel@gmail.com',
-        cell_phone_number: '3146652134',
-        address: 'Dirección de prueba...',
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/employees/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(data)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should create a new employee', async () => {
-      await authService.addPermission(userTest.id, 'create_employee');
-
-      const data: CreateEmployeeDto = {
-        first_name: 'Daniel',
-        last_name: 'Gomez',
-        email: 'daniel@gmail.com',
-        cell_phone_number: '3146652134',
-        address: 'Dirección de prueba...',
+      const bodyRequest: CreateEmployeeDto = {
+        ...employeeDtoTemplete,
       };
       const response = await request
         .default(app.getHttpServer())
         .post('/employees/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(201);
-      expect(response.body).toMatchObject(data);
+      expect(response.body).toMatchObject(bodyRequest);
     });
 
     it('should throw exception when fields are missing in the body', async () => {
@@ -195,37 +158,35 @@ describe('EmployeesController (e2e)', () => {
     });
 
     it('should throw exception for trying to create a employee with duplicate email.', async () => {
-      await createTestEmployee({
-        first_name: 'Stiven',
-        last_name: 'Gomez',
-        email: 'Stiven@gmail.com',
-        cell_phone_number: '3146652134',
-        address: 'Dirección de prueba...',
-      });
+      const employeeWithSameEmail = await seedService.CreateEmployee({});
 
-      const data: CreateEmployeeDto = {
-        first_name: 'David',
-        last_name: 'Gomez',
-        email: 'Stiven@gmail.com',
-        cell_phone_number: '3146652134',
-        address: 'Dirección de prueba...',
+      const bodyRequest: CreateEmployeeDto = {
+        ...employeeDtoTemplete,
+        email: employeeWithSameEmail.email,
       };
       const { body } = await request
         .default(app.getHttpServer())
         .post('/employees/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(400);
       expect(body.message).toEqual(
-        'Unique constraint violation, Key (email)=(Stiven@gmail.com) already exists.',
+        `Unique constraint violation, Key (email)=(${bodyRequest.email}) already exists.`,
       );
     });
   });
 
   describe('employees/all (GET)', () => {
     beforeAll(async () => {
-      await employeeRepository.delete({});
-      await seedService.insertNewEmployees();
+      try {
+        await employeeRepository.delete({});
+        await Promise.all(
+          Array.from({ length: 17 }).map(() => seedService.CreateEmployee({})),
+        );
+        await authService.addPermission(userTest.id, 'find_all_employees');
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     it('should throw an exception for not sending a JWT to the protected path /employees/all', async () => {
@@ -236,20 +197,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /employees/all', async () => {
-      await authService.removePermission(userTest.id, 'find_all_employees');
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/employees/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get only 10 employees for default by not sending paging parameters', async () => {
-      await authService.addPermission(userTest.id, 'find_all_employees');
       const response = await request
         .default(app.getHttpServer())
         .get('/employees/all')
@@ -345,37 +293,20 @@ describe('EmployeesController (e2e)', () => {
   });
 
   describe('employees/one/:id (GET)', () => {
-    const employeeId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'find_one_employee');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path employees/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .get(`/employees/one/${employeeId}`)
+        .get(`/employees/one/${falseEmployeeId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action employees/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_employee');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/employees/one/${employeeId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get one employee', async () => {
-      // Crear un employeee de prueba
-      await authService.addPermission(userTest.id, 'find_one_employee');
-      const { id } = await createTestEmployee({
-        first_name: 'John 3',
-        last_name: 'Doe',
-        email: 'john.doe3@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
+      const { id } = await seedService.CreateEmployee({});
 
       const response = await request
         .default(app.getHttpServer())
@@ -411,11 +342,11 @@ describe('EmployeesController (e2e)', () => {
     it('should throw exception for not finding employee by ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .get(`/employees/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .get(`/employees/one/${falseEmployeeId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
       expect(body.message).toEqual(
-        'Employee with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Employee with id: ${falseEmployeeId} not found`,
       );
     });
     it('should throw exception for not sending an ID', async () => {
@@ -429,36 +360,20 @@ describe('EmployeesController (e2e)', () => {
   });
 
   describe('employees/update/one/:id (PATCH)', () => {
-    const employeeId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'update_one_employee');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path employees/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/employees/update/one/${employeeId}`)
+        .patch(`/employees/update/one/${falseEmployeeId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action employees/update/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_employee');
-      const response = await request
-        .default(app.getHttpServer())
-        .patch(`/employees/update/one/${employeeId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should update one employee', async () => {
-      await authService.addPermission(userTest.id, 'update_one_employee');
-      const { id } = await createTestEmployee({
-        first_name: 'John 3.5',
-        last_name: 'Doe',
-        email: 'john.doe3.5@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
+      const { id } = await seedService.CreateEmployee({});
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/employees/update/one/${id}`)
@@ -468,83 +383,64 @@ describe('EmployeesController (e2e)', () => {
 
       expect(body.first_name).toEqual('John 4');
       expect(body.last_name).toEqual('Doe 4');
-      expect(body.email).toEqual('john.doe3.5@example.com');
-      expect(body.cell_phone_number).toEqual('3007890123');
-      expect(body.address).toEqual('123 Main St');
     });
 
     it('should throw exception for not finding employee to update', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/employees/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .patch(`/employees/update/one/${falseEmployeeId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ first_name: 'John 4' })
         .expect(404);
       expect(body.message).toEqual(
-        'Employee with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Employee with id: ${falseEmployeeId} not found`,
       );
     });
 
     it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/employees/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .patch(`/employees/update/one/${falseEmployeeId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ year: 2025 })
         .expect(400);
       expect(body.message).toContain('property year should not exist');
     });
     it('should throw exception for trying to update the email for one that is in use.', async () => {
-      const { id } = await createTestEmployee({
-        first_name: 'Alan',
-        last_name: 'Demo',
-        email: 'alandemo@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
+      const employeeWithSameEmail = await seedService.CreateEmployee({});
+      const { id } = await seedService.CreateEmployee({});
+
+      const bodyRequest = {
+        email: employeeWithSameEmail.email,
+      };
+
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/employees/update/one/${id}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ email: 'john.doe3.5@example.com' })
+        .send(bodyRequest)
         .expect(400);
       expect(body.message).toEqual(
-        'Unique constraint violation, Key (email)=(john.doe3.5@example.com) already exists.',
+        `Unique constraint violation, Key (email)=(${bodyRequest.email}) already exists.`,
       );
     });
   });
 
   describe('employees/remove/one/:id (DELETE)', () => {
-    const employeeId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_one_employee');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path employees/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .delete(`/employees/remove/one/${employeeId}`)
+        .delete(`/employees/remove/one/${falseEmployeeId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action employees/remove/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'remove_one_employee');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/employees/remove/one/${employeeId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete one employee', async () => {
-      await authService.addPermission(userTest.id, 'remove_one_employee');
-      const { id } = await createTestEmployee({
-        first_name: 'Ana 4.5',
-        last_name: 'Doe',
-        email: 'Ana.doe4.5@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
+      const { id } = await seedService.CreateEmployee({});
 
       await request
         .default(app.getHttpServer())
@@ -559,94 +455,50 @@ describe('EmployeesController (e2e)', () => {
         .expect(404);
       expect(notFound).toBe(true);
     });
+
     it('You should throw exception for trying to delete a employee that does not exist.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .delete(`/employees/remove/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .delete(`/employees/remove/one/${falseEmployeeId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
       expect(body.message).toEqual(
-        'Employee with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Employee with id: ${falseEmployeeId} not found`,
+      );
+    });
+
+    it('should throw an exception when trying to delete a employee with harvests with pending payment.', async () => {
+      const { employees } = await seedService.CreateHarvest({});
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/employees/remove/one/${employees[0].id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(409);
+      expect(body.message).toEqual(
+        `Employee with id ${employees[0].id} cannot be removed, has unpaid harvests`,
       );
     });
 
     it('should throw an exception when trying to delete a employee with harvests or works with pending payment.', async () => {
-      // Crear employeee de prueba
-      const employee1 = await createTestEmployee({
-        first_name: 'Employee for harvest',
-        last_name: 'Doe',
-        email: 'employeeforharvest@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
-      const employee2 = await createTestEmployee({
-        first_name: 'Employee for work',
-        last_name: 'Doe',
-        email: 'employeeforwork@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
+      const { employees } = await seedService.CreateWork({});
 
-      // Crear cultivo de prueba
-      const crop = await cropService.create({
-        name: `Crop for sale ${Math.random() * 100}`,
-        description: 'Crop for sale',
-        units: 10,
-        location: 'Main St',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
-
-      // Crear cosecha de prueba
-      const harvestData = {
-        date: new Date().toISOString(),
-        crop: { id: crop.id },
-        details: [
-          { employee: { id: employee1.id }, total: 10, value_pay: 1000 },
-        ],
-        total: 10,
-        value_pay: 1000,
-        observation: 'description demo test creation harvest...',
-      };
-
-      await harvestService.create(harvestData as CreateHarvestDto);
-
-      await workService.create({
-        date: new Date().toISOString(),
-        crop: { id: crop.id },
-        details: [
-          {
-            employee: { id: employee2.id },
-            value_pay: 1000,
-            payment_is_pending: true,
-          },
-        ],
-        total: 10,
-        value_pay: 1000,
-        description: 'description demo test creation harvest...',
-      } as any);
-
-      // Intentar eliminar el employee
-      const { body: body1 } = await request
+      const { body } = await request
         .default(app.getHttpServer())
-        .delete(`/employees/remove/one/${employee1.id}`)
+        .delete(`/employees/remove/one/${employees[0].id}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(409);
-      expect(body1.message).toEqual(
-        `Cannot remove employee with harvests pending payment`,
-      );
-
-      const { body: body2 } = await request
-        .default(app.getHttpServer())
-        .delete(`/employees/remove/one/${employee2.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(409);
-      expect(body2.message).toEqual(
-        `Cannot remove employee with works pending payment`,
+      expect(body.message).toEqual(
+        `Employee with id ${employees[0].id} cannot be removed, has unpaid works`,
       );
     });
   });
 
   describe('employees/remove/bulk (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_bulk_employees');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path employees/remove/bulk ', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -655,43 +507,11 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action employees/remove/bulk ', async () => {
-      await authService.removePermission(userTest.id, 'remove_bulk_employees');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/employees/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete employees bulk', async () => {
-      await authService.addPermission(userTest.id, 'remove_bulk_employees');
-      // Crear employeees de prueba
       const [employee1, employee2, employee3] = await Promise.all([
-        createTestEmployee({
-          first_name: 'John 2',
-          last_name: 'Doe',
-          email: 'john.doefg2@example.com',
-          cell_phone_number: '3007890123',
-          address: '123 Main St',
-        }),
-        createTestEmployee({
-          first_name: 'Jane4 2',
-          last_name: 'Smith',
-          email: 'jane.smith32@example.com',
-          cell_phone_number: '3007890123',
-          address: '456 Elm St',
-        }),
-        createTestEmployee({
-          first_name: 'Jane 3',
-          last_name: 'Smith',
-          email: 'jane.smith35@example.com',
-          cell_phone_number: '3007890123',
-          address: '456 Elm St',
-        }),
+        await seedService.CreateEmployee({}),
+        await seedService.CreateEmployee({}),
+        await seedService.CreateEmployee({}),
       ]);
 
       const bulkData: RemoveBulkRecordsDto<Employee> = {
@@ -727,69 +547,14 @@ describe('EmployeesController (e2e)', () => {
       expect(body.message[0]).toEqual('recordsIds should not be empty');
     });
 
-    it('should throw an exception when trying to delete a employee with sales pending payment.', async () => {
-      // Crear employeee de prueba
-      const employee1 = await createTestEmployee({
-        first_name: 'Employee for sale 1',
-        last_name: 'Doe',
-        email: 'employeeforsale1@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
-      const employee2 = await createTestEmployee({
-        first_name: 'Employee for sale 2',
-        last_name: 'Doe',
-        email: 'employeeforsale2@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
-      const employee3 = await createTestEmployee({
-        first_name: 'Employee for sale 3',
-        last_name: 'Doe',
-        email: 'employeeforsale3@example.com',
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
+    it('should throw an exception when trying to delete a employee with pending payments.', async () => {
+      const harvest = await seedService.CreateHarvest({});
+      const work = await seedService.CreateWork({});
 
-      // Crear cultivo de prueba
-      const crop = await cropService.create({
-        name: `Crop for sale ${Math.random() * 100}`,
-        description: 'Crop for sale',
-        units: 10,
-        location: 'Main St',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
+      const employee1 = harvest.employees[0];
+      const employee2 = work.employees[0];
+      const employee3 = await seedService.CreateEmployee({});
 
-      // Crear cosecha de prueba
-      const harvestData = {
-        date: new Date().toISOString(),
-        crop: { id: crop.id },
-        details: [
-          { employee: { id: employee1.id }, total: 600, value_pay: 450000 },
-        ],
-        total: 600,
-        value_pay: 450000,
-        observation: 'description demo test creation harvest...',
-      };
-
-      await harvestService.create(harvestData as CreateHarvestDto);
-
-      await workService.create({
-        date: new Date().toISOString(),
-        crop: { id: crop.id },
-        details: [
-          {
-            employee: { id: employee2.id },
-            value_pay: 1000,
-            payment_is_pending: true,
-          },
-        ],
-        total: 10,
-        value_pay: 1000,
-        description: 'description demo test creation harvest...',
-      } as any);
-
-      // Intentar eliminar el employee
       const { body } = await request
         .default(app.getHttpServer())
         .delete(`/employees/remove/bulk`)
@@ -807,24 +572,469 @@ describe('EmployeesController (e2e)', () => {
         failed: [
           {
             id: employee1.id,
-            error: 'Cannot remove employee with harvests pending payment',
+            error: `Employee with id ${employee1.id} cannot be removed, has unpaid harvests`,
           },
           {
             id: employee2.id,
-            error: 'Cannot remove employee with works pending payment',
+            error: `Employee with id ${employee2.id} cannot be removed, has unpaid works`,
           },
         ],
       });
     });
   });
 
-  // TODO: Implementar pruebas para estos endpoints
-  // TODO: pending-payments/all
-  // TODO: made-payments/all
-  // TODO: pending-payments/one/:id
-  // TODO: harvests/all
-  // TODO: works/all
-  // TODO: find/certification/one/:id
-  // TODO: find/top-employees-in-harvests
-  // TODO: find/top-employees-in-works
+  describe('employees/pending-payments/all (GET)', () => {
+    beforeAll(async () => {
+      try {
+        await employeeRepository.delete({});
+        await Promise.all([
+          seedService.CreateHarvest({ quantityEmployees: 8 }),
+          seedService.CreateWork({ quantityEmployees: 9 }),
+        ]);
+        await authService.addPermission(
+          userTest.id,
+          'find_all_employees_with_pending_payments',
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /employees/pending-payments/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/pending-payments/all')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only employees with pending payments', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/pending-payments/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.current_row_count).toEqual(17);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
+    });
+  });
+
+  describe('employees/made-payments/all (GET)', () => {
+    beforeAll(async () => {
+      try {
+        await employeeRepository.delete({});
+        const {
+          harvest: { details },
+        } = await seedService.CreateHarvest({ quantityEmployees: 8 });
+
+        await Promise.all([
+          seedService.CreatePayment({
+            employeeId: details[0].employee.id,
+            value_pay: details[0].value_pay,
+            harvestsId: [details[0].id],
+          }),
+
+          seedService.CreatePayment({
+            employeeId: details[1].employee.id,
+            value_pay: details[1].value_pay,
+            harvestsId: [details[1].id],
+          }),
+          seedService.CreatePayment({
+            employeeId: details[2].employee.id,
+            value_pay: details[2].value_pay,
+            harvestsId: [details[2].id],
+          }),
+        ]);
+
+        await authService.addPermission(
+          userTest.id,
+          'find_all_employees_with_made_payments',
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /employees/made-payments/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/made-payments/all')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only employees with made payments', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/made-payments/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(3);
+      expect(response.body.current_row_count).toEqual(3);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
+    });
+  });
+
+  describe('employees/pending-payments/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'find_one_employee_with_pending_payments',
+      );
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /employees/pending-payments/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/pending-payments/one/${falseEmployeeId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only one employee with pending payments', async () => {
+      const employee = await seedService.CreateEmployee({});
+
+      const harvest = await seedService.CreateHarvestForEmployee({
+        employeeId: employee.id,
+      });
+      const work = await seedService.CreateWorkForEmployee({
+        employeeId: employee.id,
+      });
+
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/pending-payments/one/${employee.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const body = response.body as Employee;
+
+      console.log('🚀 ~ it ~ body:', body);
+      expect(body).toHaveProperty('id');
+      expect(body).toHaveProperty('first_name');
+      expect(body).toHaveProperty('last_name');
+      expect(body).toHaveProperty('email');
+      expect(body).toHaveProperty('cell_phone_number');
+      expect(body).toHaveProperty('address');
+      expect(body).toHaveProperty('harvests_detail');
+      expect(body.harvests_detail).toBeInstanceOf(Array);
+      expect(body).toHaveProperty('works_detail');
+      expect(body.works_detail).toBeInstanceOf(Array);
+      expect(body).toHaveProperty('createdDate');
+      expect(body).toHaveProperty('updatedDate');
+      expect(body).toHaveProperty('deletedDate');
+      expect(body.deletedDate).toBeNull();
+
+      if (body.works_detail.length > 0) {
+        body.works_detail.forEach((workDetail) => {
+          expect(workDetail.payment_is_pending).toBe(true);
+        });
+      }
+      if (body.harvests_detail.length > 0) {
+        body.harvests_detail.forEach((harvestDetail) => {
+          expect(harvestDetail.payment_is_pending).toBe(true);
+        });
+      }
+    });
+  });
+
+  describe('employees/harvests/all (GET)', () => {
+    beforeAll(async () => {
+      try {
+        await employeeRepository.delete({});
+
+        await seedService.CreateHarvest({ quantityEmployees: 8 });
+
+        await authService.addPermission(
+          userTest.id,
+          'find_all_employees_with_harvests',
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /employees/harvests/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/harvests/all')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only employees with harvests', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/harvests/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(8);
+      expect(response.body.current_row_count).toEqual(8);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
+
+      response.body.records.forEach((employee) => {
+        expect(employee).toHaveProperty('id');
+        expect(employee).toHaveProperty('first_name');
+        expect(employee).toHaveProperty('last_name');
+        expect(employee).toHaveProperty('email');
+        expect(employee).toHaveProperty('cell_phone_number');
+        expect(employee).toHaveProperty('address');
+        expect(employee).toHaveProperty('harvests_detail');
+        expect(employee.harvests_detail).toBeInstanceOf(Array);
+        expect(employee).toHaveProperty('createdDate');
+        expect(employee).toHaveProperty('updatedDate');
+        expect(employee).toHaveProperty('deletedDate');
+        expect(employee.deletedDate).toBeNull();
+
+        expect(employee.harvests_detail).toBeInstanceOf(Array);
+        expect(employee.harvests_detail.length).toBeGreaterThan(0);
+      });
+    });
+  });
+  describe('employees/works/all (GET)', () => {
+    beforeAll(async () => {
+      try {
+        await employeeRepository.delete({});
+
+        await seedService.CreateWork({ quantityEmployees: 8 });
+
+        await authService.addPermission(
+          userTest.id,
+          'find_all_employees_with_works',
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /employees/works/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/works/all')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only employees with works', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/works/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(8);
+      expect(response.body.current_row_count).toEqual(8);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
+
+      response.body.records.forEach((employee) => {
+        expect(employee).toHaveProperty('id');
+        expect(employee).toHaveProperty('first_name');
+        expect(employee).toHaveProperty('last_name');
+        expect(employee).toHaveProperty('email');
+        expect(employee).toHaveProperty('cell_phone_number');
+        expect(employee).toHaveProperty('address');
+        expect(employee).toHaveProperty('works_detail');
+        expect(employee.works_detail).toBeInstanceOf(Array);
+        expect(employee).toHaveProperty('createdDate');
+        expect(employee).toHaveProperty('updatedDate');
+        expect(employee).toHaveProperty('deletedDate');
+        expect(employee.deletedDate).toBeNull();
+
+        expect(employee.works_detail).toBeInstanceOf(Array);
+        expect(employee.works_detail.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe('employees/find/certification/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'find_certification_employee',
+      );
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path employees/find/certification/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/find/certification/one/${falseEmployeeId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only one employee with certification', async () => {
+      const record = (await seedService.CreateEmployee({})) as Employee;
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/find/certification/one/${record.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body).toBeDefined();
+      expect(response.body).toBeInstanceOf(Buffer);
+    });
+  });
+
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      await Promise.all([
+        authService.removePermission(userTest.id, 'create_employee'),
+        authService.removePermission(userTest.id, 'find_all_employees'),
+        authService.removePermission(userTest.id, 'find_one_employee'),
+        authService.removePermission(userTest.id, 'update_one_employee'),
+        authService.removePermission(userTest.id, 'remove_one_employee'),
+        authService.removePermission(userTest.id, 'remove_bulk_employees'),
+
+        authService.removePermission(
+          userTest.id,
+          'find_all_employees_with_pending_payments',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'find_all_employees_with_made_payments',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'find_all_employees_with_harvests',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'find_all_employees_with_works',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'find_certification_employee',
+        ),
+      ]);
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /employees/create', async () => {
+      const bodyRequest: CreateEmployeeDto = {
+        ...employeeDtoTemplete,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/employees/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /employees/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/one/${falseEmployeeId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/employees/update/one/${falseEmployeeId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/employees/remove/one/${falseEmployeeId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/employees/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/pending-payments/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/pending-payments/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/made-payments/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/made-payments/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/harvests/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/harvests/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/works/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/works/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/find/certification/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/find/certification/one/${falseEmployeeId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+  });
 });

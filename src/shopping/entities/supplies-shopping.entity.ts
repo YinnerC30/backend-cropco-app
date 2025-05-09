@@ -20,7 +20,7 @@ export class SuppliesShopping {
   @Column({
     type: 'int4',
   })
-  total: number;
+  value_pay: number;
 
   // External relations
 

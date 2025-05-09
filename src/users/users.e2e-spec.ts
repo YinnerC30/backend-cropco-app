@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { describe } from 'node:test';
+
 import { AuthModule } from 'src/auth/auth.module';
 import { AuthService } from 'src/auth/auth.service';
 import { CommonModule } from 'src/common/common.module';
@@ -12,21 +12,32 @@ import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
 
 import { Repository } from 'typeorm';
-import { CreateUserDto } from './dto/create-user.dto';
+import { UserDto } from './dto/user.dto';
 import { UsersModule } from './users.module';
 
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import * as request from 'supertest';
 import { User } from './entities/user.entity';
-import { hashPassword } from './helpers/encrypt-password';
+import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 
-describe('UsersController (e2e)', () => {
+describe('UsersController e2e', () => {
   let app: INestApplication;
   let userRepository: Repository<User>;
   let seedService: SeedService;
   let authService: AuthService;
   let userTest: User;
   let token: string;
+
+  const userDtoTemplete: UserDto = {
+    first_name: InformationGenerator.generateFirstName(),
+    last_name: InformationGenerator.generateLastName(),
+    email: InformationGenerator.generateEmail(),
+    cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
+    password: '123456',
+    actions: [],
+  };
+
+  const falseUserId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -64,6 +75,10 @@ describe('UsersController (e2e)', () => {
     seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
 
+    userRepository = moduleFixture.get<Repository<User>>(
+      getRepositoryToken(User),
+    );
+
     app = moduleFixture.createNestApplication();
 
     app.useGlobalPipes(
@@ -77,12 +92,9 @@ describe('UsersController (e2e)', () => {
 
     await app.init();
 
-    userRepository = moduleFixture.get<Repository<User>>(
-      getRepositoryToken(User),
-    );
-
     await userRepository.delete({});
-    userTest = await authService.createUserToTests();
+
+    userTest = (await seedService.CreateUser({})) as User;
     token = authService.generateJwtToken({
       id: userTest.id,
     });
@@ -93,73 +105,36 @@ describe('UsersController (e2e)', () => {
     await app.close();
   });
 
-  async function createTestUser(data: CreateUserDto) {
-    const user = userRepository.create(data);
-    user.password = await hashPassword(user.password);
-    return await userRepository.save(user);
-  }
-
   describe('users/create (POST)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_user');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path /users/create', async () => {
-      const data: CreateUserDto = {
-        first_name: 'Daniel',
-        last_name: 'Gomez',
-        email: 'daniel@gmail.com',
-        cell_phone_number: '3146652134',
-        password: '123456',
-        actions: [],
+      const bodyRequest: UserDto = {
+        ...userDtoTemplete,
       };
       const response = await request
         .default(app.getHttpServer())
         .post('/users/create')
-        .send(data)
+        .send(bodyRequest)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /users/create', async () => {
-      await authService.removePermission(userTest.id, 'create_user');
-
-      const data: CreateUserDto = {
-        first_name: 'Daniel',
-        last_name: 'Gomez',
-        email: 'daniel@gmail.com',
-        cell_phone_number: '3146652134',
-        password: '123456',
-        actions: [],
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/users/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(data)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should create a new user', async () => {
-      await authService.addPermission(userTest.id, 'create_user');
-
-      const data: CreateUserDto = {
-        first_name: 'Daniel',
-        last_name: 'Gomez',
-        email: 'daniel@gmail.com',
-        cell_phone_number: '3146652134',
-        password: '123456',
-        actions: [],
+      const bodyRequest: UserDto = {
+        ...userDtoTemplete,
       };
       const response = await request
         .default(app.getHttpServer())
         .post('/users/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(201);
 
-      delete data.password;
-      expect(response.body).toMatchObject(data);
+      delete bodyRequest.password;
+      expect(response.body).toMatchObject(bodyRequest);
     });
 
     it('should throw exception when fields are missing in the body', async () => {
@@ -191,38 +166,30 @@ describe('UsersController (e2e)', () => {
     });
 
     it('should throw exception for trying to create a user with duplicate email.', async () => {
-      await createTestUser({
-        first_name: 'Stiven',
-        last_name: 'Gomez',
-        email: 'Stiven@gmail.com',
-        cell_phone_number: '3146652134',
-        password: '123456',
-        actions: [],
-      });
+      const userWithInitialEmail = await seedService.CreateUser({});
 
-      const data: CreateUserDto = {
-        first_name: 'David',
-        last_name: 'Gomez',
-        email: 'Stiven@gmail.com',
-        cell_phone_number: '3146652134',
-        password: '123456',
-        actions: [],
+      const bodyRequest: UserDto = {
+        ...userDtoTemplete,
+        email: userWithInitialEmail.email,
       };
       const { body } = await request
         .default(app.getHttpServer())
         .post('/users/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(400);
       expect(body.message).toEqual(
-        'Unique constraint violation, Key (email)=(stiven@gmail.com) already exists.',
+        `Unique constraint violation, Key (email)=(${bodyRequest.email}) already exists.`,
       );
     });
   });
 
   describe('users/all (GET)', () => {
     beforeAll(async () => {
-      await seedService.insertNewUsers();
+      await Promise.all(
+        Array.from({ length: 17 }).map(() => seedService.CreateUser({})),
+      );
+      await authService.addPermission(userTest.id, 'find_all_users');
     });
 
     it('should throw an exception for not sending a JWT to the protected path /users/all', async () => {
@@ -233,43 +200,30 @@ describe('UsersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /users/all', async () => {
-      await authService.removePermission(userTest.id, 'find_all_users');
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/users/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get only 10 users for default by not sending paging parameters', async () => {
-      await authService.addPermission(userTest.id, 'find_all_users');
       const response = await request
         .default(app.getHttpServer())
         .get('/users/all')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.total_row_count).toEqual(20);
       expect(response.body.current_row_count).toEqual(10);
       expect(response.body.total_page_count).toEqual(2);
       expect(response.body.current_page_count).toEqual(1);
     });
 
-    it('should return the specified number of users passed by the paging arguments by the URL', async () => {
-      const response1 = await request
+    it('should return the specified number of users passed by the paging arguments by the URL (1)', async () => {
+      const response = await request
         .default(app.getHttpServer())
         .get(`/users/all`)
         .query({ limit: 11, offset: 0 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(response1.body.total_row_count).toEqual(17);
-      expect(response1.body.current_row_count).toEqual(11);
-      expect(response1.body.total_page_count).toEqual(2);
-      expect(response1.body.current_page_count).toEqual(1);
-      response1.body.records.forEach((user: User) => {
+      expect(response.body.total_row_count).toEqual(20);
+      expect(response.body.current_row_count).toEqual(11);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(1);
+      response.body.records.forEach((user: User) => {
         expect(user).toHaveProperty('id');
         expect(user).toHaveProperty('first_name');
         expect(user).toHaveProperty('last_name');
@@ -280,18 +234,19 @@ describe('UsersController (e2e)', () => {
         expect(user).toHaveProperty('deletedDate');
         expect(user.deletedDate).toBeNull();
       });
-
-      const response2 = await request
+    });
+    it('should return the specified number of users passed by the paging arguments by the URL (2)', async () => {
+      const response = await request
         .default(app.getHttpServer())
         .get(`/users/all`)
         .query({ limit: 11, offset: 1 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(response2.body.total_row_count).toEqual(17);
-      expect(response2.body.current_row_count).toEqual(6);
-      expect(response2.body.total_page_count).toEqual(2);
-      expect(response2.body.current_page_count).toEqual(2);
-      response2.body.records.forEach((user: User) => {
+      expect(response.body.total_row_count).toEqual(20);
+      expect(response.body.current_row_count).toEqual(9);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(2);
+      response.body.records.forEach((user: User) => {
         expect(user).toHaveProperty('id');
         expect(user).toHaveProperty('first_name');
         expect(user).toHaveProperty('last_name');
@@ -317,50 +272,41 @@ describe('UsersController (e2e)', () => {
   });
 
   describe('users/one/:id (GET)', () => {
-    const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
-
     beforeAll(async () => {
-      await userRepository.delete({});
-      await seedService.insertNewUsers();
-      userTest = await authService.createUserToTests();
-      token = authService.generateJwtToken({ id: userTest.id });
+      await authService.addPermission(userTest.id, 'find_one_user');
     });
 
     it('should throw an exception for not sending a JWT to the protected path users/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .get(`/users/one/${userId}`)
+        .get(`/users/one/${falseUserId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action users/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_user');
+    it('should get one normal user', async () => {
+      const userNormal = await seedService.CreateUser({});
+
       const response = await request
         .default(app.getHttpServer())
-        .get(`/users/one/${userId}`)
+        .get(`/users/one/${userNormal.id}`)
         .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
+        .expect(200);
 
-    it('should get one user', async () => {
-      // Crear un usere de prueba
-      await authService.addPermission(userTest.id, 'find_one_user');
-      const { id } = await createTestUser({
-        first_name: 'John 3',
-        last_name: 'Doe',
-        email: 'john.doe3@example.com',
-        cell_phone_number: '3007890123',
-        password: '123456',
-        actions: [],
-      });
+      expect(response.body).toHaveProperty('id');
+      expect(response.body).toHaveProperty('first_name');
+      expect(response.body).toHaveProperty('last_name');
+      expect(response.body).toHaveProperty('email');
+      expect(response.body).toHaveProperty('cell_phone_number');
+      expect(response.body).toHaveProperty('modules');
+      expect(response.body.modules).toBeInstanceOf(Array);
+    });
+    it('should get one user with permissions', async () => {
+      const userAdmin = await seedService.CreateUser({ convertToAdmin: true });
 
       const response = await request
         .default(app.getHttpServer())
-        .get(`/users/one/${id}`)
+        .get(`/users/one/${userAdmin.id}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
@@ -372,21 +318,7 @@ describe('UsersController (e2e)', () => {
       expect(response.body).toHaveProperty('modules');
       expect(response.body.modules).toBeInstanceOf(Array);
 
-      const response2 = await request
-        .default(app.getHttpServer())
-        .get(`/users/one/${userTest.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-
-      expect(response2.body).toHaveProperty('id');
-      expect(response2.body).toHaveProperty('first_name');
-      expect(response2.body).toHaveProperty('last_name');
-      expect(response2.body).toHaveProperty('email');
-      expect(response2.body).toHaveProperty('cell_phone_number');
-      expect(response2.body).toHaveProperty('modules');
-      expect(response2.body.modules).toBeInstanceOf(Array);
-
-      response2.body.modules.forEach((module: any) => {
+      response.body.modules.forEach((module: any) => {
         expect(module).toHaveProperty('name');
         expect(module).toHaveProperty('actions');
         expect(module.actions).toBeInstanceOf(Array);
@@ -410,12 +342,10 @@ describe('UsersController (e2e)', () => {
     it('should throw exception for not finding user by ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .get(`/users/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .get(`/users/one/${falseUserId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
-      expect(body.message).toEqual(
-        'User with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
-      );
+      expect(body.message).toEqual(`User with id: ${falseUserId} not found`);
     });
     it('should throw exception for not sending an ID', async () => {
       const { body } = await request
@@ -427,125 +357,104 @@ describe('UsersController (e2e)', () => {
     });
   });
 
-  describe('users/update/one/:id (PATCH)', () => {
-    const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+  describe('users/update/one/:id (PUT)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'update_one_user');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path users/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/users/update/one/${userId}`)
+        .put(`/users/update/one/${falseUserId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action users/update/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_user');
-      const response = await request
-        .default(app.getHttpServer())
-        .patch(`/users/update/one/${userId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should update one user', async () => {
-      await authService.addPermission(userTest.id, 'update_one_user');
-      const { id } = await createTestUser({
-        first_name: 'John Es',
-        last_name: 'Doe',
-        email: 'johnes@example.com',
-        cell_phone_number: '3007890123',
-        password: '123456',
-        actions: [],
+      const { id, password, ...rest } = await seedService.CreateUser({
+        mapperToDto: true,
       });
+
+      const bodyRequest = {
+        ...rest,
+        first_name: 'John Es Modify',
+        last_name: 'Doe Modify',
+      };
+
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/users/update/one/${id}`)
+        .put(`/users/update/one/${id}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ first_name: 'John Es Modify', last_name: 'Doe Modify' })
+        .send(bodyRequest)
         .expect(200);
 
-      expect(body.first_name).toEqual('John Es Modify');
-      expect(body.last_name).toEqual('Doe Modify');
-      expect(body.email).toEqual('johnes@example.com');
-      expect(body.cell_phone_number).toEqual('3007890123');
+      expect(body.first_name).toEqual(bodyRequest.first_name);
+      expect(body.last_name).toEqual(bodyRequest.last_name);
     });
 
     it('should throw exception for not finding user to update', async () => {
+      const { password, ...bodyRequest } = userDtoTemplete;
+
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/users/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .put(`/users/update/one/${falseUserId}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ first_name: 'John 4' })
+        .send(bodyRequest)
         .expect(404);
-      expect(body.message).toEqual(
-        'User with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
-      );
+
+      expect(body.message).toEqual(`User with id: ${falseUserId} not found`);
     });
 
     it('should throw exception for sending incorrect properties', async () => {
+      const bodyRequest = {
+        year: 2025,
+      };
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/users/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .put(`/users/update/one/${falseUserId}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ year: 2025 })
+        .send(bodyRequest)
         .expect(400);
       expect(body.message).toContain('property year should not exist');
     });
+
     it('should throw exception for trying to update the email for one that is in use.', async () => {
-      const { id } = await createTestUser({
-        first_name: 'Alan',
-        last_name: 'Demo',
-        email: 'alandemo@example.com',
-        cell_phone_number: '3007890123',
-        password: '123456',
-        actions: [],
+      const userWithInitialEmail = await seedService.CreateUser({});
+      const { id, password, ...rest } = await seedService.CreateUser({
+        mapperToDto: true,
       });
+
+      const bodyRequest = {
+        ...rest,
+        email: userWithInitialEmail.email,
+      };
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/users/update/one/${id}`)
+        .put(`/users/update/one/${id}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ email: 'johnes@example.com' })
+        .send(bodyRequest)
         .expect(400);
       expect(body.message).toEqual(
-        'Unique constraint violation, Key (email)=(johnes@example.com) already exists.',
+        `Unique constraint violation, Key (email)=(${userWithInitialEmail.email}) already exists.`,
       );
     });
   });
 
   describe('users/remove/one/:id (DELETE)', () => {
-    const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_one_user');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path users/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .delete(`/users/remove/one/${userId}`)
+        .delete(`/users/remove/one/${falseUserId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action users/remove/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'remove_one_user');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/users/remove/one/${userId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete one user', async () => {
-      await authService.addPermission(userTest.id, 'remove_one_user');
-      const { id } = await createTestUser({
-        first_name: 'Ana 4.5',
-        last_name: 'Doe',
-        email: 'Ana.doe4.5@example.com',
-        cell_phone_number: '3007890123',
-        password: '123456',
-        actions: [],
-      });
+      const { id } = await seedService.CreateUser({});
 
       await request
         .default(app.getHttpServer())
@@ -563,16 +472,18 @@ describe('UsersController (e2e)', () => {
     it('You should throw exception for trying to delete a user that does not exist.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .delete(`/users/remove/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .delete(`/users/remove/one/${falseUserId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
-      expect(body.message).toEqual(
-        'User with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
-      );
+      expect(body.message).toEqual(`User with id: ${falseUserId} not found`);
     });
   });
 
   describe('users/remove/bulk (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_bulk_users');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path users/remove/bulk ', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -581,49 +492,15 @@ describe('UsersController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action users/remove/bulk ', async () => {
-      await authService.removePermission(userTest.id, 'remove_bulk_users');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/users/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete users bulk', async () => {
-      await authService.addPermission(userTest.id, 'remove_bulk_users');
       // Crear usuarios de prueba
       const [user1, user2, user3] = await Promise.all([
-        createTestUser({
-          first_name: 'John 2',
-          last_name: 'Doe',
-          email: 'john.doefg2@example.com',
-          cell_phone_number: '3007890123',
-          password: '123456',
-          actions: [],
-        }),
-        createTestUser({
-          first_name: 'Jane4 2',
-          last_name: 'Smith',
-          email: 'jane.smith32@example.com',
-          cell_phone_number: '3007890123',
-          password: '123456',
-          actions: [],
-        }),
-        createTestUser({
-          first_name: 'Jane 3',
-          last_name: 'Smith',
-          email: 'jane.smith35@example.com',
-          cell_phone_number: '3007890123',
-          password: '123456',
-          actions: [],
-        }),
+        seedService.CreateUser({}),
+        seedService.CreateUser({}),
+        seedService.CreateUser({}),
       ]);
 
-      const bulkData: RemoveBulkRecordsDto<User> = {
+      const bodyRequest: RemoveBulkRecordsDto<User> = {
         recordsIds: [{ id: user1.id }, { id: user2.id }],
       };
 
@@ -631,7 +508,7 @@ describe('UsersController (e2e)', () => {
         .default(app.getHttpServer())
         .delete('/users/remove/bulk')
         .set('Authorization', `Bearer ${token}`)
-        .send(bulkData)
+        .send(bodyRequest)
         .expect(200);
 
       const [deletedUser1, deletedUser2, remainingUser3] = await Promise.all([
@@ -646,52 +523,36 @@ describe('UsersController (e2e)', () => {
     });
 
     it('should throw exception when trying to send an empty array.', async () => {
+      const bodyRequest = { recordsIds: [] };
       const { body } = await request
         .default(app.getHttpServer())
         .delete('/users/remove/bulk')
         .set('Authorization', `Bearer ${token}`)
-        .send({ recordsIds: [] })
+        .send(bodyRequest)
         .expect(400);
       expect(body.message[0]).toEqual('recordsIds should not be empty');
     });
   });
 
-  describe('users/reset-password/one/:id (PATCH)', () => {
-    const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+  describe('users/reset-password/one/:id (PUT)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'reset_password_user');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path users/reset-password/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/users/reset-password/one/${userId}`)
+        .put(`/users/reset-password/one/${falseUserId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action users/reset-password/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'reset_password_user');
-      const response = await request
-        .default(app.getHttpServer())
-        .patch(`/users/reset-password/one/${userId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should reset the password for one user', async () => {
-      await authService.addPermission(userTest.id, 'reset_password_user');
-      const { id } = await createTestUser({
-        first_name: 'Alan',
-        last_name: 'Demo',
-        email: 'alandemo2@example.com',
-        cell_phone_number: '3007890123',
-        password: '123456',
-        actions: [],
-      });
+      const { id } = await seedService.CreateUser({});
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/users/reset-password/one/${id}`)
+        .put(`/users/reset-password/one/${id}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
       expect(body).toHaveProperty('password');
@@ -700,26 +561,17 @@ describe('UsersController (e2e)', () => {
     });
   });
 
-  describe('users/change-password/one (PATCH)', () => {
-    const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+  describe('users/change-password/one (PUT)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'change_password_user');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path users/change-password/one', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/users/change-password/one`)
+        .put(`/users/change-password/one`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action users/change-password/one', async () => {
-      await authService.removePermission(userTest.id, 'change_password_user');
-      const response = await request
-        .default(app.getHttpServer())
-        .patch(`/users/change-password/one`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
     });
 
     it('should change the password for one user', async () => {
@@ -737,28 +589,60 @@ describe('UsersController (e2e)', () => {
 
       await request
         .default(app.getHttpServer())
-        .patch(`/users/change-password/one`)
+        .put(`/users/change-password/one`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(200);
     });
   });
 
-  describe('users/toggle-status/one/:id (PATCH)', () => {
-    const userId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+  describe('users/toggle-status/one/:id (PUT)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'toggle_status_user');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path users/toggle-status/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/users/toggle-status/one/${userId}`)
+        .put(`/users/toggle-status/one/${falseUserId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
+    it('should toggle status for one user', async () => {
+      const { id } = await seedService.CreateUser({});
+
+      await request
+        .default(app.getHttpServer())
+        .put(`/users/toggle-status/one/${id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const user = await userRepository.findOne({ where: { id } });
+      expect(user).toHaveProperty('is_active');
+      expect(user.is_active).toEqual(false);
+    });
+  });
+
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      await Promise.all([
+        authService.removePermission(userTest.id, 'toggle_status_user'),
+        authService.removePermission(userTest.id, 'change_password_user'),
+        authService.removePermission(userTest.id, 'reset_password_user'),
+        authService.removePermission(userTest.id, 'remove_bulk_users'),
+        authService.removePermission(userTest.id, 'remove_one_user'),
+        authService.removePermission(userTest.id, 'update_one_user'),
+        authService.removePermission(userTest.id, 'find_one_user'),
+        authService.removePermission(userTest.id, 'create_user'),
+        authService.removePermission(userTest.id, 'find_all_users'),
+      ]);
+    });
+
     it('should throw an exception because the user JWT does not have permissions for this action users/toggle-status/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'change_password_user');
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/users/toggle-status/one/${userId}`)
+        .put(`/users/toggle-status/one/${falseUserId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -766,27 +650,97 @@ describe('UsersController (e2e)', () => {
       );
     });
 
-    it('should toggle status for one user', async () => {
-      await authService.addPermission(userTest.id, 'toggle_status_user');
-      const { id } = await createTestUser({
-        first_name: 'Alan',
-        last_name: 'Demo',
-        email: 'alandemo4@example.com',
-        cell_phone_number: '3007890123',
-        password: '123456',
-        actions: [],
-        is_active: true,
-      } as any);
-
-      await request
+    it('should throw an exception because the user JWT does not have permissions for this action users/change-password/one', async () => {
+      const response = await request
         .default(app.getHttpServer())
-        .patch(`/users/toggle-status/one/${id}`)
+        .put(`/users/change-password/one`)
         .set('Authorization', `Bearer ${token}`)
-        .expect(200);
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
 
-      const user = await userRepository.findOne({ where: { id } });
-      expect(user).toHaveProperty('is_active');
-      expect(user.is_active).toEqual(false);
+    it('should throw an exception because the user JWT does not have permissions for this action users/reset-password/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/users/reset-password/one/${falseUserId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action users/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/users/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action users/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/users/remove/one/${falseUserId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action users/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/users/update/one/${falseUserId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action users/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/users/one/${falseUserId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /users/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/users/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /users/create', async () => {
+      const bodyRequest: UserDto = {
+        ...userDtoTemplete,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/users/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
     });
   });
 });

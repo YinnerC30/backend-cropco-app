@@ -48,7 +48,7 @@ export const getWorkReport = (options: ReportOptions): TDocumentDefinitions => {
       {
         table: {
           widths: ['auto', 'auto'],
-          body: [['Valor a pagar', FormatMoneyValue(data.total)]],
+          body: [['Valor a pagar', FormatMoneyValue(data.value_pay)]],
         },
         margin: [0, 0, 0, 10],
         layout: 'noBorders',
@@ -142,7 +142,7 @@ export const getWorkReport = (options: ReportOptions): TDocumentDefinitions => {
         text: [
           '\nTotal a pagar: ',
           {
-            text: `${FormatMoneyValue(data.total)}`,
+            text: `${FormatMoneyValue(data.value_pay)}`,
             style: 'boldText',
           },
         ],

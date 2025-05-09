@@ -11,9 +11,9 @@ describe('QueryParamsHarvest', () => {
       filter_by_date: 'true',
       type_filter_date: TypeFilterDate.EQUAL,
       date: '2023-01-01',
-      filter_by_total: 'true',
-      type_filter_total: TypeFilterNumber.EQUAL,
-      total: 100,
+      filter_by_amount: 'true',
+      type_filter_amount: TypeFilterNumber.EQUAL,
+      amount: 100,
       filter_by_value_pay: 'true',
       type_filter_value_pay: TypeFilterNumber.EQUAL,
       value_pay: 500,
@@ -57,11 +57,11 @@ describe('QueryParamsHarvest', () => {
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should transform string to number for total', async () => {
+  it('should transform string to number for amount', async () => {
     const dto = plainToClass(QueryParamsHarvest, {
-      total: '100',
+      amount: '100',
     });
-    expect(typeof dto.total).toBe('number');
+    expect(typeof dto.amount).toBe('number');
   });
 
   it('should transform comma-separated string to UUID array', async () => {

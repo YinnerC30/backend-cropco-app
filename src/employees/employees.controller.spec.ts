@@ -151,10 +151,9 @@ describe('EmployeesController', () => {
 
       mockEmployeesService.removeBulk.mockResolvedValue(result);
 
-      await controller.removeBulk(removeBulkDto, response);
-
-      expect(response.status).toHaveBeenCalledWith(200);
-      expect(response.json).toHaveBeenCalledWith(result);
+      // await controller.removeBulk(removeBulkDto);
+      expect(await controller.removeBulk(removeBulkDto)).toBe(result);
+      expect(service.removeBulk).toHaveBeenCalledWith(removeBulkDto);
     });
 
     it('should return 207 status when some deletions fail', async () => {
@@ -169,10 +168,8 @@ describe('EmployeesController', () => {
 
       mockEmployeesService.removeBulk.mockResolvedValue(result);
 
-      await controller.removeBulk(removeBulkDto, response);
-
-      expect(response.status).toHaveBeenCalledWith(207);
-      expect(response.json).toHaveBeenCalledWith(result);
+      expect(await controller.removeBulk(removeBulkDto)).toBe(result);
+      expect(service.removeBulk).toHaveBeenCalledWith(removeBulkDto);
     });
   });
 

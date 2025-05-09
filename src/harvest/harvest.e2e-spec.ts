@@ -7,33 +7,24 @@ import { AuthService } from 'src/auth/auth.service';
 import { CommonModule } from 'src/common/common.module';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
-import { CropsController } from 'src/crops/crops.controller';
-import { CropsService } from 'src/crops/crops.service';
-import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
-import { EmployeesController } from 'src/employees/employees.controller';
-import { EmployeesService } from 'src/employees/employees.service';
 import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
-import { IsNull, Not, Repository } from 'typeorm';
-import { HarvestDetailsDto } from './dto/create-harvest-details.dto';
-import { CreateHarvestDto } from './dto/create-harvest.dto';
+import { Repository } from 'typeorm';
+import { HarvestDetailsDto } from './dto/harvest-details.dto';
+import { HarvestDto } from './dto/harvest.dto';
 import { Harvest } from './entities/harvest.entity';
 import { HarvestController } from './harvest.controller';
 import { HarvestModule } from './harvest.module';
-import { HarvestService } from './harvest.service';
-import { UpdateHarvestDto } from './dto/update-harvest.dto';
+
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
-import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
-import { HarvestProcessed } from './entities/harvest-processed.entity';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
+import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
+import { HarvestProcessedDto } from './dto/harvest-processed.dto';
 import { HarvestDetails } from './entities/harvest-details.entity';
-import { PaymentsController } from 'src/payments/payments.controller';
-import { MethodOfPayment } from 'src/payments/entities/payment.entity';
-import { PaymentCategoriesDto } from 'src/payments/dto/payment-categories.dto';
+import { HarvestProcessed } from './entities/harvest-processed.entity';
 
 describe('HarvestsController (e2e)', () => {
   let app: INestApplication;
@@ -43,15 +34,33 @@ describe('HarvestsController (e2e)', () => {
   let seedService: SeedService;
   let authService: AuthService;
 
-  let employeeService: EmployeesService;
-  let employeeController: EmployeesController;
-  let paymentsController: PaymentsController;
-  let cropService: CropsService;
-  let cropController: CropsController;
-  let harvestService: HarvestService;
   let harvestController: HarvestController;
   let userTest: User;
   let token: string;
+
+  const harvestDtoTemplete: HarvestDto = {
+    date: InformationGenerator.generateRandomDate(),
+    crop: { id: InformationGenerator.generateRandomId() },
+    amount: 150,
+    value_pay: 90_000,
+    observation: InformationGenerator.generateObservation(),
+    details: [
+      {
+        employee: { id: InformationGenerator.generateRandomId() },
+        amount: 150,
+        value_pay: 90_000,
+      } as HarvestDetailsDto,
+    ],
+  };
+
+  const harvestProcessedTemplateDto: HarvestProcessedDto = {
+    date: InformationGenerator.generateRandomDate(),
+    crop: { id: InformationGenerator.generateRandomId() },
+    harvest: { id: InformationGenerator.generateRandomId() },
+    amount: 50,
+  };
+
+  const falseHarvestId = InformationGenerator.generateRandomId();
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -88,15 +97,17 @@ describe('HarvestsController (e2e)', () => {
 
     seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
-    cropService = moduleFixture.get<CropsService>(CropsService);
-    cropController = moduleFixture.get<CropsController>(CropsController);
-    harvestService = moduleFixture.get<HarvestService>(HarvestService);
     harvestController = moduleFixture.get<HarvestController>(HarvestController);
-    employeeService = moduleFixture.get<EmployeesService>(EmployeesService);
-    employeeController =
-      moduleFixture.get<EmployeesController>(EmployeesController);
-    paymentsController =
-      moduleFixture.get<PaymentsController>(PaymentsController);
+
+    harvestRepository = moduleFixture.get<Repository<Harvest>>(
+      getRepositoryToken(Harvest),
+    );
+    harvestDetailsRepository = moduleFixture.get<Repository<HarvestDetails>>(
+      getRepositoryToken(HarvestDetails),
+    );
+    harvestProcessedRepository = moduleFixture.get<
+      Repository<HarvestProcessed>
+    >(getRepositoryToken(HarvestProcessed));
 
     app = moduleFixture.createNestApplication();
 
@@ -111,19 +122,7 @@ describe('HarvestsController (e2e)', () => {
 
     await app.init();
 
-    harvestRepository = moduleFixture.get<Repository<Harvest>>(
-      getRepositoryToken(Harvest),
-    );
-    harvestDetailsRepository = moduleFixture.get<Repository<HarvestDetails>>(
-      getRepositoryToken(HarvestDetails),
-    );
-    harvestProcessedRepository = moduleFixture.get<
-      Repository<HarvestProcessed>
-    >(getRepositoryToken(HarvestProcessed));
-
     await harvestRepository.delete({});
-    await cropService.deleteAllCrops();
-    await employeeService.deleteAllEmployees();
     userTest = await authService.createUserToTests();
     token = authService.generateJwtToken({
       id: userTest.id,
@@ -132,90 +131,46 @@ describe('HarvestsController (e2e)', () => {
 
   afterAll(async () => {
     await authService.deleteUserToTests(userTest.id);
-    await harvestRepository.delete({});
     await app.close();
   });
 
   describe('harvests/create (POST)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_harvest');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path /harvests/create', async () => {
-      const data: CreateHarvestProcessedDto = {
-        date: '',
-        crop: { id: '' },
-        harvest: { id: '' },
-        total: 0,
+      const bodyRequest: HarvestDto = {
+        ...harvestDtoTemplete,
       };
       const response = await request
         .default(app.getHttpServer())
         .post('/harvests/create')
-        .send(data)
+        .send(bodyRequest)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /harvests/create', async () => {
-      await authService.removePermission(userTest.id, 'create_harvest');
-
-      const data: CreateHarvestDto = {
-        date: '',
-        crop: { id: '' },
-        total: 0,
-        value_pay: 0,
-        observation: '',
-        details: [],
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/harvests/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(data)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should create a new harvest', async () => {
-      await authService.addPermission(userTest.id, 'create_harvest');
+      const crop = await seedService.CreateCrop({});
 
-      const crop = await cropController.create({
-        name: 'Crop test',
-        description: 'No description',
-        units: 10,
-        location: 'No location',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
+      const employee1 = await seedService.CreateEmployee({});
+      const employee2 = await seedService.CreateEmployee({});
 
-      const employee1 = await employeeController.create({
-        first_name: 'Employee test',
-        last_name: 'Employee test',
-        email: 'employeetest123@mail.com',
-        cell_phone_number: '3127836149',
-        address: 'no address',
-      });
-      const employee2 = await employeeController.create({
-        first_name: 'Employee test',
-        last_name: 'Employee test',
-        email: 'employeetest1234@mail.com',
-        cell_phone_number: '3127836149',
-        address: 'no address',
-      });
-
-      const data: CreateHarvestDto = {
-        date: new Date().toISOString(),
+      const bodyRequest: HarvestDto = {
+        ...harvestDtoTemplete,
         crop: { id: crop.id },
-        total: 200,
+        amount: 200,
         value_pay: 120_000,
-        observation: 'No observation',
         details: [
           {
             employee: { id: employee1.id },
-            total: 100,
+            amount: 100,
             value_pay: 60_000,
           } as HarvestDetailsDto,
           {
             employee: { id: employee2.id },
-            total: 100,
+            amount: 100,
             value_pay: 60_000,
           } as HarvestDetailsDto,
         ],
@@ -225,22 +180,22 @@ describe('HarvestsController (e2e)', () => {
         .default(app.getHttpServer())
         .post('/harvests/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(201);
-      expect(response.body).toMatchObject(data);
+      expect(response.body).toMatchObject(bodyRequest);
     });
 
     it('should throw exception when fields are missing in the body', async () => {
       const errorMessage = [
         'date must be a valid ISO 8601 date string',
         'crop should not be null or undefined',
-        'total must be a positive number',
-        'total must be an integer number',
+        'amount must be a positive number',
+        'amount must be an integer number',
         'value_pay must be a positive number',
         'value_pay must be an integer number',
         'observation must be a string',
         'The array contains duplicate employees. Each employee id must be unique.',
-        "The sum of fields [total, value_pay] in 'details' must match the corresponding top-level values.",
+        "The sum of fields [amount, value_pay] in 'details' must match the corresponding top-level values.",
         'details should not be empty',
       ];
 
@@ -261,92 +216,70 @@ describe('HarvestsController (e2e)', () => {
     let crop2: Crop;
     let employee1: Employee;
     let employee2: Employee;
+
     beforeAll(async () => {
       await harvestRepository.delete({});
-      crop1 = await cropController.create({
-        name: 'Crop test 1',
-        description: 'No description',
-        units: 10,
-        location: 'No location',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
 
-      employee1 = await employeeController.create({
-        first_name: 'Employee test',
-        last_name: 'Employee test',
-        email: 'employeetest1@mail.com',
-        cell_phone_number: '3127836149',
-        address: 'no address',
-      });
+      crop1 = (await seedService.CreateCrop({})) as Crop;
+      crop2 = (await seedService.CreateCrop({})) as Crop;
 
-      const data1: CreateHarvestDto = {
-        date: new Date().toISOString(),
+      employee1 = (await seedService.CreateEmployee({})) as Employee;
+      employee2 = (await seedService.CreateEmployee({})) as Employee;
+
+      const data1: HarvestDto = {
+        date: InformationGenerator.generateRandomDate(),
         crop: { id: crop1.id },
-        total: 100,
+        amount: 100,
         value_pay: 60_000,
         observation: 'No observation',
         details: [
           {
             employee: { id: employee1.id },
-            total: 100,
+            amount: 100,
             value_pay: 60_000,
           } as HarvestDetailsDto,
         ],
       };
-      crop2 = await cropController.create({
-        name: 'Crop test 2',
-        description: 'No description',
-        units: 10,
-        location: 'No location',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
 
-      employee2 = await employeeController.create({
-        first_name: 'Employee test',
-        last_name: 'Employee test',
-        email: 'employeetest2@mail.com',
-        cell_phone_number: '3127836149',
-        address: 'no address',
-      });
-
-      const data2: CreateHarvestDto = {
-        date: new Date(
-          new Date().setDate(new Date().getDate() + 5),
-        ).toISOString(),
+      const data2: HarvestDto = {
+        date: InformationGenerator.generateRandomDate(5),
         crop: { id: crop2.id },
-        total: 150,
+        amount: 150,
         value_pay: 90_000,
         observation: 'No observation',
         details: [
           {
             employee: { id: employee2.id },
-            total: 150,
+            amount: 150,
             value_pay: 90_000,
           } as HarvestDetailsDto,
         ],
       };
-      const data3: CreateHarvestDto = {
-        date: new Date(
-          new Date().setDate(new Date().getDate() + 10),
-        ).toISOString(),
+
+      const data3: HarvestDto = {
+        date: InformationGenerator.generateRandomDate(10),
         crop: { id: crop2.id },
-        total: 300,
+        amount: 300,
         value_pay: 180_000,
         observation: 'No observation',
         details: [
           {
             employee: { id: employee2.id },
-            total: 300,
+            amount: 300,
             value_pay: 180_000,
           } as HarvestDetailsDto,
         ],
       };
 
       for (let i = 0; i < 6; i++) {
-        await harvestController.create(data1);
-        await harvestController.create(data2);
-        await harvestController.create(data3);
+        await Promise.all([
+          await harvestController.create(data1),
+          await harvestController.create(data2),
+          await harvestController.create(data3),
+        ]);
       }
+
+      await authService.addPermission(userTest.id, 'find_all_harvests');
     });
 
     it('should throw an exception for not sending a JWT to the protected path /harvests/all', async () => {
@@ -357,20 +290,7 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /harvests/all', async () => {
-      await authService.removePermission(userTest.id, 'find_all_harvests');
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/harvests/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get only 10 harvests for default by not sending paging parameters', async () => {
-      await authService.addPermission(userTest.id, 'find_all_harvests');
       const response = await request
         .default(app.getHttpServer())
         .get('/harvests/all')
@@ -382,21 +302,21 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.current_page_count).toEqual(1);
     });
 
-    it('should return the specified number of harvests passed by the paging arguments by the URL', async () => {
-      const response1 = await request
+    it('should return the specified number of harvests passed by the paging arguments by the URL (1)', async () => {
+      const response = await request
         .default(app.getHttpServer())
         .get(`/harvests/all`)
         .query({ limit: 11, offset: 0 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(response1.body.total_row_count).toEqual(18);
-      expect(response1.body.current_row_count).toEqual(11);
-      expect(response1.body.total_page_count).toEqual(2);
-      expect(response1.body.current_page_count).toEqual(1);
-      response1.body.records.forEach((harvest: Harvest) => {
+      expect(response.body.total_row_count).toEqual(18);
+      expect(response.body.current_row_count).toEqual(11);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(1);
+      response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -411,7 +331,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -424,21 +344,22 @@ describe('HarvestsController (e2e)', () => {
           expect(detail.employee).toHaveProperty('address');
         });
       });
-
-      const response2 = await request
+    });
+    it('should return the specified number of harvests passed by the paging arguments by the URL (2)', async () => {
+      const response = await request
         .default(app.getHttpServer())
         .get(`/harvests/all`)
         .query({ limit: 11, offset: 1 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(response2.body.total_row_count).toEqual(18);
-      expect(response2.body.current_row_count).toEqual(7);
-      expect(response2.body.total_page_count).toEqual(2);
-      expect(response2.body.current_page_count).toEqual(2);
-      response2.body.records.forEach((harvest: Harvest) => {
+      expect(response.body.total_row_count).toEqual(18);
+      expect(response.body.current_row_count).toEqual(7);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(2);
+      response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -453,7 +374,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -483,7 +404,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -499,7 +420,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -529,7 +450,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -545,7 +466,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -575,7 +496,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -590,7 +511,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -622,7 +543,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -638,7 +559,7 @@ describe('HarvestsController (e2e)', () => {
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
           expect(detail.employee.id).toBe(employee2.id);
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -657,7 +578,7 @@ describe('HarvestsController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.AFTER,
-        date: new Date().toISOString(),
+        date: InformationGenerator.generateRandomDate(),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -675,7 +596,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
         expect(new Date(harvest.date) > new Date(queryData.date)).toBe(true);
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -690,7 +611,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -708,9 +629,7 @@ describe('HarvestsController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.BEFORE,
-        date: new Date(
-          new Date().setDate(new Date().getDate() + 1),
-        ).toISOString(),
+        date: InformationGenerator.generateRandomDate(1),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -728,7 +647,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
         expect(new Date(harvest.date) < new Date(queryData.date)).toBe(true);
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -743,7 +662,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -761,9 +680,7 @@ describe('HarvestsController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.EQUAL,
-        date: new Date(
-          new Date().setDate(new Date().getDate() + 5),
-        ).toISOString(),
+        date: InformationGenerator.generateRandomDate(5),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -783,7 +700,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.date.split('T')[0]).toBe(
           new Date(queryData.date).toISOString().split('T')[0],
         );
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -798,7 +715,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -812,11 +729,11 @@ describe('HarvestsController (e2e)', () => {
         });
       });
     });
-    it('should return the specified number of harvests passed by the query (equal total)', async () => {
+    it('should return the specified number of harvests passed by the query (equal amount)', async () => {
       const queryData = {
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.EQUAL,
-        total: 100,
+        filter_by_amount: true,
+        type_filter_amount: TypeFilterNumber.EQUAL,
+        amount: 100,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -833,8 +750,8 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
-        expect(harvest.total).toBe(queryData.total);
+        expect(harvest).toHaveProperty('amount');
+        expect(harvest.amount).toBe(queryData.amount);
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -849,7 +766,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -863,11 +780,11 @@ describe('HarvestsController (e2e)', () => {
         });
       });
     });
-    it('should return the specified number of harvests passed by the query (max total)', async () => {
+    it('should return the specified number of harvests passed by the query (max amount)', async () => {
       const queryData = {
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.MAX,
-        total: 100,
+        filter_by_amount: true,
+        type_filter_amount: TypeFilterNumber.MAX,
+        amount: 100,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -884,8 +801,8 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
-        expect(harvest.total).toBeGreaterThan(queryData.total);
+        expect(harvest).toHaveProperty('amount');
+        expect(harvest.amount).toBeGreaterThan(queryData.amount);
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -900,7 +817,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -914,11 +831,11 @@ describe('HarvestsController (e2e)', () => {
         });
       });
     });
-    it('should return the specified number of harvests passed by the query (min total)', async () => {
+    it('should return the specified number of harvests passed by the query (min amount)', async () => {
       const queryData = {
-        filter_by_total: true,
-        type_filter_total: TypeFilterNumber.MIN,
-        total: 300,
+        filter_by_amount: true,
+        type_filter_amount: TypeFilterNumber.MIN,
+        amount: 300,
       };
       const response = await request
         .default(app.getHttpServer())
@@ -935,8 +852,8 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
-        expect(harvest.total).toBeLessThan(queryData.total);
+        expect(harvest).toHaveProperty('amount');
+        expect(harvest.amount).toBeLessThan(queryData.amount);
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest).toHaveProperty('observation');
         expect(harvest).toHaveProperty('createdDate');
@@ -951,7 +868,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -986,7 +903,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest.value_pay).toBe(queryData.value_pay);
         expect(harvest).toHaveProperty('observation');
@@ -1002,7 +919,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -1037,7 +954,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest.value_pay).toBeGreaterThan(queryData.value_pay);
         expect(harvest).toHaveProperty('observation');
@@ -1053,7 +970,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -1088,7 +1005,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest.value_pay).toBeLessThan(queryData.value_pay);
         expect(harvest).toHaveProperty('observation');
@@ -1104,7 +1021,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -1140,7 +1057,7 @@ describe('HarvestsController (e2e)', () => {
       response.body.records.forEach((harvest: Harvest) => {
         expect(harvest).toHaveProperty('id');
         expect(harvest).toHaveProperty('date');
-        expect(harvest).toHaveProperty('total');
+        expect(harvest).toHaveProperty('amount');
         expect(harvest).toHaveProperty('value_pay');
         expect(harvest.value_pay).toBeLessThan(queryData.value_pay);
         expect(harvest).toHaveProperty('observation');
@@ -1157,7 +1074,7 @@ describe('HarvestsController (e2e)', () => {
         expect(harvest.details.length).toBeGreaterThan(0);
         harvest.details.forEach((detail) => {
           expect(detail).toHaveProperty('id');
-          expect(detail).toHaveProperty('total');
+          expect(detail).toHaveProperty('amount');
           expect(detail).toHaveProperty('value_pay');
           expect(detail).toHaveProperty('payment_is_pending');
           expect(detail).toHaveProperty('employee');
@@ -1193,62 +1110,60 @@ describe('HarvestsController (e2e)', () => {
 
     describe('should return the specified number of harvests passed by the query mix filter', () => {
       beforeAll(async () => {
-        const data1: CreateHarvestDto = {
-          date: new Date(
-            new Date().setDate(new Date().getDate() + 3),
-          ).toISOString(),
+        const data1: HarvestDto = {
+          date: InformationGenerator.generateRandomDate(3),
           crop: { id: crop1.id },
-          total: 600,
+          amount: 600,
           value_pay: 360_000,
           observation: 'No observation',
           details: [
             {
               employee: { id: employee1.id },
-              total: 300,
+              amount: 300,
               value_pay: 180_000,
             } as HarvestDetailsDto,
             {
               employee: { id: employee2.id },
-              total: 300,
+              amount: 300,
               value_pay: 180_000,
             } as HarvestDetailsDto,
           ],
         };
 
-        const data2: CreateHarvestDto = {
-          date: new Date(
-            new Date().setDate(new Date().getDate() + 3),
-          ).toISOString(),
+        const data2: HarvestDto = {
+          date: InformationGenerator.generateRandomDate(3),
           crop: { id: crop1.id },
-          total: 500,
+          amount: 500,
           value_pay: 300_000,
           observation: 'No observation',
           details: [
             {
               employee: { id: employee1.id },
-              total: 250,
+              amount: 250,
               value_pay: 150_000,
             } as HarvestDetailsDto,
             {
               employee: { id: employee2.id },
-              total: 250,
+              amount: 250,
               value_pay: 150_000,
             } as HarvestDetailsDto,
           ],
         };
 
-        const harvest1 = await harvestController.create(data1);
-        const harvest2 = await harvestController.create(data2);
+        await Promise.all([
+          await harvestController.create(data1),
+          await harvestController.create(data2),
+        ]);
       });
 
-      it('should return the specified number of harvests passed by the query (MAX value_pay , total)', async () => {
+      it('should return the specified number of harvests passed by the query (MAX value_pay , amount)', async () => {
         const queryData = {
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.MAX,
           value_pay: 200_000,
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.MAX,
-          total: 400,
+          filter_by_amount: true,
+          type_filter_amount: TypeFilterNumber.MAX,
+          amount: 400,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1265,8 +1180,8 @@ describe('HarvestsController (e2e)', () => {
         response.body.records.forEach((harvest: Harvest) => {
           expect(harvest).toHaveProperty('id');
           expect(harvest).toHaveProperty('date');
-          expect(harvest).toHaveProperty('total');
-          expect(harvest.total).toBeGreaterThan(queryData.total);
+          expect(harvest).toHaveProperty('amount');
+          expect(harvest.amount).toBeGreaterThan(queryData.amount);
           expect(harvest).toHaveProperty('value_pay');
           expect(harvest.value_pay).toBeGreaterThan(queryData.value_pay);
           expect(harvest).toHaveProperty('observation');
@@ -1283,7 +1198,7 @@ describe('HarvestsController (e2e)', () => {
           expect(harvest.details.length).toBeGreaterThan(0);
           harvest.details.forEach((detail) => {
             expect(detail).toHaveProperty('id');
-            expect(detail).toHaveProperty('total');
+            expect(detail).toHaveProperty('amount');
             expect(detail).toHaveProperty('value_pay');
             expect(detail).toHaveProperty('payment_is_pending');
             expect(detail).toHaveProperty('employee');
@@ -1297,14 +1212,14 @@ describe('HarvestsController (e2e)', () => {
           });
         });
       });
-      it('should return the specified number of harvests passed by the query (MIN 1 value_pay , total)', async () => {
+      it('should return the specified number of harvests passed by the query (MIN 1 value_pay , amount)', async () => {
         const queryData = {
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.MIN,
           value_pay: 400_000,
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.MIN,
-          total: 500,
+          filter_by_amount: true,
+          type_filter_amount: TypeFilterNumber.MIN,
+          amount: 500,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1321,8 +1236,8 @@ describe('HarvestsController (e2e)', () => {
         response.body.records.forEach((harvest: Harvest) => {
           expect(harvest).toHaveProperty('id');
           expect(harvest).toHaveProperty('date');
-          expect(harvest).toHaveProperty('total');
-          expect(harvest.total).toBeLessThan(queryData.total);
+          expect(harvest).toHaveProperty('amount');
+          expect(harvest.amount).toBeLessThan(queryData.amount);
           expect(harvest).toHaveProperty('value_pay');
           expect(harvest.value_pay).toBeLessThan(queryData.value_pay);
           expect(harvest).toHaveProperty('observation');
@@ -1339,7 +1254,7 @@ describe('HarvestsController (e2e)', () => {
           expect(harvest.details.length).toBeGreaterThan(0);
           harvest.details.forEach((detail) => {
             expect(detail).toHaveProperty('id');
-            expect(detail).toHaveProperty('total');
+            expect(detail).toHaveProperty('amount');
             expect(detail).toHaveProperty('value_pay');
             expect(detail).toHaveProperty('payment_is_pending');
             expect(detail).toHaveProperty('employee');
@@ -1353,15 +1268,15 @@ describe('HarvestsController (e2e)', () => {
           });
         });
       });
-      it('should return the specified number of harvests passed by the query (MIN 2 value_pay , total)', async () => {
+      it('should return the specified number of harvests passed by the query (MIN 2 value_pay , amount)', async () => {
         const queryData = {
           offset: 1,
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.MIN,
           value_pay: 400_000,
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.MIN,
-          total: 500,
+          filter_by_amount: true,
+          type_filter_amount: TypeFilterNumber.MIN,
+          amount: 500,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1378,8 +1293,8 @@ describe('HarvestsController (e2e)', () => {
         response.body.records.forEach((harvest: Harvest) => {
           expect(harvest).toHaveProperty('id');
           expect(harvest).toHaveProperty('date');
-          expect(harvest).toHaveProperty('total');
-          expect(harvest.total).toBeLessThan(queryData.total);
+          expect(harvest).toHaveProperty('amount');
+          expect(harvest.amount).toBeLessThan(queryData.amount);
           expect(harvest).toHaveProperty('value_pay');
           expect(harvest.value_pay).toBeLessThan(queryData.value_pay);
           expect(harvest).toHaveProperty('observation');
@@ -1396,7 +1311,7 @@ describe('HarvestsController (e2e)', () => {
           expect(harvest.details.length).toBeGreaterThan(0);
           harvest.details.forEach((detail) => {
             expect(detail).toHaveProperty('id');
-            expect(detail).toHaveProperty('total');
+            expect(detail).toHaveProperty('amount');
             expect(detail).toHaveProperty('value_pay');
             expect(detail).toHaveProperty('payment_is_pending');
             expect(detail).toHaveProperty('employee');
@@ -1410,16 +1325,16 @@ describe('HarvestsController (e2e)', () => {
           });
         });
       });
-      it('should return the specified number of harvests passed by the query (MIN 3 value_pay , total)', async () => {
+      it('should return the specified number of harvests passed by the query (MIN 3 value_pay , amount)', async () => {
         const queryData = {
           limit: 12,
           offset: 1,
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.MIN,
           value_pay: 400_000,
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.MIN,
-          total: 500,
+          filter_by_amount: true,
+          type_filter_amount: TypeFilterNumber.MIN,
+          amount: 500,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1436,8 +1351,8 @@ describe('HarvestsController (e2e)', () => {
         response.body.records.forEach((harvest: Harvest) => {
           expect(harvest).toHaveProperty('id');
           expect(harvest).toHaveProperty('date');
-          expect(harvest).toHaveProperty('total');
-          expect(harvest.total).toBeLessThan(queryData.total);
+          expect(harvest).toHaveProperty('amount');
+          expect(harvest.amount).toBeLessThan(queryData.amount);
           expect(harvest).toHaveProperty('value_pay');
           expect(harvest.value_pay).toBeLessThan(queryData.value_pay);
           expect(harvest).toHaveProperty('observation');
@@ -1454,7 +1369,7 @@ describe('HarvestsController (e2e)', () => {
           expect(harvest.details.length).toBeGreaterThan(0);
           harvest.details.forEach((detail) => {
             expect(detail).toHaveProperty('id');
-            expect(detail).toHaveProperty('total');
+            expect(detail).toHaveProperty('amount');
             expect(detail).toHaveProperty('value_pay');
             expect(detail).toHaveProperty('payment_is_pending');
             expect(detail).toHaveProperty('employee');
@@ -1468,20 +1383,18 @@ describe('HarvestsController (e2e)', () => {
           });
         });
       });
-      it('should return the specified number of harvests passed by the query (EQUAL 1 date, value_pay , total)', async () => {
+      it('should return the specified number of harvests passed by the query (EQUAL 1 date, value_pay , amount)', async () => {
         const queryData = {
           crop: crop2.id,
           filter_by_date: true,
           type_filter_date: TypeFilterDate.EQUAL,
-          date: new Date(
-            new Date().setDate(new Date().getDate() + 3),
-          ).toISOString(),
+          date: InformationGenerator.generateRandomDate(3),
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.EQUAL,
           value_pay: 360_000,
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.EQUAL,
-          total: 600,
+          filter_by_amount: true,
+          type_filter_amount: TypeFilterNumber.EQUAL,
+          amount: 600,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1495,20 +1408,18 @@ describe('HarvestsController (e2e)', () => {
         expect(response.body.total_page_count).toEqual(0);
         expect(response.body.current_page_count).toEqual(0);
       });
-      it('should return the specified number of harvests passed by the query (EQUAL 2 date, value_pay , total)', async () => {
+      it('should return the specified number of harvests passed by the query (EQUAL 2 date, value_pay , amount)', async () => {
         const queryData = {
           crop: crop1.id,
           filter_by_date: true,
           type_filter_date: TypeFilterDate.EQUAL,
-          date: new Date(
-            new Date().setDate(new Date().getDate() + 3),
-          ).toISOString(),
+          date: InformationGenerator.generateRandomDate(3),
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.EQUAL,
           value_pay: 360_000,
-          filter_by_total: true,
-          type_filter_total: TypeFilterNumber.EQUAL,
-          total: 600,
+          filter_by_amount: true,
+          type_filter_amount: TypeFilterNumber.EQUAL,
+          amount: 600,
         };
         const response = await request
           .default(app.getHttpServer())
@@ -1529,8 +1440,8 @@ describe('HarvestsController (e2e)', () => {
           expect(harvest.date.split('T')[0]).toBe(
             new Date(queryData.date).toISOString().split('T')[0],
           );
-          expect(harvest).toHaveProperty('total');
-          expect(harvest.total).toBe(queryData.total);
+          expect(harvest).toHaveProperty('amount');
+          expect(harvest.amount).toBe(queryData.amount);
           expect(harvest).toHaveProperty('value_pay');
           expect(harvest.value_pay).toBe(queryData.value_pay);
           expect(harvest).toHaveProperty('observation');
@@ -1547,7 +1458,7 @@ describe('HarvestsController (e2e)', () => {
           expect(harvest.details.length).toBeGreaterThan(0);
           harvest.details.forEach((detail) => {
             expect(detail).toHaveProperty('id');
-            expect(detail).toHaveProperty('total');
+            expect(detail).toHaveProperty('amount');
             expect(detail).toHaveProperty('value_pay');
             expect(detail).toHaveProperty('payment_is_pending');
             expect(detail).toHaveProperty('employee');
@@ -1577,45 +1488,32 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/one/:id (GET)', () => {
-    const harvestId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'find_one_harvest');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path harvests/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .get(`/harvests/one/${harvestId}`)
+        .get(`/harvests/one/${falseHarvestId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_harvest');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/harvests/one/${harvestId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get one harvest', async () => {
-      await authService.addPermission(userTest.id, 'find_one_harvest');
-
-      const record = (
-        await harvestService.findAll({
-          limit: 1,
-        })
-      ).records[0];
+      const {
+        harvest: { id },
+      } = await seedService.CreateHarvest({});
 
       const response = await request
         .default(app.getHttpServer())
-        .get(`/harvests/one/${record.id}`)
+        .get(`/harvests/one/${id}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
       const harvest = response.body;
       expect(harvest).toHaveProperty('id');
       expect(harvest).toHaveProperty('date');
-      expect(harvest).toHaveProperty('total');
+      expect(harvest).toHaveProperty('amount');
       expect(harvest).toHaveProperty('value_pay');
       expect(harvest).toHaveProperty('observation');
       expect(harvest).toHaveProperty('createdDate');
@@ -1630,7 +1528,7 @@ describe('HarvestsController (e2e)', () => {
       expect(harvest.details.length).toBeGreaterThan(0);
       harvest.details.forEach((detail) => {
         expect(detail).toHaveProperty('id');
-        expect(detail).toHaveProperty('total');
+        expect(detail).toHaveProperty('amount');
         expect(detail).toHaveProperty('value_pay');
         expect(detail).toHaveProperty('payment_is_pending');
         expect(detail).toHaveProperty('employee');
@@ -1656,11 +1554,11 @@ describe('HarvestsController (e2e)', () => {
     it('should throw exception for not finding harvest by ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .get(`/harvests/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .get(`/harvests/one/${falseHarvestId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
       expect(body.message).toEqual(
-        'Harvest with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Harvest with id: ${falseHarvestId} not found`,
       );
     });
 
@@ -1674,64 +1572,49 @@ describe('HarvestsController (e2e)', () => {
     });
   });
 
-  describe('harvests/update/one/:id (PATCH)', () => {
-    const harvestId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+  describe('harvests/update/one/:id (PUT)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'update_one_harvest');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path harvests/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${harvestId}`)
+        .put(`/harvests/update/one/${falseHarvestId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/update/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_harvest');
-      const response = await request
-        .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${harvestId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should update one harvest', async () => {
-      await authService.addPermission(userTest.id, 'update_one_harvest');
-
-      const record = (
-        await harvestService.findAll({
-          limit: 1,
-        })
-      ).records[0];
+      const record = (await seedService.CreateHarvest({})).harvest as Harvest;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
-      const bodyRequest: UpdateHarvestDto = {
+      const bodyRequest: HarvestDto = {
         ...rest,
-        total: rest.total + 10 * record.details.length,
+        amount: rest.amount + 10 * record.details.length,
         value_pay: rest.value_pay + 2000 * record.details.length,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
         details: record.details.map((detail) => ({
           id: detail.id,
           employee: { id: detail.employee.id },
-          total: detail.total + 10,
+          amount: detail.amount + 10,
           value_pay: detail.value_pay + 2000,
         })) as HarvestDetailsDto[],
       };
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${record.id}`)
+        .put(`/harvests/update/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(200);
 
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('date');
-      expect(body).toHaveProperty('total');
-      expect(body.total).toBe(bodyRequest.total);
+      expect(body).toHaveProperty('amount');
+      expect(body.amount).toBe(bodyRequest.amount);
       expect(body).toHaveProperty('value_pay');
       expect(body.value_pay).toBe(bodyRequest.value_pay);
       expect(body).toHaveProperty('observation');
@@ -1748,7 +1631,7 @@ describe('HarvestsController (e2e)', () => {
       expect(body.details.length).toBeGreaterThan(0);
       body.details.forEach((detail) => {
         expect(detail).toHaveProperty('id');
-        expect(detail).toHaveProperty('total');
+        expect(detail).toHaveProperty('amount');
         expect(detail).toHaveProperty('value_pay');
         expect(detail).toHaveProperty('payment_is_pending');
         expect(detail).toHaveProperty('employee');
@@ -1763,33 +1646,8 @@ describe('HarvestsController (e2e)', () => {
     });
 
     it(' should throw an exception for trying to delete a record that is already paid for.', async () => {
-      await authService.addPermission(userTest.id, 'update_one_harvest');
-
-      const [employee1, employee2] = (await employeeController.findAll({}))
-        .records;
-      const crop = (await cropController.findAll({})).records[0];
-
-      const data: CreateHarvestDto = {
-        date: new Date().toISOString(),
-        crop: { id: crop.id },
-        total: 200,
-        value_pay: 120_000,
-        observation: 'No observation',
-        details: [
-          {
-            employee: { id: employee1.id },
-            total: 100,
-            value_pay: 60_000,
-          } as HarvestDetailsDto,
-          {
-            employee: { id: employee2.id },
-            total: 100,
-            value_pay: 60_000,
-          } as HarvestDetailsDto,
-        ],
-      };
-
-      const record = await harvestService.create(data);
+      const record = (await seedService.CreateHarvest({ quantityEmployees: 2 }))
+        .harvest as Harvest;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
@@ -1799,9 +1657,9 @@ describe('HarvestsController (e2e)', () => {
         payment_is_pending: false,
       });
 
-      const bodyRequest: UpdateHarvestDto = {
-        ...rest,
-        total: 100,
+      const bodyRequest: HarvestDto = {
+        date: rest.date,
+        amount: 100,
         value_pay: 60_000,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
@@ -1810,14 +1668,14 @@ describe('HarvestsController (e2e)', () => {
           .map((detail) => ({
             id: detail.id,
             employee: { id: detail.employee.id },
-            total: 100,
+            amount: 100,
             value_pay: 60_000,
           })) as HarvestDetailsDto[],
       };
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${record.id}`)
+        .put(`/harvests/update/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(400);
@@ -1828,33 +1686,8 @@ describe('HarvestsController (e2e)', () => {
     });
 
     it('You should throw an exception for attempting to delete a record that has been cascaded out.', async () => {
-      await authService.addPermission(userTest.id, 'update_one_harvest');
-
-      const [employee1, employee2] = (await employeeController.findAll({}))
-        .records;
-      const crop = (await cropController.findAll({})).records[0];
-
-      const data: CreateHarvestDto = {
-        date: new Date().toISOString(),
-        crop: { id: crop.id },
-        total: 200,
-        value_pay: 120_000,
-        observation: 'No observation',
-        details: [
-          {
-            employee: { id: employee1.id },
-            total: 100,
-            value_pay: 60_000,
-          } as HarvestDetailsDto,
-          {
-            employee: { id: employee2.id },
-            total: 100,
-            value_pay: 60_000,
-          } as HarvestDetailsDto,
-        ],
-      };
-
-      const record = await harvestService.create(data);
+      const record = (await seedService.CreateHarvest({ quantityEmployees: 2 }))
+        .harvest as Harvest;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
@@ -1862,9 +1695,9 @@ describe('HarvestsController (e2e)', () => {
 
       await harvestDetailsRepository.softDelete(idHarvestDetail);
 
-      const bodyRequest: UpdateHarvestDto = {
-        ...rest,
-        total: 100,
+      const bodyRequest: HarvestDto = {
+        date: rest.date,
+        amount: 100,
         value_pay: 60_000,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
@@ -1873,14 +1706,14 @@ describe('HarvestsController (e2e)', () => {
           .map((detail) => ({
             id: detail.id,
             employee: { id: detail.employee.id },
-            total: 100,
+            amount: 100,
             value_pay: 60_000,
           })) as HarvestDetailsDto[],
       };
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${record.id}`)
+        .put(`/harvests/update/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(400);
@@ -1891,13 +1724,8 @@ describe('HarvestsController (e2e)', () => {
     });
 
     it(' should throw an exception for trying to modify a record that is already paid for.', async () => {
-      await authService.addPermission(userTest.id, 'update_one_harvest');
-
-      const record = (
-        await harvestService.findAll({
-          limit: 1,
-        })
-      ).records[0];
+      const record = (await seedService.CreateHarvest({ quantityEmployees: 3 }))
+        .harvest as Harvest;
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
@@ -1905,23 +1733,23 @@ describe('HarvestsController (e2e)', () => {
         payment_is_pending: false,
       });
 
-      const bodyRequest: UpdateHarvestDto = {
+      const bodyRequest: HarvestDto = {
         ...rest,
-        total: rest.total + 10 * record.details.length,
+        amount: rest.amount + 10 * record.details.length,
         value_pay: rest.value_pay + 2000 * record.details.length,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
         details: record.details.map((detail) => ({
           id: detail.id,
           employee: { id: detail.employee.id },
-          total: detail.total + 10,
+          amount: detail.amount + 10,
           value_pay: detail.value_pay + 2000,
         })) as HarvestDetailsDto[],
       };
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${record.id}`)
+        .put(`/harvests/update/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(400);
@@ -1936,60 +1764,58 @@ describe('HarvestsController (e2e)', () => {
     });
 
     it('You should throw an exception for attempting to modify a record that has been cascaded out.', async () => {
-      await authService.addPermission(userTest.id, 'update_one_harvest');
+      const harvest = (await seedService.CreateHarvest({})).harvest as Harvest;
 
-      const record = (
-        await harvestService.findAll({
-          limit: 1,
-        })
-      ).records[0];
+      const { id, createdDate, updatedDate, deletedDate, ...rest } = harvest;
 
-      const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
+      await harvestDetailsRepository.softDelete(harvest.details[0].id);
 
-      await harvestDetailsRepository.softDelete(record.details[0].id);
-
-      const bodyRequest: UpdateHarvestDto = {
+      const bodyRequest: HarvestDto = {
         ...rest,
-        total: rest.total + 10 * record.details.length,
-        value_pay: rest.value_pay + 2000 * record.details.length,
+        amount: rest.amount + 10 * harvest.details.length,
+        value_pay: rest.value_pay + 2000 * harvest.details.length,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
-        details: record.details.map((detail) => ({
+        details: harvest.details.map((detail) => ({
           id: detail.id,
           employee: { id: detail.employee.id },
-          total: detail.total + 10,
+          amount: detail.amount + 10,
           value_pay: detail.value_pay + 2000,
         })) as HarvestDetailsDto[],
       };
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/${record.id}`)
+        .put(`/harvests/update/one/${harvest.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(400);
 
       expect(body.message).toBe(
-        `You cannot update the record with id ${record.details[0].id} , it is linked to other records.`,
+        `You cannot update the record with id ${harvest.details[0].id} , it is linked to other records.`,
       );
     });
 
     it('should throw exception for not finding harvest to update', async () => {
+      const bodyRequest: HarvestDto = {
+        ...harvestDtoTemplete,
+      };
+
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .put(`/harvests/update/one/${falseHarvestId}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ observation: 'Observation updated 2' })
+        .send(bodyRequest)
         .expect(404);
       expect(body.message).toEqual(
-        'Harvest with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Harvest with id: ${falseHarvestId} not found`,
       );
     });
 
     it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .put(`/harvests/update/one/${falseHarvestId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ year: 2025 })
         .expect(400);
@@ -1998,34 +1824,20 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/remove/one/:id (DELETE)', () => {
-    const harvestId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_one_harvest');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path harvests/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .delete(`/harvests/remove/one/${harvestId}`)
+        .delete(`/harvests/remove/one/${falseHarvestId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/remove/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'remove_one_harvest');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/harvests/remove/one/${harvestId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete one harvest', async () => {
-      await authService.addPermission(userTest.id, 'remove_one_harvest');
-      const { id } = (
-        await harvestService.findAll({
-          limit: 1,
-        })
-      ).records[0];
+      const { id } = (await seedService.CreateHarvest({})).harvest;
 
       await request
         .default(app.getHttpServer())
@@ -2044,26 +1856,21 @@ describe('HarvestsController (e2e)', () => {
     it('You should throw exception for trying to delete a harvest that does not exist.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .delete(`/harvests/remove/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .delete(`/harvests/remove/one/${falseHarvestId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
       expect(body.message).toEqual(
-        'Harvest with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Harvest with id: ${falseHarvestId} not found`,
       );
     });
 
     it('should throw an exception when trying to delete a harvest with processed records.', async () => {
-      const harvest = (
-        await harvestService.findAll({
-          limit: 1,
-        })
-      ).records[0];
+      const { harvest, crop } = await seedService.CreateHarvest({});
 
-      await harvestService.createHarvestProcessed({
-        date: new Date().toISOString(),
-        crop: { id: harvest.crop.id },
-        harvest: { id: harvest.id },
-        total: 10,
+      await seedService.CreateHarvestProcessed({
+        harvestId: harvest.id,
+        cropId: crop.id,
+        amount: 50,
       });
 
       const { body } = await request
@@ -2073,29 +1880,19 @@ describe('HarvestsController (e2e)', () => {
         .expect(409);
 
       expect(body.message).toEqual(
-        `The record cannot be deleted because it has processed records linked to it.`,
+        `The record with id ${harvest.id} cannot be deleted because it has processed records linked to it.`,
       );
     });
 
     it('should throw an exception when trying to delete a harvest with payments records', async () => {
-      const harvest = (
-        await harvestService.findAll({
-          limit: 1,
-          offset: 1,
-        })
-      ).records[0];
+      const { employees, harvest } = await seedService.CreateHarvest({
+        quantityEmployees: 2,
+      });
 
-      const [employee] = (await employeeController.findAll({})).records;
-
-      await paymentsController.create({
-        date: new Date().toISOString(),
-        employee: { id: employee.id },
-        method_of_payment: MethodOfPayment.EFECTIVO,
-        total: harvest.details[0].value_pay,
-        categories: {
-          harvests: [harvest.details[0].id],
-          works: [],
-        } as PaymentCategoriesDto,
+      await seedService.CreatePayment({
+        employeeId: employees[0].id,
+        harvestsId: [harvest.details[0].id],
+        value_pay: harvest.details[0].value_pay,
       });
 
       const { body } = await request
@@ -2105,12 +1902,16 @@ describe('HarvestsController (e2e)', () => {
         .expect(409);
 
       expect(body.message).toEqual(
-        `The record cannot be deleted because it has payments linked to it.`,
+        `The record with id ${harvest.id} cannot be deleted because it has payments linked to it.`,
       );
     });
   });
 
   describe('harvests/remove/bulk (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_bulk_harvests');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path harvests/remove/bulk ', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -2119,26 +1920,16 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/remove/bulk ', async () => {
-      await authService.removePermission(userTest.id, 'remove_bulk_harvests');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/harvests/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete harvests bulk', async () => {
-      await authService.addPermission(userTest.id, 'remove_bulk_harvests');
-      const [harvest1, harvest2, harvest3] = (
-        await harvestService.findAll({
-          limit: 3,
-          offset: 1,
-        })
-      ).records;
+      const [
+        { harvest: harvest1 },
+        { harvest: harvest2 },
+        { harvest: harvest3 },
+      ] = await Promise.all([
+        seedService.CreateHarvest({}),
+        seedService.CreateHarvest({}),
+        seedService.CreateHarvest({}),
+      ]);
 
       const bulkData: RemoveBulkRecordsDto<Harvest> = {
         recordsIds: [{ id: harvest1.id }, { id: harvest2.id }],
@@ -2174,29 +1965,28 @@ describe('HarvestsController (e2e)', () => {
     });
 
     it('should throw an exception when trying to delete a harvest with harvest processed.', async () => {
-      const [harvest1, harvest2, harvest3] = await harvestRepository.find({
-        relations: { processed: true, crop: true },
-        where: {
-          processed: {
-            id: IsNull(),
-          },
-        },
-        take: 3,
-      });
+      const [
+        { harvest: harvest1 },
+        { harvest: harvest2 },
+        { harvest: harvest3 },
+      ] = await Promise.all([
+        seedService.CreateHarvest({}),
+        seedService.CreateHarvest({}),
+        seedService.CreateHarvest({}),
+      ]);
 
-      await harvestService.createHarvestProcessed({
-        date: new Date().toISOString(),
-        crop: { id: harvest1.crop.id },
-        harvest: { id: harvest1.id },
-        total: 10,
-      });
-
-      await harvestService.createHarvestProcessed({
-        date: new Date().toISOString(),
-        crop: { id: harvest2.crop.id },
-        harvest: { id: harvest2.id },
-        total: 10,
-      });
+      await Promise.all([
+        seedService.CreateHarvestProcessed({
+          harvestId: harvest1.id,
+          cropId: harvest1.crop.id,
+          amount: 50,
+        }),
+        seedService.CreateHarvestProcessed({
+          harvestId: harvest2.id,
+          cropId: harvest2.crop.id,
+          amount: 50,
+        }),
+      ]);
 
       const { body } = await request
         .default(app.getHttpServer())
@@ -2215,47 +2005,31 @@ describe('HarvestsController (e2e)', () => {
         failed: [
           {
             id: harvest1.id,
-            error:
-              'The record cannot be deleted because it has processed records linked to it.',
+            error: `The record with id ${harvest1.id} cannot be deleted because it has processed records linked to it.`,
           },
           {
             id: harvest2.id,
-            error:
-              'The record cannot be deleted because it has processed records linked to it.',
+            error: `The record with id ${harvest2.id} cannot be deleted because it has processed records linked to it.`,
           },
         ],
       });
     });
 
     it('should throw a multi-state code when trying to delete a harvest with payment records and other unrestricted records.', async () => {
-      const [harvest1, harvest2, harvest3] = await harvestRepository.find({
-        relations: {
-          processed: true,
-          crop: true,
-          details: { employee: true },
-        },
-        where: {
-          processed: {
-            id: IsNull(),
-          },
-          details: {
-            payments_harvest: {
-              id: IsNull(),
-            },
-          },
-        },
-        take: 3,
-      });
+      const [
+        { harvest: harvest1 },
+        { harvest: harvest2 },
+        { harvest: harvest3 },
+      ] = await Promise.all([
+        seedService.CreateHarvest({}),
+        seedService.CreateHarvest({}),
+        seedService.CreateHarvest({}),
+      ]);
 
-      await paymentsController.create({
-        date: new Date().toISOString(),
-        employee: { id: harvest1.details[0].employee.id },
-        method_of_payment: MethodOfPayment.EFECTIVO,
-        total: harvest1.details[0].value_pay,
-        categories: {
-          harvests: [harvest1.details[0].id],
-          works: [],
-        } as PaymentCategoriesDto,
+      await seedService.CreatePayment({
+        harvestsId: [harvest1.details[0].id],
+        employeeId: harvest1.details[0].employee.id,
+        value_pay: harvest1.details[0].value_pay,
       });
 
       const { body } = await request
@@ -2275,8 +2049,7 @@ describe('HarvestsController (e2e)', () => {
         failed: [
           {
             id: harvest1.id,
-            error:
-              'The record cannot be deleted because it has payments linked to it.',
+            error: `The record with id ${harvest1.id} cannot be deleted because it has payments linked to it.`,
           },
         ],
       });
@@ -2284,7 +2057,10 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/export/one/pdf/:id (GET)', () => {
-    const harvestId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'export_harvest_to_pdf');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path harvests/export/one/pdf/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -2293,25 +2069,8 @@ describe('HarvestsController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/export/one/pdf/:id', async () => {
-      await authService.removePermission(userTest.id, 'export_harvest_to_pdf');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/harvests/export/one/pdf/${harvestId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should export one harvest in PDF format', async () => {
-      await authService.addPermission(userTest.id, 'export_harvest_to_pdf');
-      const record = (
-        await harvestService.findAll({
-          limit: 1,
-        })
-      ).records[0];
+      const record = (await seedService.CreateHarvest({})).harvest;
       const response = await request
         .default(app.getHttpServer())
         .get(`/harvests/export/one/pdf/${record.id}`)
@@ -2324,100 +2083,68 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/processed/create (POST)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_harvest_processed');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path /harvests/processed/create', async () => {
-      const data: CreateHarvestProcessedDto = {
-        date: '',
-        crop: { id: '' },
-        harvest: { id: '' },
-        total: 0,
+      const bodyRequest: HarvestProcessedDto = {
+        ...harvestProcessedTemplateDto,
       };
       const response = await request
         .default(app.getHttpServer())
         .post('/harvests/processed/create')
-        .send(data)
+        .send(bodyRequest)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /harvests/create', async () => {
-      await authService.removePermission(userTest.id, 'create_harvest');
-
-      const data: CreateHarvestProcessedDto = {
-        date: '',
-        crop: { id: '' },
-        harvest: { id: '' },
-        total: 0,
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/harvests/processed/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(data)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should create a new harvest processed', async () => {
-      await authService.addPermission(userTest.id, 'create_harvest_processed');
+      const { harvest } = await seedService.CreateHarvest({});
 
-      const harvest = (
-        await harvestService.findAll({
-          limit: 1,
-        })
-      ).records[0];
-
-      const data: CreateHarvestProcessedDto = {
-        date: new Date().toISOString(),
+      const bodyRequest: HarvestProcessedDto = {
+        date: InformationGenerator.generateRandomDate(),
         crop: { id: harvest.crop.id },
         harvest: { id: harvest.id },
-        total: 10,
+        amount: 50,
       };
 
       const { body } = await request
         .default(app.getHttpServer())
         .post('/harvests/processed/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(201);
 
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('date');
-      expect(body).toHaveProperty('total');
-      expect(body.total).toBe(data.total);
+      expect(body).toHaveProperty('amount');
+      expect(body.amount).toBe(bodyRequest.amount);
       expect(body).toHaveProperty('crop');
-      expect(body.crop.id).toBe(data.crop.id);
+      expect(body.crop.id).toBe(bodyRequest.crop.id);
       expect(body).toHaveProperty('harvest');
-      expect(body.harvest.id).toBe(data.harvest.id);
+      expect(body.harvest.id).toBe(bodyRequest.harvest.id);
     });
 
-    it('Should throw an exception for attempting to create a processed harvest that exceeds the total value of the harvest.', async () => {
-      await authService.addPermission(userTest.id, 'create_harvest_processed');
+    it('Should throw an exception for attempting to create a processed harvest that exceeds the amount value of the harvest.', async () => {
+      const { harvest } = await seedService.CreateHarvest({});
 
-      const harvest = (
-        await harvestService.findAll({
-          limit: 1,
-        })
-      ).records[0];
-
-      const data: CreateHarvestProcessedDto = {
-        date: new Date().toISOString(),
+      const bodyRequest: HarvestProcessedDto = {
+        date: InformationGenerator.generateRandomDate(),
         crop: { id: harvest.crop.id },
         harvest: { id: harvest.id },
-        total: harvest.total + 50,
-      };
+        amount: harvest.amount + 50,
+      } as HarvestProcessedDto;
 
       const { body } = await request
         .default(app.getHttpServer())
         .post('/harvests/processed/create')
         .set('Authorization', `Bearer ${token}`)
-        .send(data)
+        .send(bodyRequest)
         .expect(400);
 
       expect(body.message).toBe(
-        'You cannot add more processed harvest records, it exceeds the value of the harvest.',
+        `You cannot add more processed harvest records, it exceeds the value of the harvest with id ${harvest.id}.`,
       );
     });
 
@@ -2426,8 +2153,8 @@ describe('HarvestsController (e2e)', () => {
         'date must be a valid ISO 8601 date string',
         'crop should not be null or undefined',
         'harvest should not be null or undefined',
-        'total must be a positive number',
-        'total must be an integer number',
+        'amount must be a positive number',
+        'amount must be an integer number',
       ];
 
       const { body } = await request
@@ -2442,84 +2169,73 @@ describe('HarvestsController (e2e)', () => {
     });
   });
 
-  describe('harvests/processed/update/one/:id (PATCH)', () => {
-    const harvestProcessedId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
-    it('should throw an exception for not sending a JWT to the protected path harvests/processed/update/one/:id', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .patch(`/harvests/processed/update/one/${harvestProcessedId}`)
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/processed/update/one/:id', async () => {
-      await authService.removePermission(
-        userTest.id,
-        'update_one_harvest_processed',
-      );
-      const response = await request
-        .default(app.getHttpServer())
-        .patch(`/harvests/processed/update/one/${harvestProcessedId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
-    it('should update one harvest processed', async () => {
+  describe('harvests/processed/update/one/:id (PUT)', () => {
+    beforeAll(async () => {
       await authService.addPermission(
         userTest.id,
         'update_one_harvest_processed',
       );
+    });
 
-      const harvest = await harvestRepository.findOne({
-        relations: { processed: true, crop: true },
-        where: {
-          processed: {
-            id: Not(IsNull()),
-          },
-        },
+    it('should throw an exception for not sending a JWT to the protected path harvests/processed/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/harvests/processed/update/one/${falseHarvestId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should update one harvest processed', async () => {
+      const { harvest } = await seedService.CreateHarvest({});
+
+      const harvestProcessed = await seedService.CreateHarvestProcessed({
+        harvestId: harvest.id,
+        cropId: harvest.crop.id,
+        amount: 50,
       });
 
-      const bodyRequest: UpdateHarvestProcessedDto = {
-        total: 23,
+      const bodyRequest: HarvestProcessedDto = {
+        date: harvestProcessed.date,
+        crop: { id: harvest.crop.id },
+        harvest: { id: harvest.id },
+        amount: harvestProcessed.amount - 5,
       };
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/harvests/processed/update/one/${harvest.processed[0].id}`)
+        .put(`/harvests/processed/update/one/${harvestProcessed.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(200);
 
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('date');
-      expect(body).toHaveProperty('total');
-      expect(body.total).toBe(bodyRequest.total);
+      expect(body).toHaveProperty('amount');
+      expect(body.amount).toBe(bodyRequest.amount);
       expect(body).toHaveProperty('crop');
       expect(body).toHaveProperty('harvest');
     });
 
     it('should throw exception for not finding harvest processed to update', async () => {
+      const bodyRequest: HarvestProcessedDto = {
+        ...harvestProcessedTemplateDto,
+      };
+
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(
-          `/harvests/processed/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`,
-        )
+        .put(`/harvests/processed/update/one/${falseHarvestId}`)
+        .send(bodyRequest)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
       expect(body.message).toEqual(
-        'Harvest processed with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Harvest processed with id: ${falseHarvestId} not found`,
       );
     });
 
     it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(
-          `/harvests/processed/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`,
-        )
+        .put(`/harvests/processed/update/one/${falseHarvestId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ year: 2025 })
         .expect(400);
@@ -2528,50 +2244,38 @@ describe('HarvestsController (e2e)', () => {
   });
 
   describe('harvests/processed/remove/one/:id (DELETE)', () => {
-    const harvestProcessedId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
-    it('should throw an exception for not sending a JWT to the protected path harvests/processed/remove/one/:id', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/harvests/processed/remove/one/${harvestProcessedId}`)
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action harvests/processed/remove/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'remove_one_harvest');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/harvests/processed/remove/one/${harvestProcessedId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
-    it('should delete one harvest processed', async () => {
+    beforeAll(async () => {
       await authService.addPermission(
         userTest.id,
         'remove_one_harvest_processed',
       );
+    });
 
-      const { processed } = await harvestRepository.findOne({
-        relations: { processed: true, crop: true },
-        where: {
-          processed: {
-            id: Not(IsNull()),
-          },
-        },
+    it('should throw an exception for not sending a JWT to the protected path harvests/processed/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/processed/remove/one/${falseHarvestId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should delete one harvest processed', async () => {
+      const { harvest } = await seedService.CreateHarvest({});
+
+      const harvestProcessed = await seedService.CreateHarvestProcessed({
+        harvestId: harvest.id,
+        cropId: harvest.crop.id,
+        amount: 50,
       });
 
       await request
         .default(app.getHttpServer())
-        .delete(`/harvests/processed/remove/one/${processed[0].id}`)
+        .delete(`/harvests/processed/remove/one/${harvestProcessed.id}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
       const record = await harvestProcessedRepository.findOne({
-        where: { id: processed[0].id },
+        where: { id: harvestProcessed.id },
       });
 
       expect(record).toBeNull();
@@ -2580,13 +2284,154 @@ describe('HarvestsController (e2e)', () => {
     it('You should throw exception for trying to delete a harvest processed that does not exist.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .delete(
-          `/harvests/processed/remove/one/2f6b49e7-5114-463b-8e7c-748633a9e157`,
-        )
+        .delete(`/harvests/processed/remove/one/${falseHarvestId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
       expect(body.message).toEqual(
-        'Harvest processed with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
+        `Harvest processed with id: ${falseHarvestId} not found`,
+      );
+    });
+  });
+
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      await Promise.all([
+        authService.removePermission(userTest.id, 'create_harvest'),
+        authService.removePermission(userTest.id, 'find_all_harvests'),
+        authService.removePermission(userTest.id, 'find_one_harvest'),
+        authService.removePermission(userTest.id, 'update_one_harvest'),
+        authService.removePermission(userTest.id, 'remove_one_harvest'),
+        authService.removePermission(userTest.id, 'remove_bulk_harvests'),
+        authService.removePermission(userTest.id, 'export_harvest_to_pdf'),
+        authService.removePermission(userTest.id, 'create_harvest_processed'),
+        authService.removePermission(
+          userTest.id,
+          'update_one_harvest_processed',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'remove_one_harvest_processed',
+        ),
+      ]);
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /harvests/create', async () => {
+      const bodyRequest: HarvestDto = {
+        ...harvestDtoTemplete,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/harvests/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /harvests/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/harvests/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/harvests/one/${falseHarvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/harvests/update/one/${falseHarvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/remove/one/${falseHarvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/harvests/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/export/one/pdf/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/harvests/export/one/pdf/${falseHarvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /harvests/processed/create', async () => {
+      const bodyRequest: HarvestProcessedDto = {
+        ...harvestProcessedTemplateDto,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/harvests/processed/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/processed/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/harvests/processed/update/one/${falseHarvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action harvests/processed/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/harvests/processed/remove/one/${falseHarvestId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
       );
     });
   });

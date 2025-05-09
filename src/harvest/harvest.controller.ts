@@ -5,7 +5,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
-  Patch,
+  Put,
   Post,
   Query,
   Res,
@@ -15,13 +15,13 @@ import { Response } from 'express';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
-import { CreateHarvestProcessedDto } from './dto/create-harvest-processed.dto';
-import { CreateHarvestDto } from './dto/create-harvest.dto';
+
+import { HarvestDto } from './dto/harvest.dto';
 import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
-import { UpdateHarvestProcessedDto } from './dto/update-harvest-processed.dto';
-import { UpdateHarvestDto } from './dto/update-harvest.dto';
+
 import { Harvest } from './entities/harvest.entity';
 import { HarvestService } from './harvest.service';
+import { HarvestProcessedDto } from './dto/harvest-processed.dto';
 
 export const pathsHarvestsController: PathsController = {
   createHarvest: {
@@ -114,14 +114,14 @@ export class HarvestController {
   @ApiResponse({
     status: 201,
     description: 'La cosecha ha sido creada',
-    type: CreateHarvestDto,
+    type: HarvestDto,
   })
   @ApiResponse({
     status: 400,
     description: 'La información proporcionada es incorrecta',
   })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  create(@Body() createHarvestDto: CreateHarvestDto) {
+  create(@Body() createHarvestDto: HarvestDto) {
     return this.harvestService.create(createHarvestDto);
   }
 
@@ -129,7 +129,7 @@ export class HarvestController {
   @ApiResponse({
     status: 201,
     description: 'Registro de cosecha procesado ha sido guardado',
-    type: CreateHarvestProcessedDto,
+    type: HarvestProcessedDto,
   })
   @ApiResponse({
     status: 400,
@@ -137,7 +137,7 @@ export class HarvestController {
   })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   createHarvestProcessed(
-    @Body() createHarvestProcessedDto: CreateHarvestProcessedDto,
+    @Body() createHarvestProcessedDto: HarvestProcessedDto,
   ) {
     return this.harvestService.createHarvestProcessed(
       createHarvestProcessedDto,
@@ -163,26 +163,26 @@ export class HarvestController {
     return this.harvestService.findOne(id);
   }
 
-  @Patch(updateHarvest.path)
+  @Put(updateHarvest.path)
   @ApiResponse({ status: 200, description: 'Harvest updated' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Harvest not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateHarvestDto: UpdateHarvestDto,
+    @Body() updateHarvestDto: HarvestDto,
   ) {
     return this.harvestService.update(id, updateHarvestDto);
   }
 
-  @Patch(updateHarvestProcessed.path)
+  @Put(updateHarvestProcessed.path)
   @ApiResponse({ status: 200, description: 'Processed harvest updated' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Processed harvest not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   updateHarvestProcessed(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateHarvestProcessedDto: UpdateHarvestProcessedDto,
+    @Body() updateHarvestProcessedDto: HarvestProcessedDto,
   ) {
     return this.harvestService.updateHarvestProcessed(
       id,

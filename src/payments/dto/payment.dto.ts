@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsDateString,
+  IsDefined,
   IsIn,
   IsInt,
   IsNotEmpty,
@@ -14,8 +15,9 @@ import { PaymentCategoriesDto } from './payment-categories.dto';
 import { MethodOfPayment } from '../entities/payment.entity';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { ApiProperty } from '@nestjs/swagger';
+import { HasAtLeastOneCategory } from '../decorators/validate-categories.decorator';
 
-export class CreatePaymentDto {
+export class PaymentDto {
   @ApiProperty({
     description: 'Fecha del pago',
     type: String,
@@ -29,6 +31,7 @@ export class CreatePaymentDto {
     type: String,
     format: 'uuid',
   })
+  @IsDefined()
   @ValidateNested()
   @Type(() => ValidateUUID)
   employee: DeepPartial<Employee>;
@@ -48,12 +51,13 @@ export class CreatePaymentDto {
   })
   @IsInt()
   @IsPositive()
-  total: number;
+  value_pay: number;
 
   @ApiProperty({
     description: 'Categorías de pago',
     type: PaymentCategoriesDto,
   })
+  @HasAtLeastOneCategory()
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => PaymentCategoriesDto)

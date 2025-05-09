@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import { SaleDetailsDto } from './sale-details.dto';
 
-export class CreateSaleDto {
+export class SaleDto {
   @ApiProperty({
     example: '2023-07-21',
     description: 'Fecha de la venta en formato ISO 8601',
@@ -25,7 +25,7 @@ export class CreateSaleDto {
   })
   @IsInt()
   @IsPositive()
-  quantity: number;
+  amount: number;
 
   @ApiProperty({
     example: 100,
@@ -33,7 +33,7 @@ export class CreateSaleDto {
   })
   @IsInt()
   @IsPositive()
-  total: number;
+  value_pay: number;
 
   @ApiProperty({
     type: [SaleDetailsDto],

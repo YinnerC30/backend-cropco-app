@@ -9,17 +9,18 @@ import {
   Post,
   Query,
   Res,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
-import { CreateWorkDto } from './dto/create-work.dto';
+import { WorkDto } from './dto/work.dto';
 import { QueryParamsWork } from './dto/query-params-work.dto';
-import { UpdateWorkDto } from './dto/update-work.dto';
 import { Work } from './entities/work.entity';
 import { WorkService } from './work.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
 
 export const pathsWorksController: PathsController = {
   createWork: {
@@ -76,7 +77,7 @@ export class WorkController {
   constructor(private readonly workService: WorkService) {}
 
   @Post(createWork.path)
-  create(@Body() createWorkDto: CreateWorkDto) {
+  create(@Body() createWorkDto: WorkDto) {
     return this.workService.create(createWorkDto);
   }
 
@@ -104,7 +105,7 @@ export class WorkController {
   @Patch(updateWork.path)
   update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateWorkDto: UpdateWorkDto,
+    @Body() updateWorkDto: WorkDto,
   ) {
     return this.workService.update(id, updateWorkDto);
   }
@@ -115,14 +116,8 @@ export class WorkController {
   }
 
   @Delete(removeWorks.path)
-  async removeBulk(
-    @Body() removeBulkWorksDto: RemoveBulkRecordsDto<Work>,
-    @Res() response: Response,
-  ) {
-    const result = await this.workService.removeBulk(removeBulkWorksDto);
-    if (result.failed && result.failed.length > 0) {
-      return response.status(207).json(result);
-    }
-    return response.status(200).json(result);
+  @UseInterceptors(ResponseStatusInterceptor)
+  async removeBulk(@Body() removeBulkWorksDto: RemoveBulkRecordsDto<Work>) {
+    return this.workService.removeBulk(removeBulkWorksDto);
   }
 }

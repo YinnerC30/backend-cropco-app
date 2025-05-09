@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UserDto } from './dto/user.dto';
+
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
@@ -50,7 +50,7 @@ describe('UsersController', () => {
 
   describe('create', () => {
     it('should call UsersService.create with correct parameters', async () => {
-      const createUserDto: CreateUserDto = {
+      const createUserDto: UserDto = {
         first_name: 'John',
         email: 'john@example.com',
         last_name: 'Doe',
@@ -74,7 +74,14 @@ describe('UsersController', () => {
   describe('update', () => {
     it('should call UsersService.update with correct parameters', async () => {
       const id = 'uuid';
-      const updateUserDto: UpdateUserDto = { first_name: 'Updated Name' };
+      const updateUserDto: UserDto = {
+        first_name: 'Updated Name',
+        last_name: '',
+        email: '',
+        password: '',
+        cell_phone_number: '',
+        actions: []
+      };
       await controller.update(id, updateUserDto);
       expect(service.update).toHaveBeenCalledWith(id, updateUserDto);
     });

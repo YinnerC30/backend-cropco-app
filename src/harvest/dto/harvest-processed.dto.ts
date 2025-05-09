@@ -12,7 +12,7 @@ import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
 import { Harvest } from '../entities/harvest.entity';
 
-export class CreateHarvestProcessedDto {
+export class HarvestProcessedDto {
   @ApiProperty({
     description: 'Fecha del procesamiento de la cosecha',
     format: 'date',
@@ -47,5 +47,5 @@ export class CreateHarvestProcessedDto {
   })
   @IsInt()
   @IsPositive()
-  total: number;
+  amount: number;
 }

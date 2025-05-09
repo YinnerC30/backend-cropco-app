@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Employee } from 'src/employees/entities/employee.entity';
-import { PaymentHarvest } from 'src/payments/entities/payment-harvest.entity';
+import { PaymentsHarvest } from 'src/payments/entities/payment-harvest.entity';
 import { Harvest } from './harvest.entity';
 
 @Entity({ name: 'harvests_detail' })
@@ -34,7 +34,7 @@ export class HarvestDetails {
     type: Number,
   })
   @Column({ type: 'int4' })
-  total: number;
+  amount: number;
 
   @ApiProperty({
     description: 'Valor de pago asociado a estos detalles',
@@ -77,14 +77,14 @@ export class HarvestDetails {
   // Relación con PaymentHarvest
   @ApiProperty({
     description: 'Detalles de pagos asociados a estos detalles de la cosecha',
-    type: () => PaymentHarvest,
+    type: () => PaymentsHarvest,
   })
   @OneToOne(
-    () => PaymentHarvest,
+    () => PaymentsHarvest,
     (payments_harvest) => payments_harvest.harvests_detail,
     { cascade: true },
   )
-  payments_harvest: PaymentHarvest;
+  payments_harvest: PaymentsHarvest;
 
   @CreateDateColumn()
   createdDate: Date;

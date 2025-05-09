@@ -69,7 +69,7 @@ export const getHarvestReport = (
                     [
                       'Total cosechado:',
                       {
-                        text: FormatNumber(data.total) + ' Kg',
+                        text: FormatNumber(data.amount) + ' Kg',
                         style: 'boldText',
                       },
                     ],
@@ -164,7 +164,7 @@ export const getHarvestReport = (
                 style: 'tableCell',
               },
               {
-                text: FormatNumber(detail.total),
+                text: FormatNumber(detail.amount),
                 style: 'tableCell',
                 alignment: 'center',
               },
@@ -192,7 +192,7 @@ export const getHarvestReport = (
         text: [
           'Total cosechado: ',
           {
-            text: `${FormatNumber(data.total) + ' Kg'}`,
+            text: `${FormatNumber(data.amount) + ' Kg'}`,
             style: 'boldText',
           },
           '\nTotal a pagar: ',
@@ -226,7 +226,7 @@ export const getHarvestReport = (
                 style: 'tableCell',
               },
               {
-                text: FormatNumber(proc.total),
+                text: FormatNumber(proc.amount),
                 style: 'tableCell',
                 alignment: 'center',
               },

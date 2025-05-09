@@ -7,7 +7,7 @@ import {
 import { Type } from 'class-transformer';
 import { ConsumptionSuppliesDetailsDto } from './consumption-supplies-details.dto';
 
-export class CreateConsumptionSuppliesDto {
+export class ConsumptionSuppliesDto {
   @IsDateString()
   date: string;
 

@@ -12,5 +12,5 @@ export class HarvestStockDto {
 
   @IsInt()
   @IsPositive()
-  total: number;
+  amount: number;
 }

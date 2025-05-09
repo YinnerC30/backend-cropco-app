@@ -23,7 +23,7 @@ export class CropsService {
     private readonly cropRepository: Repository<Crop>,
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.handlerError.setLogger(this.logger);
+    
   }
 
   async create(createCropDto: CreateCropDto) {
@@ -32,7 +32,7 @@ export class CropsService {
       await this.cropRepository.save(crop);
       return crop;
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -149,7 +149,7 @@ export class CropsService {
     const [crops, count] = await this.cropRepository.findAndCount({
       where: {
         harvests_stock: {
-          total: MoreThan(0),
+          amount: MoreThan(0),
         },
       },
       relations: {
@@ -164,7 +164,7 @@ export class CropsService {
       records: crops.map((item) => ({
         id: item.id,
         name: item.name,
-        stock: item.harvests_stock.total,
+        stock: item.harvests_stock.amount,
       })),
     };
   }
@@ -182,7 +182,7 @@ export class CropsService {
       .select([
         'crop',
         'harvestsStock',
-        'SUM(harvest.total) AS harvestsTotal',
+        'SUM(harvest.amount) AS harvestsTotal',
         'supplies_consumption_details',
         'sales_detail',
       ])
@@ -203,15 +203,15 @@ export class CropsService {
       await this.cropRepository.update(id, updateCropDto);
       return await this.findOne(id);
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
   async remove(id: string) {
     const crop = await this.findOne(id);
 
-    if (crop.harvests_stock !== null && crop.harvests_stock.total > 0) {
-      throw new ConflictException('Crop has stock available');
+    if (crop.harvests_stock !== null && crop.harvests_stock.amount > 0) {
+      throw new ConflictException(`Crop with id ${crop.id} has stock available`);
     }
     await this.cropRepository.softRemove(crop);
   }
@@ -221,7 +221,7 @@ export class CropsService {
     try {
       await this.cropRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 

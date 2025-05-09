@@ -16,9 +16,7 @@ export class SuppliersService {
     @InjectRepository(Supplier)
     private readonly supplierRepository: Repository<Supplier>,
     private readonly handlerError: HandlerErrorService,
-  ) {
-    this.handlerError.setLogger(this.logger);
-  }
+  ) {}
 
   async create(createSupplierDto: CreateSupplierDto) {
     try {
@@ -26,7 +24,7 @@ export class SuppliersService {
       await this.supplierRepository.save(supplier);
       return supplier;
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -68,7 +66,7 @@ export class SuppliersService {
   }
 
   async findAllSuppliersWithShopping() {
-    const suppliers = await this.supplierRepository.find({
+    const [suppliers, count] = await this.supplierRepository.findAndCount({
       where: {
         supplies_shopping_details: MoreThan(0),
       },
@@ -77,8 +75,11 @@ export class SuppliersService {
       },
     });
     return {
-      rowCount: suppliers.length,
-      rows: suppliers,
+      total_row_count: count,
+      current_row_count: suppliers.length,
+      total_page_count: 1,
+      current_page_count: 1,
+      records: suppliers,
     };
   }
 
@@ -102,7 +103,7 @@ export class SuppliersService {
       await this.supplierRepository.update(id, updateSupplierDto);
       return await this.findOne(id);
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -115,7 +116,7 @@ export class SuppliersService {
     try {
       await this.supplierRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 

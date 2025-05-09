@@ -12,15 +12,15 @@ import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { PrinterService } from 'src/printer/printer.service';
 import { DataSource, Repository } from 'typeorm';
-import { WorkDetailsDto } from './dto/create-work-details.dto';
-import { CreateWorkDto } from './dto/create-work.dto';
-import { QueryTotalWorksInYearDto } from './dto/query-params-total-works-year';
+import { WorkDetailsDto } from './dto/work-details.dto';
+import { WorkDto } from './dto/work.dto';
+
 import { QueryParamsWork } from './dto/query-params-work.dto';
-import type { UpdateWorkDto } from './dto/update-work.dto';
 import { WorkDetails } from './entities/work-details.entity';
 import { Work } from './entities/work.entity';
 import { getWorkReport } from './reports/get-work';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
+import { QueryTotalWorksInYearDto } from './dto/query-params-total-works-year';
 
 @Injectable()
 export class WorkService {
@@ -32,11 +32,9 @@ export class WorkService {
     private readonly dataSource: DataSource,
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
-  ) {
-    this.handlerError.setLogger(this.logger);
-  }
+  ) {}
 
-  async create(createWorkDto: CreateWorkDto) {
+  async create(createWorkDto: WorkDto) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -55,7 +53,7 @@ export class WorkService {
       return work;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -72,9 +70,9 @@ export class WorkService {
       type_filter_date,
       date,
 
-      filter_by_total = false,
-      type_filter_total,
-      total,
+      filter_by_value_pay = false,
+      type_filter_value_pay,
+      value_pay,
 
       employees = [],
     } = queryParams;
@@ -97,10 +95,10 @@ export class WorkService {
         { date },
       );
 
-    filter_by_total &&
+    filter_by_value_pay &&
       queryBuilder.andWhere(
-        `work.total ${getComparisonOperator(type_filter_total)} :total`,
-        { total },
+        `work.value_pay ${getComparisonOperator(type_filter_value_pay)} :value_pay`,
+        { value_pay },
       );
 
     employees.length > 0 &&
@@ -146,7 +144,7 @@ export class WorkService {
     return work;
   }
 
-  async update(id: string, updateWorkDto: UpdateWorkDto) {
+  async update(id: string, updateWorkDto: WorkDto) {
     const work = await this.findOne(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -233,7 +231,7 @@ export class WorkService {
       return this.findOne(id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -244,7 +242,7 @@ export class WorkService {
 
     if (work.details.some((item) => item.payments_work !== null)) {
       throw new ConflictException(
-        'The record cannot be deleted because it has payments linked to it.',
+        `The record with id ${id} cannot be deleted because it has payments linked to it.`,
       );
     }
     await this.workRepository.remove(work);
@@ -254,7 +252,7 @@ export class WorkService {
     try {
       await this.workRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -288,7 +286,7 @@ export class WorkService {
       .leftJoin('details.employee', 'employee')
       .select([
         'CAST(EXTRACT(MONTH FROM work.date) AS INTEGER) as month',
-        'CAST(SUM(DISTINCT work.total) AS INTEGER) as total',
+        'CAST(SUM(DISTINCT work.value_pay) AS INTEGER) as value_pay',
         'COUNT(work) as quantity_works',
       ])
       .where('EXTRACT(YEAR FROM work.date) = :year', { year })
@@ -314,7 +312,7 @@ export class WorkService {
         return {
           month_name: monthName,
           month_number: monthNumber,
-          total: 0,
+          value_pay: 0,
           quantity_works: 0,
         };
       }

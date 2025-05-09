@@ -45,7 +45,7 @@ export class Harvest {
     type: Number,
   })
   @Column({ type: 'int4' })
-  total: number;
+  amount: number;
 
   @ApiProperty({
     description: 'Valor de pago por la cosecha',

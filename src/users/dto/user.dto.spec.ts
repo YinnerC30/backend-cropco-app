@@ -1,14 +1,14 @@
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
-import { CreateUserDto } from './create-user.dto';
+import { UserDto } from './user.dto';
 import { UserActionDto } from './user-action.dto';
 
-describe('CreateUserDto', () => {
-  it('should validate a valid CreateUserDto object', async () => {
+describe('UserDto', () => {
+  it('should validate a valid UserDto object', async () => {
     const userAction = new UserActionDto();
     userAction.id = '550e8400-e29b-41d4-a716-446655440000';
 
-    const dto = plainToInstance(CreateUserDto, {
+    const dto = plainToInstance(UserDto, {
       first_name: 'John',
       last_name: 'Doe',
       email: 'john.doe@example.com',
@@ -25,7 +25,7 @@ describe('CreateUserDto', () => {
     const userAction = new UserActionDto();
     userAction.id = '550e';
 
-    const dto = plainToInstance(CreateUserDto, {
+    const dto = plainToInstance(UserDto, {
       first_name: 'John',
       last_name: 'Doe',
       email: 'john.doe@example.com',
@@ -40,14 +40,14 @@ describe('CreateUserDto', () => {
   });
 
   it('should fail validation if required fields are missing', async () => {
-    const dto = plainToInstance(CreateUserDto, {});
+    const dto = plainToInstance(UserDto, {});
 
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
   });
 
   it('should fail validation if email is invalid', async () => {
-    const dto = plainToInstance(CreateUserDto, {
+    const dto = plainToInstance(UserDto, {
       first_name: 'John',
       last_name: 'Doe',
       email: 'invalid-email',
@@ -61,7 +61,7 @@ describe('CreateUserDto', () => {
   });
 
   it('should fail validation if cell_phone_number exceeds max length', async () => {
-    const dto = plainToInstance(CreateUserDto, {
+    const dto = plainToInstance(UserDto, {
       first_name: 'John',
       last_name: 'Doe',
       email: 'john.doe@example.com',
@@ -77,7 +77,7 @@ describe('CreateUserDto', () => {
   });
 
   it('should fail validation if actions is not an array', async () => {
-    const dto = plainToInstance(CreateUserDto, {
+    const dto = plainToInstance(UserDto, {
       first_name: 'John',
       last_name: 'Doe',
       email: 'john.doe@example.com',

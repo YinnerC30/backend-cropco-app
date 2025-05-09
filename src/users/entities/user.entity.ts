@@ -26,7 +26,7 @@ export class User extends PersonalInformation {
   })
   roles: string[];
 
-  @Column('bool', { default: false })
+  @Column('bool', { default: true })
   is_active: boolean;
 
   @OneToMany(() => UserActions, (userActions) => userActions.user, {

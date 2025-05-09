@@ -29,9 +29,7 @@ export class EmployeesService {
     private readonly employeeRepository: Repository<Employee>,
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
-  ) {
-    this.handlerError.setLogger(this.logger);
-  }
+  ) {}
 
   async findOneCertification(id: string) {
     const employee = await this.findOne(id);
@@ -56,7 +54,7 @@ export class EmployeesService {
       await this.employeeRepository.save(employee);
       return employee;
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -98,7 +96,7 @@ export class EmployeesService {
   }
 
   async findAllEmployeesWithPaymentsPending() {
-    const employees = await this.employeeRepository.find({
+    const [employees, count] = await this.employeeRepository.findAndCount({
       select: {
         id: true,
         first_name: true,
@@ -119,13 +117,16 @@ export class EmployeesService {
     });
 
     return {
-      rowCount: employees.length,
-      rows: employees,
+      total_row_count: count,
+      current_row_count: employees.length,
+      total_page_count: 1,
+      current_page_count: 1,
+      records: employees,
     };
   }
 
   async findAllEmployeesWithPaymentsMade() {
-    const employees = await this.employeeRepository
+    const [employees, count] = await this.employeeRepository
       .createQueryBuilder('employee')
       .withDeleted()
       .leftJoinAndSelect('employee.payments', 'payments')
@@ -136,37 +137,43 @@ export class EmployeesService {
         'employee.last_name',
         'payments', // Si quieres incluir información de los pagos
       ])
-      .getMany();
+      .getManyAndCount();
 
     return {
-      rowCount: employees.length,
-      rows: employees,
+      total_row_count: count,
+      current_row_count: employees.length,
+      total_page_count: 1,
+      current_page_count: 1,
+      records: employees,
     };
   }
   async findOneEmployeeWithPaymentsPending(id: string) {
     const employee = await this.employeeRepository.findOne({
       withDeleted: true,
-      where: { id },
+      where: [
+        {
+          id,
+          harvests_detail: { payment_is_pending: true },
+        },
+        {
+          id,
+          works_detail: { payment_is_pending: true },
+        },
+      ],
       relations: {
         harvests_detail: { harvest: true },
         works_detail: { work: true },
       },
     });
-    if (!employee)
+    if (!employee) {
       throw new NotFoundException(`Employee with id: ${id} not found`);
-    return {
-      ...employee,
-      harvests_detail: employee.harvests_detail.filter(
-        (item: HarvestDetails) => item.payment_is_pending === true,
-      ),
-      works_detail: employee.works_detail.filter(
-        (item: WorkDetails) => item.payment_is_pending === true,
-      ),
-    };
+    }
+
+    return employee;
   }
 
   async findAllEmployeesWithHarvests() {
-    const employees = await this.employeeRepository.find({
+    const [employees, count] = await this.employeeRepository.findAndCount({
       relations: {
         harvests_detail: true,
       },
@@ -175,22 +182,28 @@ export class EmployeesService {
       },
     });
     return {
-      rowCount: employees.length,
-      rows: employees,
+      total_row_count: count,
+      current_row_count: employees.length,
+      total_page_count: 1,
+      current_page_count: 1,
+      records: employees,
     };
   }
   async findAllEmployeesWithWorks() {
-    const employees = await this.employeeRepository.find({
+    const [employees, count] = await this.employeeRepository.findAndCount({
       relations: {
-        harvests_detail: true,
+        works_detail: true,
       },
       where: {
         works_detail: MoreThan(0),
       },
     });
     return {
-      rowCount: employees.length,
-      rows: employees,
+      total_row_count: count,
+      current_row_count: employees.length,
+      total_page_count: 1,
+      current_page_count: 1,
+      records: employees,
     };
   }
 
@@ -214,7 +227,7 @@ export class EmployeesService {
       await this.employeeRepository.update(id, updateEmployeeDto);
       return await this.findOne(id);
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
@@ -227,7 +240,7 @@ export class EmployeesService {
       )
     ) {
       throw new ConflictException(
-        'Cannot remove employee with harvests pending payment',
+        `Employee with id ${employee.id} cannot be removed, has unpaid harvests`,
       );
     }
 
@@ -237,7 +250,7 @@ export class EmployeesService {
       )
     ) {
       throw new ConflictException(
-        'Cannot remove employee with works pending payment',
+        `Employee with id ${employee.id} cannot be removed, has unpaid works`,
       );
     }
 
@@ -264,7 +277,7 @@ export class EmployeesService {
     try {
       await this.employeeRepository.delete({});
     } catch (error) {
-      this.handlerError.handle(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 

@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsDefined,
   IsInt,
   IsOptional,
   IsPositive,
@@ -8,11 +10,9 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Client } from 'src/clients/entities/client.entity';
+import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
-import { Sale } from '../entities/sale.entity';
-import { Type } from 'class-transformer';
-import { ValidateUUID } from 'src/common/dto/validate-uuid';
 
 export class SaleDetailsDto {
   @IsUUID(4)
@@ -25,7 +25,7 @@ export class SaleDetailsDto {
   })
   @IsInt()
   @IsPositive()
-  quantity: number;
+  amount: number;
 
   @ApiProperty({
     example: 100,
@@ -33,21 +33,13 @@ export class SaleDetailsDto {
   })
   @IsInt()
   @IsPositive()
-  total: number;
-
-  @ApiProperty({
-    example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'ID de la venta asociada (opcional)',
-    required: false,
-  })
-  @IsOptional()
-  @IsUUID()
-  sale: DeepPartial<Sale>;
+  value_pay: number;
 
   @ApiProperty({
     type: ValidateUUID,
     description: 'Información del cultivo asociado a este detalle de venta',
   })
+  @IsDefined()
   @ValidateNested()
   @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;
@@ -56,6 +48,7 @@ export class SaleDetailsDto {
     type: ValidateUUID,
     description: 'Información del cliente asociado a este detalle de venta',
   })
+  @IsDefined()
   @ValidateNested()
   @Type(() => ValidateUUID)
   client: DeepPartial<Client>;

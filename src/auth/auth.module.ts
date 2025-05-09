@@ -12,6 +12,7 @@ import { Module as ModuleCropco } from './entities/module.entity';
 import { ModuleActions } from './entities/module-actions.entity';
 import { User } from 'src/users/entities/user.entity';
 import { UserActions } from 'src/users/entities/user-actions.entity';
+import { CommonModule } from 'src/common/common.module';
 
 @Module({
   controllers: [AuthController],
@@ -39,6 +40,7 @@ import { UserActions } from 'src/users/entities/user-actions.entity';
       User,
       UserActions,
     ]),
+    CommonModule,
   ],
   exports: [JwtStrategy, PassportModule, JwtModule, TypeOrmModule, AuthService],
 })

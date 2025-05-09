@@ -33,7 +33,7 @@ describe('CreateSupplyDto', () => {
 
   describe('brand validation', () => {
     it('should fail if brand is too short', async () => {
-      dto.brand = 'short';
+      dto.brand = 'sh';
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
     });

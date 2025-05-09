@@ -50,8 +50,8 @@ export const getSaleReport = (options: ReportOptions): TDocumentDefinitions => {
         table: {
           widths: ['auto', 'auto'],
           body: [
-            ['Cantidad vendida: ', FormatNumber(data.quantity) + ' Kg'],
-            ['Pago total: ', FormatMoneyValue(data.total)],
+            ['Cantidad vendida: ', FormatNumber(data.amount) + ' Kg'],
+            ['Pago total: ', FormatMoneyValue(data.value_pay)],
           ],
         },
         layout: 'noBorders',
@@ -89,12 +89,12 @@ export const getSaleReport = (options: ReportOptions): TDocumentDefinitions => {
                 style: 'tableCell',
               },
               {
-                text: FormatNumber(detail.quantity),
+                text: FormatNumber(detail.amount),
                 style: 'tableCell',
                 alignment: 'center',
               },
               {
-                text: FormatMoneyValue(detail.total),
+                text: FormatMoneyValue(detail.value_pay),
                 style: 'tableCell',
                 alignment: 'center',
               },
@@ -116,12 +116,12 @@ export const getSaleReport = (options: ReportOptions): TDocumentDefinitions => {
         text: [
           'Cantidad vendida: ',
           {
-            text: `${FormatNumber(data.quantity) + ' Kg'}`,
+            text: `${FormatNumber(data.amount) + ' Kg'}`,
             style: 'boldText',
           },
           '\nTotal a pagar: ',
           {
-            text: `${FormatMoneyValue(data.total)}`,
+            text: `${FormatMoneyValue(data.value_pay)}`,
             style: 'boldText',
           },
         ],

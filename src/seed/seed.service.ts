@@ -3,31 +3,62 @@ import { ClientsService } from 'src/clients/clients.service';
 import { CropsService } from 'src/crops/crops.service';
 import { EmployeesService } from 'src/employees/employees.service';
 import { Employee } from 'src/employees/entities/employee.entity';
-import { CreateHarvestProcessedDto } from 'src/harvest/dto/create-harvest-processed.dto';
-import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
+
+import { HarvestDto } from 'src/harvest/dto/harvest.dto';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
 import { HarvestService } from 'src/harvest/harvest.service';
-import { CreatePaymentDto } from 'src/payments/dto/create-payment.dto';
+import { PaymentDto } from 'src/payments/dto/payment.dto';
 import { PaymentsService } from 'src/payments/payments.service';
-import { CreateSaleDto } from 'src/sales/dto/create-sale.dto';
+import { SaleDto } from 'src/sales/dto/sale.dto';
 import { SalesService } from 'src/sales/sales.service';
 import { SuppliersService } from 'src/suppliers/suppliers.service';
 
 import { AuthService } from 'src/auth/auth.service';
 import { ConsumptionsService } from 'src/consumptions/consumptions.service';
-import { CreateConsumptionSuppliesDto } from 'src/consumptions/dto/create-consumption-supplies.dto';
+import { ConsumptionSuppliesDto } from 'src/consumptions/dto/consumption-supplies.dto';
 
-import { CreateShoppingSuppliesDto } from 'src/shopping/dto/create-shopping-supplies.dto';
+import { HarvestProcessedDto } from 'src/harvest/dto/harvest-processed.dto';
 import { ShoppingService } from 'src/shopping/shopping.service';
 import { SuppliesService } from 'src/supplies/supplies.service';
-import { CreateWorkDto } from 'src/work/dto/create-work.dto';
-import { WorkDetailsDto } from 'src/work/dto/create-work-details.dto';
+import { UserDto } from 'src/users/dto/user.dto';
+import { User } from 'src/users/entities/user.entity';
+import { WorkDetailsDto } from 'src/work/dto/work-details.dto';
+import { WorkDto } from 'src/work/dto/work.dto';
 import { Work } from 'src/work/entities/work.entity';
 import { WorkService } from 'src/work/work.service';
 import { DeepPartial } from 'typeorm';
 import { UsersService } from './../users/users.service';
 import { initialData } from './data/seed-data';
 // import { AuthService } from 'src/auth/auth.service';
+import { CreateClientDto } from 'src/clients/dto/create-client.dto';
+
+import { Client } from 'src/clients/entities/client.entity';
+import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
+import { Crop } from 'src/crops/entities/crop.entity';
+import { CreateEmployeeDto } from 'src/employees/dto/create-employee.dto';
+import { HarvestDetailsDto } from 'src/harvest/dto/harvest-details.dto';
+import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity';
+import { SaleDetailsDto } from 'src/sales/dto/sale-details.dto';
+import { Sale } from 'src/sales/entities/sale.entity';
+import { ShoppingSuppliesDetailsDto } from 'src/shopping/dto/shopping-supplies-details.dto';
+import {
+  SuppliesShopping,
+  SuppliesShoppingDetails,
+} from 'src/shopping/entities';
+import { CreateSupplierDto } from 'src/suppliers/dto/create-supplier.dto';
+import { Supplier } from 'src/suppliers/entities/supplier.entity';
+import { CreateSupplyDto } from 'src/supplies/dto/create-supply.dto';
+import { Supply } from 'src/supplies/entities/supply.entity';
+import { InformationGenerator } from './helpers/InformationGenerator';
+import { EntityConvertedToDto } from './interfaces/EntityConvertedToDto';
+import { ConsumptionSuppliesDetailsDto } from 'src/consumptions/dto/consumption-supplies-details.dto';
+import { SuppliesConsumption } from 'src/consumptions/entities/supplies-consumption.entity';
+import { MethodOfPayment } from 'src/payments/entities/payment.entity';
+import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
+import { WorkDetails } from 'src/work/entities/work-details.entity';
+import { validate } from 'class-validator';
+import { plainToClass } from 'class-transformer';
+import { ShoppingSuppliesDto } from 'src/shopping/dto/shopping-supplies.dto';
 
 @Injectable()
 export class SeedService {
@@ -92,19 +123,509 @@ export class SeedService {
     await this.salesService.deleteAllSales();
   }
 
-  async insertNewUsers() {
-    const users = initialData.users;
+  async CreateUser({
+    mapperToDto = false,
+    convertToAdmin = false,
+  }): Promise<User | EntityConvertedToDto<User>> {
+    const data: UserDto = {
+      first_name: InformationGenerator.generateFirstName(),
+      last_name: InformationGenerator.generateLastName(),
+      email: InformationGenerator.generateEmail(),
+      password: '123456',
+      cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
+      actions: [],
+    };
 
-    const insertPromises = [];
+    const user = await this.usersService.create(data);
 
-    users.forEach((user) => {
-      insertPromises.push(this.usersService.create({ ...user, actions: [] }));
+    if (convertToAdmin) {
+      await this.authService.convertToAdmin(user.id);
+    }
+
+    if (!mapperToDto) return user;
+
+    return {
+      id: user.id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      password: user.password,
+      cell_phone_number: user.cell_phone_number,
+      actions: user.actions,
+    };
+  }
+
+  async CreateClient({
+    mapperToDto = false,
+  }): Promise<Client | EntityConvertedToDto<Client>> {
+    const data: CreateClientDto = {
+      first_name: InformationGenerator.generateFirstName(),
+      last_name: InformationGenerator.generateLastName(),
+      email: InformationGenerator.generateEmail(),
+      cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
+      address: InformationGenerator.generateAddress(),
+    };
+
+    const client = await this.clientsService.create(data);
+
+    if (!mapperToDto) return client;
+
+    return {
+      id: client.id,
+      first_name: client.first_name,
+      last_name: client.last_name,
+      email: client.email,
+      cell_phone_number: client.cell_phone_number,
+      address: client.address,
+    };
+  }
+  async CreateSupplier({
+    mapperToDto = false,
+  }): Promise<Supplier | EntityConvertedToDto<Supplier>> {
+    const data: CreateSupplierDto = {
+      first_name: InformationGenerator.generateFirstName(),
+      last_name: InformationGenerator.generateLastName(),
+      email: InformationGenerator.generateEmail(),
+      cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
+      address: InformationGenerator.generateAddress(),
+    };
+
+    const supplier = await this.suppliersService.create(data);
+
+    if (!mapperToDto) return supplier;
+
+    return {
+      id: supplier.id,
+      first_name: supplier.first_name,
+      last_name: supplier.last_name,
+      email: supplier.email,
+      cell_phone_number: supplier.cell_phone_number,
+      address: supplier.address,
+    };
+  }
+
+  async CreateCrop({
+    mapperToDto = false,
+  }): Promise<Crop | EntityConvertedToDto<Crop>> {
+    const data: CreateCropDto = {
+      name: 'Crop ' + InformationGenerator.generateRandomId(),
+      description: InformationGenerator.generateDescription(),
+      units: 1000,
+      location: InformationGenerator.generateAddress(),
+      date_of_creation: InformationGenerator.generateRandomDate(),
+    } as CreateCropDto;
+
+    const crop = await this.cropsService.create(data);
+
+    if (!mapperToDto) return crop;
+
+    return {
+      id: crop.id,
+      name: crop.name,
+      description: crop.description,
+      units: crop.units,
+      location: crop.location,
+      date_of_creation: crop.date_of_creation,
+      date_of_termination: crop.date_of_termination,
+    };
+  }
+  async CreateEmployee({
+    mapperToDto = false,
+  }): Promise<Employee | EntityConvertedToDto<Employee>> {
+    const data: CreateEmployeeDto = {
+      first_name: InformationGenerator.generateFirstName(),
+      last_name: InformationGenerator.generateLastName(),
+      email: InformationGenerator.generateEmail(),
+      cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
+      address: InformationGenerator.generateAddress(),
+    };
+
+    const employee = await this.employeesService.create(data);
+
+    if (!mapperToDto) return employee;
+
+    return {
+      id: employee.id,
+      first_name: employee.first_name,
+      last_name: employee.last_name,
+      email: employee.email,
+      cell_phone_number: employee.cell_phone_number,
+      address: employee.address,
+    };
+  }
+
+  async CreateHarvest({
+    quantityEmployees = 1,
+    amount = 150,
+    valuePay = 90_000,
+  }: {
+    quantityEmployees?: number;
+    amount?: number;
+    valuePay?: number;
+  }): Promise<{ employees: Employee[]; crop: Crop; harvest: Harvest }> {
+    const employees = (await Promise.all(
+      Array.from({ length: quantityEmployees }).map(() =>
+        this.CreateEmployee({}),
+      ),
+    )) as Employee[];
+
+    const crop = (await this.CreateCrop({})) as Crop;
+    const data: HarvestDto = {
+      date: InformationGenerator.generateRandomDate(),
+      crop: { id: crop.id },
+      details: employees.map((employee) => {
+        return {
+          employee: { id: employee.id },
+          amount: amount,
+          value_pay: valuePay,
+        } as HarvestDetailsDto;
+      }),
+      amount: amount * quantityEmployees,
+      value_pay: valuePay * quantityEmployees,
+      observation: InformationGenerator.generateObservation(),
+    };
+
+    const harvest = await this.harvestsService.create(data);
+
+    return {
+      employees,
+      crop,
+      harvest,
+    };
+  }
+  async CreateHarvestProcessed({
+    cropId,
+    harvestId,
+    amount,
+  }: {
+    cropId: string;
+    harvestId: string;
+    amount: number;
+  }): Promise<HarvestProcessed> {
+    const data: HarvestProcessedDto = {
+      date: InformationGenerator.generateRandomDate(),
+      crop: { id: cropId },
+      harvest: { id: harvestId },
+      amount,
+    };
+
+    const harvestProcessed =
+      await this.harvestsService.createHarvestProcessed(data);
+
+    return harvestProcessed;
+  }
+
+  async CreateWork({
+    quantityEmployees = 1,
+    valuePay = 90_000,
+  }): Promise<{ employees: Employee[]; crop: Crop; work: Work }> {
+    const employees = (await Promise.all(
+      Array.from({ length: quantityEmployees }).map(() =>
+        this.CreateEmployee({}),
+      ),
+    )) as Employee[];
+
+    const crop = (await this.CreateCrop({})) as Crop;
+    const data: WorkDto = {
+      date: InformationGenerator.generateRandomDate(),
+      crop: { id: crop.id },
+      details: employees.map((employee) => {
+        return {
+          employee: { id: employee.id },
+          value_pay: valuePay,
+        } as HarvestDetailsDto;
+      }),
+      value_pay: valuePay * quantityEmployees,
+      description: InformationGenerator.generateDescription(),
+    };
+
+    const work = await this.workService.create(data);
+
+    // if (!mapperToDto) return { employees, crop, work };
+
+    return {
+      employees,
+      crop,
+      work,
+    };
+  }
+  async CreateHarvestForEmployee({
+    employeeId,
+  }: {
+    employeeId: string;
+  }): Promise<{ crop: Crop; harvest: Harvest }> {
+    const crop = (await this.CreateCrop({})) as Crop;
+    const data: HarvestDto = {
+      date: InformationGenerator.generateRandomDate(),
+      crop: { id: crop.id },
+      details: [
+        {
+          employee: { id: employeeId },
+          value_pay: 90_000,
+          amount: 100,
+        } as HarvestDetailsDto,
+      ],
+      value_pay: 90_000,
+      amount: 100,
+      observation: InformationGenerator.generateObservation(),
+    };
+
+    const harvest = await this.harvestsService.create(data);
+
+    return {
+      crop,
+      harvest,
+    };
+  }
+  async CreateWorkForEmployee({
+    employeeId,
+  }: {
+    employeeId: string;
+  }): Promise<{ crop: Crop; work: Work }> {
+    const crop = (await this.CreateCrop({})) as Crop;
+    const data: WorkDto = {
+      date: InformationGenerator.generateRandomDate(),
+      crop: { id: crop.id },
+      details: [
+        {
+          employee: { id: employeeId },
+          value_pay: 90_000,
+        } as WorkDetailsDto,
+      ],
+      value_pay: 90_000,
+      description: InformationGenerator.generateDescription(),
+    };
+
+    const work = await this.workService.create(data);
+
+    return {
+      crop,
+      work,
+    };
+  }
+
+  async CreateSale({
+    cropId,
+    isReceivable = false,
+    quantity = 15,
+  }: {
+    cropId: string;
+    isReceivable?: boolean;
+    quantity?: number;
+  }): Promise<{ sale: Sale; client: Client }> {
+    const client = (await this.CreateClient({})) as Client;
+
+    const data: SaleDto = {
+      date: InformationGenerator.generateRandomDate(),
+      amount: quantity,
+      value_pay: 840_000,
+      details: [
+        {
+          amount: quantity,
+          value_pay: 840_000,
+          crop: { id: cropId },
+          client: { id: client.id },
+          is_receivable: isReceivable,
+        } as SaleDetailsDto,
+      ],
+    };
+
+    const sale = await this.salesService.create(data);
+    return { client, sale };
+  }
+
+  async CreateSupply({
+    mapperToDto = false,
+  }): Promise<Supply | EntityConvertedToDto<Supply>> {
+    const data: CreateSupplyDto = {
+      name: 'Supply ' + InformationGenerator.generateRandomId(),
+      brand: InformationGenerator.generateSupplyBrand(),
+      unit_of_measure: InformationGenerator.generateUnitOfMeasure(),
+      observation: InformationGenerator.generateObservation(),
+    };
+
+    const supply = await this.suppliesService.create(data);
+
+    if (!mapperToDto) return supply;
+
+    return {
+      ...data,
+      id: supply.id,
+    };
+  }
+
+  async CreateConsumption({
+    supplyId,
+    cropId,
+    amount = 2000,
+  }: {
+    supplyId?: string;
+    cropId?: string;
+    amount?: number;
+  }): Promise<{
+    consumption: SuppliesConsumption;
+    crop: Crop;
+    supply: Supply;
+  }> {
+    let supply: Supply;
+    let crop: Crop;
+
+    if (!supplyId) {
+      supply = (await this.CreateSupply({})) as Supply;
+      await this.CreateShopping({ supplyId: supply.id, amount: 10_000 });
+    }
+    if (!cropId) {
+      crop = (await this.CreateCrop({})) as Crop;
+    }
+
+    const data: ConsumptionSuppliesDto = {
+      date: InformationGenerator.generateRandomDate(),
+      details: [
+        {
+          supply: { id: supplyId || supply.id },
+          crop: { id: cropId || crop.id },
+          amount,
+        } as ConsumptionSuppliesDetailsDto,
+      ],
+    };
+
+    const consumption = await this.consumptionsService.createConsumption(data);
+    return { crop, consumption, supply };
+  }
+  async CreateConsumptionExtended({
+    quantitySupplies = 2,
+    amountForItem = 2000,
+  }: {
+    quantitySupplies?: number;
+    amountForItem?: number;
+  }): Promise<{
+    consumption: SuppliesConsumption;
+    crop: Crop;
+    supplies: Supply[];
+  }> {
+    const crop: Crop = (await this.CreateCrop({})) as Crop;
+
+    const supplies = (await Promise.all(
+      Array.from({ length: quantitySupplies }).map(async () => {
+        const supply = await this.CreateSupply({});
+
+        await this.CreateShopping({ supplyId: supply.id });
+
+        return supply;
+      }),
+    )) as Supply[];
+
+    const data: ConsumptionSuppliesDto = {
+      date: InformationGenerator.generateRandomDate(),
+      details: supplies.map((supply) => {
+        return {
+          supply: { id: supply.id },
+          crop: { id: crop.id },
+          amount: amountForItem,
+        } as ConsumptionSuppliesDetailsDto;
+      }),
+    };
+
+    const consumption = await this.consumptionsService.createConsumption(data);
+    return { crop, consumption, supplies };
+  }
+
+  async CreateShopping({
+    supplyId,
+    amount = 4000,
+    valuePay = 250_000,
+  }: {
+    supplyId?: string;
+    amount?: number;
+    valuePay?: number;
+  }): Promise<{
+    shopping: SuppliesShopping;
+    supplier: Supplier;
+    supply: Supply;
+  }> {
+    const supplier = (await this.CreateSupplier({})) as Supplier;
+    const supply = (await this.CreateSupply({})) as Supply;
+
+    const data: ShoppingSuppliesDto = {
+      date: InformationGenerator.generateRandomDate(),
+      value_pay: valuePay,
+      details: [
+        {
+          supply: { id: supplyId || supply.id },
+          supplier: { id: supplier.id },
+          amount,
+          value_pay: valuePay,
+        } as ShoppingSuppliesDetailsDto,
+      ],
+    };
+
+    const shopping = await this.shoppingService.createShopping(data);
+    return { supplier, shopping, supply };
+  }
+  async CreateShoppingExtended({
+    quantitySupplies = 1,
+    amountForItem = 4_000,
+    valuePay = 250_000,
+  }: {
+    quantitySupplies?: number;
+    amountForItem?: number;
+    valuePay?: number;
+  }): Promise<{
+    shopping: SuppliesShopping;
+    supplier: Supplier;
+    supplies: Supply[];
+  }> {
+    const supplier = (await this.CreateSupplier({})) as Supplier;
+    const supplies = (await Promise.all(
+      Array.from({ length: quantitySupplies }).map(() => this.CreateSupply({})),
+    )) as Supply[];
+
+    const data: ShoppingSuppliesDto = {
+      date: InformationGenerator.generateRandomDate(),
+      value_pay: valuePay * supplies.length,
+      details: supplies.map((supply) => {
+        return {
+          supply: { id: supply.id },
+          supplier: { id: supplier.id },
+          amount: amountForItem,
+          value_pay: valuePay,
+        } as ShoppingSuppliesDetailsDto;
+      }),
+    };
+
+    const shopping = await this.shoppingService.createShopping(data);
+    return { supplier, shopping, supplies };
+  }
+
+  async CreatePayment({
+    datePayment = InformationGenerator.generateRandomDate(),
+    employeeId,
+    methodOfPayment = MethodOfPayment.EFECTIVO,
+    worksId = [],
+    harvestsId = [],
+    value_pay,
+  }: {
+    datePayment?: string;
+    employeeId?: string;
+    methodOfPayment?: MethodOfPayment;
+    worksId?: string[];
+    harvestsId?: string[];
+    value_pay: number;
+  }) {
+    const data: PaymentDto = plainToClass(PaymentDto, {
+      date: datePayment,
+      employee: { id: employeeId },
+      method_of_payment: methodOfPayment,
+      value_pay,
+      categories: {
+        harvests: [...(harvestsId as DeepPartial<HarvestDetails>[])],
+        works: [...(worksId as DeepPartial<WorkDetails>[])],
+      },
     });
 
-    await Promise.all(insertPromises);
-
-    return true;
+    return await this.paymentsService.create(data);
   }
+
   async insertNewCrops() {
     const crops = initialData.crops;
 
@@ -199,7 +720,7 @@ export class SeedService {
     const insertPromises = [];
 
     for (let index = 0; index < 3; index++) {
-      const objectToCreate: CreateHarvestDto = {
+      const objectToCreate: HarvestDto = {
         ...rest,
         crop: crops[index],
         details: [
@@ -242,7 +763,7 @@ export class SeedService {
     const insertPromises = [];
 
     for (let index = 0; index < 3; index++) {
-      const objectToCreate: CreateHarvestProcessedDto = {
+      const objectToCreate: HarvestProcessedDto = {
         ...initialHarvest,
         crop: { id: crops[index] },
         harvest: { id: harvests[index] },
@@ -266,7 +787,7 @@ export class SeedService {
     const { details, ...rest } = initialShopping;
 
     for (let index = 0; index < 3; index++) {
-      const objectToCreate: CreateShoppingSuppliesDto = {
+      const objectToCreate: ShoppingSuppliesDto = {
         ...rest,
         details: [
           {
@@ -301,7 +822,7 @@ export class SeedService {
     const { details, ...rest } = initialConsumption;
 
     for (let index = 0; index < 3; index++) {
-      const objectToCreate: CreateConsumptionSuppliesDto = {
+      const objectToCreate: ConsumptionSuppliesDto = {
         ...rest,
         details: [
           {
@@ -338,7 +859,7 @@ export class SeedService {
     const works = initialData.works;
     const insertPromises = [];
     works.forEach((work, index) => {
-      const recordToCreate: CreateWorkDto = {
+      const recordToCreate: WorkDto = {
         ...work,
         crop: { id: crops[index] },
         details: [
@@ -365,7 +886,7 @@ export class SeedService {
 
     const { details, ...rest } = initialSale;
 
-    const objectToCreate: CreateSaleDto = {
+    const objectToCreate: SaleDto = {
       ...rest,
       details: [
         {
@@ -390,30 +911,30 @@ export class SeedService {
     return true;
   }
 
-  private async insertNewPayments() {
-    const initialPayment = initialData.payments[0];
+  // private async insertNewPayments() {
+  //   const initialPayment = initialData.payments[0];
 
-    const [employee1]: DeepPartial<Employee>[] = this.employeeIds;
+  //   const [employee1]: DeepPartial<Employee>[] = this.employeeIds;
 
-    const [work1]: DeepPartial<Work>[] = this.worksIds;
+  //   const [work1]: DeepPartial<Work>[] = this.worksIds;
 
-    const harvestDetails: any = this.harvestDetails;
+  //   const harvestDetails: any = this.harvestDetails;
 
-    const objectToCreate: CreatePaymentDto = {
-      date: initialPayment.date,
-      method_of_payment: initialPayment.method_of_payment,
-      employee: employee1,
-      total: 185000,
-      categories: {
-        harvests: [
-          harvestDetails[0][0].id,
-          harvestDetails[1][0].id,
-          harvestDetails[2][0].id,
-        ],
-        works: [work1],
-      },
-    };
+  //   const objectToCreate: CreatePaymentDto = {
+  //     date: initialPayment.date,
+  //     method_of_payment: initialPayment.method_of_payment,
+  //     employee: employee1,
+  //     total: 185000,
+  //     categories: {
+  //       harvests: [
+  //         harvestDetails[0][0].id,
+  //         harvestDetails[1][0].id,
+  //         harvestDetails[2][0].id,
+  //       ],
+  //       works: [work1],
+  //     },
+  //   };
 
-    await this.paymentsService.create(objectToCreate);
-  }
+  //   await this.paymentsService.create(objectToCreate);
+  // }
 }

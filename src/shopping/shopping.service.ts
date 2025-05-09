@@ -7,28 +7,23 @@ import {
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
-import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
-import {
-  handleDBExceptions,
-  organizeIDsToUpdateEntity,
-} from 'src/common/helpers';
+import { organizeIDsToUpdateEntity } from 'src/common/helpers';
+import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { PrinterService } from 'src/printer/printer.service';
 import { Condition } from 'src/supplies/interfaces/condition.interface';
 import { SuppliesService } from 'src/supplies/supplies.service';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
-import { CreateShoppingSuppliesDto } from './dto/create-shopping-supplies.dto';
 import { QueryParamsShopping } from './dto/query-params-shopping.dto';
 import { ShoppingSuppliesDetailsDto } from './dto/shopping-supplies-details.dto';
-import { UpdateSuppliesShoppingDto } from './dto/update-supplies-shopping.dto';
+import { ShoppingSuppliesDto } from './dto/shopping-supplies.dto';
 import { SuppliesShopping, SuppliesShoppingDetails } from './entities';
 import { getShoppingReport } from './reports/get-shopping';
 
 @Injectable()
 export class ShoppingService {
-  private readonly logger = new Logger('ConsumptionsService');
-  private handleDBExceptions = (error: any, logger = this.logger) =>
-    handleDBExceptions(error, logger);
+  private readonly logger = new Logger('ShoppingService');
+
   constructor(
     @InjectRepository(SuppliesShopping)
     private readonly suppliesShoppingRepository: Repository<SuppliesShopping>,
@@ -39,38 +34,36 @@ export class ShoppingService {
 
     private dataSource: DataSource,
     private printerService: PrinterService,
-  ) {}
+    private readonly handlerError: HandlerErrorService,
+  ) {
+    
+  }
 
   async createShoppingDetails(
     queryRunner: QueryRunner,
-    object: ShoppingSuppliesDetailsDto,
+    data: ShoppingSuppliesDetailsDto,
   ) {
     const recordToSave = queryRunner.manager.create(
       SuppliesShoppingDetails,
-      object,
+      data,
     );
     await queryRunner.manager.save(SuppliesShoppingDetails, recordToSave);
+    return recordToSave;
   }
 
   async updateShoppingDetails(
     queryRunner: QueryRunner,
     condition: Condition,
-    object: ShoppingSuppliesDetailsDto,
+    data: ShoppingSuppliesDetailsDto,
   ) {
-    await queryRunner.manager.update(
-      SuppliesShoppingDetails,
-      condition,
-      object,
-    );
+    return await queryRunner.manager.update(SuppliesShoppingDetails, condition, data);
   }
 
   async removeShoppingDetails(queryRunner: QueryRunner, condition: Condition) {
-    await queryRunner.manager.delete(SuppliesShoppingDetails, condition);
+    return await queryRunner.manager.delete(SuppliesShoppingDetails, condition);
   }
 
-  async createShopping(createShoppingSuppliesDto: CreateShoppingSuppliesDto) {
-    // validateTotalInArray(createShoppingSuppliesDto);
-
+  async createShopping(createShoppingSuppliesDto: ShoppingSuppliesDto) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -80,14 +73,14 @@ export class ShoppingService {
 
       let shoppingDetails: SuppliesShoppingDetails[] = [];
 
-      for (const register of details) {
+      for (const record of details) {
         shoppingDetails.push(
-          queryRunner.manager.create(SuppliesShoppingDetails, register),
+          queryRunner.manager.create(SuppliesShoppingDetails, record),
         );
 
         await this.suppliesService.updateStock(queryRunner, {
-          supplyId: register.supply.id,
-          amount: register.amount,
+          supplyId: record.supply.id,
+          amount: record.amount,
           type_update: 'increment',
         });
       }
@@ -101,10 +94,10 @@ export class ShoppingService {
       await queryRunner.manager.save(shopping);
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
+      return shopping;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -119,9 +112,10 @@ export class ShoppingService {
       type_filter_date,
       date,
 
-      filter_by_total = false,
-      type_filter_total,
-      total,
+      filter_by_value_pay = false,
+      type_filter_value_pay,
+      value_pay,
+
       suppliers = [],
       supplies = [],
     } = queryParams;
@@ -136,31 +130,23 @@ export class ShoppingService {
       .take(limit)
       .skip(offset * limit);
 
-    if (filter_by_date) {
-      const operation =
-        TypeFilterDate.AFTER == type_filter_date
-          ? '>'
-          : TypeFilterDate.EQUAL == type_filter_date
-            ? '='
-            : '<';
-      queryBuilder.andWhere(`supplies_shopping.date ${operation} :date`, {
-        date,
-      });
-    }
+    filter_by_date &&
+      queryBuilder.andWhere(
+        `supplies_shopping.date ${getComparisonOperator(type_filter_date)} :date`,
+        {
+          date,
+        },
+      );
 
-    if (filter_by_total) {
-      const operation =
-        TypeFilterNumber.MAX == type_filter_total
-          ? '>'
-          : TypeFilterNumber.EQUAL == type_filter_total
-            ? '='
-            : '<';
-      queryBuilder.andWhere(`supplies_shopping.total ${operation} :total`, {
-        total,
-      });
-    }
+    filter_by_value_pay &&
+      queryBuilder.andWhere(
+        `supplies_shopping.value_pay ${getComparisonOperator(type_filter_value_pay)} :value_pay`,
+        {
+          value_pay,
+        },
+      );
 
-    if (suppliers.length > 0) {
+    suppliers.length > 0 &&
       queryBuilder.andWhere((qb) => {
         const subQuery = qb
           .subQuery()
@@ -172,9 +158,8 @@ export class ShoppingService {
           .getQuery();
         return 'supplies_shopping.id IN ' + subQuery;
       });
-    }
 
-    if (supplies.length > 0) {
+    supplies.length > 0 &&
       queryBuilder.andWhere((qb) => {
         const subQuery = qb
           .subQuery()
@@ -186,14 +171,21 @@ export class ShoppingService {
           .getQuery();
         return 'supplies_shopping.id IN ' + subQuery;
       });
-    }
 
     const [shopping, count] = await queryBuilder.getManyAndCount();
 
+    if (shopping.length === 0 && count > 0) {
+      throw new NotFoundException(
+        'There are no shopping records with the requested pagination',
+      );
+    }
+
     return {
-      rowCount: count,
-      rows: shopping,
-      pageCount: Math.ceil(count / limit),
+      total_row_count: count,
+      current_row_count: shopping.length,
+      total_page_count: Math.ceil(count / limit),
+      current_page_count: shopping.length > 0 ? offset + 1 : 0,
+      records: shopping,
     };
   }
 
@@ -215,9 +207,9 @@ export class ShoppingService {
 
   async updateShopping(
     id: string,
-    updateSuppliesShoppingDto: UpdateSuppliesShoppingDto,
+    updateSuppliesShoppingDto: ShoppingSuppliesDto,
   ) {
-    const shopping: any = await this.findOneShopping(id);
+    const shopping = await this.findOneShopping(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -247,33 +239,38 @@ export class ShoppingService {
 
         if (oldRecordData.deletedDate !== null) {
           throw new BadRequestException(
-            'You cannot delete this record, it is linked to other records.',
+            `You cannot delete the record with id ${detailId} , it is linked to other records.`,
           );
-        } else {
-          await this.removeShoppingDetails(queryRunner, {
-            id: detailId,
-          });
-
-          await this.suppliesService.updateStock(queryRunner, {
-            supplyId: oldRecordData.supply.id,
-            amount: oldRecordData.amount,
-            type_update: 'decrement',
-          });
         }
+
+        await this.suppliesService.updateStock(queryRunner, {
+          supplyId: oldRecordData.supply.id,
+          amount: oldRecordData.amount,
+          type_update: 'decrement',
+        });
+
+        await this.removeShoppingDetails(queryRunner, {
+          id: detailId,
+        });
       }
 
       for (const detailId of toUpdate) {
         const oldRecordData = oldDetails.find(
           (record: SuppliesShoppingDetails) => record.id === detailId,
         );
-
-        if (oldRecordData.deletedDate !== null) {
-          continue;
-        }
-
         const dataRecordNew = newDetails.find(
           (record) => record.id === detailId,
         );
+
+        const valuesAreDifferent =
+          dataRecordNew.value_pay !== oldRecordData.value_pay ||
+          dataRecordNew.amount !== oldRecordData.amount;
+
+        if (valuesAreDifferent && oldRecordData.deletedDate !== null) {
+          throw new BadRequestException(
+            `You cannot update the record with id ${detailId} , it is linked to other records.`,
+          );
+        }
 
         await this.suppliesService.updateStock(queryRunner, {
           supplyId: oldRecordData.supply.id,
@@ -315,42 +312,42 @@ export class ShoppingService {
       await queryRunner.manager.update(SuppliesShopping, { id }, rest);
 
       await queryRunner.commitTransaction();
+      return await this.findOneShopping(id);
     } catch (error) {
-      this.handleDBExceptions(error);
+      await queryRunner.rollbackTransaction();
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
   }
 
   async removeShopping(id: string) {
-    const shoppingSupply: any = await this.findOneShopping(id);
-
-    const { details } = shoppingSupply;
+    const shoppingSupply = await this.findOneShopping(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      const { details } = shoppingSupply;
       for (const record of details) {
         if (record.supply.deletedDate !== null) {
           continue;
         }
 
-        const { supply } = record;
-
         await this.suppliesService.updateStock(queryRunner, {
-          supplyId: id,
+          supplyId: record.supply.id,
           amount: record.amount,
           type_update: 'decrement',
         });
       }
-      await queryRunner.manager.softRemove(shoppingSupply);
+
+      await queryRunner.manager.remove(shoppingSupply);
 
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
     }
@@ -359,24 +356,32 @@ export class ShoppingService {
   async removeBulkShopping(
     removeBulkShoppingDto: RemoveBulkRecordsDto<SuppliesShopping>,
   ) {
+    const success: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+
     for (const { id } of removeBulkShoppingDto.recordsIds) {
-      await this.removeShopping(id);
+      try {
+        await this.removeShopping(id);
+        success.push(id);
+      } catch (error) {
+        failed.push({ id, error: error.message });
+      }
     }
+
+    return { success, failed };
   }
 
   async deleteAllShoppingSupplies() {
     try {
       await this.suppliesShoppingRepository.delete({});
     } catch (error) {
-      this.handleDBExceptions(error);
+      this.handlerError.handle(error, this.logger);
     }
   }
 
   async exportShoppingToPDF(id: string) {
     const shopping = await this.findOneShopping(id);
-
     const docDefinition = getShoppingReport({ data: shopping });
-
     return this.printerService.createPdf({ docDefinition });
   }
 }

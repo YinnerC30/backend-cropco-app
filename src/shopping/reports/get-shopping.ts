@@ -106,7 +106,7 @@ export const getShoppingReport = (
                 alignment: 'center',
               },
               {
-                text: FormatMoneyValue(detail.total),
+                text: FormatMoneyValue(detail.value_pay),
                 style: ['tableCell'],
                 alignment: 'center',
               },
@@ -120,7 +120,7 @@ export const getShoppingReport = (
         text: [
           '\nTotal a pagar: ',
           {
-            text: `${FormatMoneyValue(data.total)}`,
+            text: `${FormatMoneyValue(data.value_pay)}`,
             style: 'boldText',
           },
         ],

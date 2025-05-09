@@ -13,7 +13,7 @@ describe('QueryParamsWork', () => {
       date: '2023-01-01',
       filter_by_total: 'false',
       type_filter_total: TypeFilterNumber.MAX,
-      total: 100,
+      value_pay: 100,
       employees: [
         'f7314366-5f63-4f2b-9639-744eb652c26b',
         '8b73400f-be8e-454d-902a-4b37c9bd23d4',
@@ -54,9 +54,9 @@ describe('QueryParamsWork', () => {
     expect(errors.length).toBeGreaterThan(0);
   });
 
-  it('should fail validation with invalid total value', async () => {
+  it('should fail validation with invalid value_pay value', async () => {
     const dto = plainToInstance(QueryParamsWork, {
-      total: 'not-a-number',
+      value_pay: 'not-a-number',
     });
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);

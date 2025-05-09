@@ -9,18 +9,19 @@ import {
   Post,
   Query,
   Res,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 
-import { CreateShoppingSuppliesDto } from './dto/create-shopping-supplies.dto';
 import { QueryParamsShopping } from './dto/query-params-shopping.dto';
-import { UpdateSuppliesShoppingDto } from './dto/update-supplies-shopping.dto';
 import { SuppliesShopping } from './entities';
 import { ShoppingService } from './shopping.service';
 import { Response } from 'express';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
+import { ShoppingSuppliesDto } from './dto/shopping-supplies.dto';
 
 export const pathsShoppingController: PathsController = {
   createShopping: {
@@ -102,21 +103,25 @@ export class ShoppingController {
   }
 
   @Post(createShopping.path)
-  create(@Body() createShoppingSuppliesDto: CreateShoppingSuppliesDto) {
+  create(@Body() createShoppingSuppliesDto: ShoppingSuppliesDto) {
     return this.shoppingService.createShopping(createShoppingSuppliesDto);
   }
+
   @Patch(updateShopping.path)
   updateShopping(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateSuppliesShoppingDto: UpdateSuppliesShoppingDto,
+    @Body() updateSuppliesShoppingDto: ShoppingSuppliesDto,
   ) {
     return this.shoppingService.updateShopping(id, updateSuppliesShoppingDto);
   }
+
   @Delete(removeShopping.path)
   removeShopping(@Param('id', ParseUUIDPipe) id: string) {
     return this.shoppingService.removeShopping(id);
   }
+
   @Delete(removeBulkShopping.path)
+  @UseInterceptors(ResponseStatusInterceptor)
   @ApiResponse({
     status: 200,
     description: 'Compras eliminadas exitosamente',

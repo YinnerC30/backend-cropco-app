@@ -9,16 +9,12 @@ import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
-import { CreateCropDto } from './dto/create-crop.dto';
 import { Repository } from 'typeorm';
+import { CreateCropDto } from './dto/create-crop.dto';
 import { Crop } from './entities/crop.entity';
 
-import { EmployeesService } from 'src/employees/employees.service';
-import { HarvestService } from 'src/harvest/harvest.service';
-
-import { CreateHarvestDto } from 'src/harvest/dto/create-harvest.dto';
-import { ClientsService } from 'src/clients/clients.service';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 
 describe('CropsController e2e', () => {
   let app: INestApplication;
@@ -27,9 +23,16 @@ describe('CropsController e2e', () => {
   let userTest: User;
   let token: string;
   let cropRepository: Repository<Crop>;
-  let clientService: ClientsService;
-  let employeeService: EmployeesService;
-  let harvestService: HarvestService;
+
+  const cropDtoTemplete: CreateCropDto = {
+    name: 'Crop' + InformationGenerator.generateRandomId(),
+    description: InformationGenerator.generateDescription(),
+    units: 1000,
+    location: InformationGenerator.generateAddress(),
+    date_of_creation: InformationGenerator.generateRandomDate(),
+  } as CreateCropDto;
+
+  const falseCropId = InformationGenerator.generateRandomId();
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -65,24 +68,12 @@ describe('CropsController e2e', () => {
     }).compile();
 
     seedService = moduleFixture.get<SeedService>(SeedService);
-    clientService = moduleFixture.get<ClientsService>(ClientsService);
-
-    harvestService = moduleFixture.get<HarvestService>(HarvestService);
-    employeeService = moduleFixture.get<EmployeesService>(EmployeesService);
 
     authService = moduleFixture.get<AuthService>(AuthService);
 
     cropRepository = moduleFixture.get<Repository<Crop>>(
       getRepositoryToken(Crop),
     );
-    await cropRepository.delete({});
-    await clientService.deleteAllClients();
-    await harvestService.deleteAllHarvest();
-
-    userTest = await authService.createUserToTests();
-    token = authService.generateJwtToken({
-      id: userTest.id,
-    });
 
     app = moduleFixture.createNestApplication();
 
@@ -96,6 +87,13 @@ describe('CropsController e2e', () => {
     );
 
     await app.init();
+
+    await cropRepository.delete({});
+
+    userTest = (await seedService.CreateUser({})) as User;
+    token = authService.generateJwtToken({
+      id: userTest.id,
+    });
   });
 
   afterAll(async () => {
@@ -103,127 +101,17 @@ describe('CropsController e2e', () => {
     await app.close();
   });
 
-  async function createTestCrop(data: CreateCropDto) {
-    const crop = cropRepository.create(data);
-    return await cropRepository.save(crop);
-  }
-
-  describe('crops/create (POST)', () => {
-    it('should throw an exception for not sending a JWT to the protected path /crops/create', async () => {
-      const data = {
-        name: 'CropName',
-        description: 'Crop description...',
-        units: 10,
-        location: 'Location of the crop...',
-        date_of_creation: new Date().toLocaleString(),
-      } as CreateCropDto;
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/crops/create')
-        .send(data)
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action /crops/create', async () => {
-      await authService.removePermission(userTest.id, 'create_crop');
-
-      const data = {
-        name: 'CropName',
-        description: 'Crop description...',
-        units: 10,
-        location: 'Location of the crop...',
-        date_of_creation: new Date().toLocaleString(),
-      } as CreateCropDto;
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/crops/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(data)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
-    it('should create a new crop', async () => {
-      await authService.addPermission(userTest.id, 'create_crop');
-
-      const data = {
-        name: 'CropName',
-        description: 'Crop description...',
-        units: 10,
-        location: 'Location of the crop...',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto;
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/crops/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(data)
-        .expect(201);
-
-      expect(response.body).toMatchObject(data);
-    });
-
-    it('should throw exception when fields are missing in the body', async () => {
-      const errorMessage = [
-        'name must be longer than or equal to 4 characters',
-        'name must be a string',
-        'units must not be less than 1',
-        'units must be an integer number',
-        'location must be longer than or equal to 4 characters',
-        'location must be a string',
-        'date_of_creation must be a valid ISO 8601 date string',
-      ];
-
-      const { body } = await request
-        .default(app.getHttpServer())
-        .post('/crops/create')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(400);
-
-      errorMessage.forEach((msg) => {
-        expect(body.message).toContain(msg);
-      });
-    });
-
-    it('should throw exception for trying to create a crop with duplicate name.', async () => {
-      await createTestCrop({
-        name: 'CropName1',
-        description: 'Crop description...',
-        units: 10,
-        location: 'Location of the crop...',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
-
-      const data: CreateCropDto = {
-        name: 'CropName1',
-        description: 'Crop description...',
-        units: 10,
-        location: 'Location of the crop...',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto;
-
-      const { body } = await request
-        .default(app.getHttpServer())
-        .post('/crops/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(data)
-        .expect(400);
-      expect(body.message).toEqual(
-        `Unique constraint violation, Key (name)=(${data.name}) already exists.`,
-      );
-    });
-  });
-
   describe('crops/all (GET)', () => {
     beforeAll(async () => {
-      await cropRepository.delete({});
-      const result = await seedService.insertNewCrops();
+      try {
+        await cropRepository.delete({});
+        await Promise.all(
+          Array.from({ length: 17 }).map(() => seedService.CreateCrop({})),
+        );
+        await authService.addPermission(userTest.id, 'find_all_crops');
+      } catch (error) {
+        console.log(error);
+      }
     });
 
     it('should throw an exception for not sending a JWT to the protected path /crops/all', async () => {
@@ -234,26 +122,13 @@ describe('CropsController e2e', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /crops/all', async () => {
-      await authService.removePermission(userTest.id, 'find_all_crops');
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/crops/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get only 10 crops for default by not sending paging parameters', async () => {
-      await authService.addPermission(userTest.id, 'find_all_crops');
       const response = await request
         .default(app.getHttpServer())
         .get('/crops/all')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(response.body.total_row_count).toEqual(15);
+      expect(response.body.total_row_count).toEqual(17);
       expect(response.body.current_row_count).toEqual(10);
       expect(response.body.total_page_count).toEqual(2);
       expect(response.body.current_page_count).toEqual(1);
@@ -265,8 +140,8 @@ describe('CropsController e2e', () => {
         .query({ all_records: true, limit: 10, offset: 1 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(response.body.total_row_count).toEqual(15);
-      expect(response.body.current_row_count).toEqual(15);
+      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.current_row_count).toEqual(17);
       expect(response.body.total_page_count).toEqual(1);
       expect(response.body.current_page_count).toEqual(1);
 
@@ -285,18 +160,18 @@ describe('CropsController e2e', () => {
         expect(crop.deletedDate).toBeNull();
       });
     });
-    it('should return the specified number of crops passed by the paging arguments by the URL', async () => {
-      const response1 = await request
+    it('should return the specified number of crops passed by the paging arguments by the URL (1)', async () => {
+      const response = await request
         .default(app.getHttpServer())
         .get(`/crops/all`)
         .query({ limit: 11, offset: 0 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(response1.body.total_row_count).toEqual(15);
-      expect(response1.body.current_row_count).toEqual(11);
-      expect(response1.body.total_page_count).toEqual(2);
-      expect(response1.body.current_page_count).toEqual(1);
-      response1.body.records.forEach((crop: Crop) => {
+      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.current_row_count).toEqual(11);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(1);
+      response.body.records.forEach((crop: Crop) => {
         expect(crop).toHaveProperty('id');
         expect(crop).toHaveProperty('name');
         expect(crop).toHaveProperty('description');
@@ -310,18 +185,19 @@ describe('CropsController e2e', () => {
         expect(crop).toHaveProperty('deletedDate');
         expect(crop.deletedDate).toBeNull();
       });
-
-      const response2 = await request
+    });
+    it('should return the specified number of crops passed by the paging arguments by the URL (2)', async () => {
+      const response = await request
         .default(app.getHttpServer())
         .get(`/crops/all`)
         .query({ limit: 11, offset: 1 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(response2.body.total_row_count).toEqual(15);
-      expect(response2.body.current_row_count).toEqual(4);
-      expect(response2.body.total_page_count).toEqual(2);
-      expect(response2.body.current_page_count).toEqual(2);
-      response2.body.records.forEach((crop: Crop) => {
+      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.current_row_count).toEqual(6);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(2);
+      response.body.records.forEach((crop: Crop) => {
         expect(crop).toHaveProperty('id');
         expect(crop).toHaveProperty('name');
         expect(crop).toHaveProperty('description');
@@ -349,38 +225,96 @@ describe('CropsController e2e', () => {
     });
   });
 
-  describe('crops/one/:id (GET)', () => {
-    const cropId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
-    it('should throw an exception for not sending a JWT to the protected path crops/one/:id', async () => {
+  describe('crops/create (POST)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_crop');
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /crops/create', async () => {
+      const bodyRequest = {
+        ...cropDtoTemplete,
+      } as CreateCropDto;
+
       const response = await request
         .default(app.getHttpServer())
-        .get(`/crops/one/${cropId}`)
+        .post('/crops/create')
+        .send(bodyRequest)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action crops/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_crop');
+    it('should create a new crop', async () => {
+      const bodyRequest = {
+        ...cropDtoTemplete,
+      } as CreateCropDto;
+
       const response = await request
         .default(app.getHttpServer())
-        .get(`/crops/one/${cropId}`)
+        .post('/crops/create')
         .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
+        .send(bodyRequest)
+        .expect(201);
+
+      expect(response.body).toMatchObject(bodyRequest);
+    });
+
+    it('should throw exception when fields are missing in the body', async () => {
+      const errorMessage = [
+        'name must be longer than or equal to 4 characters',
+        'name must be a string',
+        'units must not be less than 1',
+        'units must be an integer number',
+        'location must be longer than or equal to 4 characters',
+        'location must be a string',
+        'date_of_creation must be a valid ISO 8601 date string',
+      ];
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/crops/create')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(400);
+
+      errorMessage.forEach((msg) => {
+        expect(body.message).toContain(msg);
+      });
+    });
+
+    it('should throw exception for trying to create a crop with duplicate name.', async () => {
+      const cropWithSameName = await seedService.CreateCrop({});
+
+      const bodyRequest: CreateCropDto = {
+        ...cropDtoTemplete,
+        name: cropWithSameName.name,
+      } as CreateCropDto;
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/crops/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(400);
+      expect(body.message).toEqual(
+        `Unique constraint violation, Key (name)=(${bodyRequest.name}) already exists.`,
       );
+    });
+  });
+
+  describe('crops/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'find_one_crop');
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path crops/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/crops/one/${falseCropId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
     });
 
     it('should get one crop', async () => {
-      // Crear un crope de prueba
-      await authService.addPermission(userTest.id, 'find_one_crop');
-      const { id } = await createTestCrop({
-        name: 'CropName3',
-        description: 'Crop description...',
-        units: 10,
-        location: 'Location of the crop...',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
+      const { id } = await seedService.CreateCrop({});
 
       const { body } = await request
         .default(app.getHttpServer())
@@ -415,12 +349,10 @@ describe('CropsController e2e', () => {
     it('should throw exception for not finding crop by ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .get(`/crops/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .get(`/crops/one/${falseCropId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
-      expect(body.message).toEqual(
-        'Crop with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
-      );
+      expect(body.message).toEqual(`Crop with id: ${falseCropId} not found`);
     });
     it('should throw exception for not sending an ID', async () => {
       const { body } = await request
@@ -433,40 +365,24 @@ describe('CropsController e2e', () => {
   });
 
   describe('crops/update/one/:id (PATCH)', () => {
-    const cropId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'update_one_crop');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path crops/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/crops/update/one/${cropId}`)
+        .patch(`/crops/update/one/${falseCropId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action crops/update/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_crop');
-      const response = await request
-        .default(app.getHttpServer())
-        .patch(`/crops/update/one/${cropId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should update one crop', async () => {
-      await authService.addPermission(userTest.id, 'update_one_crop');
-      const cropDemo = await createTestCrop({
-        name: 'CropName4',
-        description: 'Crop description...',
-        units: 10,
-        location: 'Location of the crop...',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
+      const crop = await seedService.CreateCrop({});
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/crops/update/one/${cropDemo.id}`)
+        .patch(`/crops/update/one/${crop.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send({
           description: 'Change description crop',
@@ -476,153 +392,95 @@ describe('CropsController e2e', () => {
 
       expect(body.description).toEqual('Change description crop');
       expect(body.location).toEqual('Change location crop');
-      expect(body.name).toEqual('CropName4');
-      expect(body.units).toEqual(cropDemo.units);
+      expect(body.name).toEqual(crop.name);
+      expect(body.units).toEqual(crop.units);
       expect(body.date_of_creation).toEqual(
-        cropDemo.date_of_creation.split('T')[0],
+        crop.date_of_creation.split('T')[0],
       );
     });
 
     it('should throw exception for not finding crop to update', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/crops/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .patch(`/crops/update/one/${falseCropId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ location: 'New location' })
         .expect(404);
-      expect(body.message).toEqual(
-        'Crop with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
-      );
+      expect(body.message).toEqual(`Crop with id: ${falseCropId} not found`);
     });
 
     it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/crops/update/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .patch(`/crops/update/one/${falseCropId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ year: 2025 })
         .expect(400);
       expect(body.message).toContain('property year should not exist');
     });
     it('should throw exception for trying to update the name for one that is in use.', async () => {
-      const cropDemo = await createTestCrop({
-        name: 'CropName5',
-        description: 'Crop description...',
-        units: 10,
-        location: 'Location of the crop...',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
+      const cropWithSameName = await seedService.CreateCrop({});
+      const crop = await seedService.CreateCrop({});
+
+      const bodyRequest = {
+        name: cropWithSameName.name,
+      };
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/crops/update/one/${cropDemo.id}`)
+        .patch(`/crops/update/one/${crop.id}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ name: 'CropName4' })
+        .send(bodyRequest)
         .expect(400);
       expect(body.message).toEqual(
-        'Unique constraint violation, Key (name)=(CropName4) already exists.',
+        `Unique constraint violation, Key (name)=(${bodyRequest.name}) already exists.`,
       );
     });
   });
 
   describe('crops/remove/one/:id (DELETE)', () => {
-    const cropId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_one_crop');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path crops/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .delete(`/crops/remove/one/${cropId}`)
+        .delete(`/crops/remove/one/${falseCropId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action crops/remove/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'remove_one_crop');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/crops/remove/one/${cropId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete one crop', async () => {
-      await authService.addPermission(userTest.id, 'remove_one_crop');
-      const cropDemo = await createTestCrop({
-        name: 'CropName6',
-        description: 'Crop description...',
-        units: 10,
-        location: 'Location of the crop...',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
+      const crop = await seedService.CreateCrop({});
 
       await request
         .default(app.getHttpServer())
-        .delete(`/crops/remove/one/${cropDemo.id}`)
+        .delete(`/crops/remove/one/${crop.id}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
-      const { notFound } = await request
-        .default(app.getHttpServer())
-        .get(`/crops/one/${cropDemo.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(404);
-      expect(notFound).toBe(true);
+      const deletedCrop = await cropRepository.findOne({
+        where: { id: crop.id },
+      });
+      expect(deletedCrop).toBeNull();
     });
 
     it('You should throw exception for trying to delete a crop that does not exist.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .delete(`/crops/remove/one/2f6b49e7-5114-463b-8e7c-748633a9e157`)
+        .delete(`/crops/remove/one/${falseCropId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
-      expect(body.message).toEqual(
-        'Crop with id: 2f6b49e7-5114-463b-8e7c-748633a9e157 not found',
-      );
+      expect(body.message).toEqual(`Crop with id: ${falseCropId} not found`);
     });
 
     it('should throw an exception when trying to delete a crop with stock available', async () => {
-      // Crear cultivo de prueba
-      const crop = await createTestCrop({
-        name: 'CropName7',
-        description: 'Crop description...',
-        units: 10,
-        location: 'Location of the crop...',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
-
-      // Crear empleado de prueba
-      const employee = await employeeService.create({
-        first_name: 'John',
-        last_name: 'Doe',
-        email: `employeedoe${Math.random() * 100}@gmail.com`,
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
-      });
-
-      // Crear cosecha de prueba
-      const harvestData = {
-        date: new Date().toISOString(),
-        crop: { id: crop.id },
-        details: [
-          { employee: { id: employee.id }, total: 10, value_pay: 1000 },
-        ],
-        total: 10,
-        value_pay: 1000,
-        observation: 'description demo test creation harvest...',
-      };
-
-      const harvest = await harvestService.create(
-        harvestData as CreateHarvestDto,
-      );
-
-      // Agregar stock al cultivo
-      await harvestService.createHarvestProcessed({
-        date: new Date().toISOString(),
-        crop: { id: crop.id },
-        harvest: { id: harvest.id },
-        total: 10,
+      const { crop, harvest } = await seedService.CreateHarvest({});
+      await seedService.CreateHarvestProcessed({
+        cropId: crop.id,
+        harvestId: harvest.id,
+        amount: 50,
       });
 
       const { body } = await request
@@ -630,11 +488,17 @@ describe('CropsController e2e', () => {
         .delete(`/crops/remove/one/${crop.id}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(409);
-      expect(body.message).toEqual(`Crop has stock available`);
+      expect(body.message).toEqual(
+        `Crop with id ${crop.id} has stock available`,
+      );
     });
   });
 
   describe('crops/remove/bulk (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_bulk_crops');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path crops/remove/bulk ', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -643,43 +507,11 @@ describe('CropsController e2e', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action crops/remove/bulk ', async () => {
-      await authService.removePermission(userTest.id, 'remove_bulk_crops');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/crops/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete crops bulk', async () => {
-      await authService.addPermission(userTest.id, 'remove_bulk_crops');
-      // Crear cropes de prueba
       const [crop1, crop2, crop3] = await Promise.all([
-        createTestCrop({
-          name: 'CropName8',
-          description: 'Crop description...',
-          units: 10,
-          location: 'Location of the crop...',
-          date_of_creation: new Date().toISOString(),
-        } as CreateCropDto),
-        createTestCrop({
-          name: 'CropName9',
-          description: 'Crop description...',
-          units: 10,
-          location: 'Location of the crop...',
-          date_of_creation: new Date().toISOString(),
-        } as CreateCropDto),
-        createTestCrop({
-          name: 'CropName10',
-          description: 'Crop description...',
-          units: 10,
-          location: 'Location of the crop...',
-          date_of_creation: new Date().toISOString(),
-        } as CreateCropDto),
+        await seedService.CreateCrop({}),
+        await seedService.CreateCrop({}),
+        await seedService.CreateCrop({}),
       ]);
 
       const bulkData: RemoveBulkRecordsDto<Crop> = {
@@ -716,83 +548,23 @@ describe('CropsController e2e', () => {
     });
 
     it('should throw an exception when trying to delete a crop with stock available.', async () => {
-      // Crear cultivo de prueba
-      const crop1 = await createTestCrop({
-        name: 'CropName11',
-        description: 'Crop description...',
-        units: 10,
-        location: 'Location of the crop...',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
-      const crop2 = await createTestCrop({
-        name: 'CropName12',
-        description: 'Crop description...',
-        units: 10,
-        location: 'Location of the crop...',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
-      const crop3 = await createTestCrop({
-        name: 'CropName13',
-        description: 'Crop description...',
-        units: 10,
-        location: 'Location of the crop...',
-        date_of_creation: new Date().toISOString(),
-      } as CreateCropDto);
-
-      // Crear empleado de prueba
-      const employee = await employeeService.create({
-        first_name: 'John',
-        last_name: 'Doe',
-        email: `employeedoe${Math.random() * 100}@gmail.com`,
-        cell_phone_number: '3007890123',
-        address: '123 Main St',
+      const { crop: crop1, harvest: harvest1 } =
+        await seedService.CreateHarvest({});
+      await seedService.CreateHarvestProcessed({
+        cropId: crop1.id,
+        harvestId: harvest1.id,
+        amount: 50,
       });
 
-      // Crear cosecha de prueba
-      const harvestData1 = {
-        date: new Date().toISOString(),
-        crop: { id: crop1.id },
-        details: [
-          { employee: { id: employee.id }, total: 10, value_pay: 1000 },
-        ],
-        total: 10,
-        value_pay: 1000,
-        observation: 'description demo test creation harvest...',
-      };
-
-      const harvest1 = await harvestService.create(
-        harvestData1 as CreateHarvestDto,
-      );
-
-      // Agregar stock al cultivo
-      await harvestService.createHarvestProcessed({
-        date: new Date().toISOString(),
-        crop: { id: crop1.id },
-        harvest: { id: harvest1.id },
-        total: 10,
+      const { crop: crop2, harvest: harvest2 } =
+        await seedService.CreateHarvest({});
+      await seedService.CreateHarvestProcessed({
+        cropId: crop2.id,
+        harvestId: harvest2.id,
+        amount: 50,
       });
 
-      const harvestData2 = {
-        date: new Date().toISOString(),
-        crop: { id: crop2.id },
-        details: [
-          { employee: { id: employee.id }, total: 10, value_pay: 1000 },
-        ],
-        total: 10,
-        value_pay: 1000,
-        observation: 'description demo test creation harvest...',
-      };
-      const harvest2 = await harvestService.create(
-        harvestData2 as CreateHarvestDto,
-      );
-
-      // Agregar stock al cultivo
-      await harvestService.createHarvestProcessed({
-        date: new Date().toISOString(),
-        crop: { id: crop2.id },
-        harvest: { id: harvest2.id },
-        total: 10,
-      });
+      const crop3 = await seedService.CreateCrop({});
 
       const { body } = await request
         .default(app.getHttpServer())
@@ -807,14 +579,99 @@ describe('CropsController e2e', () => {
         failed: [
           {
             id: crop1.id,
-            error: 'Crop has stock available',
+            error: `Crop with id ${crop1.id} has stock available`,
           },
           {
             id: crop2.id,
-            error: 'Crop has stock available',
+            error: `Crop with id ${crop2.id} has stock available`,
           },
         ],
       });
+    });
+  });
+
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      await Promise.all([
+        authService.removePermission(userTest.id, 'find_all_crops'),
+        authService.removePermission(userTest.id, 'create_crop'),
+        authService.removePermission(userTest.id, 'find_one_crop'),
+        authService.removePermission(userTest.id, 'update_one_crop'),
+        authService.removePermission(userTest.id, 'remove_one_crop'),
+        authService.removePermission(userTest.id, 'remove_bulk_crops'),
+      ]);
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /crops/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/crops/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /crops/create', async () => {
+      await authService.removePermission(userTest.id, 'create_crop');
+
+      const bodyRequest = {
+        ...cropDtoTemplete,
+      } as CreateCropDto;
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/crops/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action crops/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/crops/one/${falseCropId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action crops/update/one/:id', async () => {
+      await authService.removePermission(userTest.id, 'find_one_crop');
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/crops/update/one/${falseCropId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action crops/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/crops/remove/one/${falseCropId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action crops/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/crops/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
     });
   });
 });

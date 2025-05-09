@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
@@ -30,9 +31,12 @@ import { ModuleActions } from './entities/module-actions.entity';
 import { Module } from './entities/module.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { UserActions } from 'src/users/entities/user-actions.entity';
+import { UserDto } from 'src/users/dto/user.dto';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger('AuthService');
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
@@ -44,6 +48,7 @@ export class AuthService {
     private readonly moduleActionsRepository: Repository<ModuleActions>,
     private readonly jwtService: JwtService,
     private readonly userService: UsersService,
+    private readonly handlerError: HandlerErrorService,
   ) {}
 
   async login(
@@ -248,7 +253,7 @@ export class AuthService {
       },
     })) as UserActionDto[];
 
-    return await this.userService.update(id, { ...user, actions });
+    return await this.userService.update(id, { ...user, actions } as UserDto);
   }
 
   async givePermissionsToModule(
@@ -269,7 +274,7 @@ export class AuthService {
     return await this.userService.update(id, {
       ...user,
       actions: actions.flatMap((action) => ({ id: action.id })),
-    });
+    } as UserDto);
   }
 
   async removePermissionsToModule(
@@ -297,6 +302,8 @@ export class AuthService {
   async addPermission(userId: string, actionName: string) {
     const user = await this.userService.findOne(userId);
 
+    console.log('🚀 ~ addPermission ~ actionName:', actionName);
+
     const action = await this.moduleActionsRepository.findOne({
       where: { name: actionName },
     });
@@ -320,20 +327,31 @@ export class AuthService {
 
   async removePermission(userId: string, actionName: string) {
     const user = await this.userService.findOne(userId);
+
+    console.log('🚀 ~ removePermission ~ actionName:', actionName);
+
     const action = await this.moduleActionsRepository.findOne({
       where: { name: actionName },
     });
 
-    const userHasAction = user.actions.some(
-      (userAction) => userAction.id === action.id,
-    );
+    if (!action) {
+      throw new BadRequestException('Action not found');
+    }
 
-    if (userHasAction) return;
-
-    await this.userActionsRepository.delete({
-      user: { id: userId },
-      id: action.id,
+    const userAction = await this.userActionsRepository.findOne({
+      where: { action: { id: action.id }, user: { id: user.id } },
     });
+
+    if (!userAction) return 'No fue necesario eliminar la acción';
+
+    try {
+      const result = await this.userActionsRepository.delete({
+        id: userAction.id,
+      });
+      return result;
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async convertToAdminUserSeed(): Promise<
@@ -341,7 +359,7 @@ export class AuthService {
   > {
     const data = {
       first_name: 'demo name',
-      last_name: 'demo lastname',
+      last_name: 'demo lastName',
       email: 'demouser@example.com',
       password: '123456',
       cell_phone_number: '3001234567',
