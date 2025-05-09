@@ -135,8 +135,9 @@ describe('ConsumptionController (e2e)', () => {
   });
 
   describe('consumptions/create (POST)', () => {
-
-    
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_supply_consumption');
+    });
 
     it('should throw an exception for not sending a JWT to the protected path /consumptions/create', async () => {
       const bodyRequest: ConsumptionSuppliesDto = {
@@ -150,30 +151,7 @@ describe('ConsumptionController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /consumptions/create', async () => {
-      await authService.removePermission(
-        userTest.id,
-        'create_supply_consumption',
-      );
-
-      const bodyRequest: ConsumptionSuppliesDto = {
-        ...consumptionDtoTemplete,
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/consumptions/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(bodyRequest)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should create a new consumption', async () => {
-      await authService.addPermission(userTest.id, 'create_supply_consumption');
-
       const [supply1, supply2] = (
         await seedService.CreateShoppingExtended({ quantitySupplies: 3 })
       ).supplies;
@@ -208,7 +186,6 @@ describe('ConsumptionController (e2e)', () => {
     });
 
     it('should throw exception when fields are missing in the body', async () => {
-      await authService.addPermission(userTest.id, 'create_supply_consumption');
       const errorMessage = [
         'date must be a valid ISO 8601 date string',
         'details should not be empty',
@@ -290,6 +267,11 @@ describe('ConsumptionController (e2e)', () => {
         await consumptionService.createConsumption(data2);
         await consumptionService.createConsumption(data3);
       }
+
+      await authService.addPermission(
+        userTest.id,
+        'find_all_supplies_consumption',
+      );
     }, 10_000);
 
     it('should throw an exception for not sending a JWT to the protected path /consumptions/all', async () => {
@@ -300,7 +282,7 @@ describe('ConsumptionController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /consumptions/all', async () => {
+    /* it('should throw an exception because the user JWT does not have permissions for this action /consumptions/all', async () => {
       await authService.removePermission(
         userTest.id,
         'find_all_supplies_consumption',
@@ -313,13 +295,9 @@ describe('ConsumptionController (e2e)', () => {
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
       );
-    });
+    }); */
 
     it('should get only 10 consumption for default by not sending paging parameters', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'find_all_supplies_consumption',
-      );
       const response = await request
         .default(app.getHttpServer())
         .get('/consumptions/all')
@@ -331,18 +309,18 @@ describe('ConsumptionController (e2e)', () => {
       expect(response.body.current_page_count).toEqual(1);
     });
 
-    it('should return the specified number of consumption passed by the paging arguments by the URL', async () => {
-      const response1 = await request
+    it('should return the specified number of consumption passed by the paging arguments by the URL (1)', async () => {
+      const response = await request
         .default(app.getHttpServer())
         .get(`/consumptions/all`)
         .query({ limit: 11, offset: 0 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(response1.body.total_row_count).toEqual(18);
-      expect(response1.body.current_row_count).toEqual(11);
-      expect(response1.body.total_page_count).toEqual(2);
-      expect(response1.body.current_page_count).toEqual(1);
-      response1.body.records.forEach((consumption: SuppliesConsumption) => {
+      expect(response.body.total_row_count).toEqual(18);
+      expect(response.body.current_row_count).toEqual(11);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(1);
+      response.body.records.forEach((consumption: SuppliesConsumption) => {
         expect(consumption).toHaveProperty('id');
         expect(consumption).toHaveProperty('date');
         expect(consumption).toHaveProperty('createdDate');
@@ -364,18 +342,19 @@ describe('ConsumptionController (e2e)', () => {
           expect(detail.supply).toHaveProperty('name');
         });
       });
-
-      const response2 = await request
+    });
+    it('should return the specified number of consumption passed by the paging arguments by the URL (2)', async () => {
+      const response = await request
         .default(app.getHttpServer())
         .get(`/consumptions/all`)
         .query({ limit: 11, offset: 1 })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      expect(response2.body.total_row_count).toEqual(18);
-      expect(response2.body.current_row_count).toEqual(7);
-      expect(response2.body.total_page_count).toEqual(2);
-      expect(response2.body.current_page_count).toEqual(2);
-      response2.body.records.forEach((consumption: SuppliesConsumption) => {
+      expect(response.body.total_row_count).toEqual(18);
+      expect(response.body.current_row_count).toEqual(7);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(2);
+      response.body.records.forEach((consumption: SuppliesConsumption) => {
         expect(consumption).toHaveProperty('id');
         expect(consumption).toHaveProperty('date');
         expect(consumption).toHaveProperty('createdDate');
@@ -910,6 +889,13 @@ describe('ConsumptionController (e2e)', () => {
   });
 
   describe('consumptions/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'find_one_supplies_consumption',
+      );
+    });
+
     it('should throw an exception for not sending a JWT to the protected path consumptions/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -918,7 +904,7 @@ describe('ConsumptionController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action consumptions/one/:id', async () => {
+    /* it('should throw an exception because the user JWT does not have permissions for this action consumptions/one/:id', async () => {
       await authService.removePermission(
         userTest.id,
         'find_one_supplies_consumption',
@@ -931,14 +917,9 @@ describe('ConsumptionController (e2e)', () => {
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
       );
-    });
+    }); */
 
     it('should get one consumption', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'find_one_supplies_consumption',
-      );
-
       const record = (await seedService.CreateConsumption({})).consumption;
 
       const response = await request
@@ -998,6 +979,13 @@ describe('ConsumptionController (e2e)', () => {
   });
 
   describe('consumptions/update/one/:id (PATCH)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'update_one_supplies_consumption',
+      );
+    });
+
     it('should throw an exception for not sending a JWT to the protected path consumptions/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1006,7 +994,7 @@ describe('ConsumptionController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action consumptions/update/one/:id', async () => {
+    /*  it('should throw an exception because the user JWT does not have permissions for this action consumptions/update/one/:id', async () => {
       await authService.removePermission(
         userTest.id,
         'find_one_supplies_consumption',
@@ -1019,14 +1007,9 @@ describe('ConsumptionController (e2e)', () => {
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
       );
-    });
+    }); */
 
     it('should update one consumption', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'update_one_supplies_consumption',
-      );
-
       const supply = await seedService.CreateSupply({});
 
       await seedService.CreateShopping({ supplyId: supply.id, amount: 4500 });
@@ -1080,11 +1063,6 @@ describe('ConsumptionController (e2e)', () => {
     });
 
     it('Should throw an exception when trying to update an amount higher than allowed', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'update_one_supplies_consumption',
-      );
-
       const supply = await seedService.CreateSupply({});
 
       await seedService.CreateShopping({ supplyId: supply.id, amount: 4500 });
@@ -1121,11 +1099,6 @@ describe('ConsumptionController (e2e)', () => {
     });
 
     it('You should throw an exception for attempting to delete a record that has been cascaded out.', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'update_one_supplies_consumption',
-      );
-
       const record = (
         await seedService.CreateConsumptionExtended({ quantitySupplies: 3 })
       ).consumption;
@@ -1158,11 +1131,6 @@ describe('ConsumptionController (e2e)', () => {
     });
 
     it('You should throw an exception for attempting to modify a record that has been cascaded out.', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'update_one_supplies_consumption',
-      );
-
       const record = (await seedService.CreateConsumptionExtended({}))
         .consumption;
 
@@ -1196,10 +1164,6 @@ describe('ConsumptionController (e2e)', () => {
     });
 
     it('should throw exception for not finding consumption to update', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'update_one_supplies_consumption',
-      );
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/consumptions/update/one/${falseConsumptionId}`)
@@ -1223,6 +1187,13 @@ describe('ConsumptionController (e2e)', () => {
   });
 
   describe('consumptions/remove/one/:id (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'remove_one_supplies_consumption',
+      );
+    });
+
     it('should throw an exception for not sending a JWT to the protected path consumptions/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1231,26 +1202,7 @@ describe('ConsumptionController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action consumptions/remove/one/:id', async () => {
-      await authService.removePermission(
-        userTest.id,
-        'remove_one_supplies_consumption',
-      );
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/consumptions/remove/one/${falseConsumptionId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete one consumption', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'remove_one_supplies_consumption',
-      );
       const { id, details } = (await seedService.CreateConsumption({}))
         .consumption;
 
@@ -1294,13 +1246,11 @@ describe('ConsumptionController (e2e)', () => {
         );
       });
 
-      const { notFound } = await request
-        .default(app.getHttpServer())
-        .get(`/consumptions/one/${id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(404);
+      const consumption = await consumptionRepository.findOne({
+        where: { id },
+      });
 
-      expect(notFound).toBe(true);
+      expect(consumption).toBeNull();
     });
 
     it('You should throw exception for trying to delete a consumption that does not exist.', async () => {
@@ -1316,6 +1266,13 @@ describe('ConsumptionController (e2e)', () => {
   });
 
   describe('consumptions/remove/bulk (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'remove_bulk_supplies_consumption',
+      );
+    });
+
     it('should throw an exception for not sending a JWT to the protected path consumptions/remove/bulk ', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -1324,26 +1281,7 @@ describe('ConsumptionController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action consumptions/remove/bulk ', async () => {
-      await authService.removePermission(
-        userTest.id,
-        'remove_bulk_supplies_consumption',
-      );
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/consumptions/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete consumption bulk', async () => {
-      await authService.addPermission(
-        userTest.id,
-        'remove_bulk_supplies_consumption',
-      );
       const [
         { consumption: consumption1 },
         { consumption: consumption2 },
@@ -1385,6 +1323,105 @@ describe('ConsumptionController (e2e)', () => {
         .send({ recordsIds: [] })
         .expect(400);
       expect(body.message[0]).toEqual('recordsIds should not be empty');
+    });
+  });
+
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      await Promise.all([
+        authService.removePermission(userTest.id, 'create_supply_consumption'),
+        authService.removePermission(
+          userTest.id,
+          'find_all_supplies_consumption',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'find_one_supplies_consumption',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'update_one_supplies_consumption',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'remove_one_supplies_consumption',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'remove_bulk_supplies_consumption',
+        ),
+      ]);
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /consumptions/create', async () => {
+      const bodyRequest: ConsumptionSuppliesDto = {
+        ...consumptionDtoTemplete,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/consumptions/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /consumptions/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/consumptions/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /consumptions/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/consumptions/one/${falseConsumptionId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /consumptions/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/consumptions/update/one/${falseConsumptionId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /consumptions/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/consumptions/remove/one/${falseConsumptionId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /consumptions/remove/bulk', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/consumptions/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
     });
   });
 });
