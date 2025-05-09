@@ -349,6 +349,34 @@ export class SeedService {
       work,
     };
   }
+  async CreateHarvestForEmployee({
+    employeeId,
+  }: {
+    employeeId: string;
+  }): Promise<{ crop: Crop; harvest: Harvest }> {
+    const crop = (await this.CreateCrop({})) as Crop;
+    const data: HarvestDto = {
+      date: InformationGenerator.generateRandomDate(),
+      crop: { id: crop.id },
+      details: [
+        {
+          employee: { id: employeeId },
+          value_pay: 90_000,
+          amount: 100,
+        } as HarvestDetailsDto,
+      ],
+      value_pay: 90_000,
+      amount: 100,
+      observation: InformationGenerator.generateObservation(),
+    };
+
+    const harvest = await this.harvestsService.create(data);
+
+    return {
+      crop,
+      harvest,
+    };
+  }
   async CreateWorkForEmployee({
     employeeId,
   }: {

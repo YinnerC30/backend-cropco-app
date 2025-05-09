@@ -99,6 +99,10 @@ describe('EmployeesController (e2e)', () => {
   });
 
   describe('employees/create (POST)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'create_employee');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path /employees/create', async () => {
       const bodyRequest: CreateEmployeeDto = {
         ...employeeDtoTemplete,
@@ -111,27 +115,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /employees/create', async () => {
-      await authService.removePermission(userTest.id, 'create_employee');
-
-      const bodyRequest: CreateEmployeeDto = {
-        ...employeeDtoTemplete,
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/employees/create')
-        .set('Authorization', `Bearer ${token}`)
-        .send(bodyRequest)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should create a new employee', async () => {
-      await authService.addPermission(userTest.id, 'create_employee');
-
       const bodyRequest: CreateEmployeeDto = {
         ...employeeDtoTemplete,
       };
@@ -190,12 +174,13 @@ describe('EmployeesController (e2e)', () => {
   });
 
   describe('employees/all (GET)', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
       try {
         await employeeRepository.delete({});
         await Promise.all(
           Array.from({ length: 17 }).map(() => seedService.CreateEmployee({})),
         );
+        await authService.addPermission(userTest.id, 'find_all_employees');
       } catch (error) {
         console.log(error);
       }
@@ -209,20 +194,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action /employees/all', async () => {
-      await authService.removePermission(userTest.id, 'find_all_employees');
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/employees/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get only 10 employees for default by not sending paging parameters', async () => {
-      await authService.addPermission(userTest.id, 'find_all_employees');
       const response = await request
         .default(app.getHttpServer())
         .get('/employees/all')
@@ -318,6 +290,10 @@ describe('EmployeesController (e2e)', () => {
   });
 
   describe('employees/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'find_one_employee');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path employees/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -326,20 +302,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action employees/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_employee');
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/employees/one/${falseEmployeeId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should get one employee', async () => {
-      await authService.addPermission(userTest.id, 'find_one_employee');
       const { id } = await seedService.CreateEmployee({});
 
       const response = await request
@@ -394,6 +357,10 @@ describe('EmployeesController (e2e)', () => {
   });
 
   describe('employees/update/one/:id (PATCH)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'update_one_employee');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path employees/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -402,20 +369,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action employees/update/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'find_one_employee');
-      const response = await request
-        .default(app.getHttpServer())
-        .patch(`/employees/update/one/${falseEmployeeId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should update one employee', async () => {
-      await authService.addPermission(userTest.id, 'update_one_employee');
       const { id } = await seedService.CreateEmployee({});
       const { body } = await request
         .default(app.getHttpServer())
@@ -470,6 +424,10 @@ describe('EmployeesController (e2e)', () => {
   });
 
   describe('employees/remove/one/:id (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_one_employee');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path employees/remove/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -478,20 +436,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action employees/remove/one/:id', async () => {
-      await authService.removePermission(userTest.id, 'remove_one_employee');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/employees/remove/one/${falseEmployeeId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete one employee', async () => {
-      await authService.addPermission(userTest.id, 'remove_one_employee');
       const { id } = await seedService.CreateEmployee({});
 
       await request
@@ -547,6 +492,10 @@ describe('EmployeesController (e2e)', () => {
   });
 
   describe('employees/remove/bulk (DELETE)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(userTest.id, 'remove_bulk_employees');
+    });
+
     it('should throw an exception for not sending a JWT to the protected path employees/remove/bulk ', async () => {
       const response = await request
         .default(app.getHttpServer())
@@ -555,20 +504,7 @@ describe('EmployeesController (e2e)', () => {
       expect(response.body.message).toEqual('Unauthorized');
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action employees/remove/bulk ', async () => {
-      await authService.removePermission(userTest.id, 'remove_bulk_employees');
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/employees/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
     it('should delete employees bulk', async () => {
-      await authService.addPermission(userTest.id, 'remove_bulk_employees');
       const [employee1, employee2, employee3] = await Promise.all([
         await seedService.CreateEmployee({}),
         await seedService.CreateEmployee({}),
@@ -644,13 +580,458 @@ describe('EmployeesController (e2e)', () => {
     });
   });
 
-  // TODO: Implementar pruebas para estos endpoints
-  // TODO: pending-payments/all
-  // TODO: made-payments/all
-  // TODO: pending-payments/one/:id
-  // TODO: harvests/all
-  // TODO: works/all
-  // TODO: find/certification/one/:id
-  // TODO: find/top-employees-in-harvests
-  // TODO: find/top-employees-in-works
+  describe('employees/pending-payments/all (GET)', () => {
+    beforeAll(async () => {
+      try {
+        await employeeRepository.delete({});
+        await Promise.all([
+          seedService.CreateHarvest({ quantityEmployees: 8 }),
+          seedService.CreateWork({ quantityEmployees: 9 }),
+        ]);
+        await authService.addPermission(
+          userTest.id,
+          'find_all_employees_with_pending_payments',
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /employees/pending-payments/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/pending-payments/all')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only employees with pending payments', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/pending-payments/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.current_row_count).toEqual(17);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
+    });
+  });
+
+  describe('employees/made-payments/all (GET)', () => {
+    beforeAll(async () => {
+      try {
+        await employeeRepository.delete({});
+        const {
+          harvest: { details },
+        } = await seedService.CreateHarvest({ quantityEmployees: 8 });
+
+        await Promise.all([
+          seedService.CreatePayment({
+            employeeId: details[0].employee.id,
+            value_pay: details[0].value_pay,
+            harvestsId: [details[0].id],
+          }),
+
+          seedService.CreatePayment({
+            employeeId: details[1].employee.id,
+            value_pay: details[1].value_pay,
+            harvestsId: [details[1].id],
+          }),
+          seedService.CreatePayment({
+            employeeId: details[2].employee.id,
+            value_pay: details[2].value_pay,
+            harvestsId: [details[2].id],
+          }),
+        ]);
+
+        await authService.addPermission(
+          userTest.id,
+          'find_all_employees_with_made_payments',
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /employees/made-payments/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/made-payments/all')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only employees with made payments', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/made-payments/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(3);
+      expect(response.body.current_row_count).toEqual(3);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
+    });
+  });
+
+  describe('employees/pending-payments/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'find_one_employee_with_pending_payments',
+      );
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /employees/pending-payments/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/pending-payments/one/${falseEmployeeId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only one employee with pending payments', async () => {
+      const employee = await seedService.CreateEmployee({});
+
+      const harvest = await seedService.CreateHarvestForEmployee({
+        employeeId: employee.id,
+      });
+      const work = await seedService.CreateWorkForEmployee({
+        employeeId: employee.id,
+      });
+
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/pending-payments/one/${employee.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const body = response.body as Employee;
+
+      console.log('🚀 ~ it ~ body:', body);
+      expect(body).toHaveProperty('id');
+      expect(body).toHaveProperty('first_name');
+      expect(body).toHaveProperty('last_name');
+      expect(body).toHaveProperty('email');
+      expect(body).toHaveProperty('cell_phone_number');
+      expect(body).toHaveProperty('address');
+      expect(body).toHaveProperty('harvests_detail');
+      expect(body.harvests_detail).toBeInstanceOf(Array);
+      expect(body).toHaveProperty('works_detail');
+      expect(body.works_detail).toBeInstanceOf(Array);
+      expect(body).toHaveProperty('createdDate');
+      expect(body).toHaveProperty('updatedDate');
+      expect(body).toHaveProperty('deletedDate');
+      expect(body.deletedDate).toBeNull();
+
+      if (body.works_detail.length > 0) {
+        body.works_detail.forEach((workDetail) => {
+          expect(workDetail.payment_is_pending).toBe(true);
+        });
+      }
+      if (body.harvests_detail.length > 0) {
+        body.harvests_detail.forEach((harvestDetail) => {
+          expect(harvestDetail.payment_is_pending).toBe(true);
+        });
+      }
+    });
+  });
+
+  describe('employees/harvests/all (GET)', () => {
+    beforeAll(async () => {
+      try {
+        await employeeRepository.delete({});
+
+        await seedService.CreateHarvest({ quantityEmployees: 8 });
+
+        await authService.addPermission(
+          userTest.id,
+          'find_all_employees_with_harvests',
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /employees/harvests/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/harvests/all')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only employees with harvests', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/harvests/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(8);
+      expect(response.body.current_row_count).toEqual(8);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
+
+      response.body.records.forEach((employee) => {
+        expect(employee).toHaveProperty('id');
+        expect(employee).toHaveProperty('first_name');
+        expect(employee).toHaveProperty('last_name');
+        expect(employee).toHaveProperty('email');
+        expect(employee).toHaveProperty('cell_phone_number');
+        expect(employee).toHaveProperty('address');
+        expect(employee).toHaveProperty('harvests_detail');
+        expect(employee.harvests_detail).toBeInstanceOf(Array);
+        expect(employee).toHaveProperty('createdDate');
+        expect(employee).toHaveProperty('updatedDate');
+        expect(employee).toHaveProperty('deletedDate');
+        expect(employee.deletedDate).toBeNull();
+
+        expect(employee.harvests_detail).toBeInstanceOf(Array);
+        expect(employee.harvests_detail.length).toBeGreaterThan(0);
+      });
+    });
+  });
+  describe('employees/works/all (GET)', () => {
+    beforeAll(async () => {
+      try {
+        await employeeRepository.delete({});
+
+        await seedService.CreateWork({ quantityEmployees: 8 });
+
+        await authService.addPermission(
+          userTest.id,
+          'find_all_employees_with_works',
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /employees/works/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/works/all')
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only employees with works', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/works/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(8);
+      expect(response.body.current_row_count).toEqual(8);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
+
+      response.body.records.forEach((employee) => {
+        expect(employee).toHaveProperty('id');
+        expect(employee).toHaveProperty('first_name');
+        expect(employee).toHaveProperty('last_name');
+        expect(employee).toHaveProperty('email');
+        expect(employee).toHaveProperty('cell_phone_number');
+        expect(employee).toHaveProperty('address');
+        expect(employee).toHaveProperty('works_detail');
+        expect(employee.works_detail).toBeInstanceOf(Array);
+        expect(employee).toHaveProperty('createdDate');
+        expect(employee).toHaveProperty('updatedDate');
+        expect(employee).toHaveProperty('deletedDate');
+        expect(employee.deletedDate).toBeNull();
+
+        expect(employee.works_detail).toBeInstanceOf(Array);
+        expect(employee.works_detail.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe('employees/find/certification/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await authService.addPermission(
+        userTest.id,
+        'find_certification_employee',
+      );
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path employees/find/certification/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/find/certification/one/${falseEmployeeId}`)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only one employee with certification', async () => {
+      const record = (await seedService.CreateEmployee({})) as Employee;
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/find/certification/one/${record.id}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(response.body).toBeDefined();
+      expect(response.body).toBeInstanceOf(Buffer);
+    });
+  });
+
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      await Promise.all([
+        authService.removePermission(userTest.id, 'create_employee'),
+        authService.removePermission(userTest.id, 'find_all_employees'),
+        authService.removePermission(userTest.id, 'find_one_employee'),
+        authService.removePermission(userTest.id, 'update_one_employee'),
+        authService.removePermission(userTest.id, 'remove_one_employee'),
+        authService.removePermission(userTest.id, 'remove_bulk_employees'),
+
+        authService.removePermission(
+          userTest.id,
+          'find_all_employees_with_pending_payments',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'find_all_employees_with_made_payments',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'find_all_employees_with_harvests',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'find_all_employees_with_works',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'find_certification_employee',
+        ),
+      ]);
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /employees/create', async () => {
+      const bodyRequest: CreateEmployeeDto = {
+        ...employeeDtoTemplete,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/employees/create')
+        .set('Authorization', `Bearer ${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /employees/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/one/${falseEmployeeId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .patch(`/employees/update/one/${falseEmployeeId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/employees/remove/one/${falseEmployeeId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/employees/remove/bulk')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/pending-payments/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/pending-payments/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/made-payments/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/made-payments/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/harvests/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/harvests/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/works/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/works/all')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action employees/find/certification/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/find/certification/one/${falseEmployeeId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+  });
 });
