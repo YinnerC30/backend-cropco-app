@@ -352,8 +352,8 @@ export class HarvestService {
     }
 
     let recordHarvestCropStock = await queryRunner.manager
-    .getRepository(HarvestStock)
-    .findOne({
+      .getRepository(HarvestStock)
+      .findOne({
         relations: { crop: true },
         where: { crop: { id: cropId } },
       });
@@ -363,7 +363,7 @@ export class HarvestService {
         `Creando nuevo registro de stock para cropId: ${cropId}`,
       );
       const newRecord = queryRunner.manager.create(HarvestStock, {
-        crop: {id: cropId},
+        crop: { id: cropId },
         amount: 0,
       });
 
@@ -381,7 +381,6 @@ export class HarvestService {
     } else if (type_update === 'decrement') {
       const amountActually = recordHarvestCropStock?.amount ?? 0;
       if (amountActually < amount) {
-        
         throw new InsufficientHarvestStockException(
           amountActually,
           recordHarvestCropStock.crop.id,
@@ -576,7 +575,7 @@ export class HarvestService {
     return this.printerService.createPdf({ docDefinition });
   }
 
-  async getHarvestDataForYear(
+  private async getHarvestDataForYear(
     year: number,
     cropId: string,
     employeeId: string,
@@ -632,7 +631,7 @@ export class HarvestService {
   }
 
   async findTotalHarvestInYear({
-    year = 2025,
+    year = new Date().getFullYear(),
     crop = '' as UUID,
     employee = '' as UUID,
   }: QueryParamsTotalHarvestsInYearDto) {

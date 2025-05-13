@@ -367,9 +367,9 @@ export class SalesService {
   }
 
   async findTotalSalesInYear({
-    year = 2025,
-    crop = '',
-    client = '',
+    year = new Date().getFullYear(),
+    cropId = '',
+    clientId = '',
   }: QueryTotalSalesInYearDto) {
     const previousYear = year - 1;
 
@@ -385,8 +385,8 @@ export class SalesService {
         .leftJoin('details.client', 'client')
         .select([
           'CAST(EXTRACT(MONTH FROM sale.date) AS INTEGER) as month',
-          'CAST(SUM(DISTINCT details.total) AS INTEGER) as total',
-          'CAST(SUM(DISTINCT details.quantity) AS INTEGER) as quantity',
+          'CAST(SUM(DISTINCT details.value_pay) AS INTEGER) as value_pay',
+          'CAST(SUM(DISTINCT details.amount) AS INTEGER) as amount',
         ])
         .where('EXTRACT(YEAR FROM sale.date) = :year', { year })
         .groupBy('EXTRACT(MONTH FROM sale.date)')
@@ -412,8 +412,8 @@ export class SalesService {
             return {
               month_name: monthName,
               month_number: monthNumber,
-              total: 0,
-              quantity: 0,
+              value_pay: 0,
+              amount: 0,
             };
           }
 
@@ -430,8 +430,12 @@ export class SalesService {
       return formatData;
     };
 
-    const currentYearData = await getHarvestData(year, crop, client);
-    const previousYearData = await getHarvestData(previousYear, crop, client);
+    const currentYearData = await getHarvestData(year, cropId, clientId);
+    const previousYearData = await getHarvestData(
+      previousYear,
+      cropId,
+      clientId,
+    );
 
     const saleDataByYear = [
       { year, data: currentYearData },

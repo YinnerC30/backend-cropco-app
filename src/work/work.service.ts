@@ -330,7 +330,7 @@ export class WorkService {
   }
 
   async findTotalWorkInYear({
-    year = 2025,
+    year = new Date().getFullYear(),
     cropId = '',
     employeeId = '',
   }: QueryTotalWorksInYearDto) {

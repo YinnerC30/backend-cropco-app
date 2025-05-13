@@ -468,6 +468,42 @@ export class SeedService {
     const sale = await this.salesService.create(data);
     return { client, sale };
   }
+  async CreateSaleGeneric({
+    isReceivable = false,
+    quantity = 15,
+    date = InformationGenerator.generateRandomDate({}),
+  }: {
+    isReceivable?: boolean;
+    quantity?: number;
+    date?: string;
+  }): Promise<{ sale: Sale; client: Client; crop: Crop }> {
+    const client: Client = (await this.CreateClient({})) as Client;
+
+    const { crop, harvest } = await this.CreateHarvest({});
+    await this.CreateHarvestProcessed({
+      cropId: crop.id,
+      harvestId: harvest.id,
+      amount: 100,
+    });
+
+    const data: SaleDto = {
+      date: date,
+      amount: quantity,
+      value_pay: 840_000,
+      details: [
+        {
+          amount: quantity,
+          value_pay: 840_000,
+          crop: { id: crop.id },
+          client: { id: client.id },
+          is_receivable: isReceivable,
+        } as SaleDetailsDto,
+      ],
+    };
+
+    const sale = await this.salesService.create(data);
+    return { client, sale, crop };
+  }
 
   async CreateSupply({
     mapperToDto = false,
@@ -528,11 +564,13 @@ export class SeedService {
     return { crop, consumption, supply };
   }
   async CreateConsumptionExtended({
+    date = InformationGenerator.generateRandomDate({}),
     quantitySupplies = 2,
     amountForItem = 2000,
   }: {
     quantitySupplies?: number;
     amountForItem?: number;
+    date?: string;
   }): Promise<{
     consumption: SuppliesConsumption;
     crop: Crop;
@@ -551,7 +589,7 @@ export class SeedService {
     )) as Supply[];
 
     const data: ConsumptionSuppliesDto = {
-      date: InformationGenerator.generateRandomDate({}),
+      date: date,
       details: supplies.map((supply) => {
         return {
           supply: { id: supply.id },

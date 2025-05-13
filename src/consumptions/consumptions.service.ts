@@ -22,6 +22,7 @@ import { QueryParamsConsumption } from './dto/query-params-consumption.dto';
 import { SuppliesConsumptionDetails } from './entities/supplies-consumption-details.entity';
 import { SuppliesConsumption } from './entities/supplies-consumption.entity';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
+import { QueryTotalConsumptionsInYearDto } from './dto/query-total-consumptions-year';
 
 @Injectable()
 export class ConsumptionsService {
@@ -39,9 +40,7 @@ export class ConsumptionsService {
     private readonly handlerError: HandlerErrorService,
 
     private dataSource: DataSource,
-  ) {
-    
-  }
+  ) {}
 
   async createConsumption(
     createConsumptionSuppliesDto: ConsumptionSuppliesDto,
@@ -387,70 +386,68 @@ export class ConsumptionsService {
     return { success, failed };
   }
 
+  private async getHarvestData(year: number, cropId: string, supplyId: string) {
+    const queryBuilder = this.suppliesConsumptionRepository
+      .createQueryBuilder('consumptions')
+      .leftJoin('consumptions.details', 'details')
+      .leftJoin('details.crop', 'crop')
+      .leftJoin('details.supply', 'supply')
+      .select([
+        'CAST(EXTRACT(MONTH FROM consumptions.date) AS INTEGER) as month',
+        'CAST(COUNT(consumptions) AS INTEGER) as quantity_consumptions',
+      ])
+      .where('EXTRACT(YEAR FROM consumptions.date) = :year', { year })
+      .groupBy('EXTRACT(MONTH FROM consumptions.date)')
+      .orderBy('month', 'ASC');
+
+    if (cropId) {
+      queryBuilder.andWhere('crop.id = :cropId', { cropId });
+    }
+    if (supplyId) {
+      queryBuilder.andWhere('supply.id = :supplyId', { supplyId });
+    }
+
+    const rawData = await queryBuilder.getRawMany();
+
+    const formatData = monthNamesES.map((monthName: string, index: number) => {
+      const monthNumber = index + 1;
+      const record = rawData.find((item) => {
+        return item.month === monthNumber;
+      });
+
+      if (!record) {
+        return {
+          month_name: monthName,
+          month_number: monthNumber,
+          quantity_consumptions: 0,
+        };
+      }
+
+      delete record.month;
+
+      return {
+        ...record,
+        month_name: monthName,
+        month_number: monthNumber,
+      };
+    });
+
+    return formatData;
+  }
+
   async findTotalConsumptionsInYearAndPreviousYear({
-    year = 2025,
-    crop = '',
-    supply = '',
-  }: any) {
+    year = new Date().getFullYear(),
+    cropId = '',
+    supplyId = '',
+  }: QueryTotalConsumptionsInYearDto) {
     const previousYear = year - 1;
 
-    const getHarvestData = async (
-      year: number,
-      cropId: string,
-      supplyId: string,
-    ) => {
-      const queryBuilder = this.suppliesConsumptionRepository
-        .createQueryBuilder('consumptions')
-        .leftJoin('consumptions.details', 'details')
-        .leftJoin('details.crop', 'crop')
-        .leftJoin('details.supply', 'supply')
-        .select([
-          'CAST(EXTRACT(MONTH FROM consumptions.date) AS INTEGER) as month',
-          'CAST(COUNT(consumptions) AS INTEGER) as quantity_consumptions',
-        ])
-        .where('EXTRACT(YEAR FROM consumptions.date) = :year', { year })
-        .groupBy('EXTRACT(MONTH FROM consumptions.date)')
-        .orderBy('month', 'ASC');
-
-      if (cropId) {
-        queryBuilder.andWhere('crop.id = :cropId', { cropId });
-      }
-      if (supplyId) {
-        queryBuilder.andWhere('supply.id = :supplyId', { supplyId });
-      }
-
-      const rawData = await queryBuilder.getRawMany();
-
-      const formatData = monthNamesES.map(
-        (monthName: string, index: number) => {
-          const monthNumber = index + 1;
-          const record = rawData.find((item) => {
-            return item.month === monthNumber;
-          });
-
-          if (!record) {
-            return {
-              month_name: monthName,
-              month_number: monthNumber,
-              quantity_consumptions: 0,
-            };
-          }
-
-          delete record.month;
-
-          return {
-            ...record,
-            month_name: monthName,
-            month_number: monthNumber,
-          };
-        },
-      );
-
-      return formatData;
-    };
-
-    const currentYearData = await getHarvestData(year, crop, supply);
-    const previousYearData = await getHarvestData(previousYear, crop, supply);
+    const currentYearData = await this.getHarvestData(year, cropId, supplyId);
+    const previousYearData = await this.getHarvestData(
+      previousYear,
+      cropId,
+      supplyId,
+    );
 
     const saleDataByYear = [
       { year, data: currentYearData },

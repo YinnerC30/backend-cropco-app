@@ -13,6 +13,7 @@ import { QueryTotalSalesInYearDto } from 'src/sales/dto/query-total-sales-year';
 import { SalesService } from 'src/sales/sales.service';
 import { ConsumptionsService } from 'src/consumptions/consumptions.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { QueryTotalConsumptionsInYearDto } from 'src/consumptions/dto/query-total-consumptions-year';
 
 export const pathsDashboardController: PathsController = {
   findTopEmployeesInHarvests: {
@@ -138,7 +139,9 @@ export class DashboardController {
 
   // * Consumptions
   @Get(findTotalConsumptionsInYearAndPreviousYear.path)
-  async findTotalConsumptionsInYearAndPreviousYear(@Query() params: any) {
+  async findTotalConsumptionsInYearAndPreviousYear(
+    @Query() params: QueryTotalConsumptionsInYearDto,
+  ) {
     return this.consumptionsService.findTotalConsumptionsInYearAndPreviousYear(
       params,
     );

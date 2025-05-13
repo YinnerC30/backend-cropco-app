@@ -16,6 +16,7 @@ import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 import { Client } from 'src/clients/entities/client.entity';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
+import { Work } from 'src/work/entities/work.entity';
 
 describe('DashboardController (e2e)', () => {
   let app: INestApplication;
@@ -29,6 +30,7 @@ describe('DashboardController (e2e)', () => {
   let clientsRepository: Repository<Client>;
   let cropsRepository: Repository<Crop>;
   let harvestsRepository: Repository<Harvest>;
+  let worksRepository: Repository<Work>;
 
   let dateWithCurrentYear: string;
   let dateWithPastYear: string;
@@ -76,6 +78,9 @@ describe('DashboardController (e2e)', () => {
     );
     harvestsRepository = moduleFixture.get<Repository<Harvest>>(
       getRepositoryToken(Harvest),
+    );
+    worksRepository = moduleFixture.get<Repository<Work>>(
+      getRepositoryToken(Work),
     );
 
     app = moduleFixture.createNestApplication();
@@ -630,6 +635,370 @@ describe('DashboardController (e2e)', () => {
     });
   });
 
+  describe('dashboard/find/total-harvest-in-year (GET)', () => {
+    beforeAll(async () => {
+      await harvestsRepository.delete({});
+      await authService.addPermission(
+        userTest.id,
+        'find_total_harvest_in_year_chart',
+      );
+
+      await Promise.all([
+        // Crear cosechas en el año anterior
+        await seedService.CreateHarvest({
+          date: new Date('2024-01-01').toISOString(),
+        }),
+        await seedService.CreateHarvest({
+          date: new Date('2024-02-01').toISOString(),
+        }),
+        await seedService.CreateHarvest({
+          date: new Date('2024-03-01').toISOString(),
+        }),
+        await seedService.CreateHarvest({
+          date: new Date('2024-04-01').toISOString(),
+        }),
+
+        // Crear cosechas en el año actual
+        await seedService.CreateHarvest({
+          date: new Date('2025-01-01').toISOString(),
+        }),
+        await seedService.CreateHarvest({
+          date: new Date('2025-02-01').toISOString(),
+        }),
+        await seedService.CreateHarvest({
+          date: new Date('2025-03-01').toISOString(),
+        }),
+        await seedService.CreateHarvest({
+          date: new Date('2025-04-01').toISOString(),
+        }),
+      ]);
+    });
+
+    it('should return the total harvest in year - stable', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-harvest-in-year')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+
+      expect(body).toHaveProperty('growth');
+      expect(body.growth).toHaveProperty('growth_value');
+      expect(body.growth).toHaveProperty('difference');
+      expect(body.growth).toHaveProperty('status');
+      expect(body.growth.status).toBe('stable');
+      expect(body.growth).toHaveProperty('total_current');
+      expect(body.growth.total_current).toBe(600);
+      expect(body.growth).toHaveProperty('total_previous');
+      expect(body.growth.total_previous).toBe(600);
+
+      expect(body).toHaveProperty('years');
+
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('amount');
+          expect(month).toHaveProperty('value_pay');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
+    it('should return the total harvest in year - increment', async () => {
+      await seedService.CreateHarvest({
+        date: new Date('2025-05-01').toISOString(),
+      });
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-harvest-in-year')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+
+      expect(body).toHaveProperty('growth');
+      expect(body.growth).toHaveProperty('growth_value');
+      expect(body.growth).toHaveProperty('difference');
+      expect(body.growth).toHaveProperty('status');
+      expect(body.growth.status).toBe('increment');
+      expect(body.growth).toHaveProperty('total_current');
+      expect(body.growth.total_current).toBe(750);
+      expect(body.growth).toHaveProperty('total_previous');
+      expect(body.growth.total_previous).toBe(600);
+
+      expect(body).toHaveProperty('years');
+
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('amount');
+          expect(month).toHaveProperty('value_pay');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
+    it('should return the total harvest in year - decrement', async () => {
+      await seedService.CreateHarvest({
+        date: new Date('2024-05-01').toISOString(),
+        amount: 500,
+      });
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-harvest-in-year')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+
+      expect(body).toHaveProperty('growth');
+      expect(body.growth).toHaveProperty('growth_value');
+      expect(body.growth).toHaveProperty('difference');
+      expect(body.growth).toHaveProperty('status');
+      expect(body.growth.status).toBe('decrement');
+      expect(body.growth).toHaveProperty('total_current');
+      expect(body.growth.total_current).toBeGreaterThan(500);
+      expect(body.growth).toHaveProperty('total_previous');
+      expect(body.growth.total_previous).toBe(1100);
+
+      expect(body).toHaveProperty('years');
+
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('amount');
+          expect(month).toHaveProperty('value_pay');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
+
+    it('should return invalid status for sending year with no records available to compare', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-harvest-in-year')
+        .set('Authorization', `Bearer ${token}`)
+        .query({ year: '2024' })
+        .expect(200);
+      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+
+      expect(body).toHaveProperty('growth');
+      expect(body.growth).toHaveProperty('growth_value');
+      expect(body.growth).toHaveProperty('difference');
+      expect(body.growth).toHaveProperty('status');
+      expect(body.growth.status).toBe('no-valid');
+      expect(body.growth).toHaveProperty('total_current');
+      expect(body.growth).toHaveProperty('total_previous');
+
+      expect(body).toHaveProperty('years');
+
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('amount');
+          expect(month).toHaveProperty('value_pay');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
+  });
+  describe('dashboard/find/total-work-in-year (GET)', () => {
+    beforeAll(async () => {
+      await harvestsRepository.delete({});
+      await authService.addPermission(
+        userTest.id,
+        'find_total_work_in_year_chart',
+      );
+
+      await Promise.all([
+        // Crear cosechas en el año anterior
+        await seedService.CreateWork({
+          date: new Date('2024-01-01').toISOString(),
+        }),
+        await seedService.CreateWork({
+          date: new Date('2024-02-01').toISOString(),
+        }),
+        await seedService.CreateWork({
+          date: new Date('2024-03-01').toISOString(),
+        }),
+        await seedService.CreateWork({
+          date: new Date('2024-04-01').toISOString(),
+        }),
+
+        // Crear cosechas en el año actual
+        await seedService.CreateWork({
+          date: new Date('2025-01-01').toISOString(),
+        }),
+        await seedService.CreateWork({
+          date: new Date('2025-02-01').toISOString(),
+        }),
+        await seedService.CreateWork({
+          date: new Date('2025-03-01').toISOString(),
+        }),
+        await seedService.CreateWork({
+          date: new Date('2025-04-01').toISOString(),
+        }),
+      ]);
+    });
+
+    it('should return the total work in year', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-work-in-year')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+
+      expect(body).toHaveProperty('years');
+
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
+
+        expect(year.data).toBeInstanceOf(Array);
+
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('quantity_works');
+          expect(month).toHaveProperty('value_pay');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
+  });
+  describe('dashboard/find/total-sales-in-year (GET)', () => {
+    beforeAll(async () => {
+      await harvestsRepository.delete({});
+      await authService.addPermission(
+        userTest.id,
+        'find_total_sales_in_year_chart',
+      );
+
+      await Promise.all([
+        // Crear cosechas en el año anterior
+        await seedService.CreateSaleGeneric({
+          date: new Date('2024-01-01').toISOString(),
+        }),
+        await seedService.CreateSaleGeneric({
+          date: new Date('2024-02-01').toISOString(),
+        }),
+        await seedService.CreateSaleGeneric({
+          date: new Date('2024-03-01').toISOString(),
+        }),
+        await seedService.CreateSaleGeneric({
+          date: new Date('2024-04-01').toISOString(),
+        }),
+        // Crear cosechas en el año actual
+        await seedService.CreateSaleGeneric({
+          date: new Date('2025-01-01').toISOString(),
+        }),
+        await seedService.CreateSaleGeneric({
+          date: new Date('2025-02-01').toISOString(),
+        }),
+        await seedService.CreateSaleGeneric({
+          date: new Date('2025-03-01').toISOString(),
+        }),
+        await seedService.CreateSaleGeneric({
+          date: new Date('2025-04-01').toISOString(),
+        }),
+      ]);
+    }, 15_000);
+
+    it('should return the total sales in year', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-sales-in-year')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+
+      expect(body).toHaveProperty('years');
+
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
+
+        expect(year.data).toBeInstanceOf(Array);
+
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('amount');
+          expect(month).toHaveProperty('value_pay');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
+  });
+
+  describe('dashboard/find/total-consumptions-in-year (GET)', () => {
+    beforeAll(async () => {
+      await harvestsRepository.delete({});
+      await authService.addPermission(
+        userTest.id,
+        'find_total_consumptions_in_year_chart',
+      );
+
+      await Promise.all([
+        // Crear cosechas en el año anterior
+        await seedService.CreateConsumptionExtended({
+          date: new Date('2024-01-01').toISOString(),
+        }),
+        await seedService.CreateConsumptionExtended({
+          date: new Date('2024-02-01').toISOString(),
+        }),
+        await seedService.CreateConsumptionExtended({
+          date: new Date('2024-03-01').toISOString(),
+        }),
+        await seedService.CreateConsumptionExtended({
+          date: new Date('2024-04-01').toISOString(),
+        }),
+        // Crear cosechas en el año actual
+        await seedService.CreateConsumptionExtended({
+          date: new Date('2025-01-01').toISOString(),
+        }),
+        await seedService.CreateConsumptionExtended({
+          date: new Date('2025-02-01').toISOString(),
+        }),
+        await seedService.CreateConsumptionExtended({
+          date: new Date('2025-03-01').toISOString(),
+        }),
+        await seedService.CreateConsumptionExtended({
+          date: new Date('2025-04-01').toISOString(),
+        }),
+      ]);
+    }, 15_000);
+
+    it('should return the total consumptions in year', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-consumptions-in-year')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+
+      expect(body).toHaveProperty('years');
+
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
+
+        expect(year.data).toBeInstanceOf(Array);
+
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('quantity_consumptions');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
+  });
+
   describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
     beforeAll(async () => {
       const result = await Promise.all([
@@ -649,6 +1018,18 @@ describe('DashboardController (e2e)', () => {
         authService.removePermission(
           userTest.id,
           'find_count_harvests_and_total_stock_chart',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'find_total_work_in_year_chart',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'find_total_sales_in_year_chart',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'find_total_consumptions_in_year_chart',
         ),
       ]);
     });
@@ -697,6 +1078,46 @@ describe('DashboardController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .get('/dashboard/find/count-harvest-and-total-stock')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/total-harvest  -in-year', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-harvest-in-year')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/total-work-in-year', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-work-in-year')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/total-sales-in-year', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-sales-in-year')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/total-consumptions-in-year', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-consumptions-in-year')
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(

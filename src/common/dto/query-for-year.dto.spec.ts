@@ -5,7 +5,7 @@ describe('QueryForYear DTO', () => {
   it('should validate correctly when year is valid', async () => {
     // Arrange
     const dto = new QueryForYearDto();
-    dto.year = 2024; // Valor válido según el DTO
+    dto.year = new Date().getFullYear() - 1; // Valor válido según el DTO
 
     // Act
     const errors = await validate(dto);
@@ -17,7 +17,7 @@ describe('QueryForYear DTO', () => {
   it('should fail validation when year is below the minimum value', async () => {
     // Arrange
     const dto = new QueryForYearDto();
-    dto.year = 2023; // Valor inválido (menor que 2024)
+    dto.year = new Date().getFullYear() - 2; // Valor inválido (menor que 2024)
 
     // Act
     const errors = await validate(dto);
