@@ -28,49 +28,34 @@ import { Work } from 'src/work/entities/work.entity';
 import { WorkService } from 'src/work/work.service';
 import { DeepPartial } from 'typeorm';
 import { UsersService } from './../users/users.service';
-import { initialData } from './data/seed-data';
-// import { AuthService } from 'src/auth/auth.service';
 import { CreateClientDto } from 'src/clients/dto/create-client.dto';
 
+import { plainToClass } from 'class-transformer';
 import { Client } from 'src/clients/entities/client.entity';
+import { ConsumptionSuppliesDetailsDto } from 'src/consumptions/dto/consumption-supplies-details.dto';
+import { SuppliesConsumption } from 'src/consumptions/entities/supplies-consumption.entity';
 import { CreateCropDto } from 'src/crops/dto/create-crop.dto';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { CreateEmployeeDto } from 'src/employees/dto/create-employee.dto';
 import { HarvestDetailsDto } from 'src/harvest/dto/harvest-details.dto';
+import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity';
+import { MethodOfPayment } from 'src/payments/entities/payment.entity';
 import { SaleDetailsDto } from 'src/sales/dto/sale-details.dto';
 import { Sale } from 'src/sales/entities/sale.entity';
 import { ShoppingSuppliesDetailsDto } from 'src/shopping/dto/shopping-supplies-details.dto';
-import {
-  SuppliesShopping,
-  SuppliesShoppingDetails,
-} from 'src/shopping/entities';
+import { ShoppingSuppliesDto } from 'src/shopping/dto/shopping-supplies.dto';
+import { SuppliesShopping } from 'src/shopping/entities';
 import { CreateSupplierDto } from 'src/suppliers/dto/create-supplier.dto';
 import { Supplier } from 'src/suppliers/entities/supplier.entity';
 import { CreateSupplyDto } from 'src/supplies/dto/create-supply.dto';
 import { Supply } from 'src/supplies/entities/supply.entity';
+import { WorkDetails } from 'src/work/entities/work-details.entity';
 import { InformationGenerator } from './helpers/InformationGenerator';
 import { EntityConvertedToDto } from './interfaces/EntityConvertedToDto';
-import { ConsumptionSuppliesDetailsDto } from 'src/consumptions/dto/consumption-supplies-details.dto';
-import { SuppliesConsumption } from 'src/consumptions/entities/supplies-consumption.entity';
-import { MethodOfPayment } from 'src/payments/entities/payment.entity';
-import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
-import { WorkDetails } from 'src/work/entities/work-details.entity';
-import { validate } from 'class-validator';
-import { plainToClass } from 'class-transformer';
-import { ShoppingSuppliesDto } from 'src/shopping/dto/shopping-supplies.dto';
 
 @Injectable()
 export class SeedService {
-  private cropIds = [];
-  private employeeIds = [];
-  private clientsIds = [];
-  private suppliesIds = [];
-  private suppliersIds = [];
-  private harvestIds = [];
-  private harvestDetails = [];
-  private worksIds = [];
-
   constructor(
     private readonly usersService: UsersService,
     private readonly cropsService: CropsService,
@@ -91,21 +76,154 @@ export class SeedService {
     await this.clearDatabase();
     await this.authService.createModulesWithActions();
     await this.authService.convertToAdminUserSeed();
-    // await this.insertNewUsers();
-    // await this.insertNewClients();
-    // await this.insertNewSuppliers();
-    // await this.insertNewSupplies();
-    // await this.insertNewEmployees();
-    // await this.insertNewCrops();
-    // await this.insertNewHarvests();
-    // await this.insertNewHarvestsProcessed();
-    // await this.insertNewShoppingSupplies();
-    // await this.insertNewWork();
-    // await this.insertNewConsumptionSupplies();
-    // await this.insertNewSales();
-    // await this.insertNewPayments();
+    const insertedUsers = await this.insertNewUsers();
+    const insertedClients = await this.insertNewClients();
+    const insertedSuppliers = await this.insertNewSuppliers();
+    const insertedSupplies = await this.insertNewSupplies();
+    const insertedEmployees = await this.insertNewEmployees();
+    const insertedCrops = await this.insertNewCrops();
+    const insertedHarvests = await this.insertNewHarvests();
+    const insertedWorks = await this.insertNewWorks();
+    const insertedSales = await this.insertNewSales();
+    const insertedShoppingSupplies = await this.insertNewShoppingSupplies();
+    const insertedConsumptionSupplies =
+      await this.insertNewConsumptionSupplies();
 
-    return 'SEED EXECUTED';
+    return {
+      message: 'Seed executed successfully',
+      history: {
+        insertedUsers,
+        insertedClients,
+        insertedSuppliers,
+        insertedSupplies,
+        insertedEmployees,
+        insertedCrops,
+        insertedHarvests,
+        insertedWorks,
+        insertedSales,
+        insertedShoppingSupplies,
+        insertedConsumptionSupplies,
+      },
+    };
+  }
+  async insertNewSales() {
+    try {
+      for (let index = 0; index < 6; index++) {
+        await this.CreateSaleGeneric({});
+      }
+
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+  async insertNewConsumptionSupplies() {
+    try {
+      for (let index = 0; index < 6; index++) {
+        await this.CreateConsumption({});
+      }
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async insertNewWorks() {
+    try {
+      await Promise.all(
+        Array.from({ length: 10 }).map(() => this.CreateWork({})),
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async insertNewShoppingSupplies() {
+    try {
+      for (let index = 0; index < 6; index++) {
+        await this.CreateShopping({});
+      }
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async insertNewHarvests() {
+    try {
+      await Promise.all(
+        Array.from({ length: 10 }).map(() => this.CreateHarvest({})),
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async insertNewCrops() {
+    try {
+      await Promise.all(
+        Array.from({ length: 10 }).map(() => this.CreateCrop({})),
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async insertNewEmployees() {
+    try {
+      await Promise.all(
+        Array.from({ length: 10 }).map(() => this.CreateEmployee({})),
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async insertNewSupplies() {
+    try {
+      await Promise.all(
+        Array.from({ length: 10 }).map(() => this.CreateSupply({})),
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async insertNewSuppliers() {
+    try {
+      await Promise.all(
+        Array.from({ length: 10 }).map(() => this.CreateSupplier({})),
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+  async insertNewClients() {
+    try {
+      await Promise.all(
+        Array.from({ length: 10 }).map(() => this.CreateClient({})),
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async insertNewUsers() {
+    try {
+      await Promise.all(
+        Array.from({ length: 10 }).map(() => this.CreateUser({})),
+      );
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   async clearDatabase() {
@@ -698,316 +816,4 @@ export class SeedService {
 
     return await this.paymentsService.create(data);
   }
-
-  async insertNewCrops() {
-    const crops = initialData.crops;
-
-    const insertPromises = [];
-
-    crops.forEach((crop) => {
-      const { units, ...rest } = crop;
-      insertPromises.push(
-        this.cropsService.create({ units: Number(units), ...rest }),
-      );
-    });
-
-    const result = await Promise.all(insertPromises);
-
-    this.cropIds = result.map((crop) => new String(crop.id).toString());
-
-    return true;
-  }
-  async insertNewEmployees() {
-    const employees = initialData.employees;
-
-    const insertPromises = [];
-
-    employees.forEach((employee) => {
-      insertPromises.push(this.employeesService.create(employee));
-    });
-
-    const result = await Promise.all(insertPromises);
-
-    this.employeeIds = result.map((employee) =>
-      new String(employee.id).toString(),
-    );
-
-    return true;
-  }
-  async insertNewClients() {
-    const clients = initialData.clients;
-
-    const insertPromises = [];
-
-    clients.forEach((client) => {
-      insertPromises.push(this.clientsService.create(client));
-    });
-
-    const result = await Promise.all(insertPromises);
-
-    this.clientsIds = result.map((client) => new String(client.id).toString());
-
-    return true;
-  }
-  async insertNewSuppliers() {
-    const suppliers = initialData.suppliers;
-
-    const insertPromises = [];
-
-    suppliers.forEach((supplier) => {
-      insertPromises.push(this.suppliersService.create(supplier));
-    });
-
-    const result = await Promise.all(insertPromises);
-
-    this.suppliersIds = result.map((supplier) =>
-      new String(supplier.id).toString(),
-    );
-
-    return true;
-  }
-  async insertNewSupplies() {
-    const supplies = initialData.supplies;
-
-    const insertPromises = [];
-
-    supplies.forEach((supply) => {
-      insertPromises.push(this.suppliesService.create(supply));
-    });
-
-    const result = await Promise.all(insertPromises);
-
-    this.suppliesIds = result.map((supply) => new String(supply.id).toString());
-
-    return true;
-  }
-  private async insertNewHarvests() {
-    const [crop1, crop2, crop3, crop4] = this.cropIds;
-    const crops = [crop1, crop2, crop3];
-    const [employee1, employee2]: DeepPartial<Employee>[] = this.employeeIds;
-
-    const initialHarvest: any = initialData.harvests[0];
-
-    const { details, ...rest } = initialHarvest;
-
-    const insertPromises = [];
-
-    for (let index = 0; index < 3; index++) {
-      const objectToCreate: HarvestDto = {
-        ...rest,
-        crop: crops[index],
-        details: [
-          {
-            ...details[0],
-            employee: { id: `${employee1}` },
-          },
-          {
-            ...details[1],
-            employee: { id: `${employee2}` },
-          },
-        ],
-      };
-
-      insertPromises.push(this.harvestsService.create(objectToCreate));
-    }
-
-    const result = await Promise.all(insertPromises);
-
-    this.harvestIds = result.map((harvest) =>
-      new String(harvest.id).toString(),
-    );
-
-    this.harvestDetails = result.map((harvest) => {
-      return harvest.details;
-    });
-
-    return true;
-  }
-  private async insertNewHarvestsProcessed() {
-    const [crop1, crop2, crop3] = this.cropIds;
-    const crops = [crop1, crop2, crop3];
-    const [harvest1, harvest2, harvest3]: DeepPartial<Harvest>[] =
-      this.harvestIds;
-
-    const harvests = [harvest1, harvest2, harvest3];
-
-    const initialHarvest: any = initialData.harvestProcessed[0];
-
-    const insertPromises = [];
-
-    for (let index = 0; index < 3; index++) {
-      const objectToCreate: HarvestProcessedDto = {
-        ...initialHarvest,
-        crop: { id: crops[index] },
-        harvest: { id: harvests[index] },
-      };
-
-      insertPromises.push(
-        this.harvestsService.createHarvestProcessed(objectToCreate),
-      );
-    }
-
-    await Promise.all(insertPromises);
-
-    return true;
-  }
-  private async insertNewShoppingSupplies() {
-    const [supply1, supply2, supply3] = this.suppliesIds;
-    const [supplier1] = this.suppliersIds;
-
-    const initialShopping: any = initialData.shoppingSupplies[0];
-
-    const { details, ...rest } = initialShopping;
-
-    for (let index = 0; index < 3; index++) {
-      const objectToCreate: ShoppingSuppliesDto = {
-        ...rest,
-        details: [
-          {
-            ...details[0],
-            supplier: `${supplier1}`,
-            supply: `${supply1}`,
-          },
-          {
-            ...details[1],
-            supplier: `${supplier1}`,
-            supply: `${supply2}`,
-          },
-          {
-            ...details[2],
-            supplier: `${supplier1}`,
-            supply: `${supply3}`,
-          },
-        ],
-      };
-
-      await this.shoppingService.createShopping(objectToCreate);
-    }
-
-    return true;
-  }
-  private async insertNewConsumptionSupplies() {
-    const [supply1, supply2, supply3] = this.suppliesIds;
-    const [crop1] = this.cropIds;
-
-    const initialConsumption: any = initialData.consumptionSupplies[0];
-
-    const { details, ...rest } = initialConsumption;
-
-    for (let index = 0; index < 3; index++) {
-      const objectToCreate: ConsumptionSuppliesDto = {
-        ...rest,
-        details: [
-          {
-            ...details[0],
-            crop: `${crop1}`,
-            supply: `${supply1}`,
-          },
-          {
-            ...details[1],
-            crop: `${crop1}`,
-            supply: `${supply2}`,
-          },
-          {
-            ...details[2],
-            crop: `${crop1}`,
-            supply: `${supply3}`,
-          },
-        ],
-      };
-
-      await this.consumptionsService.createConsumption(objectToCreate);
-    }
-
-    return true;
-  }
-
-  private async insertNewWork() {
-    const [crop1, crop2, crop3] = this.cropIds;
-    const crops = [crop1, crop2, crop3];
-
-    const [employee1, employee2, employee3]: string[] = this.employeeIds;
-    const employees = [employee1, employee2, employee3];
-
-    const works = initialData.works;
-    const insertPromises = [];
-    works.forEach((work, index) => {
-      const recordToCreate: WorkDto = {
-        ...work,
-        crop: { id: crops[index] },
-        details: [
-          {
-            employee: { id: employees[index] },
-            value_pay: 35000,
-          },
-        ] as WorkDetailsDto[],
-      };
-      insertPromises.push(this.workService.create(recordToCreate));
-    });
-    const result = await Promise.all(insertPromises);
-    this.worksIds = result.map((work: Work) => new String(work.id).toString());
-
-    return true;
-  }
-
-  private async insertNewSales() {
-    const [crop1, crop2, crop3] = this.cropIds;
-
-    const [client1, client2, client3] = this.clientsIds;
-
-    const initialSale: any = initialData.sales[0];
-
-    const { details, ...rest } = initialSale;
-
-    const objectToCreate: SaleDto = {
-      ...rest,
-      details: [
-        {
-          ...details[0],
-          crop: `${crop1}`,
-          client: `${client1}`,
-        },
-        {
-          ...details[1],
-          crop: `${crop2}`,
-          client: `${client2}`,
-        },
-        {
-          ...details[2],
-          crop: `${crop3}`,
-          client: `${client3}`,
-        },
-      ],
-    };
-    await this.salesService.create(objectToCreate);
-
-    return true;
-  }
-
-  // private async insertNewPayments() {
-  //   const initialPayment = initialData.payments[0];
-
-  //   const [employee1]: DeepPartial<Employee>[] = this.employeeIds;
-
-  //   const [work1]: DeepPartial<Work>[] = this.worksIds;
-
-  //   const harvestDetails: any = this.harvestDetails;
-
-  //   const objectToCreate: CreatePaymentDto = {
-  //     date: initialPayment.date,
-  //     method_of_payment: initialPayment.method_of_payment,
-  //     employee: employee1,
-  //     total: 185000,
-  //     categories: {
-  //       harvests: [
-  //         harvestDetails[0][0].id,
-  //         harvestDetails[1][0].id,
-  //         harvestDetails[2][0].id,
-  //       ],
-  //       works: [work1],
-  //     },
-  //   };
-
-  //   await this.paymentsService.create(objectToCreate);
-  // }
 }
