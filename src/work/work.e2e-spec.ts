@@ -38,7 +38,7 @@ describe('WorksController (e2e)', () => {
   let token: string;
 
   const workDtoTemplete: WorkDto = {
-    date: InformationGenerator.generateRandomDate(),
+    date: InformationGenerator.generateRandomDate({}),
     crop: { id: InformationGenerator.generateRandomId() },
     value_pay: 90_000,
     description: InformationGenerator.generateObservation(),
@@ -204,7 +204,7 @@ describe('WorksController (e2e)', () => {
       employee2 = (await seedService.CreateEmployee({})) as Employee;
 
       const data1: WorkDto = {
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
         crop: { id: crop1.id },
         value_pay: 60_000,
         description: InformationGenerator.generateDescription(),
@@ -217,7 +217,7 @@ describe('WorksController (e2e)', () => {
       };
 
       const data2: WorkDto = {
-        date: InformationGenerator.generateRandomDate(5),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 5 }),
         crop: { id: crop2.id },
         value_pay: 90_000,
         description: InformationGenerator.generateDescription(),
@@ -229,7 +229,7 @@ describe('WorksController (e2e)', () => {
         ],
       };
       const data3: WorkDto = {
-        date: InformationGenerator.generateRandomDate(10),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 10 }),
         crop: { id: crop2.id },
         value_pay: 180_000,
         description: InformationGenerator.generateDescription(),
@@ -535,7 +535,7 @@ describe('WorksController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.AFTER,
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -584,7 +584,7 @@ describe('WorksController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.BEFORE,
-        date: InformationGenerator.generateRandomDate(1),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 1 }),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -633,7 +633,7 @@ describe('WorksController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.EQUAL,
-        date: InformationGenerator.generateRandomDate(5),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 5 }),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -903,7 +903,7 @@ describe('WorksController (e2e)', () => {
     describe('should return the specified number of works passed by the query mix filter', () => {
       beforeAll(async () => {
         const data1: WorkDto = {
-          date: InformationGenerator.generateRandomDate(3),
+          date: InformationGenerator.generateRandomDate({ daysToAdd: 3 }),
           crop: { id: crop1.id },
           value_pay: 360_000,
           description: InformationGenerator.generateDescription(),
@@ -920,7 +920,7 @@ describe('WorksController (e2e)', () => {
         };
 
         const data2: WorkDto = {
-          date: InformationGenerator.generateRandomDate(3),
+          date: InformationGenerator.generateRandomDate({ daysToAdd: 3 }),
           crop: { id: crop1.id },
           value_pay: 300_000,
           description: InformationGenerator.generateDescription(),

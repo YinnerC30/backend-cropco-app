@@ -29,7 +29,7 @@ describe('CropsController e2e', () => {
     description: InformationGenerator.generateDescription(),
     units: 1000,
     location: InformationGenerator.generateAddress(),
-    date_of_creation: InformationGenerator.generateRandomDate(),
+    date_of_creation: InformationGenerator.generateRandomDate({}),
   } as CreateCropDto;
 
   const falseCropId = InformationGenerator.generateRandomId();

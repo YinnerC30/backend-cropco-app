@@ -44,7 +44,7 @@ describe('ShoppingController (e2e)', () => {
   let token: string;
 
   const shoppingDtoTemplete: ShoppingSuppliesDto = {
-    date: InformationGenerator.generateRandomDate(),
+    date: InformationGenerator.generateRandomDate({}),
     value_pay: 90_000,
     details: [
       {
@@ -159,7 +159,7 @@ describe('ShoppingController (e2e)', () => {
       )) as Supplier;
 
       const data: ShoppingSuppliesDto = {
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
         value_pay: 110_000,
         details: [
           {
@@ -235,7 +235,7 @@ describe('ShoppingController (e2e)', () => {
       supplier2 = suppliers[1] as Supplier;
 
       const data1: ShoppingSuppliesDto = {
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
         value_pay: 60_000,
         details: [
           {
@@ -247,7 +247,7 @@ describe('ShoppingController (e2e)', () => {
         ],
       };
       const data2: ShoppingSuppliesDto = {
-        date: InformationGenerator.generateRandomDate(5),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 5 }),
         value_pay: 90_000,
         details: [
           {
@@ -259,7 +259,7 @@ describe('ShoppingController (e2e)', () => {
         ],
       };
       const data3: ShoppingSuppliesDto = {
-        date: InformationGenerator.generateRandomDate(10),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 10 }),
         value_pay: 180_000,
         details: [
           {
@@ -556,7 +556,7 @@ describe('ShoppingController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.AFTER,
-        date: InformationGenerator.generateRandomDate(0),
+        date: InformationGenerator.generateRandomDate({}),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -604,7 +604,7 @@ describe('ShoppingController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.BEFORE,
-        date: InformationGenerator.generateRandomDate(1),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 1 }),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -652,7 +652,7 @@ describe('ShoppingController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.EQUAL,
-        date: InformationGenerator.generateRandomDate(5),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 5 }),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -844,8 +844,8 @@ describe('ShoppingController (e2e)', () => {
     });
 
     describe('should return the specified number of shopping passed by the query mix filter', () => {
-      let dateShopping1 = InformationGenerator.generateRandomDate(3);
-      let dateShopping2 = InformationGenerator.generateRandomDate();
+      let dateShopping1 = InformationGenerator.generateRandomDate({ daysToAdd: 3 });
+      let dateShopping2 = InformationGenerator.generateRandomDate({});
 
       beforeAll(async () => {
         const data1: ShoppingSuppliesDto = {

@@ -35,7 +35,7 @@ describe('SalesController (e2e)', () => {
   let token: string;
 
   const saleDtoTemplete: SaleDto = {
-    date: InformationGenerator.generateRandomDate(),
+    date: InformationGenerator.generateRandomDate({}),
     amount: 150,
     value_pay: 90_000,
     details: [
@@ -244,7 +244,7 @@ describe('SalesController (e2e)', () => {
       });
 
       const data1: SaleDto = {
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
         amount: 100,
         value_pay: 60_000,
         details: [
@@ -259,7 +259,7 @@ describe('SalesController (e2e)', () => {
       };
 
       const data2: SaleDto = {
-        date: InformationGenerator.generateRandomDate(5),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 5 }),
         amount: 150,
         value_pay: 90_000,
         details: [
@@ -274,7 +274,7 @@ describe('SalesController (e2e)', () => {
       };
 
       const data3: SaleDto = {
-        date: InformationGenerator.generateRandomDate(10),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 10 }),
         amount: 300,
         value_pay: 180_000,
         details: [
@@ -602,7 +602,7 @@ describe('SalesController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.AFTER,
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -654,7 +654,7 @@ describe('SalesController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.BEFORE,
-        date: InformationGenerator.generateRandomDate(1),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 1 }),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -706,7 +706,7 @@ describe('SalesController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.EQUAL,
-        date: InformationGenerator.generateRandomDate(5),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 5 }),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -1143,7 +1143,7 @@ describe('SalesController (e2e)', () => {
     describe('should return the specified number of sales passed by the query mix filter', () => {
       beforeAll(async () => {
         const data1: SaleDto = {
-          date: InformationGenerator.generateRandomDate(3),
+          date: InformationGenerator.generateRandomDate({ daysToAdd: 3 }),
           amount: 600,
           value_pay: 360_000,
           details: [
@@ -1163,7 +1163,7 @@ describe('SalesController (e2e)', () => {
         };
 
         const data2: SaleDto = {
-          date: InformationGenerator.generateRandomDate(3),
+          date: InformationGenerator.generateRandomDate({ daysToAdd: 3 }),
           amount: 500,
           value_pay: 300_000,
           details: [
@@ -1417,7 +1417,7 @@ describe('SalesController (e2e)', () => {
           crops: crop2.id,
           filter_by_date: true,
           type_filter_date: TypeFilterDate.EQUAL,
-          date: InformationGenerator.generateRandomDate(3),
+          date: InformationGenerator.generateRandomDate({ daysToAdd: 3 }),
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.EQUAL,
           value_pay: 360_000,
@@ -1442,7 +1442,7 @@ describe('SalesController (e2e)', () => {
           crops: crop1.id,
           filter_by_date: true,
           type_filter_date: TypeFilterDate.EQUAL,
-          date: InformationGenerator.generateRandomDate(3),
+          date: InformationGenerator.generateRandomDate({ daysToAdd: 3 }),
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.EQUAL,
           value_pay: 360_000,

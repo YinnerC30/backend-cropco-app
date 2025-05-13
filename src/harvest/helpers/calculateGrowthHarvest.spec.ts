@@ -5,11 +5,11 @@ describe('calculateGrowthHarvest', () => {
     const data = {
       last_year: {
         year: 2023,
-        data: [{ month: 'January', total: 0, value_pay: 0 }],
+        data: [{ month: 'January', amount: 0, value_pay: 0 }],
       },
       previous_year: {
         year: 2022,
-        data: [{ month: 'January', total: 0, value_pay: 0 }],
+        data: [{ month: 'January', amount: 0, value_pay: 0 }],
       },
     };
 
@@ -26,11 +26,11 @@ describe('calculateGrowthHarvest', () => {
     const data = {
       last_year: {
         year: 2023,
-        data: [{ month: 'January', total: 100, value_pay: 0 }],
+        data: [{ month: 'January', amount: 100, value_pay: 0 }],
       },
       previous_year: {
         year: 2022,
-        data: [{ month: 'January', total: 0, value_pay: 0 }],
+        data: [{ month: 'January', amount: 0, value_pay: 0 }],
       },
     };
 
@@ -47,11 +47,11 @@ describe('calculateGrowthHarvest', () => {
     const data = {
       last_year: {
         year: 2023,
-        data: [{ month: 'January', total: 200, value_pay: 0 }],
+        data: [{ month: 'January', amount: 200, value_pay: 0 }],
       },
       previous_year: {
         year: 2022,
-        data: [{ month: 'January', total: 100, value_pay: 0 }],
+        data: [{ month: 'January', amount: 100, value_pay: 0 }],
       },
     };
 
@@ -68,11 +68,11 @@ describe('calculateGrowthHarvest', () => {
     const data = {
       last_year: {
         year: 2023,
-        data: [{ month: 'January', total: 50, value_pay: 0 }],
+        data: [{ month: 'January', amount: 50, value_pay: 0 }],
       },
       previous_year: {
         year: 2022,
-        data: [{ month: 'January', total: 100, value_pay: 0 }],
+        data: [{ month: 'January', amount: 100, value_pay: 0 }],
       },
     };
 
@@ -89,11 +89,11 @@ describe('calculateGrowthHarvest', () => {
     const data = {
       last_year: {
         year: 2023,
-        data: [{ month: 'January', total: 100, value_pay: 0 }],
+        data: [{ month: 'January', amount: 100, value_pay: 0 }],
       },
       previous_year: {
         year: 2022,
-        data: [{ month: 'January', total: 100, value_pay: 0 }],
+        data: [{ month: 'January', amount: 100, value_pay: 0 }],
       },
     };
 

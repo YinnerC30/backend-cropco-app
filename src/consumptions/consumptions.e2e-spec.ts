@@ -46,7 +46,7 @@ describe('ConsumptionController (e2e)', () => {
   let token: string;
 
   const consumptionDtoTemplete: ConsumptionSuppliesDto = {
-    date: InformationGenerator.generateRandomDate(),
+    date: InformationGenerator.generateRandomDate({}),
     details: [
       {
         supply: { id: InformationGenerator.generateRandomId() },
@@ -160,7 +160,7 @@ describe('ConsumptionController (e2e)', () => {
       const crop2: Crop = (await seedService.CreateCrop({})) as Crop;
 
       const data: ConsumptionSuppliesDto = {
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
         details: [
           {
             crop: { id: crop1.id },
@@ -232,7 +232,7 @@ describe('ConsumptionController (e2e)', () => {
       crop2 = crops[1] as Crop;
 
       const data1: ConsumptionSuppliesDto = {
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
         details: [
           {
             crop: { id: crop1.id },
@@ -242,7 +242,7 @@ describe('ConsumptionController (e2e)', () => {
         ],
       };
       const data2: ConsumptionSuppliesDto = {
-        date: InformationGenerator.generateRandomDate(5),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 5 }),
         details: [
           {
             crop: { id: crop2.id },
@@ -252,7 +252,7 @@ describe('ConsumptionController (e2e)', () => {
         ],
       };
       const data3: ConsumptionSuppliesDto = {
-        date: InformationGenerator.generateRandomDate(10),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 10 }),
         details: [
           {
             crop: { id: crop2.id },
@@ -528,7 +528,7 @@ describe('ConsumptionController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.AFTER,
-        date: InformationGenerator.generateRandomDate(0),
+        date: InformationGenerator.generateRandomDate({}),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -572,7 +572,7 @@ describe('ConsumptionController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.BEFORE,
-        date: InformationGenerator.generateRandomDate(1),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 1 }),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -616,7 +616,7 @@ describe('ConsumptionController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.EQUAL,
-        date: InformationGenerator.generateRandomDate(5),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 5 }),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -658,8 +658,8 @@ describe('ConsumptionController (e2e)', () => {
     });
 
     describe('should return the specified number of consumption passed by the query mix filter', () => {
-      let dateConsumption1 = InformationGenerator.generateRandomDate(3);
-      let dateConsumption2 = InformationGenerator.generateRandomDate();
+      let dateConsumption1 = InformationGenerator.generateRandomDate({ daysToAdd: 3 });
+      let dateConsumption2 = InformationGenerator.generateRandomDate({});
 
       beforeAll(async () => {
         const data1: ConsumptionSuppliesDto = {

@@ -39,7 +39,7 @@ describe('HarvestsController (e2e)', () => {
   let token: string;
 
   const harvestDtoTemplete: HarvestDto = {
-    date: InformationGenerator.generateRandomDate(),
+    date: InformationGenerator.generateRandomDate({}),
     crop: { id: InformationGenerator.generateRandomId() },
     amount: 150,
     value_pay: 90_000,
@@ -54,7 +54,7 @@ describe('HarvestsController (e2e)', () => {
   };
 
   const harvestProcessedTemplateDto: HarvestProcessedDto = {
-    date: InformationGenerator.generateRandomDate(),
+    date: InformationGenerator.generateRandomDate({}),
     crop: { id: InformationGenerator.generateRandomId() },
     harvest: { id: InformationGenerator.generateRandomId() },
     amount: 50,
@@ -224,7 +224,7 @@ describe('HarvestsController (e2e)', () => {
       employee2 = (await seedService.CreateEmployee({})) as Employee;
 
       const data1: HarvestDto = {
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
         crop: { id: crop1.id },
         amount: 100,
         value_pay: 60_000,
@@ -239,7 +239,7 @@ describe('HarvestsController (e2e)', () => {
       };
 
       const data2: HarvestDto = {
-        date: InformationGenerator.generateRandomDate(5),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 5 }),
         crop: { id: crop2.id },
         amount: 150,
         value_pay: 90_000,
@@ -254,7 +254,7 @@ describe('HarvestsController (e2e)', () => {
       };
 
       const data3: HarvestDto = {
-        date: InformationGenerator.generateRandomDate(10),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 10 }),
         crop: { id: crop2.id },
         amount: 300,
         value_pay: 180_000,
@@ -575,7 +575,7 @@ describe('HarvestsController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.AFTER,
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -626,7 +626,7 @@ describe('HarvestsController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.BEFORE,
-        date: InformationGenerator.generateRandomDate(1),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 1 }),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -677,7 +677,7 @@ describe('HarvestsController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.EQUAL,
-        date: InformationGenerator.generateRandomDate(5),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 5 }),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -1108,7 +1108,7 @@ describe('HarvestsController (e2e)', () => {
     describe('should return the specified number of harvests passed by the query mix filter', () => {
       beforeAll(async () => {
         const data1: HarvestDto = {
-          date: InformationGenerator.generateRandomDate(3),
+          date: InformationGenerator.generateRandomDate({ daysToAdd: 3 }),
           crop: { id: crop1.id },
           amount: 600,
           value_pay: 360_000,
@@ -1128,7 +1128,7 @@ describe('HarvestsController (e2e)', () => {
         };
 
         const data2: HarvestDto = {
-          date: InformationGenerator.generateRandomDate(3),
+          date: InformationGenerator.generateRandomDate({ daysToAdd: 3 }),
           crop: { id: crop1.id },
           amount: 500,
           value_pay: 300_000,
@@ -1385,7 +1385,7 @@ describe('HarvestsController (e2e)', () => {
           crop: crop2.id,
           filter_by_date: true,
           type_filter_date: TypeFilterDate.EQUAL,
-          date: InformationGenerator.generateRandomDate(3),
+          date: InformationGenerator.generateRandomDate({ daysToAdd: 3 }),
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.EQUAL,
           value_pay: 360_000,
@@ -1410,7 +1410,7 @@ describe('HarvestsController (e2e)', () => {
           crop: crop1.id,
           filter_by_date: true,
           type_filter_date: TypeFilterDate.EQUAL,
-          date: InformationGenerator.generateRandomDate(3),
+          date: InformationGenerator.generateRandomDate({ daysToAdd: 3 }),
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.EQUAL,
           value_pay: 360_000,
@@ -2100,7 +2100,7 @@ describe('HarvestsController (e2e)', () => {
       const { harvest } = await seedService.CreateHarvest({});
 
       const bodyRequest: HarvestProcessedDto = {
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
         crop: { id: harvest.crop.id },
         harvest: { id: harvest.id },
         amount: 50,
@@ -2127,7 +2127,7 @@ describe('HarvestsController (e2e)', () => {
       const { harvest } = await seedService.CreateHarvest({});
 
       const bodyRequest: HarvestProcessedDto = {
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
         crop: { id: harvest.crop.id },
         harvest: { id: harvest.id },
         amount: harvest.amount + 50,

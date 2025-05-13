@@ -152,7 +152,7 @@ export class InformationGenerator {
     return 'This is a simple description of the record for testing.';
   };
 
-  static generateRandomDate = (daysToAdd: number = 0): string => {
+  /* static generateRandomDate = (daysToAdd: number = 0): string => {
     const date = new Date();
     date.setDate(date.getDate() + daysToAdd);
     return date.toISOString();
@@ -161,6 +161,28 @@ export class InformationGenerator {
   static generateRandomDateWithYears = (yearsToAdd: number = 0): string => {
     const date = new Date();
     date.setFullYear(date.getFullYear() + yearsToAdd);
+    return date.toISOString();
+  }; */
+
+  static generateRandomDate = ({
+    daysToAdd = 0,
+    monthsToAdd = 0,
+    yearsToAdd = 0,
+  }): string => {
+    const date = new Date();
+
+    if (daysToAdd) {
+      date.setDate(date.getDate() + daysToAdd);
+    }
+
+    if (monthsToAdd) {
+      date.setMonth(date.getMonth() + monthsToAdd);
+    }
+
+    if (yearsToAdd) {
+      date.setFullYear(date.getFullYear() + yearsToAdd);
+    }
+
     return date.toISOString();
   };
 

@@ -212,7 +212,7 @@ export class SeedService {
       description: InformationGenerator.generateDescription(),
       units: 1000,
       location: InformationGenerator.generateAddress(),
-      date_of_creation: InformationGenerator.generateRandomDate(),
+      date_of_creation: InformationGenerator.generateRandomDate({}),
     } as CreateCropDto;
 
     const crop = await this.cropsService.create(data);
@@ -258,7 +258,7 @@ export class SeedService {
     quantityEmployees = 1,
     amount = 150,
     valuePay = 90_000,
-    date = InformationGenerator.generateRandomDate(),
+    date = InformationGenerator.generateRandomDate({}),
   }: {
     quantityEmployees?: number;
     amount?: number;
@@ -299,7 +299,7 @@ export class SeedService {
     cropId,
     harvestId,
     amount,
-    date = InformationGenerator.generateRandomDate(),
+    date = InformationGenerator.generateRandomDate({}),
   }: {
     cropId: string;
     harvestId: string;
@@ -322,7 +322,7 @@ export class SeedService {
   async CreateWork({
     quantityEmployees = 1,
     valuePay = 90_000,
-    date = InformationGenerator.generateRandomDate(),
+    date = InformationGenerator.generateRandomDate({}),
   }: {
     quantityEmployees?: number;
     valuePay?: number;
@@ -363,7 +363,7 @@ export class SeedService {
     cropId,
     valuePay = 90_000,
     amount = 150,
-    date = InformationGenerator.generateRandomDate(),
+    date = InformationGenerator.generateRandomDate({}),
   }: {
     employeeId?: string;
     cropId?: string;
@@ -404,7 +404,7 @@ export class SeedService {
   async CreateWorkForEmployee({
     employeeId,
     valuePay = 90_000,
-    date = InformationGenerator.generateRandomDate(),
+    date = InformationGenerator.generateRandomDate({}),
   }: {
     employeeId: string;
     valuePay?: number;
@@ -437,7 +437,7 @@ export class SeedService {
     cropId,
     isReceivable = false,
     quantity = 15,
-    date = InformationGenerator.generateRandomDate(),
+    date = InformationGenerator.generateRandomDate({}),
   }: {
     cropId: string;
     clientId?: string;
@@ -514,7 +514,7 @@ export class SeedService {
     }
 
     const data: ConsumptionSuppliesDto = {
-      date: InformationGenerator.generateRandomDate(),
+      date: InformationGenerator.generateRandomDate({}),
       details: [
         {
           supply: { id: supplyId || supply.id },
@@ -551,7 +551,7 @@ export class SeedService {
     )) as Supply[];
 
     const data: ConsumptionSuppliesDto = {
-      date: InformationGenerator.generateRandomDate(),
+      date: InformationGenerator.generateRandomDate({}),
       details: supplies.map((supply) => {
         return {
           supply: { id: supply.id },
@@ -582,7 +582,7 @@ export class SeedService {
     const supply = (await this.CreateSupply({})) as Supply;
 
     const data: ShoppingSuppliesDto = {
-      date: InformationGenerator.generateRandomDate(),
+      date: InformationGenerator.generateRandomDate({}),
       value_pay: valuePay,
       details: [
         {
@@ -616,7 +616,7 @@ export class SeedService {
     )) as Supply[];
 
     const data: ShoppingSuppliesDto = {
-      date: InformationGenerator.generateRandomDate(),
+      date: InformationGenerator.generateRandomDate({}),
       value_pay: valuePay * supplies.length,
       details: supplies.map((supply) => {
         return {
@@ -633,7 +633,7 @@ export class SeedService {
   }
 
   async CreatePayment({
-    datePayment = InformationGenerator.generateRandomDate(),
+    datePayment = InformationGenerator.generateRandomDate({}),
     employeeId,
     methodOfPayment = MethodOfPayment.EFECTIVO,
     worksId = [],

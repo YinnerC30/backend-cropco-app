@@ -30,6 +30,9 @@ describe('DashboardController (e2e)', () => {
   let cropsRepository: Repository<Crop>;
   let harvestsRepository: Repository<Harvest>;
 
+  let dateWithCurrentYear: string;
+  let dateWithPastYear: string;
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -96,17 +99,21 @@ describe('DashboardController (e2e)', () => {
     await employeesRepository.delete({});
     await clientsRepository.delete({});
     await cropsRepository.delete({});
+    await harvestsRepository.delete({});
+
+    dateWithCurrentYear = InformationGenerator.generateRandomDate({});
+    dateWithPastYear = InformationGenerator.generateRandomDate({
+      yearsToAdd: -1,
+    });
   }, 10_000);
 
   describe('dashboard/find/top-employees-in-harvests (GET)', () => {
     let employees: Employee[];
-    let currentDate = InformationGenerator.generateRandomDateWithYears();
-    let pastYear = InformationGenerator.generateRandomDateWithYears(-1);
 
     beforeAll(async () => {
       const result = await seedService.CreateHarvest({
         quantityEmployees: 5,
-        date: pastYear,
+        date: dateWithPastYear,
       });
 
       employees = [...result.employees];
@@ -115,11 +122,11 @@ describe('DashboardController (e2e)', () => {
         await Promise.all([
           seedService.CreateHarvestAdvanced({
             employeeId,
-            date: currentDate,
+            date: dateWithCurrentYear,
           }),
           seedService.CreateHarvestAdvanced({
             employeeId,
-            date: currentDate,
+            date: dateWithCurrentYear,
           }),
         ]);
       }
@@ -163,7 +170,7 @@ describe('DashboardController (e2e)', () => {
 
     it('should return the top 5 employees in current year', async () => {
       const queryData = {
-        year: new Date(currentDate).getFullYear(),
+        year: new Date(dateWithCurrentYear).getFullYear(),
       };
 
       const { body } = await request
@@ -193,7 +200,7 @@ describe('DashboardController (e2e)', () => {
 
     it('should return the top 5 employees in past year', async () => {
       const queryData = {
-        year: new Date(pastYear).getFullYear(),
+        year: new Date(dateWithPastYear).getFullYear(),
       };
 
       const { body } = await request
@@ -224,32 +231,30 @@ describe('DashboardController (e2e)', () => {
 
   describe('dashboard/find/top-employees-in-works (GET)', () => {
     let employees: Employee[];
-    let currentDate = InformationGenerator.generateRandomDateWithYears();
-    let pastDate = InformationGenerator.generateRandomDateWithYears(-1);
 
     beforeAll(async () => {
       const result = await seedService.CreateWork({
         quantityEmployees: 5,
-        date: pastDate,
+        date: dateWithPastYear,
       });
 
       employees = [...result.employees];
 
       seedService.CreateWorkForEmployee({
         employeeId: employees[0].id,
-        date: currentDate,
+        date: dateWithCurrentYear,
       }),
         seedService.CreateWorkForEmployee({
           employeeId: employees[0].id,
-          date: currentDate,
+          date: dateWithCurrentYear,
         }),
         seedService.CreateWorkForEmployee({
           employeeId: employees[1].id,
-          date: currentDate,
+          date: dateWithCurrentYear,
         }),
         seedService.CreateWorkForEmployee({
           employeeId: employees[1].id,
-          date: currentDate,
+          date: dateWithCurrentYear,
         }),
         await authService.addPermission(
           userTest.id,
@@ -290,7 +295,7 @@ describe('DashboardController (e2e)', () => {
 
     it('should return the top 5 employees in current year', async () => {
       const queryData = {
-        year: new Date(currentDate).getFullYear(),
+        year: new Date(dateWithCurrentYear).getFullYear(),
       };
 
       const { body } = await request
@@ -320,7 +325,7 @@ describe('DashboardController (e2e)', () => {
 
     it('should return the top 5 employees in past year', async () => {
       const queryData = {
-        year: new Date(pastDate).getFullYear(),
+        year: new Date(dateWithPastYear).getFullYear(),
       };
 
       const { body } = await request
@@ -351,8 +356,6 @@ describe('DashboardController (e2e)', () => {
 
   describe('dashboard/find/top-clients-in-sales (GET)', () => {
     let clients: Client[];
-    let currentDate = InformationGenerator.generateRandomDateWithYears();
-    let pastDate = InformationGenerator.generateRandomDateWithYears(-1);
 
     beforeAll(async () => {
       const { crop, harvest } = await seedService.CreateHarvest({
@@ -368,7 +371,10 @@ describe('DashboardController (e2e)', () => {
 
       const result = await Promise.all(
         Array.from({ length: 6 }).map(() => {
-          return seedService.CreateSale({ cropId: crop.id, date: pastDate });
+          return seedService.CreateSale({
+            cropId: crop.id,
+            date: dateWithPastYear,
+          });
         }),
       );
 
@@ -377,23 +383,23 @@ describe('DashboardController (e2e)', () => {
       await seedService.CreateSale({
         cropId: crop.id,
         clientId: clients[0].id,
-        date: currentDate,
+        date: dateWithCurrentYear,
       });
       await seedService.CreateSale({
         cropId: crop.id,
         clientId: clients[0].id,
-        date: currentDate,
+        date: dateWithCurrentYear,
       });
 
       await seedService.CreateSale({
         cropId: crop.id,
         clientId: clients[1].id,
-        date: currentDate,
+        date: dateWithCurrentYear,
       });
       await seedService.CreateSale({
         cropId: crop.id,
         clientId: clients[1].id,
-        date: currentDate,
+        date: dateWithCurrentYear,
       });
 
       await authService.addPermission(
@@ -435,7 +441,7 @@ describe('DashboardController (e2e)', () => {
 
     it('should return the top 5 clients in current year', async () => {
       const queryData = {
-        year: new Date(currentDate).getFullYear(),
+        year: new Date(dateWithCurrentYear).getFullYear(),
       };
 
       const { body } = await request
@@ -465,7 +471,7 @@ describe('DashboardController (e2e)', () => {
 
     it('should return the top 5 clients in past year', async () => {
       const queryData = {
-        year: new Date(pastDate).getFullYear(),
+        year: new Date(dateWithPastYear).getFullYear(),
       };
 
       const { body } = await request
@@ -498,6 +504,7 @@ describe('DashboardController (e2e)', () => {
     let crops: Crop[] = [];
 
     beforeAll(async () => {
+      await cropsRepository.delete({});
       for (let index = 0; index < 5; index++) {
         const { harvest, crop } = await seedService.CreateHarvest({
           quantityEmployees: 1,
@@ -540,20 +547,17 @@ describe('DashboardController (e2e)', () => {
   });
 
   describe('dashboard/find/count-harvest-and-total-stock (GET)', () => {
-    let currentDate = InformationGenerator.generateRandomDateWithYears();
-    let pastDate = InformationGenerator.generateRandomDateWithYears(-1);
-
     beforeAll(async () => {
       await harvestsRepository.delete({});
       for (let index = 0; index < 5; index++) {
         const { crop } = await seedService.CreateHarvest({
           quantityEmployees: 1,
-          date: currentDate,
+          date: dateWithCurrentYear,
         });
 
         if (index === 0 || index === 1) {
           await seedService.CreateHarvestAdvanced({
-            date: currentDate,
+            date: dateWithCurrentYear,
             cropId: crop.id,
           });
         }
@@ -562,7 +566,7 @@ describe('DashboardController (e2e)', () => {
       for (let index = 0; index < 5; index++) {
         await seedService.CreateHarvest({
           quantityEmployees: 1,
-          date: pastDate,
+          date: dateWithPastYear,
           amount: 200,
         });
       }
@@ -605,7 +609,7 @@ describe('DashboardController (e2e)', () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get('/dashboard/find/count-harvest-and-total-stock')
-        .query({ year: new Date(pastDate).getFullYear() })
+        .query({ year: new Date(dateWithPastYear).getFullYear() })
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 

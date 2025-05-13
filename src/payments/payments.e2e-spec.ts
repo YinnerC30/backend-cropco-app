@@ -36,7 +36,7 @@ describe('PaymentsController (e2e)', () => {
   let token: string;
 
   const paymentDtoTemplete: PaymentDto = {
-    date: InformationGenerator.generateRandomDate(),
+    date: InformationGenerator.generateRandomDate({}),
     value_pay: 90_000,
     employee: { id: InformationGenerator.generateRandomId() },
     method_of_payment: MethodOfPayment.EFECTIVO,
@@ -230,7 +230,7 @@ describe('PaymentsController (e2e)', () => {
             value_pay: resultHarvest.harvest.details[i].value_pay,
           }),
           await seedService.CreatePayment({
-            datePayment: InformationGenerator.generateRandomDate(1),
+            datePayment: InformationGenerator.generateRandomDate({ daysToAdd: 1 }),
             employeeId: employeesWork[i].id,
             worksId: [resultWork.work.details[i].id],
             harvestsId: [],
@@ -406,7 +406,7 @@ describe('PaymentsController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.AFTER,
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -447,7 +447,7 @@ describe('PaymentsController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.BEFORE,
-        date: InformationGenerator.generateRandomDate(1),
+        date: InformationGenerator.generateRandomDate({ daysToAdd: 1 }),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -488,7 +488,7 @@ describe('PaymentsController (e2e)', () => {
       const queryData = {
         filter_by_date: true,
         type_filter_date: TypeFilterDate.EQUAL,
-        date: InformationGenerator.generateRandomDate(),
+        date: InformationGenerator.generateRandomDate({}),
       };
       const response = await request
         .default(app.getHttpServer())
@@ -672,7 +672,7 @@ describe('PaymentsController (e2e)', () => {
             value_pay: resultHarvest.harvest.details[0].value_pay,
           }),
           await seedService.CreatePayment({
-            datePayment: InformationGenerator.generateRandomDate(1),
+            datePayment: InformationGenerator.generateRandomDate({ daysToAdd: 1 }),
             employeeId: resultWork.employees[0].id,
             worksId: [resultWork.work.details[0].id],
             harvestsId: [],
@@ -768,7 +768,7 @@ describe('PaymentsController (e2e)', () => {
         const queryData = {
           filter_by_date: true,
           type_filter_date: TypeFilterDate.EQUAL,
-          date: InformationGenerator.generateRandomDate(3),
+          date: InformationGenerator.generateRandomDate({ daysToAdd: 3 }),
           filter_by_value_pay: true,
           type_filter_value_pay: TypeFilterNumber.EQUAL,
           value_pay: 360_000,
