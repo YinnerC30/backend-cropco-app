@@ -114,16 +114,9 @@ describe('CropsController', () => {
       const result = { success: ['1'], failed: [] };
       jest.spyOn(service, 'removeBulk').mockResolvedValue(result);
 
-      const responseMock = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-      } as any;
-
-      await controller.removeBulk(removeBulkDto, responseMock);
+      await controller.removeBulk(removeBulkDto);
 
       expect(service.removeBulk).toHaveBeenCalledWith(removeBulkDto);
-      expect(responseMock.status).toHaveBeenCalledWith(200);
-      expect(responseMock.json).toHaveBeenCalledWith(result);
     });
   });
 

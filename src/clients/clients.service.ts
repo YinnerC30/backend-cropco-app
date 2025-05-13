@@ -161,7 +161,6 @@ export class ClientsService {
   async findTopClientsInSales({
     year = new Date().getFullYear(),
   }: QueryForYearDto) {
-    console.log('🚀 ~ ClientsService ~ year:', year);
 
     const clients = await this.clientRepository
       .createQueryBuilder('clients')

@@ -10,13 +10,7 @@ import {
   Res,
   UseInterceptors,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiQuery,
-} from '@nestjs/swagger';
+
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { PaymentDto } from './dto/payment.dto';
 import { PaymentsService } from './payments.service';
@@ -71,35 +65,21 @@ const {
 } = pathsPaymentsController;
 
 @Auth()
-@ApiTags('Payments')
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Post(createPayment.path)
-  @ApiOperation({ summary: 'Create a new payment' })
-  @ApiResponse({
-    status: 201,
-    description: 'The payment has been successfully created.',
-  })
-  @ApiResponse({ status: 400, description: 'Bad Request.' })
   create(@Body() createPaymentDto: PaymentDto) {
     return this.paymentsService.create(createPaymentDto);
   }
 
   @Get(findAllPayments.path)
-  @ApiOperation({ summary: 'Get all payments' })
-  @ApiResponse({ status: 200, description: 'Return all payments.' })
-  @ApiQuery({ type: QueryParamsDto })
   findAll(@Query() queryParams: QueryParamsPayment) {
     return this.paymentsService.findAll(queryParams);
   }
 
   @Get(findOnePayment.path)
-  @ApiOperation({ summary: 'Get a payment by id' })
-  @ApiResponse({ status: 200, description: 'Return the payment.' })
-  @ApiResponse({ status: 404, description: 'Payment not found.' })
-  @ApiParam({ name: 'id', type: 'string', description: 'Payment id' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.paymentsService.findOne(id);
   }
@@ -117,23 +97,12 @@ export class PaymentsController {
   }
 
   @Delete(removePayment.path)
-  @ApiOperation({ summary: 'Delete a payment' })
-  @ApiResponse({
-    status: 200,
-    description: 'The payment has been successfully deleted.',
-  })
-  @ApiResponse({ status: 404, description: 'Payment not found.' })
-  @ApiParam({ name: 'id', type: 'string', description: 'Payment id' })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.paymentsService.remove(id);
   }
 
   @Delete(removePayments.path)
   @UseInterceptors(ResponseStatusInterceptor)
-  @ApiResponse({
-    status: 200,
-    description: 'Pagos eliminados exitosamente',
-  })
   removeBulk(@Body() removeBulkPaymentsDto: RemoveBulkRecordsDto<Payment>) {
     return this.paymentsService.removeBulk(removeBulkPaymentsDto);
   }

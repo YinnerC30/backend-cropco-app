@@ -12,13 +12,6 @@ import {
   Res,
   UseInterceptors,
 } from '@nestjs/common';
-import {
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { SaleDto } from './dto/sale.dto';
@@ -79,18 +72,11 @@ const {
 } = pathsSalesController;
 
 @Auth()
-@ApiTags('Sales')
 @Controller('sales')
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
   @Post(createSale.path)
-  @ApiOperation({ summary: 'Create a new sale' })
-  @ApiResponse({
-    status: 201,
-    description: 'The sale has been successfully created.',
-  })
-  @ApiResponse({ status: 400, description: 'Bad Request.' })
   create(@Body() createSaleDto: SaleDto) {
     return this.salesService.create(createSaleDto);
   }
@@ -108,31 +94,16 @@ export class SalesController {
   }
 
   @Get(findAllSales.path)
-  @ApiOperation({ summary: 'Get all sales' })
-  @ApiResponse({ status: 200, description: 'Return all sales.' })
-  @ApiQuery({ type: QueryParamsDto })
   findAll(@Query() queryParams: QueryParamsSale) {
     return this.salesService.findAll(queryParams);
   }
 
   @Get(findOneSale.path)
-  @ApiOperation({ summary: 'Get a sale by id' })
-  @ApiResponse({ status: 200, description: 'Return the sale.' })
-  @ApiResponse({ status: 404, description: 'Sale not found.' })
-  @ApiParam({ name: 'id', type: 'string', description: 'Sale id' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.salesService.findOne(id);
   }
 
   @Put(updateSale.path)
-  @ApiOperation({ summary: 'Update a sale' })
-  @ApiResponse({
-    status: 200,
-    description: 'The sale has been successfully updated.',
-  })
-  @ApiResponse({ status: 400, description: 'Bad Request.' })
-  @ApiResponse({ status: 404, description: 'Sale not found.' })
-  @ApiParam({ name: 'id', type: 'string', description: 'Sale id' })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSaleDto: SaleDto,
@@ -141,13 +112,6 @@ export class SalesController {
   }
 
   @Delete(removeSale.path)
-  @ApiOperation({ summary: 'Delete a sale' })
-  @ApiResponse({
-    status: 200,
-    description: 'The sale has been successfully deleted.',
-  })
-  @ApiResponse({ status: 404, description: 'Sale not found.' })
-  @ApiParam({ name: 'id', type: 'string', description: 'Sale id' })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.salesService.remove(id);
   }

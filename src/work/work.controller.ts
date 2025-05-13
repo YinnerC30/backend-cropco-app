@@ -11,7 +11,6 @@ import {
   Res,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
@@ -71,7 +70,6 @@ const {
 } = pathsWorksController;
 
 @Auth()
-@ApiTags('Works')
 @Controller('works')
 export class WorkController {
   constructor(private readonly workService: WorkService) {}

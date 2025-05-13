@@ -11,7 +11,6 @@ import {
   Res,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiResponse } from '@nestjs/swagger';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 
@@ -122,10 +121,6 @@ export class ShoppingController {
 
   @Delete(removeBulkShopping.path)
   @UseInterceptors(ResponseStatusInterceptor)
-  @ApiResponse({
-    status: 200,
-    description: 'Compras eliminadas exitosamente',
-  })
   removeBulkShopping(
     @Body() removeBulkShoppingDto: RemoveBulkRecordsDto<SuppliesShopping>,
   ) {

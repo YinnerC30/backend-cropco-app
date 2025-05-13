@@ -17,6 +17,8 @@ import { Client } from 'src/clients/entities/client.entity';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
 import { Work } from 'src/work/entities/work.entity';
+import { Sale } from 'src/sales/entities/sale.entity';
+import { SuppliesConsumption } from 'src/consumptions/entities/supplies-consumption.entity';
 
 describe('DashboardController (e2e)', () => {
   let app: INestApplication;
@@ -31,6 +33,8 @@ describe('DashboardController (e2e)', () => {
   let cropsRepository: Repository<Crop>;
   let harvestsRepository: Repository<Harvest>;
   let worksRepository: Repository<Work>;
+  let salesRepository: Repository<Sale>;
+  let consumptionsRepository: Repository<SuppliesConsumption>;
 
   let dateWithCurrentYear: string;
   let dateWithPastYear: string;
@@ -82,6 +86,12 @@ describe('DashboardController (e2e)', () => {
     worksRepository = moduleFixture.get<Repository<Work>>(
       getRepositoryToken(Work),
     );
+    salesRepository = moduleFixture.get<Repository<Sale>>(
+      getRepositoryToken(Sale),
+    );
+    consumptionsRepository = moduleFixture.get<Repository<SuppliesConsumption>>(
+      getRepositoryToken(SuppliesConsumption),
+    );
 
     app = moduleFixture.createNestApplication();
 
@@ -105,6 +115,7 @@ describe('DashboardController (e2e)', () => {
     await clientsRepository.delete({});
     await cropsRepository.delete({});
     await harvestsRepository.delete({});
+    await worksRepository.delete({});
 
     dateWithCurrentYear = InformationGenerator.generateRandomDate({});
     dateWithPastYear = InformationGenerator.generateRandomDate({
@@ -680,7 +691,7 @@ describe('DashboardController (e2e)', () => {
         .get('/dashboard/find/total-harvest-in-year')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+      
 
       expect(body).toHaveProperty('growth');
       expect(body.growth).toHaveProperty('growth_value');
@@ -715,7 +726,7 @@ describe('DashboardController (e2e)', () => {
         .get('/dashboard/find/total-harvest-in-year')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+      
 
       expect(body).toHaveProperty('growth');
       expect(body.growth).toHaveProperty('growth_value');
@@ -751,7 +762,7 @@ describe('DashboardController (e2e)', () => {
         .get('/dashboard/find/total-harvest-in-year')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+      
 
       expect(body).toHaveProperty('growth');
       expect(body.growth).toHaveProperty('growth_value');
@@ -784,7 +795,7 @@ describe('DashboardController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .query({ year: '2024' })
         .expect(200);
-      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+      
 
       expect(body).toHaveProperty('growth');
       expect(body.growth).toHaveProperty('growth_value');
@@ -810,7 +821,7 @@ describe('DashboardController (e2e)', () => {
   });
   describe('dashboard/find/total-work-in-year (GET)', () => {
     beforeAll(async () => {
-      await harvestsRepository.delete({});
+      await worksRepository.delete({});
       await authService.addPermission(
         userTest.id,
         'find_total_work_in_year_chart',
@@ -853,7 +864,7 @@ describe('DashboardController (e2e)', () => {
         .get('/dashboard/find/total-work-in-year')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+      
 
       expect(body).toHaveProperty('years');
 
@@ -874,7 +885,7 @@ describe('DashboardController (e2e)', () => {
   });
   describe('dashboard/find/total-sales-in-year (GET)', () => {
     beforeAll(async () => {
-      await harvestsRepository.delete({});
+      await salesRepository.delete({});
       await authService.addPermission(
         userTest.id,
         'find_total_sales_in_year_chart',
@@ -916,7 +927,7 @@ describe('DashboardController (e2e)', () => {
         .get('/dashboard/find/total-sales-in-year')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+      
 
       expect(body).toHaveProperty('years');
 
@@ -938,7 +949,7 @@ describe('DashboardController (e2e)', () => {
 
   describe('dashboard/find/total-consumptions-in-year (GET)', () => {
     beforeAll(async () => {
-      await harvestsRepository.delete({});
+      await consumptionsRepository.delete({});
       await authService.addPermission(
         userTest.id,
         'find_total_consumptions_in_year_chart',
@@ -980,7 +991,7 @@ describe('DashboardController (e2e)', () => {
         .get('/dashboard/find/total-consumptions-in-year')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
-      console.log('🚀 ~ it ~ body:', JSON.stringify(body, null, 2));
+      
 
       expect(body).toHaveProperty('years');
 
@@ -1018,6 +1029,10 @@ describe('DashboardController (e2e)', () => {
         authService.removePermission(
           userTest.id,
           'find_count_harvests_and_total_stock_chart',
+        ),
+        authService.removePermission(
+          userTest.id,
+          'find_total_harvest_in_year_chart',
         ),
         authService.removePermission(
           userTest.id,

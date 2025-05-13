@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { AuthService } from './auth.service';
 import { Auth } from './decorators/auth.decorator';
@@ -58,7 +58,6 @@ const {
   convertToAdmin,
 } = pathsAuthController;
 
-@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

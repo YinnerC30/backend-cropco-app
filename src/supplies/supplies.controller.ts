@@ -11,7 +11,6 @@ import {
   Res,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
@@ -88,7 +87,6 @@ const {
 } = pathsSuppliesController;
 
 @Auth()
-@ApiTags('Supplies')
 @Controller('supplies')
 export class SuppliesController {
   constructor(private readonly suppliesService: SuppliesService) {}
@@ -134,10 +132,6 @@ export class SuppliesController {
     return this.suppliesService.remove(id);
   }
 
-  @ApiResponse({
-    status: 200,
-    description: 'Suministros eliminados exitosamente',
-  })
   @Delete(removeSupplies.path)
   @UseInterceptors(ResponseStatusInterceptor)
   async removeBulk(

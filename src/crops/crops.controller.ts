@@ -3,30 +3,23 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
   Query,
-  Res,
+  UseInterceptors,
 } from '@nestjs/common';
-import {
-  ApiBadRequestResponse,
-  ApiCreatedResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
+import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
+import { PathsController } from 'src/common/interfaces/PathsController';
 import { CropsService } from './crops.service';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
-import { PathsController } from 'src/common/interfaces/PathsController';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { Response } from 'express';
 
 export const pathsCropsController: PathsController = {
   createCrop: {
@@ -101,17 +94,11 @@ const {
 } = pathsCropsController;
 
 @Auth()
-@ApiTags('Crops')
 @Controller('crops')
 export class CropsController {
   constructor(private readonly cropsService: CropsService) {}
 
   @Get(findAllCropsStock.path)
-  @ApiResponse({
-    status: 200,
-    description: 'Se han obtenido todas las cosechas con su respectivo Stock',
-  })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
   findAllHarvestStock() {
     return this.cropsService.findAllCropsWithStock();
   }
@@ -119,13 +106,7 @@ export class CropsController {
   // Crear cultivo
   @Post(createCrop.path)
   // Documentación
-  @ApiOperation({ summary: 'Crear un nuevo cultivo' })
-  @ApiCreatedResponse({ description: 'Cultivo creado', type: Crop })
-  @ApiBadRequestResponse({ description: 'Datos inválidos' })
-  @ApiResponse({ status: 401, description: 'No autorizado' })
-  @ApiResponse({ status: 403, description: 'Prohibido' })
-  @ApiResponse({ status: 409, description: 'Conflicto' })
-  @ApiResponse({ status: 500, description: 'Error interno del servidor' })
+
   // Método
   create(@Body() createCropDto: CreateCropDto) {
     return this.cropsService.create(createCropDto);
@@ -134,16 +115,6 @@ export class CropsController {
   // Obtener todos los cultivos
   @Get(findAllCrops.path)
   // Documentación
-  @ApiOperation({ summary: 'Obtener una lista de todos los cultivos' })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de cultivos obtenida con éxito',
-    type: [Crop],
-  })
-  @ApiResponse({ status: 400, description: 'Datos de consulta inválidos' })
-  @ApiResponse({ status: 401, description: 'No autorizado' })
-  @ApiResponse({ status: 403, description: 'Prohibido' })
-  @ApiResponse({ status: 500, description: 'Error interno del servidor' })
   findAll(@Query() queryParams: QueryParamsDto) {
     return this.cropsService.findAll(queryParams);
   }
@@ -169,17 +140,7 @@ export class CropsController {
   // Obtener 1 cultivo
   @Get(findOneCrop.path)
   // Documentación
-  @ApiOperation({ summary: 'Obtener los detalles de un cultivo específico' })
-  @ApiResponse({
-    status: 200,
-    description: 'Detalles del cultivo obtenidos con éxito',
-    type: Crop,
-  })
-  @ApiResponse({ status: 400, description: 'Identificador inválido' })
-  @ApiResponse({ status: 401, description: 'No autorizado' })
-  @ApiResponse({ status: 403, description: 'Prohibido' })
-  @ApiResponse({ status: 404, description: 'Cultivo no encontrado' })
-  @ApiResponse({ status: 500, description: 'Error interno del servidor' })
+
   // Método
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.cropsService.findOne(id);
@@ -188,18 +149,7 @@ export class CropsController {
   // Actualización de 1 cultivo
   @Patch(updateCrop.path)
   // Documentación
-  @ApiOperation({ summary: 'Actualizar los detalles de un cultivo específico' })
-  @ApiResponse({
-    status: 200,
-    description: 'Detalles del cultivo actualizados con éxito',
-    type: Crop,
-  })
-  @ApiResponse({ status: 400, description: 'Datos de actualización inválidos' })
-  @ApiResponse({ status: 401, description: 'No autorizado' })
-  @ApiResponse({ status: 403, description: 'Prohibido' })
-  @ApiResponse({ status: 404, description: 'Cultivo no encontrado' })
-  @ApiResponse({ status: 409, description: 'Conflicto' })
-  @ApiResponse({ status: 500, description: 'Error interno del servidor' })
+
   // Método
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -211,32 +161,15 @@ export class CropsController {
   // Eliminación de 1 cultivo
   @Delete(removeCrop.path)
   // Documentación
-  @ApiOperation({ summary: 'Eliminar un cultivo específico' })
-  @ApiResponse({ status: 200, description: 'Cultivo eliminado con éxito' })
-  @ApiResponse({ status: 400, description: 'Identificador inválido' })
-  @ApiResponse({ status: 401, description: 'No autorizado' })
-  @ApiResponse({ status: 403, description: 'Prohibido' })
-  @ApiResponse({ status: 404, description: 'Cultivo no encontrado' })
-  @ApiResponse({ status: 500, description: 'Error interno del servidor' })
+
   // Método
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.cropsService.remove(id);
   }
 
   @Delete(removeCrops.path)
-  @HttpCode(207)
-  @ApiResponse({
-    status: 200,
-    description: 'Empleados eliminados exitosamente',
-  })
-  async removeBulk(
-    @Body() removeBulkCropsDto: RemoveBulkRecordsDto<Crop>,
-    @Res() response: Response,
-  ) {
-    const result = await this.cropsService.removeBulk(removeBulkCropsDto);
-    if (result.failed && result.failed.length > 0) {
-      return response.status(207).json(result);
-    }
-    return response.status(200).json(result);
+  @UseInterceptors(ResponseStatusInterceptor)
+  async removeBulk(@Body() removeBulkCropsDto: RemoveBulkRecordsDto<Crop>) {
+    return this.cropsService.removeBulk(removeBulkCropsDto);
   }
 }

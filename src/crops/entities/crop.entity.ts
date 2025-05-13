@@ -1,4 +1,3 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { SuppliesConsumptionDetails } from 'src/consumptions/entities/supplies-consumption-details.entity';
 import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity';
 import { HarvestStock } from 'src/harvest/entities/harvest-stock.entity';
@@ -19,70 +18,24 @@ import {
 
 @Entity({ name: 'crops' })
 export class Crop {
-  @ApiProperty({
-    example: 'b57b302e-74a1-47e3-8fbb-d56454f61bec',
-    description: 'El ID del cultivo',
-    uniqueItems: true,
-    readOnly: true,
-    default: 'UUID auto generado',
-    format: 'uuid',
-    type: String,
-  })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ApiProperty({
-    example: 'Café',
-    description: 'Nombre del cultivo',
-    uniqueItems: true,
-    minLength: 4,
-    maxLength: 100,
-    type: 'string',
-  })
   @Column({ type: 'varchar', length: 100, unique: true })
   name: string;
 
-  @ApiProperty({
-    example: 'El cultivo requiere cuidados en...',
-    description: 'Información de utilidad sobre el cultivo',
-    maxLength: 500,
-    type: 'string',
-  })
   @Column({ type: 'text' })
   description: string;
 
-  @ApiProperty({
-    example: 100,
-    description: 'Número de unidades de arboles/plantas del cultivo',
-    minimum: 1,
-    type: 'integer',
-  })
   @Column({ type: 'int4' })
   units: number;
 
-  @ApiProperty({
-    example: '42.3601° N, 71.0589° W',
-    description: 'Ubicación del cultivo',
-    minLength: 4,
-    maxLength: 150,
-    type: 'string',
-  })
   @Column({ type: 'text' })
   location: string;
 
-  @ApiProperty({
-    example: '2021-03-01',
-    description: 'Fecha en la que se creo el cultivo',
-    type: 'date',
-  })
   @Column({ type: 'date', name: 'date_of_creation' })
   date_of_creation: string;
 
-  @ApiProperty({
-    example: '2023-07-18',
-    description: 'Fecha en la que se termino/elimino el cultivo',
-    type: 'date',
-  })
   @Column({ type: 'date', name: 'date_of_termination', nullable: true })
   date_of_termination: string;
 

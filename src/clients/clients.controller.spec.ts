@@ -12,7 +12,6 @@ describe('ClientsController', () => {
   let controller: ClientsController;
   let service: ClientsService;
   let printerService: PrinterService;
-  let mockResponse: any;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -46,10 +45,6 @@ describe('ClientsController', () => {
     controller = module.get<ClientsController>(ClientsController);
     service = module.get<ClientsService>(ClientsService);
     printerService = module.get<PrinterService>(PrinterService);
-    mockResponse = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
   });
 
   it('should be defined', () => {
@@ -162,14 +157,10 @@ describe('ClientsController', () => {
       // Mock del servicio
       jest.spyOn(service, 'removeBulk').mockResolvedValue(mockResult);
 
-      await controller.removeBulk(removeBulkClientsDto, mockResponse);
+      await controller.removeBulk(removeBulkClientsDto);
 
       // Verificar que el servicio fue llamado con los datos correctos
       expect(service.removeBulk).toHaveBeenCalledWith(removeBulkClientsDto);
-
-      // Verificar que la respuesta tiene el estado 200 y el resultado esperado
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith(mockResult);
     });
 
     it('should return 207 status and result when some records fail', async () => {
@@ -192,14 +183,12 @@ describe('ClientsController', () => {
       // Mock del servicio
       jest.spyOn(service, 'removeBulk').mockResolvedValue(mockResult);
 
-      await controller.removeBulk(removeBulkClientsDto, mockResponse);
+      await controller.removeBulk(removeBulkClientsDto);
 
       // Verificar que el servicio fue llamado con los datos correctos
       expect(service.removeBulk).toHaveBeenCalledWith(removeBulkClientsDto);
 
       // Verificar que la respuesta tiene el estado 207 y el resultado esperado
-      expect(mockResponse.status).toHaveBeenCalledWith(207);
-      expect(mockResponse.json).toHaveBeenCalledWith(mockResult);
     });
   });
 });

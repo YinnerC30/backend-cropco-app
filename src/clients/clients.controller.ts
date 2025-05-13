@@ -9,16 +9,9 @@ import {
   Post,
   Query,
   Res,
+  UseInterceptors,
 } from '@nestjs/common';
-import {
-  ApiBody,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiParam,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+
 import { Response } from 'express';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
@@ -28,6 +21,7 @@ import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
 
 export const pathsClientsController: PathsController = {
   createClient: {
@@ -84,7 +78,6 @@ const {
 } = pathsClientsController;
 
 @Auth()
-@ApiTags('Clients')
 @Controller('clients')
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
@@ -100,17 +93,7 @@ export class ClientsController {
   // Crear cliente
   @Post(createClient.path)
   // Documentación
-  @ApiOperation({ summary: 'Crear un nuevo cliente' })
-  @ApiBody({ type: CreateClientDto })
-  @ApiCreatedResponse({
-    description: 'El cliente ha sido creado.',
-    type: CreateClientDto,
-  })
-  @ApiResponse({ status: 400, description: 'Datos inválidos.' })
-  @ApiResponse({ status: 401, description: 'No autorizado' })
-  @ApiResponse({ status: 403, description: 'Prohibido' })
-  @ApiResponse({ status: 409, description: 'Conflicto' })
-  @ApiResponse({ status: 500, description: 'Error interno del servidor' })
+
   // Método
   create(@Body() createClientDto: CreateClientDto) {
     return this.clientsService.create(createClientDto);
@@ -119,13 +102,7 @@ export class ClientsController {
   // Obtener todos los clientes
   @Get(findAllClients.path)
   // Documentación
-  @ApiOperation({ summary: 'Obtener una lista de todos los clientes' })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de clientes obtenida con éxito.',
-    type: [CreateClientDto],
-  })
-  @ApiResponse({ status: 400, description: 'Datos de consulta inválidos.' })
+
   // Método
   findAll(@Query() queryParams: QueryParamsDto) {
     return this.clientsService.findAll(queryParams);
@@ -139,21 +116,7 @@ export class ClientsController {
   // Obtener información de 1 cliente
   @Get(findOneClient.path)
   // Documentación
-  @ApiOperation({
-    summary: 'Obtener la información de un cliente en especifico',
-  })
-  @ApiParam({
-    name: 'id',
-    type: 'string',
-    format: 'uuid',
-    description: 'El ID único del cliente',
-    required: true,
-  })
-  @ApiOkResponse({
-    description: 'Información del cliente obtenida con éxito.',
-    type: Client,
-  })
-  @ApiResponse({ status: 404, description: 'Cliente no encontrado.' })
+
   // Método
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.clientsService.findOne(id);
@@ -162,23 +125,7 @@ export class ClientsController {
   // Actualizar información de 1 cliente
   @Patch(updateClient.path)
   // Documentación
-  @ApiOperation({ summary: 'Actualizar los detalles de un cliente específico' })
-  @ApiBody({ type: CreateClientDto })
-  @ApiParam({
-    name: 'id',
-    type: 'string',
-    format: 'uuid',
-    description: 'El ID único del cliente',
-    required: true,
-  })
-  @ApiOkResponse({
-    description: 'Información del cliente actualizada con éxito.',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Datos de actualización inválidos.',
-  })
-  @ApiResponse({ status: 404, description: 'Cliente no encontrado.' })
+
   // Método
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -190,29 +137,13 @@ export class ClientsController {
   // Eliminar información de 1 cliente
   @Delete(removeClient.path)
   // Documentación
-  @ApiOperation({ summary: 'Eliminar un cliente específico' })
-  @ApiParam({
-    name: 'id',
-    type: 'string',
-    format: 'uuid',
-    description: 'El ID único del cliente',
-    required: true,
-  })
-  @ApiResponse({ status: 200, description: 'Cliente eliminado con éxito.' })
-  @ApiResponse({ status: 404, description: 'Cliente no encontrado.' })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.clientsService.remove(id);
   }
 
   @Delete(removeClients.path)
-  async removeBulk(
-    @Body() removeBulkClientsDto: RemoveBulkRecordsDto<Client>,
-    @Res() response: Response,
-  ) {
-    const result = await this.clientsService.removeBulk(removeBulkClientsDto);
-    if (result.failed && result.failed.length > 0) {
-      return response.status(207).json(result);
-    }
-    return response.status(200).json(result);
+  @UseInterceptors(ResponseStatusInterceptor)
+  async removeBulk(@Body() removeBulkClientsDto: RemoveBulkRecordsDto<Client>) {
+    return this.clientsService.removeBulk(removeBulkClientsDto);
   }
 }
