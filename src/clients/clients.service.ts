@@ -28,7 +28,6 @@ export class ClientsService {
     private readonly handlerError: HandlerErrorService, // Inyecta HandlerErrorService
   ) {
     // Proporciona el Logger personalizado a HandlerErrorService
-    
   }
   async create(createClientDto: CreateClientDto) {
     try {
@@ -162,6 +161,8 @@ export class ClientsService {
   async findTopClientsInSales({
     year = new Date().getFullYear(),
   }: QueryForYearDto) {
+    console.log('🚀 ~ ClientsService ~ year:', year);
+
     const clients = await this.clientRepository
       .createQueryBuilder('clients')
       .leftJoin('clients.sales_detail', 'sales_detail')
@@ -170,17 +171,23 @@ export class ClientsService {
         'clients.id as id',
         'clients.first_name as first_name',
         'clients.last_name as last_name',
-        'CAST(SUM(sales_detail.total) AS INTEGER) AS total_sale',
-        'CAST(SUM(sales_detail.quantity) AS INTEGER) AS total_quantity',
+        'CAST(SUM(sales_detail.value_pay) AS INTEGER) AS total_value_pay',
+        'CAST(SUM(sales_detail.amount) AS INTEGER) AS total_amount',
       ])
       .where('EXTRACT(YEAR FROM sale.date) = :year', { year })
       .groupBy('clients.id')
-      .having('SUM(sales_detail.total) > 0')
-      .orderBy('total_sale', 'DESC')
+      .having('SUM(sales_detail.value_pay) > 0')
+      .orderBy('total_value_pay', 'DESC')
       .limit(5)
       .getRawMany();
+
+    const count = clients.length;
+
     return {
-      current_row_count: clients.length,
+      total_row_count: count,
+      current_row_count: count,
+      total_page_count: count > 0 ? 1 : 0,
+      current_page_count: count > 0 ? 1 : 0,
       records: clients,
     };
   }

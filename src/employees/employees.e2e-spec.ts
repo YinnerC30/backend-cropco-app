@@ -694,7 +694,7 @@ describe('EmployeesController (e2e)', () => {
     it('should get only one employee with pending payments', async () => {
       const employee = await seedService.CreateEmployee({});
 
-      const harvest = await seedService.CreateHarvestForEmployee({
+      const harvest = await seedService.CreateHarvestAdvanced({
         employeeId: employee.id,
       });
       const work = await seedService.CreateWorkForEmployee({

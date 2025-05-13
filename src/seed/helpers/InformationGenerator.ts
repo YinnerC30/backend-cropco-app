@@ -158,6 +158,12 @@ export class InformationGenerator {
     return date.toISOString();
   };
 
+  static generateRandomDateWithYears = (yearsToAdd: number = 0): string => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() + yearsToAdd);
+    return date.toISOString();
+  };
+
   static generateSupplyBrand = (): string => {
     const randomIndex = this.generateRandomIndex(fakeSupplyBrands.length);
     return fakeSupplyBrands[randomIndex];

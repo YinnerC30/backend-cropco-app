@@ -106,19 +106,21 @@ export class DashboardController {
   }
 
   // * Crops
-  @Get(findCountHarvestsAndTotalStock.path)
-  async findCountHarvestsAndTotalStock(@Query() params: QueryForYearDto) {
-    return this.cropsService.findCountHarvestsAndTotalStock(params);
-  }
-
   @Get(findAllCropsStock.path)
   findAllHarvestStock() {
     return this.cropsService.findAllCropsWithStock();
   }
 
+  @Get(findCountHarvestsAndTotalStock.path)
+  async findCountHarvestsAndTotalStock(@Query() params: QueryForYearDto) {
+    return this.cropsService.findCountHarvestsAndTotalStock(params);
+  }
+
   // * Harvests
   @Get(findTotalHarvestInYearAndPreviousYear.path)
-  async findTotalHarvestInYear(@Query() params: QueryParamsTotalHarvestsInYearDto) {
+  async findTotalHarvestInYear(
+    @Query() params: QueryParamsTotalHarvestsInYearDto,
+  ) {
     return this.harvestService.findTotalHarvestInYear(params);
   }
 

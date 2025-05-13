@@ -294,19 +294,24 @@ export class EmployeesService {
         'employees.id as id',
         'employees.first_name as first_name',
         'employees.last_name as last_name',
-        'CAST(SUM(harvests_detail.total) AS INTEGER) AS total_harvests',
+        'CAST(SUM(harvests_detail.amount) AS INTEGER) AS total_harvests',
         'CAST(SUM(harvests_detail.value_pay) AS INTEGER) AS total_value_pay',
       ])
       .where('EXTRACT(YEAR FROM harvest.date) = :year', { year })
       .groupBy('employees.id')
-      .having('SUM(harvests_detail.total) > 0')
+      .having('SUM(harvests_detail.amount) > 0')
       .orderBy('total_harvests', 'DESC')
       .limit(5)
       .getRawMany();
 
+    const count = employees.length;
+
     return {
-      rowCount: employees.length,
-      rows: employees,
+      total_row_count: count,
+      current_row_count: count,
+      total_page_count: count > 0 ? 1 : 0,
+      current_page_count: count > 0 ? 1 : 0, 
+      records: employees,
     };
   }
   async findTopEmployeesInWorks({
@@ -326,14 +331,19 @@ export class EmployeesService {
       .where('EXTRACT(YEAR FROM work.date) = :year', { year })
       .groupBy('employees.id')
       .having('SUM(works_detail.value_pay) > 0')
-      .orderBy('total_works', 'DESC') // Primero ordena por total de trabajos
+      .orderBy('total_works', 'DESC') // Primero ordena por amount de trabajos
       .addOrderBy('value_pay_works', 'DESC') // Luego por valor de pago
       .limit(5)
       .getRawMany();
 
+    const count = employees.length;
+
     return {
-      rowCount: employees.length,
-      rows: employees,
+      total_row_count: count,
+      current_row_count: count,
+      total_page_count: count > 0 ? 1 : 0,
+      current_page_count: count > 0 ? 1 : 0, 
+      records: employees,
     };
   }
 }

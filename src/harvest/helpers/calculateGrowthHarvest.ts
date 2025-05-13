@@ -1,6 +1,6 @@
 interface MonthData {
   month: string;
-  total: number;
+  amount: number;
   value_pay: number;
 }
 
@@ -34,11 +34,11 @@ export function calculateGrowthHarvest({
 
   // Sumamos los totales de cada año
   const totalLastYear = lastYear.data.reduce(
-    (acc, month) => acc + month.total,
+    (acc, month) => acc + month.amount,
     0,
   );
   const totalPreviousYear = previousYear.data.reduce(
-    (acc, month) => acc + month.total,
+    (acc, month) => acc + month.amount,
     0,
   );
 

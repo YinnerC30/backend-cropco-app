@@ -22,9 +22,7 @@ export class CropsService {
     @InjectRepository(Crop)
     private readonly cropRepository: Repository<Crop>,
     private readonly handlerError: HandlerErrorService,
-  ) {
-    
-  }
+  ) {}
 
   async create(createCropDto: CreateCropDto) {
     try {
@@ -161,6 +159,7 @@ export class CropsService {
       total_row_count: count,
       current_row_count: count,
       total_page_count: count > 0 ? 1 : 0,
+      current_page_count: count > 0 ? 1 : 0,
       records: crops.map((item) => ({
         id: item.id,
         name: item.name,
@@ -211,7 +210,9 @@ export class CropsService {
     const crop = await this.findOne(id);
 
     if (crop.harvests_stock !== null && crop.harvests_stock.amount > 0) {
-      throw new ConflictException(`Crop with id ${crop.id} has stock available`);
+      throw new ConflictException(
+        `Crop with id ${crop.id} has stock available`,
+      );
     }
     await this.cropRepository.softRemove(crop);
   }
@@ -250,12 +251,12 @@ export class CropsService {
         'crops.id as id',
         'crops.name as name',
         'CAST(COUNT(harvests.id) AS INTEGER) AS total_harvests',
-        'CAST(SUM(harvests.total) AS INTEGER) AS total_stock',
+        'CAST(SUM(harvests.amount) AS INTEGER) AS total_amount',
       ])
       .where('EXTRACT(YEAR FROM harvests.date) = :year', { year })
       .groupBy('crops.id')
       .orderBy('total_harvests', 'DESC')
-      .addOrderBy('total_stock', 'DESC')
+      .addOrderBy('total_amount', 'DESC')
       .limit(5)
       .getRawMany();
 
@@ -265,6 +266,7 @@ export class CropsService {
       total_row_count: count,
       current_row_count: count,
       total_page_count: count > 0 ? 1 : 0,
+      current_page_count: count > 0 ? 1 : 0,
       records: crops,
     };
   }
