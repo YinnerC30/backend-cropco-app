@@ -9,7 +9,7 @@ import { Harvest } from '../entities/harvest.entity';
 import { DateFormatter } from 'src/common/helpers';
 
 interface ReportOptions {
-  data: Harvest & { total_processed: number };
+  data: Harvest & { total_amount_processed: number };
 }
 
 export const getHarvestReport = (
@@ -76,7 +76,7 @@ export const getHarvestReport = (
                     [
                       'Total Stock procesado:',
                       {
-                        text: FormatNumber(data.total_processed) + ' Kg',
+                        text: FormatNumber(data.total_amount_processed) + ' Kg',
                         style: 'boldText',
                       },
                     ],
@@ -244,7 +244,7 @@ export const getHarvestReport = (
         text: [
           'Total de Stock procesado: ',
           {
-            text: `${FormatNumber(data.total_processed) + ' Kg'}`,
+            text: `${FormatNumber(data.total_amount_processed) + ' Kg'}`,
             style: 'boldText',
           },
         ],

@@ -9,10 +9,10 @@ import {
 
 const fonts = {
   Roboto: {
-    normal: 'fonts/Roboto-Regular.ttf',
-    bold: 'fonts/Roboto-Medium.ttf',
-    italics: 'fonts/Roboto-Italic.ttf',
-    bolditalics: 'fonts/Roboto-MediumItalic.ttf',
+    normal: 'public/fonts/Roboto-Regular.ttf',
+    bold: 'public/fonts/Roboto-Medium.ttf',
+    italics: 'public/fonts/Roboto-Italic.ttf',
+    bolditalics: 'public/fonts/Roboto-MediumItalic.ttf',
   },
 };
 

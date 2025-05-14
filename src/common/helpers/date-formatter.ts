@@ -7,7 +7,7 @@ export class DateFormatter {
 
   static getSpanishDate(originalDate: string) {
     // Crear un objeto Date a partir de la fecha original
-    const date = new Date(originalDate + 'T00:00:00');
+    const date = new Date(originalDate.split('T')[0] + 'T00:00:00');
 
     // Array con los nombres de los meses en español
     const monthsES = [

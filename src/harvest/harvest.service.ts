@@ -178,11 +178,11 @@ export class HarvestService {
     if (!harvest)
       throw new NotFoundException(`Harvest with id: ${id} not found`);
 
-    const total_processed = harvest.processed.reduce(
+    const total_amount_processed = harvest.processed.reduce(
       (accumulator, currentValue) => accumulator + currentValue.amount,
       0,
     );
-    return { ...harvest, total_processed };
+    return { ...harvest, total_amount_processed };
   }
 
   async update(id: string, updateHarvestDto: HarvestDto) {
@@ -395,7 +395,7 @@ export class HarvestService {
     }
   }
 
-  async validateTotalProcessed(data: {
+  private async validateTotalProcessed(data: {
     harvestId: string;
     currentAmount: number;
     oldAmount: number;

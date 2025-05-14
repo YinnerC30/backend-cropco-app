@@ -161,7 +161,6 @@ export class ClientsService {
   async findTopClientsInSales({
     year = new Date().getFullYear(),
   }: QueryForYearDto) {
-
     const clients = await this.clientRepository
       .createQueryBuilder('clients')
       .leftJoin('clients.sales_detail', 'sales_detail')

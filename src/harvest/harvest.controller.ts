@@ -46,6 +46,11 @@ export const pathsHarvestsController: PathsController = {
     description: 'obtener 1 cosecha',
     name: 'find_one_harvest',
   },
+  findOneHarvestProcessedAll: {
+    path: 'processed/all',
+    description: 'obtener todas las cosechas procesadas',
+    name: 'find_one_harvest_processed_all',
+  },
   updateHarvest: {
     path: 'update/one/:id',
     description: 'actualizar 1 cosecha',

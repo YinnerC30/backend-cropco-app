@@ -59,7 +59,9 @@ export class SuppliesService {
 
     if (!!query && !all_records) {
       queryBuilder.where('supplies.name ILIKE :query', { query: `${query}%` });
-      queryBuilder.where('supplies.brand ILIKE :query', { query: `${query}%` });
+      queryBuilder.orWhere('supplies.brand ILIKE :query', {
+        query: `${query}%`,
+      });
     }
 
     !all_records && queryBuilder.take(limit).skip(offset * limit);
