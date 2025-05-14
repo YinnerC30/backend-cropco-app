@@ -162,22 +162,26 @@ export class SuppliesService {
   }
 
   async findAllSuppliesStock() {
-    const [suppliesStock, count] = await this.supplyRepository.findAndCount({
-      relations: {
-        stock: true,
-      },
-      where: {
-        stock: {
-          amount: MoreThan(0),
-        },
-      },
-      order: {
-        name: 'ASC',
-      },
-    });
+    const suppliesStock = await this.supplyRepository
+      .createQueryBuilder('supply')
+      .leftJoin('supply.stock', 'stock')
+      .select([
+        'supply.id AS id',
+        'supply.name AS name',
+        'supply.brand AS brand',
+        'supply.observation AS observation',
+        'supply.unit_of_measure AS unit_of_measure',
+        'supply.createdDate AS createdDate',
+        'supply.updatedDate AS updatedDate',
+        'supply.deletedDate AS deletedDate',
+        'COALESCE(stock.amount, 0) as amount',
+      ])
+      .where('stock.amount > :amount', { amount: 0 })
+      .orderBy('supply.name', 'ASC')
+      .getRawMany();
 
     return {
-      total_row_count: count,
+      total_row_count: suppliesStock.length,
       current_row_count: suppliesStock.length,
       total_page_count: 1,
       current_page_count: 1,

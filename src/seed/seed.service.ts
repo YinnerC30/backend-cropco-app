@@ -72,6 +72,107 @@ export class SeedService {
     private readonly authService: AuthService,
   ) {}
 
+  async runSeedSelective(options: {
+    clearDatabase?: boolean;
+    users?: boolean;
+    clients?: boolean;
+    suppliers?: boolean;
+    supplies?: boolean;
+    employees?: boolean;
+    crops?: boolean;
+    harvests?: boolean;
+    works?: boolean;
+    sales?: boolean;
+    shoppings?: boolean;
+    consumptions?: boolean;
+    modules?: boolean;
+    adminUser?: boolean;
+  }) {
+    const {
+      clearDatabase = false,
+      users = false,
+      clients = false,
+      suppliers = false,
+      supplies = false,
+      employees = false,
+      crops = false,
+      harvests = false,
+      works = false,
+      sales = false,
+      shoppings = false,
+      consumptions = false,
+      modules = false,
+      adminUser = false,
+    } = options;
+
+    const history: Record<string, boolean> = {};
+
+    if (clearDatabase) {
+      await this.clearDatabase();
+      history.clearDatabase = true;
+    }
+
+    if (modules) {
+      await this.authService.createModulesWithActions();
+      history.insertedModules = true;
+    }
+
+    if (adminUser) {
+      await this.authService.convertToAdminUserSeed();
+      history.insertedAdminUser = true;
+    }
+
+    if (users) {
+      history.insertedUsers = await this.insertNewUsers();
+    }
+
+    if (clients) {
+      history.insertedClients = await this.insertNewClients();
+    }
+
+    if (suppliers) {
+      history.insertedSuppliers = await this.insertNewSuppliers();
+    }
+
+    if (supplies) {
+      history.insertedSupplies = await this.insertNewSupplies();
+    }
+
+    if (employees) {
+      history.insertedEmployees = await this.insertNewEmployees();
+    }
+
+    if (crops) {
+      history.insertedCrops = await this.insertNewCrops();
+    }
+
+    if (harvests) {
+      history.insertedHarvests = await this.insertNewHarvests();
+    }
+
+    if (works) {
+      history.insertedWorks = await this.insertNewWorks();
+    }
+
+    if (sales) {
+      history.insertedSales = await this.insertNewSales();
+    }
+
+    if (shoppings) {
+      history.insertedShoppingSupplies = await this.insertNewShoppingSupplies();
+    }
+
+    if (consumptions) {
+      history.insertedConsumptionSupplies =
+        await this.insertNewConsumptionSupplies();
+    }
+
+    return {
+      message: 'Selective seed executed successfully',
+      history,
+    };
+  }
+
   async runSeed() {
     await this.clearDatabase();
     await this.authService.createModulesWithActions();

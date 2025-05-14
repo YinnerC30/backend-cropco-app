@@ -153,6 +153,7 @@ export class CropsService {
       relations: {
         harvests_stock: true,
       },
+      take: 5,
     });
 
     return {

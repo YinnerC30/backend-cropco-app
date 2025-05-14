@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
   Res,
   UseInterceptors,
@@ -100,7 +101,7 @@ export class WorkController {
     pdfDoc.end();
   }
 
-  @Patch(updateWork.path)
+  @Put(updateWork.path)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateWorkDto: WorkDto,

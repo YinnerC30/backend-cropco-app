@@ -1130,7 +1130,7 @@ describe('WorksController (e2e)', () => {
     it('should throw an exception for not sending a JWT to the protected path works/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/works/update/one/${falseWorkId}`)
+        .put(`/works/update/one/${falseWorkId}`)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -1154,7 +1154,7 @@ describe('WorksController (e2e)', () => {
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/works/update/one/${record.id}`)
+        .put(`/works/update/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(200);
@@ -1218,7 +1218,7 @@ describe('WorksController (e2e)', () => {
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/works/update/one/${record.id}`)
+        .put(`/works/update/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(400);
@@ -1254,7 +1254,7 @@ describe('WorksController (e2e)', () => {
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/works/update/one/${record.id}`)
+        .put(`/works/update/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(400);
@@ -1288,7 +1288,7 @@ describe('WorksController (e2e)', () => {
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/works/update/one/${record.id}`)
+        .put(`/works/update/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(400);
@@ -1324,7 +1324,7 @@ describe('WorksController (e2e)', () => {
 
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/works/update/one/${record.id}`)
+        .put(`/works/update/one/${record.id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
         .expect(400);
@@ -1337,7 +1337,7 @@ describe('WorksController (e2e)', () => {
     it('should throw exception for not finding work to update', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/works/update/one/${falseWorkId}`)
+        .put(`/works/update/one/${falseWorkId}`)
         .set('Authorization', `Bearer ${token}`)
         .send(workDtoTemplete)
         .expect(404);
@@ -1347,7 +1347,7 @@ describe('WorksController (e2e)', () => {
     it('should throw exception for sending incorrect properties', async () => {
       const { body } = await request
         .default(app.getHttpServer())
-        .patch(`/works/update/one/${falseWorkId}`)
+        .put(`/works/update/one/${falseWorkId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ year: 2025 })
         .expect(400);
@@ -1583,7 +1583,7 @@ describe('WorksController (e2e)', () => {
     it('should throw an exception because the user JWT does not have permissions for this action works/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .patch(`/works/update/one/${falseWorkId}`)
+        .put(`/works/update/one/${falseWorkId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
