@@ -2138,7 +2138,7 @@ describe('HarvestsController (e2e)', () => {
         .post('/harvests/processed/create')
         .set('Authorization', `Bearer ${token}`)
         .send(bodyRequest)
-        .expect(400);
+        .expect(409);
 
       expect(body.message).toBe(
         `You cannot add more processed harvest records, it exceeds the value of the harvest with id ${harvest.id}.`,

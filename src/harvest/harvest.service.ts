@@ -420,7 +420,7 @@ export class HarvestService {
     const processedSum = Number(totalProcessed?.totalProcessed || 0);
 
     if (processedSum - data.oldAmount + data.currentAmount > harvest.amount) {
-      throw new BadRequestException(
+      throw new ConflictException(
         `You cannot add more processed harvest records, it exceeds the value of the harvest with id ${harvest.id}.`,
       );
     }
