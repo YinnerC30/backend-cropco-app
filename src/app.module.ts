@@ -36,7 +36,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_NAME'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: true,
+          // synchronize: true,
           ssl: {
             rejectUnauthorized: true, // Be cautious with this in production
           },
