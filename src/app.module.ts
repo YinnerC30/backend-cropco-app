@@ -18,6 +18,8 @@ import { PrinterModule } from './printer/printer.module';
 import { ConsumptionsModule } from './consumptions/consumptions.module';
 import { ShoppingModule } from './shopping/shopping.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Module({
   imports: [
@@ -28,6 +30,17 @@ import { DashboardModule } from './dashboard/dashboard.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
+        const caCertPath = configService.get<string>('DB_CA_CERT_PATH');
+        let sslOptions: Record<string, unknown> = { rejectUnauthorized: true };
+        if (
+          caCertPath &&
+          fs.existsSync(path.resolve(__dirname, '..', caCertPath))
+        ) {
+          sslOptions.ca = fs
+            .readFileSync(path.resolve(__dirname, '..', caCertPath))
+            .toString();
+        }
+        console.log(sslOptions);
         return {
           type: 'postgres',
           host: configService.get<string>('DB_HOST'),
@@ -37,9 +50,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
           database: configService.get<string>('DB_NAME'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: true,
-          ssl: {
-            rejectUnauthorized: true, // Be cautious with this in production
-          },
+          ssl: sslOptions,
         };
       },
     }),
