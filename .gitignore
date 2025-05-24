@@ -59,3 +59,9 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Data DB container
 data-server-db-development/
+
+# CA certificate
+ca_certificate.crt
+
+# Docker compose
+docker-compose-backend-cloud.yml
