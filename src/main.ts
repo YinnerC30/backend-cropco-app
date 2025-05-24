@@ -3,7 +3,12 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule, {
+    cors: {
+      origin: 'https://cropco.netlify.app',
+      credentials: true,
+    },
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
