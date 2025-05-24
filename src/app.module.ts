@@ -40,7 +40,7 @@ import * as path from 'path';
             .readFileSync(path.resolve(__dirname, '..', caCertPath))
             .toString();
         }
-        console.log(sslOptions);
+
         return {
           type: 'postgres',
           host: configService.get<string>('DB_HOST'),
@@ -49,7 +49,7 @@ import * as path from 'path';
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_NAME'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: true,
+          // synchronize: true,
           ssl: sslOptions,
         };
       },
