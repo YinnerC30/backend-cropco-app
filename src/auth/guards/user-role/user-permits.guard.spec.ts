@@ -6,6 +6,7 @@ import {
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
+import { AUTH_OPTIONS_KEY } from 'src/auth/decorators/auth.decorator';
 
 describe('UserPermitsGuard', () => {
   let guard: UserPermitsGuard;
@@ -36,13 +37,45 @@ describe('UserPermitsGuard', () => {
     it('should throw BadRequestException if user is not found in the request', () => {
       const mockContext = {
         switchToHttp: jest.fn(() => ({
-          getRequest: jest.fn(() => ({})), // Simulamos una solicitud sin usuario
+          getRequest: jest.fn(() => ({})), // req.user no existe
         })),
-      } as unknown as ExecutionContext;
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+      } as any as ExecutionContext;
+
+      jest.spyOn(reflector, 'get').mockImplementation((key: string) => {
+        if (key === AUTH_OPTIONS_KEY) return undefined;
+        return null;
+      });
 
       expect(() => guard.canActivate(mockContext)).toThrowError(
         BadRequestException,
       );
+    });
+
+    it('should return true if skipValidationPath is true', () => {
+      const mockUser = {
+        first_name: 'John',
+        modules: [],
+      };
+
+      const mockContext = {
+        switchToHttp: jest.fn(() => ({
+          getRequest: jest.fn(() => ({
+            user: mockUser,
+            route: { path: '/any-path' }, // ruta cualquiera
+          })),
+        })),
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+      } as any as ExecutionContext;
+
+      jest.spyOn(reflector, 'get').mockImplementation((key: string) => {
+        if (key === AUTH_OPTIONS_KEY) return { skipValidationPath: true }; // opción activada
+        return null;
+      });
+
+      expect(guard.canActivate(mockContext)).toBe(true);
     });
 
     it('should throw ForbiddenException if user does not have permission for the requested path', () => {
@@ -59,10 +92,17 @@ describe('UserPermitsGuard', () => {
         switchToHttp: jest.fn(() => ({
           getRequest: jest.fn(() => ({
             user: mockUser,
-            route: { path: '/forbidden-path' }, // Ruta no permitida
+            route: { path: '/forbidden-path' }, // ruta no permitida
           })),
         })),
-      } as unknown as ExecutionContext;
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+      } as any as ExecutionContext;
+
+      jest.spyOn(reflector, 'get').mockImplementation((key: string) => {
+        if (key === AUTH_OPTIONS_KEY) return undefined; // no se salta validación
+        return null;
+      });
 
       expect(() => guard.canActivate(mockContext)).toThrowError(
         `User ${mockUser.first_name} need a permit for this action`,
@@ -83,10 +123,17 @@ describe('UserPermitsGuard', () => {
         switchToHttp: jest.fn(() => ({
           getRequest: jest.fn(() => ({
             user: mockUser,
-            route: { path: '/allowed-path' }, // Ruta permitida
+            route: { path: '/allowed-path' }, // ruta permitida
           })),
         })),
-      } as unknown as ExecutionContext;
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+      } as any as ExecutionContext;
+
+      jest.spyOn(reflector, 'get').mockImplementation((key: string) => {
+        if (key === AUTH_OPTIONS_KEY) return undefined; // no se salta validación
+        return null;
+      });
 
       expect(guard.canActivate(mockContext)).toBe(true);
     });

@@ -275,6 +275,7 @@ describe('AuthService', () => {
             name: 'action1',
             description: 'Action 1',
             path_endpoint: '/test1',
+            is_visible: true,
           },
         ],
       },
@@ -287,6 +288,7 @@ describe('AuthService', () => {
 
       expect(result).toEqual(mockModules);
       expect(mockModuleRepository.find).toHaveBeenCalledWith({
+        where: { actions: { is_visible: true } },
         relations: { actions: true },
       });
     });
