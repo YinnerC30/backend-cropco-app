@@ -33,7 +33,7 @@ import * as path from 'path';
         const statusProject =
           configService.get<string>('STATUS_PROJECT') || 'development';
         const caCertPath = configService.get<string>('DB_CA_CERT_PATH');
-        let sslOptions: Record<string, unknown> = { rejectUnauthorized: false };
+        let sslOptions: Record<string, unknown> = { rejectUnauthorized: true };
         if (
           caCertPath &&
           fs.existsSync(path.resolve(__dirname, '..', caCertPath))
