@@ -240,6 +240,10 @@ export class UsersService {
 
   async toggleStatusUser(id: string): Promise<void> {
     const user = await this.findOne(id);
+
+    if (user.roles.includes('admin')) {
+      throw new ForbiddenException('You cannot delete an admin user');
+    }
     await this.usersRepository.update(user.id, { is_active: !user.is_active });
   }
 }
