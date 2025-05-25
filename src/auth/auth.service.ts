@@ -124,7 +124,7 @@ export class AuthService {
   }
 
   generateJwtToken(payload: JwtPayload): string {
-    const token = this.jwtService.sign(payload);
+    const token = this.jwtService.sign(payload, { expiresIn: '6h' });
     return token;
   }
 
