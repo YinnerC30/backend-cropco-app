@@ -25,6 +25,7 @@ WORKDIR /app
 COPY --from=all-deps /app/node_modules ./node_modules
 COPY . .
 COPY certs ./certs
+COPY public ./public
 RUN npm run build
 
 # Stage 5: Prepare the runtime environment
@@ -32,6 +33,7 @@ FROM node:18-alpine AS runner
 WORKDIR /app
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/certs ./certs
+COPY --from=builder /app/public ./public
 COPY --from=builder /app/dist ./dist
 EXPOSE 3000
 CMD [ "node", "dist/main" ]
