@@ -71,14 +71,14 @@ export class AuthController {
     return this.authService.login(loginUserDto);
   }
 
-  @Auth()
+  @Auth({ skipValidationPath: true })
   @Patch(renewToken.path)
   @HttpCode(200)
   renewToken(@GetToken() token: string) {
     return this.authService.renewToken(token);
   }
 
-  @Auth()
+  @Auth({ skipValidationPath: true })
   @Get(checkAuthStatus.path)
   checkAuthStatus(@GetToken() token: string) {
     return this.authService.checkAuthStatus(token);

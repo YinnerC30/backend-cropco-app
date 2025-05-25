@@ -8,6 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { User } from 'src/users/entities/user.entity';
+import { AUTH_OPTIONS_KEY } from 'src/auth/decorators/auth.decorator';
 
 @Injectable()
 export class UserPermitsGuard implements CanActivate {
@@ -22,6 +23,18 @@ export class UserPermitsGuard implements CanActivate {
     const userRequest = req.user as User as any;
 
     if (!userRequest) throw new BadRequestException('User not found');
+
+    // Obtener las opciones del decorador
+    const options = this.reflector.get<{ skipValidationPath?: boolean }>(
+      AUTH_OPTIONS_KEY,
+      context.getHandler(),
+    );
+
+    // Si skipValidationPath está activo, omitir validación
+    if (options?.skipValidationPath) {
+      return true;
+    }
+
     // Obtener path solicitado
     const pathEndPoint = req.route.path;
 
