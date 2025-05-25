@@ -17,8 +17,8 @@ services:
       - ./data-server-db-development:/var/lib/postgresql/data
       - ./sql-scripts:/docker-entrypoint-initdb.d/
   nest-api:
-    image: backend-cropco
-    container_name: nest-api
+    image: cropco-api-rest:latest
+    container_name: nest-api-local
     ports:
       - 3000:3000
     environment:
