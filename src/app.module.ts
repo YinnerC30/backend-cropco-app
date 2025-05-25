@@ -30,6 +30,8 @@ import * as path from 'path';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
+        const statusProject =
+          configService.get<string>('STATUS_PROJECT') || 'development';
         const caCertPath = configService.get<string>('DB_CA_CERT_PATH');
         let sslOptions: Record<string, unknown> = { rejectUnauthorized: false };
         if (
@@ -50,8 +52,7 @@ import * as path from 'path';
           database: configService.get<string>('DB_NAME'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: true,
-          // ssl: sslOptions,
-          ssl: false,
+          ssl: statusProject === 'production' ? sslOptions : false,
         };
       },
     }),
