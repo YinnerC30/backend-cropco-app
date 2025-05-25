@@ -60,9 +60,9 @@ describe('ClientsController (e2e)', () => {
               entities: [__dirname + '../../**/*.entity{.ts,.js}'],
               synchronize: true,
               
-              ssl: {
-                rejectUnauthorized: true, // Be cautious with this in production
-              },
+              // ssl: {
+              //   rejectUnauthorized: false, // Be cautious with this in production
+              // },
             };
           },
         }),

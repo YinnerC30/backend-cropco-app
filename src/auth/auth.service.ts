@@ -33,6 +33,10 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { UserActions } from 'src/users/entities/user-actions.entity';
 import { UserDto } from 'src/users/dto/user.dto';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import {
+  PathProperties,
+  PathsController,
+} from 'src/common/interfaces/PathsController';
 
 @Injectable()
 export class AuthService {
@@ -226,12 +230,14 @@ export class AuthService {
         };
       });
 
-      modelEntity.actions = pathList.map(({ path, description, name }: any) =>
-        this.moduleActionsRepository.create({
-          name: name,
-          description: description.trim(),
-          path_endpoint: path,
-        }),
+      modelEntity.actions = pathList.map(
+        ({ path, description, name, visibleToUser = true }: PathProperties) =>
+          this.moduleActionsRepository.create({
+            name: name,
+            description: description.trim(),
+            path_endpoint: path,
+            is_visible: visibleToUser,
+          }),
       );
 
       await this.modulesRepository.save(modelEntity);
@@ -239,7 +245,10 @@ export class AuthService {
   }
 
   async findAllModules(): Promise<Module[]> {
-    return await this.modulesRepository.find({ relations: { actions: true } });
+    return await this.modulesRepository.find({
+      where: { actions: { is_visible: true } },
+      relations: { actions: true },
+    });
   }
 
   async convertToAdmin(

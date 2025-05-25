@@ -31,7 +31,7 @@ import * as path from 'path';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const caCertPath = configService.get<string>('DB_CA_CERT_PATH');
-        let sslOptions: Record<string, unknown> = { rejectUnauthorized: true };
+        let sslOptions: Record<string, unknown> = { rejectUnauthorized: false };
         if (
           caCertPath &&
           fs.existsSync(path.resolve(__dirname, '..', caCertPath))
@@ -49,8 +49,9 @@ import * as path from 'path';
           password: configService.get<string>('DB_PASSWORD'),
           database: configService.get<string>('DB_NAME'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          // synchronize: true,
-          ssl: sslOptions,
+          synchronize: true,
+          // ssl: sslOptions,
+          ssl: false,
         };
       },
     }),

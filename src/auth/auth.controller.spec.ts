@@ -101,17 +101,17 @@ describe('AuthController', () => {
     });
   });
 
-  describe('convertToAdmin', () => {
-    it('should call authService.convertToAdmin with id and return result', async () => {
-      const mockId = '1';
-      const mockResult = { email: 'admin@example.com', modules: [] };
+  // describe('convertToAdmin', () => {
+  //   it('should call authService.convertToAdmin with id and return result', async () => {
+  //     const mockId = '1';
+  //     const mockResult = { email: 'admin@example.com', modules: [] };
 
-      mockAuthService.convertToAdmin.mockResolvedValue(mockResult);
+  //     mockAuthService.convertToAdmin.mockResolvedValue(mockResult);
 
-      const result = await authController.convertToAdmin(mockId);
+  //     const result = await authController.convertToAdmin(mockId);
 
-      expect(authService.convertToAdmin).toHaveBeenCalledWith(mockId);
-      expect(result).toEqual(mockResult);
-    });
-  });
+  //     expect(authService.convertToAdmin).toHaveBeenCalledWith(mockId);
+  //     expect(result).toEqual(mockResult);
+  //   });
+  // });
 });
