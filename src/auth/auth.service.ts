@@ -37,6 +37,7 @@ import {
   PathProperties,
   PathsController,
 } from 'src/common/interfaces/PathsController';
+import { RoleUser } from 'src/users/types/role-user.type';
 
 @Injectable()
 export class AuthService {
@@ -374,6 +375,7 @@ export class AuthService {
       cell_phone_number: '3001234567',
       is_active: true,
       actions: [],
+      roles: ['admin'] as RoleUser[],
     };
 
     const user = await this.userService.create(data);

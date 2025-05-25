@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -103,6 +104,7 @@ export class UsersService {
         last_name: true,
         is_active: true,
         password: showPassword,
+        roles: true,
       },
       where: { id },
       relations: {
@@ -169,7 +171,12 @@ export class UsersService {
   }
 
   async remove(id: string): Promise<void> {
-    await this.findOne(id);
+    const { roles } = await this.findOne(id);
+
+    if (roles.includes('admin')) {
+      throw new ForbiddenException('You cannot delete an admin user');
+    }
+
     await this.usersRepository.delete(id);
   }
 

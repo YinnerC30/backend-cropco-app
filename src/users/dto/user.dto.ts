@@ -2,12 +2,15 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEmail,
+  IsIn,
+  IsOptional,
   IsString,
   MaxLength,
   MinLength,
   ValidateNested,
 } from 'class-validator';
 import { UserActionDto } from './user-action.dto';
+import { RoleUser } from '../types/role-user.type';
 
 export class UserDto {
   @IsString()
@@ -36,4 +39,10 @@ export class UserDto {
   @ValidateNested()
   @Type(() => UserActionDto)
   actions: UserActionDto[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @IsIn(['admin', 'user'], { each: true })
+  roles?: RoleUser[];
 }

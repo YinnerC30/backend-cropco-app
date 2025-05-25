@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { PersonalInformation } from '../../common/entities/personal-information.entity';
 import { UserActions } from './user-actions.entity';
+import { RoleUser } from '../types/role-user.type';
 
 @Entity({ name: 'users' })
 export class User extends PersonalInformation {
@@ -20,11 +21,10 @@ export class User extends PersonalInformation {
   @Column({ type: 'varchar', length: 100, select: false })
   password: string;
 
-  @Column('text', {
-    array: true,
+  @Column('jsonb', {
     default: ['user'],
   })
-  roles: string[];
+  roles: RoleUser[];
 
   @Column('bool', { default: true })
   is_active: boolean;
