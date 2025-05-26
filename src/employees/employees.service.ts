@@ -35,7 +35,7 @@ export class EmployeesService {
     const employee = await this.findOne(id);
 
     const docDefinition = getEmploymentLetterByIdReport({
-      employerName: 'Sofonias',
+      employerName: 'Carlos',
       employerPosition: 'Gerente de RRHH',
       employeeName: employee.first_name,
       employeePosition: 'Jornalero',
