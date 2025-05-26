@@ -79,6 +79,32 @@ CropCo Backend es una aplicación desarrollada en NestJS para la gestión integr
    npm run start:dev
    ```
 
+## 🐳 Construcción y despliegue con Docker
+
+El proyecto incluye un `Dockerfile` multi-etapa para construir y ejecutar la aplicación de forma eficiente:
+
+1. **Construir la imagen:**
+
+   ```bash
+   docker build -t cropco-backend .
+   ```
+
+2. **Ejecutar el contenedor:**
+
+   ```bash
+   docker run -p 3000:3000 --env-file .env cropco-backend
+   ```
+
+### Etapas del Dockerfile
+
+- **all-deps:** Instala todas las dependencias (desarrollo y producción).
+- **prod-deps:** Instala solo dependencias de producción.
+- **tester:** Ejecuta pruebas unitarias.
+- **builder:** Compila la aplicación NestJS.
+- **runner:** Imagen final, solo con dependencias de producción y el código compilado listo para ejecutarse.
+
+Puedes personalizar los comandos de acuerdo a tu entorno y necesidades.
+
 ## 🧪 Pruebas
 
 - Ejecutar pruebas unitarias:
