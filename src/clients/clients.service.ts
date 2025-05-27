@@ -122,6 +122,11 @@ export class ClientsService {
 
   async exportAllClients() {
     const clients = await this.clientRepository.find();
+
+    if (clients.length === 0) {
+      throw new NotFoundException('No clients found');
+    }
+
     const docDefinition = getClientsReport({ clients });
     const pdfDoc = this.printerService.createPdf({
       title: 'Listado de clientes',
