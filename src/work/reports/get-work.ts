@@ -100,7 +100,7 @@ export const getWorkReport = (options: ReportOptions): TDocumentDefinitions => {
       {
         table: {
           headerRows: 1,
-          widths: ['auto', 'auto', 'auto', 'auto'],
+          widths: [120, 'auto', 'auto', 'auto'],
           body: [
             [
               { text: 'Id Empleado', style: 'tableHeader' },

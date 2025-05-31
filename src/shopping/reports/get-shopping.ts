@@ -51,7 +51,7 @@ export const getShoppingReport = (
       {
         table: {
           headerRows: 1,
-          widths: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+          widths: [100, 'auto', 'auto', 'auto', 'auto', 'auto'],
           body: [
             [
               {

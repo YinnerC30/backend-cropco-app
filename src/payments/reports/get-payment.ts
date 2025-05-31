@@ -100,7 +100,7 @@ export const getPaymentReport = (
                 {
                   table: {
                     headerRows: 1,
-                    widths: ['auto', 'auto', 'auto', 'auto'],
+                    widths: [120, 'auto', 'auto', 'auto'],
                     body: [
                       [
                         { text: 'ID', style: 'tableHeader' },
@@ -148,7 +148,7 @@ export const getPaymentReport = (
                 {
                   table: {
                     headerRows: 1,
-                    widths: ['auto', 'auto', 'auto'],
+                    widths: [120, 'auto', 'auto'],
                     body: [
                       [
                         { text: 'ID', style: 'tableHeader' },

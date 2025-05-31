@@ -64,7 +64,7 @@ export const getSaleReport = (options: ReportOptions): TDocumentDefinitions => {
       {
         table: {
           headerRows: 1,
-          widths: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+          widths: [100, 'auto', 'auto', 'auto', 'auto', 'auto'],
           body: [
             [
               { text: 'Id Cliente', style: 'tableHeader' },
