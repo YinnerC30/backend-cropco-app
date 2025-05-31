@@ -16,6 +16,9 @@ export const getClientsReport = (
 
   return {
     pageOrientation: 'landscape',
+    defaultStyle: {
+      fontSize: 9
+    },
     header: headerSection({
       title: title ?? 'Reporte de Clientes',
     }),
@@ -28,7 +31,7 @@ export const getClientsReport = (
           // headers are automatically repeated if the table spans over multiple pages
           // you can declare how many rows should be treated as headers
           headerRows: 1,
-          widths: [50, 50, 50, '*', 'auto', '*'],
+          widths: [120, 50, 50, '*', 'auto', 100],
 
           body: [
             [
@@ -40,8 +43,8 @@ export const getClientsReport = (
               'Dirección',
             ],
             ...clients.map((client: ClientTable, index: number) => [
-              // client.id.toString(),
-              index,
+              client.id.toString(),
+              // index,
               client.first_name,
               client.last_name,
               { text: client.email, bold: true },
@@ -49,52 +52,18 @@ export const getClientsReport = (
               client.address,
             ]),
 
-            ['', '', '', '', '', ``],
-            [
-              '',
-              '',
-              '',
-              '',
-              'Total',
-              {
-                text: `${clients.length} clientes`,
-                bold: true,
-              },
-            ],
-          ],
-        },
-      },
-
-      // Tabla de totales
-      {
-        text: 'Totales',
-        style: {
-          fontSize: 18,
-          bold: true,
-          margin: [0, 40, 0, 0],
-        },
-      },
-      {
-        layout: 'noBorders',
-        table: {
-          headerRows: 1,
-          widths: [50, 50, 70, '*', 'auto', '*'],
-          body: [
-            [
-              {
-                text: 'Total de países',
-                colSpan: 2,
-                bold: true,
-              },
-              {},
-              {
-                text: `${clients.length} clientes`,
-                bold: true,
-              },
-              {},
-              {},
-              {},
-            ],
+            ['', '', '', '', '', ''],
+            // [
+            //   '',
+            //   '',
+            //   '',
+            //   '',
+            //   'Total',
+            //   {
+            //     text: `${clients.length} clientes`,
+            //     bold: true,
+            //   },
+            // ],
           ],
         },
       },
