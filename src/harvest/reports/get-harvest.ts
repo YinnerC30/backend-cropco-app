@@ -144,7 +144,7 @@ export const getHarvestReport = (
       {
         table: {
           headerRows: 1,
-          widths: ['auto', 'auto', 'auto', 'auto', 'auto'],
+          widths: [100, 'auto', 'auto', 'auto', 'auto'],
           body: [
             [
               { text: 'Id Empleado', style: 'tableHeader' },
@@ -204,51 +204,57 @@ export const getHarvestReport = (
       },
 
       // Procesos realizados
-      { text: 'Información sobre cosecha procesada', style: 'subheader' },
-      {
-        table: {
-          headerRows: 1,
-          widths: ['auto', 'auto', 'auto'],
-          body: [
-            [
-              { text: 'Id', style: 'tableHeader' },
-              { text: 'Fecha', style: 'tableHeader' },
-              { text: 'Total', style: 'tableHeader' },
-            ],
-            ...data.processed.map((proc) => [
-              {
-                text: proc.id,
-                link: `${pathFrontend}/app/home/harvests/processed/view/${data.id}`,
-                style: ['tableCell', 'link'],
+      data.processed.length > 0 
+        ? [
+            { text: 'Información sobre cosecha procesada', style: 'subheader' },
+            {
+              table: {
+                headerRows: 1,
+                widths: ['auto', 'auto', 'auto'],
+                body: [
+                  [
+                    { text: 'Id', style: 'tableHeader' },
+                    { text: 'Fecha', style: 'tableHeader' },
+                    { text: 'Total', style: 'tableHeader' },
+                  ],
+                  ...data.processed.map((proc) => [
+                    {
+                      text: proc.id,
+                      link: `${pathFrontend}/app/home/harvests/processed/view/${data.id}`,
+                      style: ['tableCell', 'link'],
+                    },
+                    {
+                      text: DateFormatter.getSpanishDate(proc.date),
+                      style: 'tableCell',
+                    },
+                    {
+                      text: FormatNumber(proc.amount),
+                      style: 'tableCell',
+                      alignment: 'center',
+                    },
+                  ]),
+                ],
               },
-              {
-                text: DateFormatter.getSpanishDate(proc.date),
-                style: 'tableCell',
-              },
-              {
-                text: FormatNumber(proc.amount),
-                style: 'tableCell',
-                alignment: 'center',
-              },
-            ]),
+              margin: [0, 0, 0, 10],
+            },
+            // Resumen final
+            {
+              text: [
+                'Total de Stock procesado: ',
+                {
+                  text: `${FormatNumber(data.total_amount_processed) + ' Kg'}`,
+                  style: 'boldText',
+                },
+              ],
+            },
+          ]
+        : [
+            {
+              text: 'No hay información de cosecha procesada disponible',
+              style: 'mutedText',
+              margin: [0, 10, 0, 10],
+            },
           ],
-        },
-        margin: [0, 0, 0, 10],
-        // layout: {
-        //   fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f9fafb' : null), // Fondo gris para el encabezado
-        // },
-      },
-
-      // Resumen final
-      {
-        text: [
-          'Total de Stock procesado: ',
-          {
-            text: `${FormatNumber(data.total_amount_processed) + ' Kg'}`,
-            style: 'boldText',
-          },
-        ],
-      },
     ],
 
     styles: MyStyles,
