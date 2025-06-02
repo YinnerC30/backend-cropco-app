@@ -69,7 +69,7 @@ export const pathsSuppliesController: PathsController = {
   },
   removeSupplies: {
     path: 'remove/bulk',
-    description: 'eliminar varios suministros',
+    description: 'eliminar varios insumos',
     name: 'remove_bulk_supplies',
   },
 };
