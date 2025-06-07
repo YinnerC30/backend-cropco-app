@@ -52,7 +52,8 @@ import * as path from 'path';
           database: configService.get<string>('DB_NAME'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: statusProject === 'development',
-          ssl: statusProject === 'production' ? sslOptions : false,
+          // ssl: statusProject === 'production' ? sslOptions : false,
+          ssl: false,
         };
       },
     }),
@@ -62,7 +63,7 @@ import * as path from 'path';
     CropsModule,
     EmployeesModule,
     HarvestModule,
-    SeedModule,
+    ...(process.env.STATUS_PROJECT === 'development' ? [SeedModule] : []),
     SuppliersModule,
     SuppliesModule,
     UsersModule,

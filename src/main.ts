@@ -7,13 +7,14 @@ async function bootstrap() {
   const hostFrontend = process.env.HOST_FRONTED;
   const portBackend = process.env.PORT_BACKEND;
   const app = await NestFactory.create(AppModule, {
-    cors:
-      statusProject === 'production'
-        ? {
-            origin: !hostFrontend ? 'https://cropco.netlify.app' : hostFrontend,
-            credentials: true,
-          }
-        : true,
+    // cors:
+    //   statusProject === 'production'
+    //     ? {
+    //         origin: !hostFrontend ? 'https://cropco.netlify.app' : hostFrontend,
+    //         credentials: true,
+    //       }
+    //     : true,
+    cors: true
   });
 
   app.useGlobalPipes(
