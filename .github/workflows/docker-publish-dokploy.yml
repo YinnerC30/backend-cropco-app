@@ -36,6 +36,6 @@ jobs:
           context: .
           push: true
           no-cache: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/cropco-api-rest:dokploy
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/public-cropco-api-rest:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max 
