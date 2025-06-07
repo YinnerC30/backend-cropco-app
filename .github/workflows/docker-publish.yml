@@ -28,9 +28,17 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Limpiar caché de Docker
+        run: |
+          docker builder prune -f
+          docker system prune -f
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
+          no-cache: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/cropco-api-rest:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
