@@ -5,6 +5,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const statusProject = process.env.STATUS_PROJECT || 'development';
   const hostFrontend = process.env.HOST_FRONTED;
+  const portBackend = process.env.PORT_BACKEND;
   const app = await NestFactory.create(AppModule, {
     cors:
       statusProject === 'production'
@@ -25,10 +26,10 @@ async function bootstrap() {
   );
   console.log(
     'Application is running on port',
-    process.env.PORT_BACKEND || 3000,
+    portBackend,
     ' and cors ',
     hostFrontend,
   );
-  await app.listen(process.env.PORT_BACKEND || 3000);
+  await app.listen(!portBackend ? 3000 : portBackend);
 }
 bootstrap();
