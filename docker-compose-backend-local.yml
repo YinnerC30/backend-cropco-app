@@ -28,7 +28,7 @@ services:
       - DB_PASSWORD=root
       - DB_NAME=cropco
       - JWT_SECRET=millavesecreta
-      - PORT=3000
+      - PORT_BACKEND=3000
       - HOST_FRONTED=http://localhost:5173
     depends_on:
       - server-db

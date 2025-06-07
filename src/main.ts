@@ -22,7 +22,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  console.log('Application is running on port', process.env.PORT || 3000);
-  await app.listen(process.env.PORT || 3000);
+  console.log('Application is running on port', process.env.PORT_BACKEND || 3000);
+  await app.listen(process.env.PORT_BACKEND || 3000);
 }
 bootstrap();
