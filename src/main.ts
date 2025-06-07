@@ -4,11 +4,12 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const statusProject = process.env.STATUS_PROJECT || 'development';
+  const hostFrontend = process.env.HOST_FRONTED;
   const app = await NestFactory.create(AppModule, {
     cors:
       statusProject === 'production'
         ? {
-            origin: 'https://cropco.netlify.app',
+            origin: !hostFrontend ? 'https://cropco.netlify.app' : hostFrontend,
             credentials: true,
           }
         : true,
@@ -22,7 +23,12 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  console.log('Application is running on port', process.env.PORT_BACKEND || 3000);
+  console.log(
+    'Application is running on port',
+    process.env.PORT_BACKEND || 3000,
+    ' and cors ',
+    hostFrontend,
+  );
   await app.listen(process.env.PORT_BACKEND || 3000);
 }
 bootstrap();
