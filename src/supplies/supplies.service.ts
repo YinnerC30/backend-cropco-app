@@ -22,6 +22,7 @@ import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { SuppliesStock } from 'src/supplies/entities/supplies-stock.entity';
 import { InsufficientSupplyStockException } from './exceptions/insufficient-supply-stock.exception';
+import { UnitConversionService } from 'src/common/unit-conversion/unit-conversion.service';
 
 @Injectable()
 export class SuppliesService {
@@ -34,6 +35,7 @@ export class SuppliesService {
     @InjectRepository(SuppliesStock)
     private readonly suppliesStockRepository: Repository<SuppliesStock>,
     private readonly handlerError: HandlerErrorService,
+    private readonly unitConversionService: UnitConversionService,
   ) {}
 
   async create(createSupply: CreateSupplyDto) {
@@ -199,19 +201,16 @@ export class SuppliesService {
     return supplyStock;
   }
 
-  async updateStockManual(id: string, amount: number) {
-    return await this.suppliesStockRepository.update(id, { amount });
-  }
-
   async updateStock(
     queryRunner: QueryRunner,
     info: {
       supplyId: any;
       amount: number;
       type_update: 'increment' | 'decrement';
+      inputUnit?: string;
     },
   ) {
-    const { supplyId, amount, type_update } = info;
+    const { supplyId, amount, type_update, inputUnit } = info;
 
     this.logger.log(
       `Actualizando stock para supplyId: ${supplyId} con tipo: ${type_update} y cantidad: ${amount}`,
@@ -226,6 +225,20 @@ export class SuppliesService {
       throw new NotFoundException(`Supply with id: ${supplyId} not found`);
     }
 
+    // Si se proporciona una unidad de entrada diferente, convertir la cantidad
+    let finalAmount = amount;
+    console.log('🚀 ~ SuppliesService ~ finalAmount:', finalAmount);
+    if (inputUnit && inputUnit !== supply.unit_of_measure) {
+      if (!this.unitConversionService.isValidUnit(inputUnit)) {
+        throw new Error(`Invalid input unit: ${inputUnit}`);
+      }
+      finalAmount = this.unitConversionService.convert(
+        amount,
+        inputUnit as any,
+        supply.unit_of_measure,
+      );
+    }
+
     // Buscar el registro de stock
     let recordSupplyStock = await queryRunner.manager.findOne(SuppliesStock, {
       where: { supply: { id: supplyId } },
@@ -238,7 +251,7 @@ export class SuppliesService {
       );
 
       const newRecord = queryRunner.manager.create(SuppliesStock, {
-        supply: supply, // <-- Usamos la entidad completa
+        supply: supply,
         amount: 0,
       });
 
@@ -252,7 +265,7 @@ export class SuppliesService {
         SuppliesStock,
         { supply: supplyId },
         'amount',
-        amount,
+        finalAmount,
       );
 
       this.logger.verbose('Increment result:', result);
@@ -265,7 +278,9 @@ export class SuppliesService {
     } else if (type_update === 'decrement') {
       const amountActually = recordSupplyStock.amount;
 
-      if (amountActually < amount) {
+      if (amountActually < finalAmount) {
+        console.log('🚀 ~ SuppliesService ~ amountActually:', amountActually);
+        console.log('🚀 ~ SuppliesService ~ finalAmount:', finalAmount);
         throw new InsufficientSupplyStockException(
           amountActually,
           supply.name,
@@ -277,7 +292,7 @@ export class SuppliesService {
         SuppliesStock,
         { supply: supplyId },
         'amount',
-        amount,
+        finalAmount,
       );
 
       this.logger.verbose('Decrement result:', result);

@@ -1,4 +1,5 @@
-import { UnitOfMeasure } from 'src/supplies/entities';
+
+import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
 import { v4 as uuidv4 } from 'uuid';
 
 const colombianPhoneNumbers: string[] = [
@@ -190,9 +191,9 @@ export class InformationGenerator {
     const randomIndex = this.generateRandomIndex(fakeSupplyBrands.length);
     return fakeSupplyBrands[randomIndex];
   };
-  static generateUnitOfMeasure = (): UnitOfMeasure => {
+  static generateUnitOfMeasure = (): UnitType => {
     const units = ['GRAMOS', 'MILILITROS'];
     const randomIndex = this.generateRandomIndex(units.length);
-    return units[randomIndex] as UnitOfMeasure;
+    return units[randomIndex] as UnitType;
   };
 }

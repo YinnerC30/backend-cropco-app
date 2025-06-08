@@ -1,5 +1,6 @@
+import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
 import { MethodOfPayment } from 'src/payments/entities/payment.entity';
-import { UnitOfMeasure } from 'src/supplies/entities/supply.entity';
+
 
 export interface Seed {
   users: User[];
@@ -69,7 +70,7 @@ export interface Crop {
 export interface Supply {
   name: string;
   brand: string;
-  unit_of_measure: UnitOfMeasure;
+  unit_of_measure: UnitType;
   observation: string;
 }
 export interface Work {

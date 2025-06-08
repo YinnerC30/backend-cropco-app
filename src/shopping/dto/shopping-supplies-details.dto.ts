@@ -1,41 +1,70 @@
-import { Supplier } from 'src/suppliers/entities/supplier.entity';
-
-import { DeepPartial } from 'typeorm';
+import { Type } from 'class-transformer';
 import {
+  IsIn,
   IsInt,
+  IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsPositive,
+  IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { SuppliesShopping } from '../entities/supplies-shopping.entity';
-import { Type } from 'class-transformer';
-import { ValidateUUID } from 'src/common/dto/validate-uuid';
+import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
+import { DeepPartial } from 'typeorm';
 import { Supply } from 'src/supplies/entities';
+import { Supplier } from 'src/suppliers/entities/supplier.entity';
+import { SuppliesShopping } from '../entities/supplies-shopping.entity';
+import { ValidateUUID } from 'src/common/dto/validate-uuid';
 
 export class ShoppingSuppliesDetailsDto {
-  @IsUUID(4)
   @IsOptional()
-  id: string;
+  @IsUUID()
+  id?: string;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => ValidateUUID)
-  shopping: DeepPartial<SuppliesShopping>;
+  @Type(() => String)
+  shopping?: DeepPartial<SuppliesShopping>;
 
+  @IsNotEmpty()
   @ValidateNested()
   @Type(() => ValidateUUID)
   supply: DeepPartial<Supply>;
 
+  @IsNotEmpty()
   @ValidateNested()
   @Type(() => ValidateUUID)
   supplier: DeepPartial<Supplier>;
 
-  @IsInt()
-  @IsPositive()
-  amount: number;
-  
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   value_pay: number;
+
+  @IsNumber()
+  @IsPositive()
+  amount: number;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsIn([
+    // Unidades de masa
+    'GRAMOS',
+    'KILOGRAMOS',
+    'LIBRAS',
+    'ONZAS',
+    'TONELADAS',
+    // Unidades de volumen
+    'MILILITROS',
+    'LITROS',
+    'GALONES',
+    // 'ONZAS_FLUIDAS',
+    // 'CUCHARADAS',
+    // 'CUCHARADAS_SOPERAS',
+  ])
+  unit_of_measure: UnitType;
+
+  // @IsOptional()
+  // @IsString()
+  // observation?: string;
 }

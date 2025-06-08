@@ -13,8 +13,7 @@ import { SuppliesConsumptionDetails } from 'src/consumptions/entities/supplies-c
 
 import { SuppliesStock } from './supplies-stock.entity';
 import { SuppliesShoppingDetails } from 'src/shopping/entities';
-
-export type UnitOfMeasure = 'GRAMOS' | 'MILILITROS';
+import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
 
 @Entity({ name: 'supplies' })
 export class Supply {
@@ -27,8 +26,25 @@ export class Supply {
   @Column({ type: 'varchar', length: 100 })
   brand: string;
 
-  @Column({ type: 'enum', enum: ['GRAMOS', 'MILILITROS'] })
-  unit_of_measure: UnitOfMeasure;
+  @Column({
+    type: 'enum',
+    enum: [
+      // Unidades de masa
+      'GRAMOS',
+      'KILOGRAMOS',
+      'LIBRAS',
+      'ONZAS',
+      'TONELADAS',
+      // Unidades de volumen
+      'MILILITROS',
+      'LITROS',
+      'GALONES',
+      'ONZAS_FLUIDAS',
+      'CUCHARADAS',
+      'CUCHARADAS_SOPERAS',
+    ],
+  })
+  unit_of_measure: UnitType;
 
   @Column({ type: 'varchar', length: 500 })
   observation: string;

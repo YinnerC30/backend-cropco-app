@@ -6,12 +6,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SuppliesConsumption } from './entities/supplies-consumption.entity';
 import { SuppliesConsumptionDetails } from './entities/supplies-consumption-details.entity';
 import { CommonModule } from 'src/common/common.module';
+import { UnitConversionModule } from 'src/common/unit-conversion/unit-conversion.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([SuppliesConsumption, SuppliesConsumptionDetails]),
     SuppliesModule,
     CommonModule,
+    UnitConversionModule,
   ],
   controllers: [ConsumptionsController],
   providers: [ConsumptionsService],

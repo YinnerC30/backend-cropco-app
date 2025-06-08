@@ -19,6 +19,7 @@ import { ShoppingSuppliesDetailsDto } from './dto/shopping-supplies-details.dto'
 import { ShoppingSuppliesDto } from './dto/shopping-supplies.dto';
 import { SuppliesShopping, SuppliesShoppingDetails } from './entities';
 import { getShoppingReport } from './reports/get-shopping';
+import { UnitConversionService } from 'src/common/unit-conversion/unit-conversion.service';
 
 @Injectable()
 export class ShoppingService {
@@ -35,9 +36,8 @@ export class ShoppingService {
     private dataSource: DataSource,
     private printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
-  ) {
-    
-  }
+    private readonly unitConversionService: UnitConversionService,
+  ) {}
 
   async createShoppingDetails(
     queryRunner: QueryRunner,
@@ -56,7 +56,11 @@ export class ShoppingService {
     condition: Condition,
     data: ShoppingSuppliesDetailsDto,
   ) {
-    return await queryRunner.manager.update(SuppliesShoppingDetails, condition, data);
+    return await queryRunner.manager.update(
+      SuppliesShoppingDetails,
+      condition,
+      data,
+    );
   }
 
   async removeShoppingDetails(queryRunner: QueryRunner, condition: Condition) {
@@ -74,6 +78,26 @@ export class ShoppingService {
       let shoppingDetails: SuppliesShoppingDetails[] = [];
 
       for (const record of details) {
+        // Verificar que la unidad de medida sea válida
+        if (!this.unitConversionService.isValidUnit(record.unit_of_measure)) {
+          throw new BadRequestException(
+            `Unidad de medida inválida: ${record.unit_of_measure}`,
+          );
+        }
+
+        // Obtener el suministro para verificar su unidad de medida
+        const supply = await this.suppliesService.findOne(record.supply.id);
+
+        // Verificar que las unidades sean del mismo tipo (masa o volumen)
+        if (
+          this.unitConversionService.getUnitType(record.unit_of_measure) !==
+          this.unitConversionService.getUnitType(supply.unit_of_measure)
+        ) {
+          throw new BadRequestException(
+            `No se puede convertir entre unidades de ${record.unit_of_measure} y ${supply.unit_of_measure}`,
+          );
+        }
+
         shoppingDetails.push(
           queryRunner.manager.create(SuppliesShoppingDetails, record),
         );
@@ -82,6 +106,7 @@ export class ShoppingService {
           supplyId: record.supply.id,
           amount: record.amount,
           type_update: 'increment',
+          inputUnit: record.unit_of_measure,
         });
       }
 
@@ -247,6 +272,7 @@ export class ShoppingService {
           supplyId: oldRecordData.supply.id,
           amount: oldRecordData.amount,
           type_update: 'decrement',
+          inputUnit: oldRecordData.unit_of_measure,
         });
 
         await this.removeShoppingDetails(queryRunner, {
@@ -262,9 +288,35 @@ export class ShoppingService {
           (record) => record.id === detailId,
         );
 
+        // Verificar que la unidad de medida sea válida
+        if (
+          !this.unitConversionService.isValidUnit(dataRecordNew.unit_of_measure)
+        ) {
+          throw new BadRequestException(
+            `Unidad de medida inválida: ${dataRecordNew.unit_of_measure}`,
+          );
+        }
+
+        // Obtener el suministro para verificar su unidad de medida
+        const supply = await this.suppliesService.findOne(
+          dataRecordNew.supply.id,
+        );
+
+        // Verificar que las unidades sean del mismo tipo (masa o volumen)
+        if (
+          this.unitConversionService.getUnitType(
+            dataRecordNew.unit_of_measure,
+          ) !== this.unitConversionService.getUnitType(supply.unit_of_measure)
+        ) {
+          throw new BadRequestException(
+            `No se puede convertir entre unidades de ${dataRecordNew.unit_of_measure} y ${supply.unit_of_measure}`,
+          );
+        }
+
         const valuesAreDifferent =
           dataRecordNew.value_pay !== oldRecordData.value_pay ||
-          dataRecordNew.amount !== oldRecordData.amount;
+          dataRecordNew.amount !== oldRecordData.amount ||
+          dataRecordNew.unit_of_measure !== oldRecordData.unit_of_measure;
 
         if (valuesAreDifferent && oldRecordData.deletedDate !== null) {
           throw new BadRequestException(
@@ -276,12 +328,14 @@ export class ShoppingService {
           supplyId: oldRecordData.supply.id,
           amount: oldRecordData.amount,
           type_update: 'decrement',
+          inputUnit: oldRecordData.unit_of_measure,
         });
 
         await this.suppliesService.updateStock(queryRunner, {
           supplyId: dataRecordNew.supply.id,
           amount: dataRecordNew.amount,
           type_update: 'increment',
+          inputUnit: dataRecordNew.unit_of_measure,
         });
 
         await this.updateShoppingDetails(
@@ -296,8 +350,33 @@ export class ShoppingService {
           (record) => record.id === detailId,
         );
 
+        // Verificar que la unidad de medida sea válida
+        if (
+          !this.unitConversionService.isValidUnit(newRecordData.unit_of_measure)
+        ) {
+          throw new BadRequestException(
+            `Unidad de medida inválida: ${newRecordData.unit_of_measure}`,
+          );
+        }
+
+        // Obtener el suministro para verificar su unidad de medida
+        const supply = await this.suppliesService.findOne(
+          newRecordData.supply.id,
+        );
+
+        // Verificar que las unidades sean del mismo tipo (masa o volumen)
+        if (
+          this.unitConversionService.getUnitType(
+            newRecordData.unit_of_measure,
+          ) !== this.unitConversionService.getUnitType(supply.unit_of_measure)
+        ) {
+          throw new BadRequestException(
+            `No se puede convertir entre unidades de ${newRecordData.unit_of_measure} y ${supply.unit_of_measure}`,
+          );
+        }
+
         await this.createShoppingDetails(queryRunner, {
-          shopping: id,
+          shopping: id as any,
           ...newRecordData,
         });
 
@@ -305,6 +384,7 @@ export class ShoppingService {
           supplyId: newRecordData.supply.id,
           amount: newRecordData.amount,
           type_update: 'increment',
+          inputUnit: newRecordData.unit_of_measure,
         });
       }
 
