@@ -419,6 +419,7 @@ export class ShoppingService {
           supplyId: record.supply.id,
           amount: record.amount,
           type_update: 'decrement',
+          inputUnit: record.unit_of_measure,
         });
       }
 

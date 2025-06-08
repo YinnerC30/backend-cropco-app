@@ -23,6 +23,7 @@ import { SuppliesConsumptionDetails } from './entities/supplies-consumption-deta
 import { SuppliesConsumption } from './entities/supplies-consumption.entity';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 import { QueryTotalConsumptionsInYearDto } from './dto/query-total-consumptions-year';
+import { UnitConversionService } from 'src/common/unit-conversion/unit-conversion.service';
 
 @Injectable()
 export class ConsumptionsService {
@@ -38,6 +39,7 @@ export class ConsumptionsService {
 
     private readonly suppliesService: SuppliesService,
     private readonly handlerError: HandlerErrorService,
+    private readonly unitConversionService: UnitConversionService,
 
     private dataSource: DataSource,
   ) {}
@@ -55,6 +57,26 @@ export class ConsumptionsService {
       let consumptionDetails: SuppliesConsumptionDetails[] = [];
 
       for (const register of details) {
+        // Verificar que la unidad de medida sea válida
+        if (!this.unitConversionService.isValidUnit(register.unit_of_measure)) {
+          throw new BadRequestException(
+            `Unidad de medida inválida: ${register.unit_of_measure}`,
+          );
+        }
+
+        // Obtener el suministro para verificar su unidad de medida
+        const supply = await this.suppliesService.findOne(register.supply.id);
+
+        // Verificar que las unidades sean del mismo tipo (masa o volumen)
+        if (
+          this.unitConversionService.getUnitType(register.unit_of_measure) !==
+          this.unitConversionService.getUnitType(supply.unit_of_measure)
+        ) {
+          throw new BadRequestException(
+            `No se puede convertir entre unidades de ${register.unit_of_measure} y ${supply.unit_of_measure}`,
+          );
+        }
+
         consumptionDetails.push(
           queryRunner.manager.create(SuppliesConsumptionDetails, {
             ...register,
@@ -75,6 +97,7 @@ export class ConsumptionsService {
           supplyId: item.supply.id,
           amount: item.amount,
           type_update: 'decrement',
+          inputUnit: item.unit_of_measure,
         });
       }
 
@@ -256,6 +279,7 @@ export class ConsumptionsService {
           supplyId: oldRecordData.supply.id,
           amount: oldRecordData.amount,
           type_update: 'increment',
+          inputUnit: oldRecordData.unit_of_measure,
         });
 
         await this.removeConsumptionDetails(queryRunner, {
@@ -274,20 +298,42 @@ export class ConsumptionsService {
           );
         }
 
+        const newRecordData = newDetails.find(
+          (record) => record.id === detailId,
+        );
+
+        // Verificar que la unidad de medida sea válida
+        if (!this.unitConversionService.isValidUnit(newRecordData.unit_of_measure)) {
+          throw new BadRequestException(
+            `Unidad de medida inválida: ${newRecordData.unit_of_measure}`,
+          );
+        }
+
+        // Obtener el suministro para verificar su unidad de medida
+        const supply = await this.suppliesService.findOne(newRecordData.supply.id);
+
+        // Verificar que las unidades sean del mismo tipo (masa o volumen)
+        if (
+          this.unitConversionService.getUnitType(newRecordData.unit_of_measure) !==
+          this.unitConversionService.getUnitType(supply.unit_of_measure)
+        ) {
+          throw new BadRequestException(
+            `No se puede convertir entre unidades de ${newRecordData.unit_of_measure} y ${supply.unit_of_measure}`,
+          );
+        }
+
         await this.suppliesService.updateStock(queryRunner, {
           supplyId: oldRecordData.supply.id,
           amount: oldRecordData.amount,
           type_update: 'increment',
+          inputUnit: oldRecordData.unit_of_measure,
         });
-
-        const newRecordData = newDetails.find(
-          (record) => record.id === detailId,
-        );
 
         await this.suppliesService.updateStock(queryRunner, {
           supplyId: newRecordData.supply.id,
           amount: newRecordData.amount,
           type_update: 'decrement',
+          inputUnit: newRecordData.unit_of_measure,
         });
 
         await this.updateConsumptionDetails(
@@ -302,6 +348,26 @@ export class ConsumptionsService {
           (record) => record.id === detailId,
         );
 
+        // Verificar que la unidad de medida sea válida
+        if (!this.unitConversionService.isValidUnit(newRecordData.unit_of_measure)) {
+          throw new BadRequestException(
+            `Unidad de medida inválida: ${newRecordData.unit_of_measure}`,
+          );
+        }
+
+        // Obtener el suministro para verificar su unidad de medida
+        const supply = await this.suppliesService.findOne(newRecordData.supply.id);
+
+        // Verificar que las unidades sean del mismo tipo (masa o volumen)
+        if (
+          this.unitConversionService.getUnitType(newRecordData.unit_of_measure) !==
+          this.unitConversionService.getUnitType(supply.unit_of_measure)
+        ) {
+          throw new BadRequestException(
+            `No se puede convertir entre unidades de ${newRecordData.unit_of_measure} y ${supply.unit_of_measure}`,
+          );
+        }
+
         await this.createConsumptionDetails(queryRunner, {
           consumption: id,
           ...newRecordData,
@@ -311,6 +377,7 @@ export class ConsumptionsService {
           supplyId: newRecordData.supply.id,
           amount: newRecordData.amount,
           type_update: 'decrement',
+          inputUnit: newRecordData.unit_of_measure,
         });
       }
 
@@ -347,6 +414,7 @@ export class ConsumptionsService {
           supplyId: record.supply.id,
           amount: record.amount,
           type_update: 'increment',
+          inputUnit: record.unit_of_measure,
         });
       }
       await queryRunner.manager.remove(consumptionSupply);
