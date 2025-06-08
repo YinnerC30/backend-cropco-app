@@ -76,12 +76,25 @@ export class SuppliesService {
         'There are no supply records with the requested pagination',
       );
     }
+
+    // Mapear los supplies para asegurar un stock por defecto
+    const suppliesWithDefaultStock = supplies.map((supply) => ({
+      ...supply,
+      stock: supply.stock || {
+        id: null,
+        amount: 0,
+        createdDate: new Date(),
+        updatedDate: new Date(),
+        deletedDate: null,
+      },
+    }));
+
     return {
       total_row_count: count,
       current_row_count: supplies.length,
       total_page_count: all_records ? 1 : Math.ceil(count / limit),
       current_page_count: all_records ? 1 : offset + 1,
-      records: supplies,
+      records: suppliesWithDefaultStock,
     };
   }
 
