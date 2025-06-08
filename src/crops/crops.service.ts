@@ -59,12 +59,25 @@ export class CropsService {
         'There are no crop records with the requested pagination',
       );
     }
+
+    // Mapear los crops para asegurar un stock por defecto
+    const cropsWithDefaultStock = crops.map((crop) => ({
+      ...crop,
+      harvests_stock: crop.harvests_stock || {
+        id: null,
+        amount: 0,
+        createdDate: new Date(),
+        updatedDate: new Date(),
+        deletedDate: null,
+      },
+    }));
+
     return {
       total_row_count: count,
       current_row_count: crops.length,
       total_page_count: all_records ? 1 : Math.ceil(count / limit),
       current_page_count: all_records ? 1 : offset + 1,
-      records: crops,
+      records: cropsWithDefaultStock,
     };
   }
   async findAllWithHarvest(queryParams: QueryParamsDto) {
