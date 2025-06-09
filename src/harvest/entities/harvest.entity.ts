@@ -23,7 +23,7 @@ export class Harvest {
   @Column({ type: 'date' })
   date: string;
 
-  @Column({ type: 'int4' })
+  @Column({ type: 'float8' })
   amount: number;
 
   @Column({ type: 'int4' })

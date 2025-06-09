@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsNumber,
   IsDefined,
   IsIn,
   IsInt,
@@ -44,7 +45,7 @@ export class HarvestDetailsDto {
   ])
   unit_of_measure: UnitType;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   amount: number;
 

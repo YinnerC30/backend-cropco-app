@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsDateString,
+  IsNumber,
   IsDefined,
   IsInt,
   IsPositive,
@@ -25,7 +26,7 @@ export class HarvestDto {
   @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   amount: number;
 

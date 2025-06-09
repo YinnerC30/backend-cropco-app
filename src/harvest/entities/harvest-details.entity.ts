@@ -40,7 +40,7 @@ export class HarvestDetails {
   })
   unit_of_measure: UnitType;
 
-  @Column({ type: 'int4' })
+  @Column({ type: 'float8' })
   amount: number;
 
   @Column({ type: 'int4' })
