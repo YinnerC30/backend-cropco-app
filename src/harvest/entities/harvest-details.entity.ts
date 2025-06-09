@@ -13,12 +13,32 @@ import {
 import { Employee } from 'src/employees/entities/employee.entity';
 import { PaymentsHarvest } from 'src/payments/entities/payment-harvest.entity';
 import { Harvest } from './harvest.entity';
+import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
 
 @Entity({ name: 'harvests_detail' })
 export class HarvestDetails {
-  
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({
+    type: 'enum',
+    enum: [
+      // Unidades de masa
+      'GRAMOS',
+      'KILOGRAMOS',
+      'LIBRAS',
+      'ONZAS',
+      'TONELADAS',
+      // Unidades de volumen
+      'MILILITROS',
+      'LITROS',
+      'GALONES',
+      'ONZAS_FLUIDAS',
+      'CUCHARADAS',
+      'CUCHARADAS_SOPERAS',
+    ],
+  })
+  unit_of_measure: UnitType;
 
   @Column({ type: 'int4' })
   amount: number;
