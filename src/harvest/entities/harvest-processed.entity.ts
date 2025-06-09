@@ -10,6 +10,10 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Harvest } from './harvest.entity';
+import {
+  MassUnit,
+  UnitType,
+} from 'src/common/unit-conversion/unit-conversion.service';
 
 @Entity('harvests_processed')
 export class HarvestProcessed {
@@ -29,6 +33,19 @@ export class HarvestProcessed {
     onDelete: 'CASCADE',
   })
   harvest: Harvest;
+
+  @Column({
+    type: 'enum',
+    enum: [
+      // Unidades de masa
+      'GRAMOS',
+      'KILOGRAMOS',
+      'LIBRAS',
+      'ONZAS',
+      'TONELADAS',
+    ],
+  })
+  unit_of_measure: MassUnit;
 
   @Column({ type: 'float8' })
   amount: number;

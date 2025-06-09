@@ -524,18 +524,19 @@ export class SeedService {
     harvestId: string;
     amount: number;
     date?: string;
-  }): Promise<HarvestProcessed> {
-    const data: HarvestProcessedDto = {
-      date: date,
-      crop: { id: cropId },
-      harvest: { id: harvestId },
-      amount,
-    };
+  }): Promise<any> {
+    return true;
+    // const data: HarvestProcessedDto = {
+    //   date: date,
+    //   crop: { id: cropId },
+    //   harvest: { id: harvestId },
+    //   amount,
+    // };
 
-    const harvestProcessed =
-      await this.harvestsService.createHarvestProcessed(data);
+    // const harvestProcessed =
+    //   await this.harvestsService.createHarvestProcessed(data);
 
-    return harvestProcessed;
+    // return harvestProcessed;
   }
 
   async CreateWork({

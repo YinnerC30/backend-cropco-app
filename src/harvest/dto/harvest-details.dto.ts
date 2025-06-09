@@ -12,7 +12,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
-import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
+import {
+  MassUnit,
+  UnitType,
+} from 'src/common/unit-conversion/unit-conversion.service';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { DeepPartial } from 'typeorm';
 
@@ -35,15 +38,8 @@ export class HarvestDetailsDto {
     'LIBRAS',
     'ONZAS',
     'TONELADAS',
-    // Unidades de volumen
-    'MILILITROS',
-    'LITROS',
-    'GALONES',
-    // 'ONZAS_FLUIDAS',
-    // 'CUCHARADAS',
-    // 'CUCHARADAS_SOPERAS',
   ])
-  unit_of_measure: UnitType;
+  unit_of_measure: MassUnit;
 
   @IsNumber()
   @IsPositive()

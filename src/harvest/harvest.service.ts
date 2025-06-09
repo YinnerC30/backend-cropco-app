@@ -197,7 +197,14 @@ export class HarvestService {
       throw new NotFoundException(`Harvest with id: ${id} not found`);
 
     const total_amount_processed = harvest.processed.reduce(
-      (accumulator, currentValue) => accumulator + currentValue.amount,
+      (accumulator, currentValue) => {
+        const convertedValue = this.unitConversionService.convert(
+          currentValue.amount,
+          currentValue.unit_of_measure,
+          'GRAMOS',
+        );
+        return accumulator + convertedValue;
+      },
       0,
     );
     return { ...harvest, total_amount_processed };
@@ -288,9 +295,9 @@ export class HarvestService {
         );
 
         const recordToCreate = queryRunner.manager.create(HarvestDetails, {
-          harvest: id,
           ...dataRecord,
-        } as HarvestDetailsDto);
+          harvest,
+        });
 
         await queryRunner.manager.save(recordToCreate);
       }
@@ -366,10 +373,10 @@ export class HarvestService {
       cropId: any;
       amount: number;
       type_update: 'increment' | 'decrement';
-      inputUnit?: MassUnit;
+      // inputUnit?: MassUnit;
     },
   ) {
-    const { cropId, amount, type_update, inputUnit } = info;
+    const { cropId, amount, type_update /* inputUnit */ } = info;
 
     this.logger.log(
       `Actualizando stock para cropId: ${cropId} con tipo: ${type_update} y cantidad: ${amount}`,
@@ -383,24 +390,24 @@ export class HarvestService {
       throw new NotFoundException(`Crop with id: ${cropId} not found`);
     }
 
-    let finalAmount = amount;
-    if (inputUnit) {
-      if (!this.unitConversionService.isValidUnit(inputUnit)) {
-        throw new Error(`Invalid input unit: ${inputUnit}`);
-      }
+    // let finalAmount = amount;
+    // if (inputUnit) {
+    //   if (!this.unitConversionService.isValidUnit(inputUnit)) {
+    //     throw new Error(`Invalid input unit: ${inputUnit}`);
+    //   }
 
-      if (this.unitConversionService.getUnitType(inputUnit) !== 'mass') {
-        throw new Error(
-          `La unidad ${inputUnit} no es una unidad de masa válida`,
-        );
-      }
+    //   if (this.unitConversionService.getUnitType(inputUnit) !== 'mass') {
+    //     throw new Error(
+    //       `La unidad ${inputUnit} no es una unidad de masa válida`,
+    //     );
+    //   }
 
-      finalAmount = this.unitConversionService.convert(
-        amount,
-        inputUnit,
-        'KILOGRAMOS',
-      );
-    }
+    //   finalAmount = this.unitConversionService.convert(
+    //     amount,
+    //     inputUnit,
+    //     'GRAMOS',
+    //   );
+    // }
 
     let recordHarvestCropStock = await queryRunner.manager.findOne(
       HarvestStock,
@@ -430,7 +437,7 @@ export class HarvestService {
         HarvestStock,
         { crop: cropId },
         'amount',
-        finalAmount,
+        amount,
       );
 
       this.logger.verbose('Increment result:', result);
@@ -441,7 +448,7 @@ export class HarvestService {
     } else if (type_update === 'decrement') {
       const amountActually = recordHarvestCropStock.amount;
 
-      if (amountActually < finalAmount) {
+      if (amountActually < amount) {
         throw new InsufficientHarvestStockException(amountActually, crop.id);
       }
 
@@ -449,7 +456,7 @@ export class HarvestService {
         HarvestStock,
         { crop: cropId },
         'amount',
-        finalAmount,
+        amount,
       );
 
       this.logger.verbose('Decrement result:', result);
@@ -464,6 +471,8 @@ export class HarvestService {
     harvestId: string;
     currentAmount: number;
     oldAmount: number;
+    inputCurrentUnit: MassUnit;
+    inputOldUnit: MassUnit;
   }) {
     const harvest = await this.harvestRepository.findOne({
       where: { id: data.harvestId },
@@ -482,9 +491,23 @@ export class HarvestService {
       .where('harvest.id = :harvestId', { harvestId: data.harvestId })
       .getRawOne();
 
+    const convertedOldResult = this.unitConversionService.convert(
+      data.oldAmount,
+      data.inputOldUnit,
+      'GRAMOS',
+    );
+    const convertedCurrentResult = this.unitConversionService.convert(
+      data.currentAmount,
+      data.inputCurrentUnit,
+      'GRAMOS',
+    );
+
     const processedSum = Number(totalProcessed?.totalProcessed || 0);
 
-    if (processedSum - data.oldAmount + data.currentAmount > harvest.amount) {
+    if (
+      processedSum - convertedOldResult + convertedCurrentResult >
+      harvest.amount
+    ) {
       throw new ConflictException(
         `You cannot add more processed harvest records, it exceeds the value of the harvest with id ${harvest.id}.`,
       );
@@ -498,6 +521,8 @@ export class HarvestService {
       harvestId: createHarvestProcessedDto.harvest.id,
       currentAmount: createHarvestProcessedDto.amount,
       oldAmount: 0,
+      inputCurrentUnit: createHarvestProcessedDto.unit_of_measure,
+      inputOldUnit: 'GRAMOS',
     });
 
     await queryRunner.connect();
@@ -508,11 +533,17 @@ export class HarvestService {
         createHarvestProcessedDto,
       );
       await queryRunner.manager.save(HarvestProcessed, harvestProcessed);
-      const { crop, amount } = createHarvestProcessedDto;
+      const { crop, amount, unit_of_measure } = createHarvestProcessedDto;
+
+      const resultConverted = this.unitConversionService.convert(
+        amount,
+        unit_of_measure,
+        'GRAMOS',
+      );
 
       await this.updateStock(queryRunner, {
         cropId: crop.id,
-        amount: amount,
+        amount: resultConverted,
         type_update: 'increment',
       });
 
@@ -554,15 +585,23 @@ export class HarvestService {
       harvestId: harvestProcessed.harvest.id,
       oldAmount: harvestProcessed.amount,
       currentAmount: updateHarvestProcessedDto.amount,
+      inputCurrentUnit: updateHarvestProcessedDto.unit_of_measure,
+      inputOldUnit: harvestProcessed.unit_of_measure,
     });
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
+      const resultOldConverted = this.unitConversionService.convert(
+        harvestProcessed.amount,
+        harvestProcessed.unit_of_measure,
+        'GRAMOS',
+      );
+
       await this.updateStock(queryRunner, {
         cropId: harvestProcessed.crop.id,
-        amount: harvestProcessed.amount,
+        amount: resultOldConverted,
         type_update: 'decrement',
       });
 
@@ -574,9 +613,15 @@ export class HarvestService {
 
       const { amount } = updateHarvestProcessedDto;
 
+      const resultConverted = this.unitConversionService.convert(
+        amount,
+        updateHarvestProcessedDto.unit_of_measure,
+        'GRAMOS',
+      );
+
       await this.updateStock(queryRunner, {
         cropId: harvestProcessed.crop.id,
-        amount: amount,
+        amount: resultConverted,
         type_update: 'increment',
       });
 
@@ -601,11 +646,17 @@ export class HarvestService {
     try {
       await queryRunner.manager.remove(harvestProcessed);
 
-      const { crop } = harvestProcessed;
+      const { crop, amount, unit_of_measure } = harvestProcessed;
+
+      const resultConverted = this.unitConversionService.convert(
+        amount,
+        unit_of_measure,
+        'GRAMOS',
+      );
 
       await this.updateStock(queryRunner, {
         cropId: crop.id,
-        amount: harvestProcessed.amount,
+        amount: resultConverted,
         type_update: 'decrement',
       });
 

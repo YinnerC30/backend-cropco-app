@@ -13,7 +13,10 @@ import {
 import { Employee } from 'src/employees/entities/employee.entity';
 import { PaymentsHarvest } from 'src/payments/entities/payment-harvest.entity';
 import { Harvest } from './harvest.entity';
-import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
+import {
+  MassUnit,
+  UnitType,
+} from 'src/common/unit-conversion/unit-conversion.service';
 
 @Entity({ name: 'harvests_detail' })
 export class HarvestDetails {
@@ -29,16 +32,9 @@ export class HarvestDetails {
       'LIBRAS',
       'ONZAS',
       'TONELADAS',
-      // Unidades de volumen
-      'MILILITROS',
-      'LITROS',
-      'GALONES',
-      'ONZAS_FLUIDAS',
-      'CUCHARADAS',
-      'CUCHARADAS_SOPERAS',
     ],
   })
-  unit_of_measure: UnitType;
+  unit_of_measure: MassUnit;
 
   @Column({ type: 'float8' })
   amount: number;
