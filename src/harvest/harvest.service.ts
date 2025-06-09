@@ -68,6 +68,18 @@ export class HarvestService {
       harvest.details = details.map((harvestDetailsDto: HarvestDetailsDto) =>
         queryRunner.manager.create(HarvestDetails, harvestDetailsDto),
       );
+
+      const totalAmountInGrams = details.reduce((total, detail) => {
+        const amountInGrams = this.unitConversionService.convert(
+          detail.amount,
+          detail.unit_of_measure,
+          'GRAMOS',
+        );
+        return total + amountInGrams;
+      }, 0);
+
+      harvest.amount = totalAmountInGrams;
+
       await queryRunner.manager.save(harvest);
       await queryRunner.commitTransaction();
       return harvest;
@@ -283,8 +295,21 @@ export class HarvestService {
         await queryRunner.manager.save(recordToCreate);
       }
 
+      const totalAmountInGrams = newHarvestDetails.reduce((total, detail) => {
+        const amountInGrams = this.unitConversionService.convert(
+          detail.amount,
+          detail.unit_of_measure,
+          'GRAMOS',
+        );
+        return total + amountInGrams;
+      }, 0);
+
       const { details, crop, ...rest } = updateHarvestDto;
-      await queryRunner.manager.update(Harvest, { id }, rest);
+      await queryRunner.manager.update(
+        Harvest,
+        { id },
+        { ...rest, amount: totalAmountInGrams },
+      );
 
       await queryRunner.commitTransaction();
       return await this.findOne(id);

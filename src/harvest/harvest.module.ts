@@ -7,6 +7,7 @@ import { Harvest } from './entities/harvest.entity';
 import { HarvestController } from './harvest.controller';
 import { HarvestService } from './harvest.service';
 import { CommonModule } from 'src/common/common.module';
+import { UnitConversionModule } from 'src/common/unit-conversion/unit-conversion.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { CommonModule } from 'src/common/common.module';
       HarvestProcessed,
     ]),
     CommonModule,
+    UnitConversionModule,
   ],
   controllers: [HarvestController],
   providers: [HarvestService],
