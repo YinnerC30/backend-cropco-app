@@ -38,8 +38,9 @@ export class HarvestDto {
   observation: string;
 
   @ArrayNotEmpty()
+  // TODO: Crear decorador personalizado para validar unidades de medida del amount de cada registro
   @MatchTotals({
-    fields: ['amount', 'value_pay'],
+    fields: ['value_pay'],
     nameArrayToCalculate: 'details',
   })
   @UniqueRecordIdInArray('employee')
