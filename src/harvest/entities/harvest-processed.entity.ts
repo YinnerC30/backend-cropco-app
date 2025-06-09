@@ -30,7 +30,7 @@ export class HarvestProcessed {
   })
   harvest: Harvest;
 
-  @Column({ type: 'int4' })
+  @Column({ type: 'float8' })
   amount: number;
 
   @CreateDateColumn()

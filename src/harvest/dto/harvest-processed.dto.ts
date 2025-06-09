@@ -3,6 +3,7 @@ import {
   IsDateString,
   IsDefined,
   IsInt,
+  IsNumber,
   IsPositive,
   ValidateNested,
 } from 'class-validator';
@@ -26,7 +27,7 @@ export class HarvestProcessedDto {
   @Type(() => ValidateUUID)
   harvest: DeepPartial<Harvest>;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   amount: number;
 }
