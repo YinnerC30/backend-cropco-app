@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsDateString,
   IsInt,
+  IsNumber,
   IsPositive,
   ValidateNested,
 } from 'class-validator';
@@ -14,7 +15,7 @@ export class SaleDto {
   @IsDateString()
   date: string;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   amount: number;
 

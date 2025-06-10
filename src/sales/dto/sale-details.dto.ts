@@ -5,6 +5,7 @@ import {
   IsIn,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsPositive,
   IsString,
@@ -34,7 +35,7 @@ export class SaleDetailsDto {
   ])
   unit_of_measure: MassUnit;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   amount: number;
 

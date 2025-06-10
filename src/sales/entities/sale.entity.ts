@@ -12,7 +12,7 @@ export class Sale {
   date: string;
 
   @Column({
-    type: 'int4',
+    type: 'float8',
   })
   amount: number;
 

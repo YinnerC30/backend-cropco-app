@@ -31,7 +31,7 @@ export class SaleDetails {
   unit_of_measure: MassUnit;
 
   @Column({
-    type: 'int4',
+    type: 'float8',
   })
   amount: number;
 
