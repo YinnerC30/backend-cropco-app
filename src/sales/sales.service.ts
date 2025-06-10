@@ -89,6 +89,7 @@ export class SalesService {
   }
 
   async findAll(queryParams: QueryParamsSale) {
+    console.log('🚀 ~ SalesService ~ findAll ~ queryParams:', queryParams);
     const {
       limit = 10,
       offset = 0,
@@ -103,6 +104,7 @@ export class SalesService {
 
       filter_by_amount = false,
       type_filter_amount,
+      type_unit_of_measure = 'KILOGRAMOS',
       amount,
 
       filter_by_is_receivable = false,
@@ -128,10 +130,16 @@ export class SalesService {
         { date },
       );
 
+    const amountConverted = this.unitConversionService.convert(
+      amount,
+      type_unit_of_measure,
+      'GRAMOS',
+    );
+
     filter_by_amount &&
       queryBuilder.andWhere(
         `sale.amount ${getComparisonOperator(type_filter_amount)} :amount`,
-        { amount },
+        { amount: amountConverted },
       );
 
     filter_by_value_pay &&

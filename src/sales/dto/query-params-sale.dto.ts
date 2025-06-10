@@ -4,13 +4,16 @@ import {
   IsBooleanString,
   IsDateString,
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
+  IsString,
   IsUUID,
 } from 'class-validator';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
+import { MassUnit } from 'src/common/unit-conversion/unit-conversion.service';
 
 export class QueryParamsSale extends QueryParamsDto {
   @IsOptional()
@@ -45,6 +48,18 @@ export class QueryParamsSale extends QueryParamsDto {
   @IsOptional()
   @IsEnum(TypeFilterNumber)
   type_filter_amount?: TypeFilterNumber;
+
+  @IsOptional()
+  @IsString()
+  @IsIn([
+    // Unidades de masa
+    'GRAMOS',
+    'KILOGRAMOS',
+    'LIBRAS',
+    'ONZAS',
+    'TONELADAS',
+  ])
+  type_unit_of_measure: MassUnit;
 
   @IsOptional()
   @Type(() => Number) // Transformará el valor a un número
