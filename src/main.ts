@@ -8,22 +8,12 @@ async function bootstrap() {
   const statusProject = process.env.STATUS_PROJECT || 'development';
   const hostFrontend = process.env.HOST_FRONTED;
   const portBackend = process.env.PORT_BACKEND;
-  
-  // Configuración HTTPS
-  const httpsOptions = {
-    key: fs.readFileSync(path.join(__dirname, '..', 'certs', 'private.key')),
-    cert: fs.readFileSync(path.join(__dirname, '..', 'certs', 'certificate.crt')),
-  };
 
   const app = await NestFactory.create(AppModule, {
-    cors:
-      statusProject === 'production'
-        ? {
-            origin: !hostFrontend ? 'https://cropco.org' : hostFrontend,
-            credentials: true,
-          }
-        : true,
-    httpsOptions: statusProject === 'production' ? httpsOptions : undefined,
+    cors: true,
+    httpsOptions: {
+      rejectUnauthorized: false,
+    },
   });
 
   app.useGlobalPipes(
@@ -34,7 +24,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  
+
   console.log(
     'Application is running on port',
     portBackend,

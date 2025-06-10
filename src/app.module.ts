@@ -52,7 +52,7 @@ import * as path from 'path';
           database: configService.get<string>('DB_NAME'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: statusProject === 'development',
-          ssl: statusProject === 'production' ? sslOptions : false,
+          ssl: false,
           // ssl: false,
         };
       },
