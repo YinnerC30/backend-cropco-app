@@ -4,7 +4,9 @@ import {
   IsBooleanString,
   IsDateString,
   IsEnum,
+  IsIn,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
@@ -14,6 +16,7 @@ import { UUID } from 'node:crypto';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
+import { MassUnit } from 'src/common/unit-conversion/unit-conversion.service';
 
 export class QueryParamsHarvest extends QueryParamsDto {
   @IsOptional()
@@ -39,6 +42,18 @@ export class QueryParamsHarvest extends QueryParamsDto {
   @IsOptional()
   @IsEnum(TypeFilterNumber)
   type_filter_amount?: TypeFilterNumber;
+
+  @IsString()
+  @IsOptional()
+  @IsIn([
+    // Unidades de masa
+    'GRAMOS',
+    'KILOGRAMOS',
+    'LIBRAS',
+    'ONZAS',
+    'TONELADAS',
+  ])
+  type_unit_of_measure: MassUnit;
 
   @IsOptional()
   @Type(() => Number)

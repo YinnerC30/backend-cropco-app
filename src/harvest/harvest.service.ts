@@ -106,6 +106,7 @@ export class HarvestService {
 
       filter_by_amount = false,
       type_filter_amount,
+      type_unit_of_measure = 'KILOGRAMOS',
       amount,
 
       filter_by_value_pay = false,
@@ -134,10 +135,16 @@ export class HarvestService {
         { date },
       );
 
+    const amountConverted = this.unitConversionService.convert(
+      amount,
+      type_unit_of_measure,
+      'GRAMOS',
+    );
+
     filter_by_amount &&
       queryBuilder.andWhere(
         `harvest.amount ${getComparisonOperator(type_filter_amount)} :amount`,
-        { amount },
+        { amount: amountConverted },
       );
 
     filter_by_value_pay &&
