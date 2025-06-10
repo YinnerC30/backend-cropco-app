@@ -146,9 +146,10 @@ export class UsersService {
   async update(
     id: string,
     updateUserDto: UpdateUserDto,
+    ignoreAdmin = false,
   ): Promise<Partial<User> & { modules: Module[] }> {
     const user = await this.findOne(id);
-    if (user.roles.includes('admin')) {
+    if (user.roles.includes('admin') && !ignoreAdmin) {
       throw new ForbiddenException('You cannot update an admin user');
     }
 

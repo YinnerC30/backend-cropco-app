@@ -386,7 +386,7 @@ export class AuthService {
       },
     })) as UserActionDto[];
 
-    return await this.userService.update(user.id, { ...user, actions });
+    return await this.userService.update(user.id, { ...user, actions }, true);
   }
 
   async createUserToTests(): Promise<User> {
