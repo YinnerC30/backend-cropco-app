@@ -5,9 +5,10 @@ import { Sale } from './entities/sale.entity';
 import { SalesController } from './sales.controller';
 import { SalesService } from './sales.service';
 import { CommonModule } from 'src/common/common.module';
+import { UnitConversionModule } from 'src/common/unit-conversion/unit-conversion.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Sale]), HarvestModule, CommonModule],
+  imports: [TypeOrmModule.forFeature([Sale]), HarvestModule, CommonModule, UnitConversionModule],
   controllers: [SalesController],
   providers: [SalesService],
   exports: [SalesService],

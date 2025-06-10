@@ -10,11 +10,25 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Sale } from './sale.entity';
+import { MassUnit } from 'src/common/unit-conversion/unit-conversion.service';
 
 @Entity({ name: 'sales_detail' })
 export class SaleDetails {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({
+    type: 'enum',
+    enum: [
+      // Unidades de masa
+      'GRAMOS',
+      'KILOGRAMOS',
+      'LIBRAS',
+      'ONZAS',
+      'TONELADAS',
+    ],
+  })
+  unit_of_measure: MassUnit;
 
   @Column({
     type: 'int4',

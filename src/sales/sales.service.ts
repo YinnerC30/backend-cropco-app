@@ -22,6 +22,7 @@ import { SaleDetails } from './entities/sale-details.entity';
 import { Sale } from './entities/sale.entity';
 import { getSaleReport } from './reports/get-sale';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
+import { UnitConversionService } from 'src/common/unit-conversion/unit-conversion.service';
 
 @Injectable()
 export class SalesService {
@@ -34,6 +35,7 @@ export class SalesService {
     private readonly harvestService: HarvestService,
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
+    private readonly unitConversionService: UnitConversionService,
   ) {}
 
   async create(createSaleDto: SaleDto) {
@@ -50,12 +52,29 @@ export class SalesService {
       });
 
       for (const item of details) {
+        const amountConverted = this.unitConversionService.convert(
+          item.amount,
+          item.unit_of_measure,
+          'GRAMOS',
+        );
+
         await this.harvestService.updateStock(queryRunner, {
           cropId: item.crop.id,
-          amount: item.amount,
+          amount: amountConverted,
           type_update: 'decrement',
         });
       }
+
+      const totalAmountInGrams = details.reduce((total, detail) => {
+        const amountInGrams = this.unitConversionService.convert(
+          detail.amount,
+          detail.unit_of_measure,
+          'GRAMOS',
+        );
+        return total + amountInGrams;
+      }, 0);
+
+      sale.amount = totalAmountInGrams;
 
       await queryRunner.manager.save(sale);
 
@@ -227,9 +246,15 @@ export class SalesService {
           );
         }
 
+        const amountConverted = this.unitConversionService.convert(
+          oldData.amount,
+          oldData.unit_of_measure,
+          'GRAMOS',
+        );
+
         await this.harvestService.updateStock(queryRunner, {
           cropId: oldData.crop.id,
-          amount: oldData.amount,
+          amount: amountConverted,
           type_update: 'increment',
         });
 
@@ -254,15 +279,27 @@ export class SalesService {
           );
         }
 
+        const amountConverted = this.unitConversionService.convert(
+          oldRecordData.amount,
+          oldRecordData.unit_of_measure,
+          'GRAMOS',
+        );
+
         await this.harvestService.updateStock(queryRunner, {
           cropId: oldRecordData.crop.id,
-          amount: oldRecordData.amount,
+          amount: amountConverted,
           type_update: 'increment',
         });
 
+        const amountConvertedNew = this.unitConversionService.convert(
+          dataRecordNew.amount,
+          dataRecordNew.unit_of_measure,
+          'GRAMOS',
+        );
+
         await this.harvestService.updateStock(queryRunner, {
           cropId: dataRecordNew.crop.id,
-          amount: dataRecordNew.amount,
+          amount: amountConvertedNew,
           type_update: 'decrement',
         });
 
@@ -275,9 +312,16 @@ export class SalesService {
 
       for (const saleDetailId of toCreate) {
         const newData = newDetails.find((record) => record.id === saleDetailId);
+
+        const amountConverted = this.unitConversionService.convert(
+          newData.amount,
+          newData.unit_of_measure,
+          'GRAMOS',
+        );
+
         await this.harvestService.updateStock(queryRunner, {
           cropId: newData.crop.id,
-          amount: newData.amount,
+          amount: amountConverted,
           type_update: 'decrement',
         });
         const record = queryRunner.manager.create(SaleDetails, {
@@ -317,9 +361,15 @@ export class SalesService {
           continue;
         }
 
+        const amountConverted = this.unitConversionService.convert(
+          item.amount,
+          item.unit_of_measure,
+          'GRAMOS',
+        );
+
         await this.harvestService.updateStock(queryRunner, {
           cropId: item.crop.id,
-          amount: item.amount,
+          amount: amountConverted,
           type_update: 'increment',
         });
       }

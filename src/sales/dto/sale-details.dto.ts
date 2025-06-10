@@ -2,14 +2,18 @@ import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDefined,
+  IsIn,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsPositive,
+  IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
 import { Client } from 'src/clients/entities/client.entity';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
+import { MassUnit } from 'src/common/unit-conversion/unit-conversion.service';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
 
@@ -17,6 +21,18 @@ export class SaleDetailsDto {
   @IsUUID(4)
   @IsOptional()
   id: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsIn([
+    // Unidades de masa
+    'GRAMOS',
+    'KILOGRAMOS',
+    'LIBRAS',
+    'ONZAS',
+    'TONELADAS',
+  ])
+  unit_of_measure: MassUnit;
 
   @IsInt()
   @IsPositive()
