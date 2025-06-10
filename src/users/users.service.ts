@@ -147,7 +147,11 @@ export class UsersService {
     id: string,
     updateUserDto: UpdateUserDto,
   ): Promise<Partial<User> & { modules: Module[] }> {
-    await this.findOne(id);
+    const user = await this.findOne(id);
+    if (user.roles.includes('admin')) {
+      throw new ForbiddenException('You cannot update an admin user');
+    }
+
     try {
       const { actions = [], ...rest } = updateUserDto;
 
@@ -217,7 +221,10 @@ export class UsersService {
   }
 
   async resetPassword(id: string): Promise<{ password: string }> {
-    await this.findOne(id);
+    const user = await this.findOne(id);
+    if (user.roles.includes('admin')) {
+      throw new ForbiddenException('You cannot reset the password of an admin user');
+    }
     const password = generatePassword();
     const encryptPassword = await hashPassword(password);
     await this.updatePassword(id, encryptPassword);
@@ -242,7 +249,7 @@ export class UsersService {
     const user = await this.findOne(id);
 
     if (user.roles.includes('admin')) {
-      throw new ForbiddenException('You cannot delete an admin user');
+      throw new ForbiddenException('You cannot change the status of an admin user');
     }
     await this.usersRepository.update(user.id, { is_active: !user.is_active });
   }
