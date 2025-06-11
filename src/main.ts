@@ -6,18 +6,22 @@ import * as path from 'path';
 
 async function bootstrap() {
   const statusProject = process.env.STATUS_PROJECT || 'development';
+  console.log("🚀 ~ bootstrap ~ statusProject:", statusProject)
   const hostFrontend = process.env.HOST_FRONTED;
+  console.log("🚀 ~ bootstrap ~ hostFrontend:", hostFrontend)
   const portBackend = process.env.PORT_BACKEND;
+  console.log("🚀 ~ bootstrap ~ portBackend:", portBackend)
 
   const app = await NestFactory.create(AppModule, {
-    cors: {
-      origin: hostFrontend,
-      methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-    },
-    httpsOptions: {
-      rejectUnauthorized: false,
-    },
+    // cors: {
+    //   origin: hostFrontend,
+    //   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    //   allowedHeaders: ['Content-Type', 'Authorization'],
+    // },
+    // httpsOptions: {
+    //   rejectUnauthorized: false,
+    // },
+    cors: true,
   });
 
   app.useGlobalPipes(
