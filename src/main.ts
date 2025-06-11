@@ -10,7 +10,11 @@ async function bootstrap() {
   const portBackend = process.env.PORT_BACKEND;
 
   const app = await NestFactory.create(AppModule, {
-    cors: true,
+    cors: {
+      origin: hostFrontend,
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    },
     httpsOptions: {
       rejectUnauthorized: false,
     },
