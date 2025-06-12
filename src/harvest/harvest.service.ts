@@ -460,12 +460,11 @@ export class HarvestService {
       );
     }
 
-    const totalProcessed = await this.harvestRepository
+    const harvestWithProcessed = await this.harvestRepository
       .createQueryBuilder('harvest')
-      .leftJoin('harvest.processed', 'processed')
-      .select('COALESCE(SUM(processed.amount), 0)', 'totalProcessed')
+      .leftJoinAndSelect('harvest.processed', 'processed')
       .where('harvest.id = :harvestId', { harvestId: data.harvestId })
-      .getRawOne();
+      .getOne();
 
     const convertedOldResult = this.unitConversionService.convert(
       data.oldAmount,
@@ -477,15 +476,22 @@ export class HarvestService {
       data.inputCurrentUnit,
       'GRAMOS',
     );
+    let processedSum: number = 0;
+    if (harvestWithProcessed.processed.length > 0) {
+      processedSum = harvestWithProcessed.processed.reduce((prev, current) => {
+        const convertedValue = this.unitConversionService.convert(
+          current.amount,
+          current.unit_of_measure,
+          'GRAMOS',
+        );
+        return convertedValue + prev;
+      }, 0);
+    }
+    const currentStock = processedSum - convertedOldResult;
 
-    const processedSum = Number(totalProcessed?.totalProcessed || 0);
-
-    if (
-      processedSum - convertedOldResult + convertedCurrentResult >
-      harvest.amount
-    ) {
+    if (currentStock + convertedCurrentResult > harvest.amount) {
       throw new ConflictException(
-        `You cannot add more processed harvest records, it exceeds the value of the harvest with id ${harvest.id}.`,
+        `You cannot add more processed harvest records, it exceeds the value of the harvest with id ${harvest.id}, only available ${harvest.amount - currentStock} GRAMOS.`,
       );
     }
   }
