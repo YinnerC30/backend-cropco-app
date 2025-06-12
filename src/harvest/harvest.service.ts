@@ -385,10 +385,6 @@ export class HarvestService {
   ) {
     const { cropId, amount, type_update /* inputUnit */ } = info;
 
-    this.logger.log(
-      `Actualizando stock para cropId: ${cropId} con tipo: ${type_update} y cantidad: ${amount}`,
-    );
-
     const crop = await queryRunner.manager.findOne(Crop, {
       where: { id: cropId },
     });
@@ -396,25 +392,6 @@ export class HarvestService {
     if (!crop) {
       throw new NotFoundException(`Crop with id: ${cropId} not found`);
     }
-
-    // let finalAmount = amount;
-    // if (inputUnit) {
-    //   if (!this.unitConversionService.isValidUnit(inputUnit)) {
-    //     throw new Error(`Invalid input unit: ${inputUnit}`);
-    //   }
-
-    //   if (this.unitConversionService.getUnitType(inputUnit) !== 'mass') {
-    //     throw new Error(
-    //       `La unidad ${inputUnit} no es una unidad de masa válida`,
-    //     );
-    //   }
-
-    //   finalAmount = this.unitConversionService.convert(
-    //     amount,
-    //     inputUnit,
-    //     'GRAMOS',
-    //   );
-    // }
 
     let recordHarvestCropStock = await queryRunner.manager.findOne(
       HarvestStock,
@@ -425,10 +402,6 @@ export class HarvestService {
     );
 
     if (!recordHarvestCropStock) {
-      this.logger.warn(
-        `Creando nuevo registro de stock para cropId: ${cropId}`,
-      );
-
       const newRecord = queryRunner.manager.create(HarvestStock, {
         crop: crop,
         amount: 0,
@@ -447,8 +420,6 @@ export class HarvestService {
         amount,
       );
 
-      this.logger.verbose('Increment result:', result);
-
       if (result.affected === 0) {
         throw new NotFoundException(`Crop with id: ${cropId} not incremented`);
       }
@@ -465,8 +436,6 @@ export class HarvestService {
         'amount',
         amount,
       );
-
-      this.logger.verbose('Decrement result:', result);
 
       if (result.affected === 0) {
         throw new NotFoundException(`Crop with id: ${cropId} not decremented`);

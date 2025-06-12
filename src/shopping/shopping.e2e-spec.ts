@@ -1287,8 +1287,6 @@ describe('ShoppingController (e2e)', () => {
             ...rest,
           })) as ShoppingSuppliesDetailsDto[],
       };
-      console.log('🚀 ~ it ~ bodyRequest:', bodyRequest);
-
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/shopping/update/one/${record.id}`)

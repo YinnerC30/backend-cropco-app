@@ -311,9 +311,6 @@ export class AuthService {
 
   async addPermission(userId: string, actionName: string) {
     const user = await this.userService.findOne(userId);
-
-    console.log('🚀 ~ addPermission ~ actionName:', actionName);
-
     const action = await this.moduleActionsRepository.findOne({
       where: { name: actionName },
     });
@@ -337,9 +334,6 @@ export class AuthService {
 
   async removePermission(userId: string, actionName: string) {
     const user = await this.userService.findOne(userId);
-
-    console.log('🚀 ~ removePermission ~ actionName:', actionName);
-
     const action = await this.moduleActionsRepository.findOne({
       where: { name: actionName },
     });
