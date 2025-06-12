@@ -292,7 +292,7 @@ export class EmployeesService {
              emp.first_name,
              emp.last_name,
              SUM(convert_to_grams(hd.unit_of_measure::TEXT, hd.amount::NUMERIC)) AS total_harvests_amount,
-             SUM(hd.value_pay) AS total_value_pay
+             CAST(SUM(hd.value_pay) AS INTEGER) AS total_value_pay
       FROM harvests_detail hd
       JOIN harvests h ON hd."harvestId" = h.id
       JOIN employees emp ON hd."employeeId" = emp.id
@@ -317,24 +317,23 @@ export class EmployeesService {
   async findTopEmployeesInWorks({
     year = new Date().getFullYear(),
   }: QueryForYearDto) {
-    const employees = await this.employeeRepository
-      .createQueryBuilder('employees')
-      .leftJoin('employees.works_detail', 'works_detail')
-      .leftJoin('works_detail.work', 'work')
-      .select([
-        'employees.id as id',
-        'employees.first_name as first_name',
-        'employees.last_name as last_name',
-        'CAST(SUM(works_detail.value_pay) AS INTEGER) AS value_pay_works',
-        'CAST(COUNT(works_detail.id) AS INTEGER) AS total_works', // Conteo de registros en works_detail
-      ])
-      .where('EXTRACT(YEAR FROM work.date) = :year', { year })
-      .groupBy('employees.id')
-      .having('SUM(works_detail.value_pay) > 0')
-      .orderBy('total_works', 'DESC') // Primero ordena por amount de trabajos
-      .addOrderBy('value_pay_works', 'DESC') // Luego por valor de pago
-      .limit(5)
-      .getRawMany();
+    const employees = await this.employeeRepository.query(
+      `
+        SELECT wd."employeeId",
+               emp.first_name,
+               emp.last_name,
+               CAST(COUNT(wd.id) AS INTEGER)      AS total_works,
+               CAST(SUM(wd.value_pay) AS INTEGER) AS total_value_pay
+        FROM works_detail wd
+                 JOIN works w ON wd."workId" = w.id
+                 JOIN employees emp ON wd."employeeId" = emp.id
+        WHERE EXTRACT(YEAR FROM w.date) = $1
+        GROUP BY wd."employeeId", emp.first_name, emp.last_name
+        ORDER BY total_works DESC
+        LIMIT 5
+      `,
+      [year],
+    );
 
     const count = employees.length;
 
