@@ -225,10 +225,6 @@ export class SuppliesService {
   ) {
     const { supplyId, amount, type_update, inputUnit } = info;
 
-    this.logger.log(
-      `Actualizando stock para supplyId: ${supplyId} con tipo: ${type_update} y cantidad: ${amount}`,
-    );
-
     // Cargar la entidad Supply
     const supply = await queryRunner.manager.findOne(Supply, {
       where: { id: supplyId },
@@ -240,7 +236,6 @@ export class SuppliesService {
 
     // Si se proporciona una unidad de entrada diferente, convertir la cantidad
     let finalAmount = amount;
-    console.log('🚀 ~ SuppliesService ~ finalAmount:', finalAmount);
     if (inputUnit && inputUnit !== supply.unit_of_measure) {
       if (!this.unitConversionService.isValidUnit(inputUnit)) {
         throw new Error(`Invalid input unit: ${inputUnit}`);
@@ -259,10 +254,6 @@ export class SuppliesService {
     });
 
     if (!recordSupplyStock) {
-      this.logger.warn(
-        `Creando nuevo registro de stock para supplyId: ${supplyId}`,
-      );
-
       const newRecord = queryRunner.manager.create(SuppliesStock, {
         supply: supply,
         amount: 0,
@@ -281,8 +272,6 @@ export class SuppliesService {
         finalAmount,
       );
 
-      this.logger.verbose('Increment result:', result);
-
       if (result.affected === 0) {
         throw new NotFoundException(
           `Supply with id: ${supplyId} not incremented`,
@@ -292,8 +281,6 @@ export class SuppliesService {
       const amountActually = recordSupplyStock.amount;
 
       if (amountActually < finalAmount) {
-        console.log('🚀 ~ SuppliesService ~ amountActually:', amountActually);
-        console.log('🚀 ~ SuppliesService ~ finalAmount:', finalAmount);
         throw new InsufficientSupplyStockException(
           amountActually,
           supply.name,
@@ -307,8 +294,6 @@ export class SuppliesService {
         'amount',
         finalAmount,
       );
-
-      this.logger.verbose('Decrement result:', result);
 
       if (result.affected === 0) {
         throw new NotFoundException(

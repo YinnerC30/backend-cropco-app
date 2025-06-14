@@ -166,23 +166,28 @@ export class ClientsService {
   async findTopClientsInSales({
     year = new Date().getFullYear(),
   }: QueryForYearDto) {
-    const clients = await this.clientRepository
-      .createQueryBuilder('clients')
-      .leftJoin('clients.sales_detail', 'sales_detail')
-      .leftJoin('sales_detail.sale', 'sale')
-      .select([
-        'clients.id as id',
-        'clients.first_name as first_name',
-        'clients.last_name as last_name',
-        'CAST(SUM(sales_detail.value_pay) AS INTEGER) AS total_value_pay',
-        'CAST(SUM(sales_detail.amount) AS INTEGER) AS total_amount',
-      ])
-      .where('EXTRACT(YEAR FROM sale.date) = :year', { year })
-      .groupBy('clients.id')
-      .having('SUM(sales_detail.value_pay) > 0')
-      .orderBy('total_value_pay', 'DESC')
-      .limit(5)
-      .getRawMany();
+    const clients = await this.clientRepository.query(
+      `
+      SELECT sd."clientId",
+       cl.first_name,
+       cl.last_name,
+       SUM(convert_to_grams(sd.unit_of_measure::TEXT, sd.amount::NUMERIC)) AS total_amount,
+       CAST(SUM(sd.value_pay) AS INTEGER)                                  AS total_value_pay
+       FROM sales_detail sd JOIN sales s ON sd."saleId" = s.id
+                            JOIN clients cl ON sd."clientId" = cl.id
+       WHERE EXTRACT(
+                     YEAR
+                     FROM
+                     s.date
+             ) = $1
+       GROUP BY sd."clientId",
+                cl.first_name,
+                cl.last_name
+       ORDER BY total_amount DESC
+       LIMIT 5
+      `,
+      [year],
+    );
 
     const count = clients.length;
 

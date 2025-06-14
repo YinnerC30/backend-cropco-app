@@ -711,8 +711,6 @@ describe('EmployeesController (e2e)', () => {
         .expect(200);
 
       const body = response.body as Employee;
-
-      console.log('🚀 ~ it ~ body:', body);
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('first_name');
       expect(body).toHaveProperty('last_name');

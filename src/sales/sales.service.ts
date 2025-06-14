@@ -89,7 +89,6 @@ export class SalesService {
   }
 
   async findAll(queryParams: QueryParamsSale) {
-    console.log('🚀 ~ SalesService ~ findAll ~ queryParams:', queryParams);
     const {
       limit = 10,
       offset = 0,
