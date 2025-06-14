@@ -84,6 +84,7 @@ export class AuthController {
     return this.authService.checkAuthStatus(token);
   }
 
+  @Auth({ skipValidationPath: true })
   @Get(findAllModules.path)
   findAllModules() {
     return this.authService.findAllModules();
