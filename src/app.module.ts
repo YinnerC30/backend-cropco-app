@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientsModule } from './clients/clients.module';
@@ -18,6 +18,8 @@ import { PrinterModule } from './printer/printer.module';
 import { ConsumptionsModule } from './consumptions/consumptions.module';
 import { ShoppingModule } from './shopping/shopping.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { TenantsModule } from './tenants/tenants.module';
+import { TenantMiddleware } from './tenants/middleware/tenant.middleware';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -49,15 +51,15 @@ import * as path from 'path';
           port: configService.get<number>('DB_PORT'),
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
-          database: configService.get<string>('DB_NAME'),
+          database: 'cropco_management', // Base de datos principal para gestión de tenants
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: statusProject === 'development',
           ssl: false,
-          // ssl: false,
         };
       },
     }),
     AuthModule,
+    TenantsModule, // Agregar el módulo de tenants
     ClientsModule,
     CommonModule,
     CropsModule,
@@ -76,4 +78,14 @@ import * as path from 'path';
     DashboardModule,
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(TenantMiddleware)
+      .exclude(
+        { path: 'auth/login', method: RequestMethod.POST },
+        { path: 'tenants', method: RequestMethod.ALL },
+      )
+      .forRoutes('*');
+  }
+}
