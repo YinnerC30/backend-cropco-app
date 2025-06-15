@@ -150,21 +150,55 @@ export class TenantsService {
       username: config.username,
       password: config.password,
       database: config.database,
-      entities: [__dirname + '/../../**/!(*tenant*).entity{.ts,.js}'],
+      entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
       synchronize: !is_migrated,
     });
 
     await dataSource.initialize();
 
-    if (!is_migrated) {
-      await this.updateStatusMigrationDB(id_database, true);
+    const queryRunner = dataSource.createQueryRunner();
+
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      await queryRunner.query(`
+          create function convert_to_grams(unit text, amount numeric) returns numeric
+            language plpgsql
+          as
+          $$
+          BEGIN
+            CASE UPPER(unit)
+              WHEN 'GRAMOS' THEN RETURN amount;  
+              WHEN 'KILOGRAMOS' THEN RETURN amount * 1000;
+              WHEN 'ONZAS' THEN RETURN amount * 28.3495;
+              WHEN 'LIBRAS' THEN RETURN amount * 453.592;
+              WHEN 'TONELADAS' THEN RETURN amount * 1000000;
+              ELSE
+                RAISE EXCEPTION 'Unit not valid: %', unit;
+            END CASE;
+          END;
+          $$;
+    
+          alter function convert_to_grams(text, numeric) owner to "admin-cropco";
+    `);
+
+      await queryRunner.commitTransaction();
+
+      if (!is_migrated) {
+        await this.updateStatusMigrationDB(id_database, true);
+      }
+
+      return {
+        msg: '¡Database ready to use!',
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.handlerError.handle(error, this.logger);
+    } finally {
+      await queryRunner.release();
+      await dataSource.destroy();
     }
-
-    await dataSource.destroy();
-
-    return {
-      msg: '¡Database ready to use!',
-    };
   }
 
   // async addUserToTenant(tenantId: string, userId: string, role: string) {
