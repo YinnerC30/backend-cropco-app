@@ -47,7 +47,7 @@ export class TenantsController {
 
   @Put('config-db/:id')
   configDataBaseTanent(@Param('id') id: string) {
-    return this.tenantsConnectionService.configDataBaseTenant(id);
+    return this.tenantsService.configDataBaseTenant(id);
   }
 
   @Patch(':id')
