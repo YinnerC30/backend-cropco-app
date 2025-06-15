@@ -1,0 +1,136 @@
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import { DataSource, Repository } from 'typeorm';
+import { CreateTenantDto } from './dto/create-tenant.dto';
+import { UpdateTenantDto } from './dto/update-tenant.dto';
+import { TenantAdministrator } from './entities/tenant-administrator.entity';
+import { TenantDatabase } from './entities/tenant-database.entity';
+import { Tenant } from './entities/tenant.entity';
+import { TenantConnectionService } from './services/tenant-connection.service';
+
+@Injectable()
+export class TenantsService {
+  private readonly logger = new Logger('TenantsService');
+  constructor(
+    @InjectRepository(Tenant)
+    private tenantRepository: Repository<Tenant>,
+    @InjectRepository(TenantDatabase)
+    private tenantDatabaseRepository: Repository<TenantDatabase>,
+    @InjectRepository(TenantAdministrator)
+    private dataSource: DataSource,
+    private tenantConnectionService: TenantConnectionService,
+    private readonly handlerError: HandlerErrorService,
+  ) {}
+
+  async create(createTenantDto: CreateTenantDto) {
+    // Crear el tenant
+    try {
+      const tenant = this.tenantRepository.create(createTenantDto);
+      await this.tenantRepository.save(tenant);
+
+      // Crear la base de datos para el tenant
+      const databaseName = `cropco_tenant_${tenant.subdomain}`;
+      await this.createTenantDatabase(tenant.id, databaseName);
+
+      return tenant;
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
+  }
+
+  async findAll() {
+    return this.tenantRepository.find();
+  }
+
+  async findOne(id: string) {
+    const tenant = await this.tenantRepository.findOne({ where: { id } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant with ID ${id} not found`);
+    }
+    return tenant;
+  }
+
+  async update(id: string, updateTenantDto: UpdateTenantDto) {
+    const tenant = await this.findOne(id);
+    try {
+      Object.assign(tenant, updateTenantDto);
+      return this.tenantRepository.save(tenant);
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
+  }
+
+  async remove(id: string) {
+    const tenant = await this.findOne(id);
+    try {
+      return this.tenantRepository.softRemove(tenant);
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
+  }
+
+  private async createTenantDatabase(tenantId: string, databaseName: string) {
+    try {
+      // Crear la base de datos
+      await this.dataSource.query(`CREATE DATABASE ${databaseName}`);
+
+      // Guardar la configuración de la base de datos
+      const tenantDatabase = this.tenantDatabaseRepository.create({
+        tenant: { id: tenantId },
+        database_name: databaseName,
+        connection_config: {
+          host: process.env.DB_HOST,
+          port: parseInt(process.env.DB_PORT),
+          username: process.env.DB_USERNAME,
+          password: process.env.DB_PASSWORD,
+        },
+      });
+
+      await this.tenantDatabaseRepository.save(tenantDatabase);
+
+      // await this.tenantConnectionService.getTenantConnection(newTenant.id);
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
+  }
+
+  async getOneTenantConfigDB(tenantId: string) {
+    const tenantDatabase = await this.tenantDatabaseRepository
+      .createQueryBuilder('tenant_databases')
+      .leftJoinAndSelect('tenant_databases.tenant', 'tenant')
+      .where('tenant.id = :tenantId', { tenantId })
+      .getOne();
+
+    if (!tenantDatabase) {
+      throw new NotFoundException(`Database for tenant ${tenantId} not found`);
+    }
+
+    return {
+      type: 'postgres',
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT),
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: tenantDatabase.database_name,
+      entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
+      synchronize: true,
+    };
+  }
+
+  // async addUserToTenant(tenantId: string, userId: string, role: string) {
+  //   const tenantUser = this.tenantUserRepository.create({
+  //     // tenant: { id: tenantId },
+  //     // userId,
+  //     // role,
+  //   });
+
+  //   return this.tenantUserRepository.save(tenantUser);
+  // }
+
+  // async getTenantUsers(tenantId: string) {
+  //   return this.tenantUserRepository.find({
+  //     where: { tenantId, is_active: true },
+  //   });
+  // }
+}
