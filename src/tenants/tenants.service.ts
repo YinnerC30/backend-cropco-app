@@ -87,9 +87,20 @@ export class TenantsService {
         },
       });
 
-      await this.tenantDatabaseRepository.save(tenantDatabase);
+      return await this.tenantDatabaseRepository.save(tenantDatabase);
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
+  }
 
-      // await this.tenantConnectionService.getTenantConnection(newTenant.id);
+  async updateStatusMigrationDB(tenantDataBaseId: string, status: boolean) {
+    try {
+      await this.tenantDatabaseRepository.update(
+        { id: tenantDataBaseId },
+        {
+          is_migrated: status,
+        },
+      );
     } catch (error) {
       this.handlerError.handle(error, this.logger);
     }
@@ -107,14 +118,52 @@ export class TenantsService {
     }
 
     return {
+      config: {
+        type: 'postgres',
+        host: process.env.DB_HOST,
+        port: parseInt(process.env.DB_PORT),
+        username: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD,
+        database: tenantDatabase.database_name,
+        entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
+        synchronize: true,
+      },
+      is_migrated: tenantDatabase.is_migrated,
+      id_database: tenantDatabase.id,
+    };
+  }
+
+  async configDataBaseTenant(tenantId: string) {
+    const { config, is_migrated, id_database } =
+      await this.getOneTenantConfigDB(tenantId);
+
+    if (is_migrated) {
+      return {
+        msg: 'The database has already been migrated',
+      };
+    }
+
+    const dataSource = new DataSource({
       type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: tenantDatabase.database_name,
-      entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
-      synchronize: true,
+      host: config.host,
+      port: config.port,
+      username: config.username,
+      password: config.password,
+      database: config.database,
+      entities: [__dirname + '/../../**/!(*tenant*).entity{.ts,.js}'],
+      synchronize: !is_migrated,
+    });
+
+    await dataSource.initialize();
+
+    if (!is_migrated) {
+      await this.updateStatusMigrationDB(id_database, true);
+    }
+
+    await dataSource.destroy();
+
+    return {
+      msg: '¡Database ready to use!',
     };
   }
 

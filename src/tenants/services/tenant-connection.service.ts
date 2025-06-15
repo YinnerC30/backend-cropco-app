@@ -13,18 +13,18 @@ export class TenantConnectionService {
 
   async getTenantConnection(tenantId: string): Promise<DataSource> {
     if (!this.tenantConnections.has(tenantId)) {
-      const connectionConfig =
+      const { config } =
         await this.tenantsService.getOneTenantConfigDB(tenantId);
 
       const dataSource = new DataSource({
         type: 'postgres',
-        host: connectionConfig.host,
-        port: connectionConfig.port,
-        username: connectionConfig.username,
-        password: connectionConfig.password,
-        database: connectionConfig.database,
+        host: config.host,
+        port: config.port,
+        username: config.username,
+        password: config.password,
+        database: config.database,
         entities: [__dirname + '/../../**/!(*tenant*).entity{.ts,.js}'],
-        synchronize: true,
+        synchronize: false,
       });
 
       await dataSource.initialize();
@@ -33,28 +33,6 @@ export class TenantConnectionService {
     }
 
     return this.tenantConnections.get(tenantId);
-  }
-
-  async configDataBaseTenant(tenantId: string) {
-    const connectionConfig =
-      await this.tenantsService.getOneTenantConfigDB(tenantId);
-
-    const dataSource = new DataSource({
-      type: 'postgres',
-      host: connectionConfig.host,
-      port: connectionConfig.port,
-      username: connectionConfig.username,
-      password: connectionConfig.password,
-      database: connectionConfig.database,
-      entities: [__dirname + '/../../**/!(*tenant*).entity{.ts,.js}'],
-      synchronize: true,
-    });
-
-    await dataSource.initialize();
-    await dataSource.destroy();
-    return {
-      msg: 'Base de datos lista',
-    };
   }
 
   async closeTenantConnection(tenantId: string): Promise<void> {

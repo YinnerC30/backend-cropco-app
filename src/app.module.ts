@@ -54,13 +54,10 @@ import { TenantAdministrator } from './tenants/entities/tenant-administrator.ent
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: 'cropco_management',
-          // entities: [__dirname + '/tenants/*.entity{.ts,.js}'],
           entities: [Tenant, TenantDatabase, TenantAdministrator],
-          // synchronize: statusProject === 'development',
           synchronize: true,
           ssl: false,
           logging: true,
-          // ssl: false,
         };
       },
     }),
