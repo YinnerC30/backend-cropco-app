@@ -20,6 +20,10 @@ import { ShoppingModule } from './shopping/shopping.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import * as fs from 'fs';
 import * as path from 'path';
+import { TenantsModule } from './tenants/tenants.module';
+import { Tenant } from './tenants/entities/tenant.entity';
+import { TenantDatabase } from './tenants/entities/tenant-database.entity';
+import { TenantAdministrator } from './tenants/entities/tenant-administrator.entity';
 
 @Module({
   imports: [
@@ -49,14 +53,18 @@ import * as path from 'path';
           port: configService.get<number>('DB_PORT'),
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
-          database: configService.get<string>('DB_NAME'),
-          entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: statusProject === 'development',
+          database: 'cropco_management',
+          // entities: [__dirname + '/tenants/*.entity{.ts,.js}'],
+          entities: [Tenant, TenantDatabase, TenantAdministrator],
+          // synchronize: statusProject === 'development',
+          synchronize: true,
           ssl: false,
+          logging: true,
           // ssl: false,
         };
       },
     }),
+    TenantsModule,
     AuthModule,
     ClientsModule,
     CommonModule,

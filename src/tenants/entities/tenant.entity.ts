@@ -1,0 +1,44 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  OneToMany,
+} from 'typeorm';
+import { TenantDatabase } from './tenant-database.entity';
+import { TenantAdministrator } from './tenant-administrator.entity';
+
+@Entity('tenants')
+export class Tenant {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column()
+  company_name: string;
+
+  @Column()
+  email: string;
+
+  @Column({ unique: true })
+  subdomain: string;
+
+  @Column({ nullable: true })
+  cell_phone_number: string;
+
+  @Column({ default: true })
+  is_active: boolean;
+
+  @OneToMany(() => TenantDatabase, (database) => database.tenant)
+  databases: TenantDatabase[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt: Date;
+}
