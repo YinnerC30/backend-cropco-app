@@ -9,7 +9,7 @@ import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
-import { IsNull, MoreThan, Not, Repository } from 'typeorm';
+import { DataSource, IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
@@ -34,15 +34,18 @@ export class CropsService {
     }
   }
 
-  async findAll(queryParams: QueryParamsDto) {
+  async findAll(queryParams: QueryParamsDto, tenantConnection: DataSource) {
     const {
       query = '',
       limit = 10,
       offset = 0,
       all_records = false,
     } = queryParams;
+    
+    console.log("🚀 ~ CropsService ~ findAll ~ tenantConnection:", tenantConnection)
+    const customRepository = tenantConnection.getRepository(Crop);
 
-    const queryBuilder = this.cropRepository.createQueryBuilder('crops');
+    const queryBuilder = customRepository.createQueryBuilder('crops');
     queryBuilder.leftJoinAndSelect('crops.harvests_stock', 'harvests_stock');
 
     !!query &&

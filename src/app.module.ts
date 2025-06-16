@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientsModule } from './clients/clients.module';
@@ -24,6 +24,7 @@ import { TenantsModule } from './tenants/tenants.module';
 import { Tenant } from './tenants/entities/tenant.entity';
 import { TenantDatabase } from './tenants/entities/tenant-database.entity';
 import { TenantAdministrator } from './tenants/entities/tenant-administrator.entity';
+import { TenantMiddleware } from './tenants/middleware/tenant.middleware';
 
 @Module({
   imports: [
@@ -81,4 +82,14 @@ import { TenantAdministrator } from './tenants/entities/tenant-administrator.ent
     DashboardModule,
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(TenantMiddleware)
+      .exclude(
+        { path: 'auth/login', method: RequestMethod.POST },
+        { path: 'tenants', method: RequestMethod.ALL },
+      )
+      .forRoutes('*');
+  }
+}
