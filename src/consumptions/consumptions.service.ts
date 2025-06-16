@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -24,12 +25,15 @@ import { SuppliesConsumption } from './entities/supplies-consumption.entity';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 import { QueryTotalConsumptionsInYearDto } from './dto/query-total-consumptions-year';
 import { UnitConversionService } from 'src/common/unit-conversion/unit-conversion.service';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
 export class ConsumptionsService {
   private readonly logger = new Logger('ConsumptionsService');
 
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     @InjectRepository(Supply)
     private readonly supplyRepository: Repository<Supply>,
     @InjectRepository(SuppliesConsumption)
@@ -42,7 +46,16 @@ export class ConsumptionsService {
     private readonly unitConversionService: UnitConversionService,
 
     private dataSource: DataSource,
-  ) {}
+  ) {
+    this.supplyRepository =
+      this.request['tenantConnection'].getRepository(Supply);
+    this.suppliesConsumptionRepository =
+      this.request['tenantConnection'].getRepository(SuppliesConsumption);
+    this.suppliesConsumptionDetailsRepository = this.request[
+      'tenantConnection'
+    ].getRepository(SuppliesConsumptionDetails);
+    this.dataSource = this.request['tenantConnection'];
+  }
 
   async createConsumption(
     createConsumptionSuppliesDto: ConsumptionSuppliesDto,
@@ -303,19 +316,24 @@ export class ConsumptionsService {
         );
 
         // Verificar que la unidad de medida sea válida
-        if (!this.unitConversionService.isValidUnit(newRecordData.unit_of_measure)) {
+        if (
+          !this.unitConversionService.isValidUnit(newRecordData.unit_of_measure)
+        ) {
           throw new BadRequestException(
             `Unidad de medida inválida: ${newRecordData.unit_of_measure}`,
           );
         }
 
         // Obtener el suministro para verificar su unidad de medida
-        const supply = await this.suppliesService.findOne(newRecordData.supply.id);
+        const supply = await this.suppliesService.findOne(
+          newRecordData.supply.id,
+        );
 
         // Verificar que las unidades sean del mismo tipo (masa o volumen)
         if (
-          this.unitConversionService.getUnitType(newRecordData.unit_of_measure) !==
-          this.unitConversionService.getUnitType(supply.unit_of_measure)
+          this.unitConversionService.getUnitType(
+            newRecordData.unit_of_measure,
+          ) !== this.unitConversionService.getUnitType(supply.unit_of_measure)
         ) {
           throw new BadRequestException(
             `No se puede convertir entre unidades de ${newRecordData.unit_of_measure} y ${supply.unit_of_measure}`,
@@ -349,19 +367,24 @@ export class ConsumptionsService {
         );
 
         // Verificar que la unidad de medida sea válida
-        if (!this.unitConversionService.isValidUnit(newRecordData.unit_of_measure)) {
+        if (
+          !this.unitConversionService.isValidUnit(newRecordData.unit_of_measure)
+        ) {
           throw new BadRequestException(
             `Unidad de medida inválida: ${newRecordData.unit_of_measure}`,
           );
         }
 
         // Obtener el suministro para verificar su unidad de medida
-        const supply = await this.suppliesService.findOne(newRecordData.supply.id);
+        const supply = await this.suppliesService.findOne(
+          newRecordData.supply.id,
+        );
 
         // Verificar que las unidades sean del mismo tipo (masa o volumen)
         if (
-          this.unitConversionService.getUnitType(newRecordData.unit_of_measure) !==
-          this.unitConversionService.getUnitType(supply.unit_of_measure)
+          this.unitConversionService.getUnitType(
+            newRecordData.unit_of_measure,
+          ) !== this.unitConversionService.getUnitType(supply.unit_of_measure)
         ) {
           throw new BadRequestException(
             `No se puede convertir entre unidades de ${newRecordData.unit_of_measure} y ${supply.unit_of_measure}`,

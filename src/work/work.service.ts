@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -21,18 +22,24 @@ import { Work } from './entities/work.entity';
 import { getWorkReport } from './reports/get-work';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 import { QueryTotalWorksInYearDto } from './dto/query-params-total-works-year';
+import { REQUEST } from '@nestjs/core';
 
 @Injectable()
 export class WorkService {
   private readonly logger = new Logger('WorkService');
 
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     @InjectRepository(Work)
     private readonly workRepository: Repository<Work>,
     private readonly dataSource: DataSource,
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
-  ) {}
+  ) {
+    this.workRepository =
+      this.request['tenantConnection'].getRepository(Work);
+    this.dataSource = this.request['tenantConnection'];
+  }
 
   async create(createWorkDto: WorkDto) {
     const queryRunner = this.dataSource.createQueryRunner();

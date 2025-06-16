@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -20,12 +21,15 @@ import { ShoppingSuppliesDto } from './dto/shopping-supplies.dto';
 import { SuppliesShopping, SuppliesShoppingDetails } from './entities';
 import { getShoppingReport } from './reports/get-shopping';
 import { UnitConversionService } from 'src/common/unit-conversion/unit-conversion.service';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
 export class ShoppingService {
   private readonly logger = new Logger('ShoppingService');
 
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     @InjectRepository(SuppliesShopping)
     private readonly suppliesShoppingRepository: Repository<SuppliesShopping>,
     @InjectRepository(SuppliesShoppingDetails)
@@ -37,7 +41,13 @@ export class ShoppingService {
     private printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
     private readonly unitConversionService: UnitConversionService,
-  ) {}
+  ) {
+    this.suppliesShoppingRepository =
+      this.request['tenantConnection'].getRepository(SuppliesShopping);
+    this.suppliesShoppingDetailsRepository =
+      this.request['tenantConnection'].getRepository(SuppliesShoppingDetails);
+    this.dataSource = this.request['tenantConnection'];
+  }
 
   async createShoppingDetails(
     queryRunner: QueryRunner,

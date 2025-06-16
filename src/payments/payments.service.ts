@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -21,18 +22,25 @@ import { PrinterService } from 'src/printer/printer.service';
 import { getPaymentReport } from './reports/get-payment';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger('PaymentsService');
 
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
     private readonly dataSource: DataSource,
     private printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
-  ) {}
+  ) {
+    this.paymentRepository =
+      this.request['tenantConnection'].getRepository(Payment);
+    this.dataSource = this.request['tenantConnection'];
+  }
 
   async create(createPaymentDto: PaymentDto) {
     const queryRunner = this.dataSource.createQueryRunner();

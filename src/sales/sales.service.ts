@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -23,12 +24,15 @@ import { Sale } from './entities/sale.entity';
 import { getSaleReport } from './reports/get-sale';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 import { UnitConversionService } from 'src/common/unit-conversion/unit-conversion.service';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
 export class SalesService {
   private readonly logger = new Logger('SalesService');
 
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     @InjectRepository(Sale)
     private readonly saleRepository: Repository<Sale>,
     private readonly dataSource: DataSource,
@@ -36,7 +40,11 @@ export class SalesService {
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
     private readonly unitConversionService: UnitConversionService,
-  ) {}
+  ) {
+    this.saleRepository =
+      this.request['tenantConnection'].getRepository(Sale);
+    this.dataSource = this.request['tenantConnection'];
+  }
 
   async create(createSaleDto: SaleDto) {
     const queryRunner = this.dataSource.createQueryRunner();
