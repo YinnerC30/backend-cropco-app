@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -19,17 +20,23 @@ import { getEmploymentLetterByIdReport } from './reports/employment-letter-by-id
 
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
 export class EmployeesService {
   private readonly logger = new Logger('EmployeesService');
 
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     @InjectRepository(Employee)
     private readonly employeeRepository: Repository<Employee>,
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
-  ) {}
+  ) {
+    this.employeeRepository =
+      this.request['tenantConnection'].getRepository(Employee);
+  }
 
   async findOneCertification(id: string) {
     const employee = await this.findOne(id);

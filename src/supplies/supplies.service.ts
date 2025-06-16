@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -23,12 +24,15 @@ import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { SuppliesStock } from 'src/supplies/entities/supplies-stock.entity';
 import { InsufficientSupplyStockException } from './exceptions/insufficient-supply-stock.exception';
 import { UnitConversionService } from 'src/common/unit-conversion/unit-conversion.service';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
 export class SuppliesService {
   private readonly logger = new Logger('SuppliesService');
 
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     @InjectRepository(Supply)
     private readonly supplyRepository: Repository<Supply>,
 
@@ -36,7 +40,12 @@ export class SuppliesService {
     private readonly suppliesStockRepository: Repository<SuppliesStock>,
     private readonly handlerError: HandlerErrorService,
     private readonly unitConversionService: UnitConversionService,
-  ) {}
+  ) {
+    this.supplyRepository =
+      this.request['tenantConnection'].getRepository(Supply);
+    this.suppliesStockRepository =
+      this.request['tenantConnection'].getRepository(SuppliesStock);
+  }
 
   async create(createSupply: CreateSupplyDto) {
     try {

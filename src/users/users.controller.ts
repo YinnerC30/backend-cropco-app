@@ -81,7 +81,7 @@ const {
   toggleStatusUser,
 } = pathsUsersController;
 
-@Auth()
+// @Auth()
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

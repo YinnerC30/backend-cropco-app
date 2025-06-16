@@ -68,7 +68,7 @@ const {
   findAllSuppliersWithShopping,
 } = pathsSuppliersController;
 
-@Auth()
+// @Auth()
 @Controller('suppliers')
 export class SuppliersController {
   constructor(private readonly suppliersService: SuppliersService) {}

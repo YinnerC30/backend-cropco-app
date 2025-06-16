@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { MoreThan, Repository } from 'typeorm';
@@ -7,16 +7,22 @@ import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { Supplier } from './entities/supplier.entity';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
 export class SuppliersService {
   private readonly logger = new Logger('SuppliersService');
 
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     @InjectRepository(Supplier)
     private readonly supplierRepository: Repository<Supplier>,
     private readonly handlerError: HandlerErrorService,
-  ) {}
+  ) {
+    this.supplierRepository =
+      this.request['tenantConnection'].getRepository(Supplier);
+  }
 
   async create(createSupplierDto: CreateSupplierDto) {
     try {

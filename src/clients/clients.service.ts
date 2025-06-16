@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -16,18 +17,22 @@ import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
 import { getClientsReport } from './reports/get-all-clients.report';
 import { TemplateGetAllRecords } from 'src/common/interfaces/TemplateGetAllRecords';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
 export class ClientsService {
   private readonly logger = new Logger('ClientsService'); // Logger personalizado
 
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     @InjectRepository(Client)
     private readonly clientRepository: Repository<Client>,
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService, // Inyecta HandlerErrorService
   ) {
-    // Proporciona el Logger personalizado a HandlerErrorService
+    this.clientRepository =
+      this.request['tenantConnection'].getRepository(Client);
   }
   async create(createClientDto: CreateClientDto) {
     try {
