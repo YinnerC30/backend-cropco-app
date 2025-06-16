@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -21,12 +22,15 @@ import { User } from './entities/user.entity';
 import { hashPassword } from './helpers/encrypt-password';
 import { generatePassword } from './helpers/generate-password';
 import { UserDto } from './dto/user.dto';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger('UsersService');
 
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
 
@@ -37,7 +41,14 @@ export class UsersService {
     private readonly modulesRepository: Repository<Module>,
 
     private readonly handlerError: HandlerErrorService,
-  ) {}
+  ) {
+    this.usersRepository =
+      this.request['tenantConnection'].getRepository(User);
+    this.userActionsRepository =
+      this.request['tenantConnection'].getRepository(UserActions);
+    this.modulesRepository =
+      this.request['tenantConnection'].getRepository(Module);
+  }
 
   async create(createUserDto: UserDto): Promise<User> {
     try {
