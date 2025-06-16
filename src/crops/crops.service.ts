@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -13,6 +14,8 @@ import { DataSource, IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
 export class CropsService {
@@ -22,12 +25,15 @@ export class CropsService {
     @InjectRepository(Crop)
     private readonly cropRepository: Repository<Crop>,
     private readonly handlerError: HandlerErrorService,
+    @Inject(REQUEST) private readonly request: Request,
   ) {}
 
   async create(createCropDto: CreateCropDto) {
     try {
-      const crop = this.cropRepository.create(createCropDto);
-      await this.cropRepository.save(crop);
+      const tenantConnection = this.request['tenantConnection'];
+      const customRepository = tenantConnection.getRepository(Crop);
+      const crop = customRepository.create(createCropDto);
+      await customRepository.save(crop);
       return crop;
     } catch (error) {
       this.handlerError.handle(error, this.logger);
@@ -41,8 +47,7 @@ export class CropsService {
       offset = 0,
       all_records = false,
     } = queryParams;
-    
-    console.log("🚀 ~ CropsService ~ findAll ~ tenantConnection:", tenantConnection)
+
     const customRepository = tenantConnection.getRepository(Crop);
 
     const queryBuilder = customRepository.createQueryBuilder('crops');
