@@ -115,9 +115,8 @@ export class CropsController {
   // Obtener todos los cultivos
   @Get(findAllCrops.path)
   // Documentación
-  findAll(@Query() queryParams: QueryParamsDto, @Req() req: Request) {
-    const tenantConnection = req['tenantConnection'];
-    return this.cropsService.findAll(queryParams, tenantConnection);
+  findAll(@Query() queryParams: QueryParamsDto) {
+    return this.cropsService.findAll(queryParams);
   }
 
   @Get(findAllCropsWithHarvest.path)

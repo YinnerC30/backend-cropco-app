@@ -22,25 +22,25 @@ export class CropsService {
   private readonly logger = new Logger('CropsService');
 
   constructor(
-    @InjectRepository(Crop)
-    private readonly cropRepository: Repository<Crop>,
-    private readonly handlerError: HandlerErrorService,
     @Inject(REQUEST) private readonly request: Request,
-  ) {}
+    @InjectRepository(Crop)
+    private cropRepository: Repository<Crop>,
+    private readonly handlerError: HandlerErrorService,
+  ) {
+    this.cropRepository = this.request['tenantConnection'].getRepository(Crop);
+  }
 
   async create(createCropDto: CreateCropDto) {
     try {
-      const tenantConnection = this.request['tenantConnection'];
-      const customRepository = tenantConnection.getRepository(Crop);
-      const crop = customRepository.create(createCropDto);
-      await customRepository.save(crop);
+      const crop = this.cropRepository.create(createCropDto);
+      await this.cropRepository.save(crop);
       return crop;
     } catch (error) {
       this.handlerError.handle(error, this.logger);
     }
   }
 
-  async findAll(queryParams: QueryParamsDto, tenantConnection: DataSource) {
+  async findAll(queryParams: QueryParamsDto) {
     const {
       query = '',
       limit = 10,
@@ -48,9 +48,7 @@ export class CropsService {
       all_records = false,
     } = queryParams;
 
-    const customRepository = tenantConnection.getRepository(Crop);
-
-    const queryBuilder = customRepository.createQueryBuilder('crops');
+    const queryBuilder = this.cropRepository.createQueryBuilder('crops');
     queryBuilder.leftJoinAndSelect('crops.harvests_stock', 'harvests_stock');
 
     !!query &&
