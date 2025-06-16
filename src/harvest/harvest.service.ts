@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -38,12 +39,15 @@ import {
   UnitType,
   MassUnit,
 } from 'src/common/unit-conversion/unit-conversion.service';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
 export class HarvestService {
   private readonly logger = new Logger('HarvestsService');
 
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     @InjectRepository(Harvest)
     private readonly harvestRepository: Repository<Harvest>,
 
@@ -54,7 +58,13 @@ export class HarvestService {
     private readonly printerService: PrinterService,
     private handlerError: HandlerErrorService,
     private readonly unitConversionService: UnitConversionService,
-  ) {}
+  ) {
+    this.dataSource = this.request['tenantConnection'];
+    this.harvestRepository =
+      this.request['tenantConnection'].getRepository(Harvest);
+    this.harvestProcessedRepository =
+      this.request['tenantConnection'].getRepository(HarvestProcessed);
+  }
 
   async create(createHarvestDto: HarvestDto) {
     const queryRunner = this.dataSource.createQueryRunner();

@@ -71,7 +71,7 @@ const {
   exportSaleToPDF,
 } = pathsSalesController;
 
-@Auth()
+// @Auth()
 @Controller('sales')
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
