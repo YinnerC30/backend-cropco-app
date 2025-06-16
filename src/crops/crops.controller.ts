@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseInterceptors,
 } from '@nestjs/common';
 
@@ -20,6 +21,7 @@ import { CropsService } from './crops.service';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
+import { Request } from 'express';
 
 export const pathsCropsController: PathsController = {
   createCrop: {
@@ -93,7 +95,7 @@ const {
   findAllCropsStock,
 } = pathsCropsController;
 
-@Auth()
+// @Auth()
 @Controller('crops')
 export class CropsController {
   constructor(private readonly cropsService: CropsService) {}
@@ -105,8 +107,6 @@ export class CropsController {
 
   // Crear cultivo
   @Post(createCrop.path)
-  // Documentación
-
   // Método
   create(@Body() createCropDto: CreateCropDto) {
     return this.cropsService.create(createCropDto);
@@ -115,8 +115,9 @@ export class CropsController {
   // Obtener todos los cultivos
   @Get(findAllCrops.path)
   // Documentación
-  findAll(@Query() queryParams: QueryParamsDto) {
-    return this.cropsService.findAll(queryParams);
+  findAll(@Query() queryParams: QueryParamsDto, @Req() req: Request) {
+    const tenantConnection = req['tenantConnection'];
+    return this.cropsService.findAll(queryParams, tenantConnection);
   }
 
   @Get(findAllCropsWithHarvest.path)
