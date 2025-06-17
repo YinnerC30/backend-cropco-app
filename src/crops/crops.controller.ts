@@ -95,7 +95,7 @@ const {
   findAllCropsStock,
 } = pathsCropsController;
 
-// @Auth()
+@Auth()
 @Controller('crops')
 export class CropsController {
   constructor(private readonly cropsService: CropsService) {}

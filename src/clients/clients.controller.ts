@@ -77,7 +77,7 @@ const {
   exportClients,
 } = pathsClientsController;
 
-// @Auth()
+@Auth()
 @Controller('clients')
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}

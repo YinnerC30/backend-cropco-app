@@ -96,7 +96,7 @@ const {
   exportHarvestToPDF,
 } = pathsHarvestsController;
 
-// @Auth()
+@Auth()
 @Controller('harvests')
 export class HarvestController {
   constructor(private readonly harvestService: HarvestService) {}

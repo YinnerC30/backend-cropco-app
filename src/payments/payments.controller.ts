@@ -64,7 +64,7 @@ const {
   exportPaymentToPDF,
 } = pathsPaymentsController;
 
-// @Auth()
+@Auth()
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
