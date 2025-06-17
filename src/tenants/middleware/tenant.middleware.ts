@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NestMiddleware,
+  NotFoundException,
 } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
 import { TenantConnectionService } from '../services/tenant-connection.service';
@@ -19,15 +20,14 @@ export class TenantMiddleware implements NestMiddleware {
       throw new BadRequestException('No finding x-tenant-id in headers');
     }
 
-    if (tenantId) {
-      try {
+    try {
+      if (tenantId) {
         const tenantConnection =
           await this.tenantsConnectionService.getTenantConnection(tenantId);
         req['tenantConnection'] = tenantConnection;
-      } catch (error) {
-        // Si no se encuentra el tenant, continuamos sin conexión específica
-        console.error(`Error getting tenant connection: ${error.message}`);
       }
+    } catch (error) {
+      throw new NotFoundException('The requested resource could not be found');
     }
 
     next();
