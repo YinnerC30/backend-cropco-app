@@ -1,4 +1,8 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NestMiddleware,
+} from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
 import { TenantConnectionService } from '../services/tenant-connection.service';
 
@@ -10,6 +14,10 @@ export class TenantMiddleware implements NestMiddleware {
 
   async use(req: Request, res: Response, next: NextFunction) {
     const tenantId = req.headers['x-tenant-id'] as string;
+
+    if (!tenantId) {
+      throw new BadRequestException('No finding x-tenant-id in headers');
+    }
 
     if (tenantId) {
       try {
