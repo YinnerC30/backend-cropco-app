@@ -1,14 +1,21 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import { Request } from 'express';
 import { pathsClientsController } from 'src/clients/clients.controller';
+import {
+  PathProperties
+} from 'src/common/interfaces/PathsController';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { pathsConsumptionController } from 'src/consumptions/consumptions.controller';
 import { pathsCropsController } from 'src/crops/crops.controller';
 import { pathsDashboardController } from 'src/dashboard/dashboard.controller';
@@ -20,7 +27,10 @@ import { pathsShoppingController } from 'src/shopping/shopping.controller';
 import { pathsSuppliersController } from 'src/suppliers/suppliers.controller';
 import { pathsSuppliesController } from 'src/supplies/supplies.controller';
 import { UserActionDto } from 'src/users/dto/user-action.dto';
+import { UserDto } from 'src/users/dto/user.dto';
+import { UserActions } from 'src/users/entities/user-actions.entity';
 import { User } from 'src/users/entities/user.entity';
+import { RoleUser } from 'src/users/types/role-user.type';
 import { pathsUsersController } from 'src/users/users.controller';
 import { UsersService } from 'src/users/users.service';
 import { pathsWorksController } from 'src/work/work.controller';
@@ -30,19 +40,12 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { ModuleActions } from './entities/module-actions.entity';
 import { Module } from './entities/module.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-import { UserActions } from 'src/users/entities/user-actions.entity';
-import { UserDto } from 'src/users/dto/user.dto';
-import { HandlerErrorService } from 'src/common/services/handler-error.service';
-import {
-  PathProperties,
-  PathsController,
-} from 'src/common/interfaces/PathsController';
-import { RoleUser } from 'src/users/types/role-user.type';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger('AuthService');
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     @InjectRepository(UserActions)
@@ -54,7 +57,15 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly userService: UsersService,
     private readonly handlerError: HandlerErrorService,
-  ) {}
+  ) {
+    this.usersRepository = this.request['tenantConnection'].getRepository(User);
+    this.userActionsRepository =
+      this.request['tenantConnection'].getRepository(UserActions);
+    this.modulesRepository =
+      this.request['tenantConnection'].getRepository(Module);
+    this.moduleActionsRepository =
+      this.request['tenantConnection'].getRepository(ModuleActions);
+  }
 
   async login(
     loginUserDto: LoginUserDto,

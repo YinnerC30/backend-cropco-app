@@ -87,7 +87,7 @@ export class AppModule {
     consumer
       .apply(TenantMiddleware)
       .exclude(
-        { path: 'auth/login', method: RequestMethod.POST },
+        // { path: 'auth/login', method: RequestMethod.POST },
         { path: 'tenants', method: RequestMethod.ALL },
       )
       .forRoutes('*');
