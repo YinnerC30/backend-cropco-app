@@ -115,7 +115,7 @@ const {
   findTopEmployeesInWorks,
 } = pathsEmployeesController;
 
-// @Auth()
+@Auth()
 @Controller('employees')
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}

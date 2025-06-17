@@ -66,7 +66,7 @@ const {
   removeConsumption,
   removeBulkConsumptions,
 } = pathsConsumptionController;
-// @Auth()
+@Auth()
 @Controller('consumptions')
 export class ConsumptionsController {
   constructor(private readonly consumptionsService: ConsumptionsService) {}

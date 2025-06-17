@@ -75,7 +75,7 @@ const {
   exportShoppingToPDF,
 } = pathsShoppingController;
 
-// @Auth()
+@Auth()
 @Controller('shopping')
 export class ShoppingController {
   constructor(private readonly shoppingService: ShoppingService) {}

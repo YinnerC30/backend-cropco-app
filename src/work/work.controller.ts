@@ -70,7 +70,7 @@ const {
   removeWorks,
 } = pathsWorksController;
 
-// @Auth()
+@Auth()
 @Controller('works')
 export class WorkController {
   constructor(private readonly workService: WorkService) {}
