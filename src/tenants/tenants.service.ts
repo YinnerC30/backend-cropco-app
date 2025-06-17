@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { DataSource, Repository } from 'typeorm';
@@ -48,6 +54,24 @@ export class TenantsService {
     if (!tenant) {
       throw new NotFoundException(`Tenant with ID ${id} not found`);
     }
+
+    return tenant;
+  }
+
+  async findOneBySubdomain(tenantSubdomain: string) {
+    const tenant = await this.tenantRepository.findOne({
+      where: { subdomain: tenantSubdomain },
+    });
+    if (!tenant) {
+      throw new NotFoundException(
+        `Tenant with subdomain ${tenantSubdomain} not found`,
+      );
+    }
+
+    if (!tenant.is_active) {
+      throw new UnauthorizedException('The tenant is currently disabled');
+    }
+
     return tenant;
   }
 

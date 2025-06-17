@@ -21,42 +21,47 @@ export class TenantsController {
     private readonly tenantsConnectionService: TenantConnectionService,
   ) {}
 
-  @Post()
+  @Post('create')
   // @Roles('admin')
   create(@Body() createTenantDto: CreateTenantDto) {
     return this.tenantsService.create(createTenantDto);
   }
 
-  @Get()
+  @Get('all')
   // @Roles('admin')
   findAll() {
     return this.tenantsService.findAll();
   }
 
-  @Get(':id')
+  @Get('one/:id')
   // @Roles('admin')
   findOne(@Param('id') id: string) {
     return this.tenantsService.findOne(id);
   }
-
-  @Get('connection-db/:id')
+  @Get('one/find/:TenantSubdomain')
   // @Roles('admin')
-  findOneConnectionDB(@Param('id') id: string) {
-    return this.tenantsService.getOneTenantConfigDB(id);
+  findOneBySubdomain(@Param('TenantSubdomain') subdomain: string) {
+    return this.tenantsService.findOneBySubdomain(subdomain);
   }
 
-  @Put('config-db/:id')
+  // @Get('one/connection-db/:id')
+  // // @Roles('admin')
+  // findOneConnectionDB(@Param('id') id: string) {
+  //   return this.tenantsService.getOneTenantConfigDB(id);
+  // }
+
+  @Put('one/config-db/:id')
   configDataBaseTanent(@Param('id') id: string) {
     return this.tenantsService.configDataBaseTenant(id);
   }
 
-  @Patch(':id')
+  @Patch('one/update/:id')
   // @Roles('admin')
   update(@Param('id') id: string, @Body() updateTenantDto: UpdateTenantDto) {
     return this.tenantsService.update(id, updateTenantDto);
   }
 
-  @Delete(':id')
+  @Delete('remove/one/:id')
   // @Roles('admin')
   remove(@Param('id') id: string) {
     return this.tenantsService.remove(id);
