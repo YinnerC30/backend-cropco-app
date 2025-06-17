@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ClientsService } from 'src/clients/clients.service';
 import { CropsService } from 'src/crops/crops.service';
 import { EmployeesService } from 'src/employees/employees.service';
@@ -53,10 +53,13 @@ import { Supply } from 'src/supplies/entities/supply.entity';
 import { WorkDetails } from 'src/work/entities/work-details.entity';
 import { InformationGenerator } from './helpers/InformationGenerator';
 import { EntityConvertedToDto } from './interfaces/EntityConvertedToDto';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
 export class SeedService {
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     private readonly usersService: UsersService,
     private readonly cropsService: CropsService,
     private readonly employeesService: EmployeesService,
