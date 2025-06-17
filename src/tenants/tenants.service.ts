@@ -107,30 +107,34 @@ export class TenantsService {
   }
 
   async getOneTenantConfigDB(tenantId: string) {
-    const tenantDatabase = await this.tenantDatabaseRepository
-      .createQueryBuilder('tenant_databases')
-      .leftJoinAndSelect('tenant_databases.tenant', 'tenant')
-      .where('tenant.id = :tenantId', { tenantId })
-      .getOne();
+    try {
+      const tenantDatabase = await this.tenantDatabaseRepository
+        .createQueryBuilder('tenant_databases')
+        .leftJoinAndSelect('tenant_databases.tenant', 'tenant')
+        .where('tenant.id = :tenantId', { tenantId })
+        .getOne();
 
-    if (!tenantDatabase) {
-      throw new NotFoundException(`Database for tenant ${tenantId} not found`);
+      if (!tenantDatabase) {
+        throw new Error(`Database for tenant ${tenantId} not found`);
+      }
+
+      return {
+        config: {
+          type: 'postgres',
+          host: process.env.DB_HOST,
+          port: parseInt(process.env.DB_PORT),
+          username: process.env.DB_USERNAME,
+          password: process.env.DB_PASSWORD,
+          database: tenantDatabase.database_name,
+          entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
+          synchronize: true,
+        },
+        is_migrated: tenantDatabase.is_migrated,
+        id_database: tenantDatabase.id,
+      };
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
     }
-
-    return {
-      config: {
-        type: 'postgres',
-        host: process.env.DB_HOST,
-        port: parseInt(process.env.DB_PORT),
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        database: tenantDatabase.database_name,
-        entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
-        synchronize: true,
-      },
-      is_migrated: tenantDatabase.is_migrated,
-      id_database: tenantDatabase.id,
-    };
   }
 
   async configDataBaseTenant(tenantId: string) {
