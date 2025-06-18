@@ -20,9 +20,8 @@ export class JwtTenantStrategy extends PassportStrategy(
   ) {
     super({
       secretOrKey: configService.get('JWT_SECRET'),
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromHeader('x-tenant-token'),
       ignoreExpiration: false,
-      // passReqToCallback: true,
     });
   }
 
