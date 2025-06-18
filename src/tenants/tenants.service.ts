@@ -85,7 +85,7 @@ export class TenantsService {
       throw new UnauthorizedException('The tenant is currently disabled');
     }
 
-    return tenant;
+    return { id: tenant.id, subdomain: tenant.subdomain };
   }
 
   async update(id: string, updateTenantDto: UpdateTenantDto) {
