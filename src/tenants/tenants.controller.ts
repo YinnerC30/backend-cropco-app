@@ -47,6 +47,11 @@ export const pathsTenantsController: PathsController = {
     description: 'eliminar 1 inquilino',
     name: 'remove_one_tenant',
   },
+  configDataBaseTenant: {
+    path: 'config-db/one/:id',
+    description: 'configurar base de datos de 1 inquilino',
+    name: 'config_data_base_tenant',
+  },
   createTenantAdmin: {
     path: 'create/one/admin',
     description: 'Crear usuario capaz de manipular los inquilinos',
@@ -82,6 +87,7 @@ const {
   findOneBySubdomain,
   updateTenant,
   removeTenant,
+  configDataBaseTenant,
   createTenantAdmin,
   findAllTenantsAdmins,
   findOneTenantsAdmin,
@@ -99,19 +105,9 @@ export class TenantsController {
     return this.tenantsService.create(createTenantDto);
   }
 
-  @Post(createTenantAdmin.path)
-  createAdmin(@Body() tenantAdministradorDto: TenantAdministradorDto) {
-    return this.tenantsService.createAdmin(tenantAdministradorDto);
-  }
-
   @Get(findAllTenants.path)
   findAll() {
     return this.tenantsService.findAll();
-  }
-
-  @Get(findAllTenantsAdmins.path)
-  findAllAdmin() {
-    return this.tenantsService.findAllAdmin();
   }
 
   @Get(findOneTenant.path)
@@ -129,17 +125,7 @@ export class TenantsController {
     return this.tenantsService.findOneBySubdomain(subdomain);
   }
 
-  // @Get('one/connection-db/:id')
-  // findOneConnectionDB(@Param('id') id: string) {
-  //   return this.tenantsService.getOneTenantConfigDB(id);
-  // }
-
   @Put(updateTenant.path)
-  configDataBaseTanent(@Param('id') id: string) {
-    return this.tenantsService.configDataBaseTenant(id);
-  }
-
-  @Patch(updateTenant.path)
   update(@Param('id') id: string, @Body() updateTenantDto: UpdateTenantDto) {
     return this.tenantsService.update(id, updateTenantDto);
   }
@@ -149,21 +135,33 @@ export class TenantsController {
     return this.tenantsService.remove(id);
   }
 
+  // Tenants Databases
+  @Put(configDataBaseTenant.path)
+  configDataBaseTanent(@Param('id') id: string) {
+    return this.tenantsService.configDataBaseTenant(id);
+  }
+
+  // Tenants Administrators
+  @Post(createTenantAdmin.path)
+  createAdmin(@Body() tenantAdministradorDto: TenantAdministradorDto) {
+    return this.tenantsService.createAdmin(tenantAdministradorDto);
+  }
+
+  @Get(findAllTenantsAdmins.path)
+  findAllAdmin() {
+    return this.tenantsService.findAllAdmin();
+  }
+
+  @Patch(updateTenantsAdmin.path)
+  updateAdmin(
+    @Param('id') id: string,
+    @Body() tenantAdministradorDto: TenantAdministradorDto,
+  ) {
+    return this.tenantsService.updateAdmin(id, tenantAdministradorDto);
+  }
+
   @Delete(removeTenantsAdmin.path)
   removeAdmin(@Param('id') id: string) {
     return this.tenantsService.removeAdmin(id);
   }
-
-  // @Get(':id/users')
-  // getTenantUsers(@Param('id') id: string) {
-  //   return this.tenantsService.getTenantUsers(id);
-  // }
-
-  // @Post(':id/users')
-  // addUserToTenant(
-  //   @Param('id') id: string,
-  //   @Body() body: { userId: string; role: string },
-  // ) {
-  //   return this.tenantsService.addUserToTenant(id, body.userId, body.role);
-  // }
 }
