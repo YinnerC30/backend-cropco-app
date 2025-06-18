@@ -253,6 +253,19 @@ export class TenantsService {
     return tenantAdmin;
   }
 
+  async updateAdmin(
+    id: string,
+    tenantAdministradorDto: TenantAdministradorDto,
+  ) {
+    const tenantAdmin = await this.findOneAdmin(id);
+    try {
+      Object.assign(tenantAdmin, tenantAdministradorDto);
+      return this.tenantAdministratorRepository.save(tenantAdmin);
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
+  }
+
   async removeAdmin(id: string) {
     const tenantAdmin = await this.findOneAdmin(id);
     try {
