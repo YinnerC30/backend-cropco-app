@@ -50,12 +50,12 @@ export class TenantsController {
   //   return this.tenantsService.getOneTenantConfigDB(id);
   // }
 
-  @Put('one/config-db/:id')
+  @Put('config-db/one/:id')
   configDataBaseTanent(@Param('id') id: string) {
     return this.tenantsService.configDataBaseTenant(id);
   }
 
-  @Patch('one/update/:id')
+  @Patch('update/one/:id')
   // @Roles('admin')
   update(@Param('id') id: string, @Body() updateTenantDto: UpdateTenantDto) {
     return this.tenantsService.update(id, updateTenantDto);

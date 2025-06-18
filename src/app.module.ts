@@ -87,8 +87,24 @@ export class AppModule {
     consumer
       .apply(TenantMiddleware)
       .exclude(
-        // { path: 'auth/login', method: RequestMethod.POST },
-        { path: 'tenants', method: RequestMethod.ALL },
+        {
+          path: 'tenants/one/find/:TenantSubdomain',
+          method: RequestMethod.GET,
+        },
+        {
+          path: '/tenants/create',
+          method: RequestMethod.POST,
+        },
+        {
+          path: '/tenants/one/config-db/:id',
+          method: RequestMethod.PUT,
+        },
+        // { path: 'tenants/create', method: RequestMethod.POST },
+        // { path: 'tenants/all', method: RequestMethod.GET },
+        // { path: 'tenants/one/:id', method: RequestMethod.GET },
+        // { path: 'tenants/one/update/:id', method: RequestMethod.PATCH },
+        // { path: 'tenants/remove/one/:id', method: RequestMethod.DELETE },
+        // { path: 'tenants/one/config-db/:id', method: RequestMethod.PUT },
       )
       .forRoutes('*');
   }
