@@ -50,7 +50,16 @@ export class TenantsService {
   }
 
   async findAll() {
-    return this.tenantRepository.find();
+    const queryBuilder = this.tenantRepository.createQueryBuilder('tenants');
+    const [tenants, count] = await queryBuilder.getManyAndCount();
+
+    return {
+      total_row_count: count,
+      current_row_count: tenants.length,
+      total_page_count: 1,
+      current_page_count: 1,
+      records: tenants,
+    };
   }
 
   async findOne(id: string) {
@@ -239,7 +248,18 @@ export class TenantsService {
   }
 
   async findAllAdmin() {
-    return this.tenantAdministratorRepository.find();
+    const queryBuilder = this.tenantAdministratorRepository.createQueryBuilder(
+      'tenant_administrators',
+    );
+    const [tenantAdmins, count] = await queryBuilder.getManyAndCount();
+
+    return {
+      total_row_count: count,
+      current_row_count: tenantAdmins.length,
+      total_page_count: 1,
+      current_page_count: 1,
+      records: tenantAdmins,
+    };
   }
 
   async findOneAdmin(id: string) {
@@ -258,6 +278,9 @@ export class TenantsService {
     tenantAdministradorDto: TenantAdministradorDto,
   ) {
     const tenantAdmin = await this.findOneAdmin(id);
+    if (tenantAdmin.role === 'admin') {
+      throw new BadRequestException('Admin cannot be updated');
+    }
     try {
       Object.assign(tenantAdmin, tenantAdministradorDto);
       return this.tenantAdministratorRepository.save(tenantAdmin);
@@ -268,6 +291,9 @@ export class TenantsService {
 
   async removeAdmin(id: string) {
     const tenantAdmin = await this.findOneAdmin(id);
+    if (tenantAdmin.role === 'admin') {
+      throw new BadRequestException('Admin cannot be deleted');
+    }
     try {
       return this.tenantAdministratorRepository.softRemove(tenantAdmin);
     } catch (error) {
