@@ -14,12 +14,19 @@ import { AuthService } from './auth.service';
 import { Auth } from './decorators/auth.decorator';
 import { GetToken } from './decorators/get-token.headers.decorator';
 import { LoginUserDto } from './dto/login-user.dto';
+import { AuthTenantService } from './services/auth-tenant.service';
 
 export const pathsAuthController: PathsController = {
   login: {
     path: 'login',
     description: 'login usuario',
     name: 'login_user',
+    visibleToUser: false,
+  },
+  loginManagement: {
+    path: 'management/login',
+    description: 'login usuario administrador cropco',
+    name: 'login_user_management',
     visibleToUser: false,
   },
   renewToken: {
@@ -60,15 +67,24 @@ const {
   findAllModules,
   createModuleActions,
   // convertToAdmin,
+  loginManagement,
 } = pathsAuthController;
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly authTenantService: AuthTenantService,
+  ) {}
 
   @Post(login.path)
   login(@Body() loginUserDto: LoginUserDto) {
     return this.authService.login(loginUserDto);
+  }
+
+  @Post(loginManagement.path)
+  loginManagement(@Body() loginUserDto: LoginUserDto) {
+    return this.authTenantService.login(loginUserDto);
   }
 
   @Auth({ skipValidationPath: true })

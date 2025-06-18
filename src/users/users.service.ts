@@ -42,12 +42,15 @@ export class UsersService {
 
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.usersRepository =
-      this.request['tenantConnection'].getRepository(User);
-    this.userActionsRepository =
-      this.request['tenantConnection'].getRepository(UserActions);
-    this.modulesRepository =
-      this.request['tenantConnection'].getRepository(Module);
+    const tenantConnection = this.request['tenantConnection'];
+    if (!!tenantConnection) {
+      this.usersRepository =
+        this.request['tenantConnection'].getRepository(User);
+      this.userActionsRepository =
+        this.request['tenantConnection'].getRepository(UserActions);
+      this.modulesRepository =
+        this.request['tenantConnection'].getRepository(Module);
+    }
   }
 
   async create(createUserDto: UserDto): Promise<User> {
@@ -235,7 +238,9 @@ export class UsersService {
   async resetPassword(id: string): Promise<{ password: string }> {
     const user = await this.findOne(id);
     if (user.roles.includes('admin')) {
-      throw new ForbiddenException('You cannot reset the password of an admin user');
+      throw new ForbiddenException(
+        'You cannot reset the password of an admin user',
+      );
     }
     const password = generatePassword();
     const encryptPassword = await hashPassword(password);
@@ -261,7 +266,9 @@ export class UsersService {
     const user = await this.findOne(id);
 
     if (user.roles.includes('admin')) {
-      throw new ForbiddenException('You cannot change the status of an admin user');
+      throw new ForbiddenException(
+        'You cannot change the status of an admin user',
+      );
     }
     await this.usersRepository.update(user.id, { is_active: !user.is_active });
   }

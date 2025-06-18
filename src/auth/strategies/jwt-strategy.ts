@@ -27,46 +27,51 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(request: Request, payload: JwtPayload): Promise<User | any> {
-    this.userRepository = request['tenantConnection'].getRepository(User);
-    this.modulesRepository = request['tenantConnection'].getRepository(Module);
+    try {
+      this.userRepository = request['tenantConnection'].getRepository(User);
+      this.modulesRepository =
+        request['tenantConnection'].getRepository(Module);
 
-    const { id } = payload;
-    const user = await this.userRepository.findOne({
-      where: { id },
-    });
+      const { id } = payload;
+      const user = await this.userRepository.findOne({
+        where: { id },
+      });
 
-    const userPermits = await this.modulesRepository.find({
-      select: {
-        name: true,
-        actions: {
-          id: true,
-          description: true,
-          path_endpoint: true,
+      const userPermits = await this.modulesRepository.find({
+        select: {
+          name: true,
+          actions: {
+            id: true,
+            description: true,
+            path_endpoint: true,
+          },
         },
-      },
-      relations: {
-        actions: true,
-      },
-      where: {
-        actions: {
-          users_actions: {
-            user: {
-              id,
+        relations: {
+          actions: true,
+        },
+        where: {
+          actions: {
+            users_actions: {
+              user: {
+                id,
+              },
             },
           },
         },
-      },
-    });
+      });
 
-    if (!user) {
-      throw new UnauthorizedException('Token is not valid - User no exist');
-    }
-    if (!user.is_active) {
-      throw new UnauthorizedException(
-        'User is inactive, talk with an administrator',
-      );
-    }
+      if (!user) {
+        throw new UnauthorizedException('Token is not valid - User no exist');
+      }
+      if (!user.is_active) {
+        throw new UnauthorizedException(
+          'User is inactive, talk with an administrator',
+        );
+      }
 
-    return { ...user, modules: userPermits };
+      return { ...user, modules: userPermits };
+    } catch (error) {
+      console.log('Hubo un error en la strategy de los usuarios normales');
+    }
   }
 }

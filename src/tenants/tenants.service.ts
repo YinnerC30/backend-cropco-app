@@ -14,6 +14,8 @@ import { TenantAdministrator } from './entities/tenant-administrator.entity';
 import { TenantDatabase } from './entities/tenant-database.entity';
 import { Tenant } from './entities/tenant.entity';
 import { TenantConnectionService } from './services/tenant-connection.service';
+import { TenantAdministradorDto } from './dto/tenant-administrator.dto';
+import { hashPassword } from 'src/users/helpers/encrypt-password';
 
 @Injectable()
 export class TenantsService {
@@ -24,8 +26,10 @@ export class TenantsService {
     @InjectRepository(TenantDatabase)
     private tenantDatabaseRepository: Repository<TenantDatabase>,
     @InjectRepository(TenantAdministrator)
+    private tenantAdministratorRepository: Repository<TenantAdministrator>,
+
     private dataSource: DataSource,
-    private tenantConnectionService: TenantConnectionService,
+
     private readonly handlerError: HandlerErrorService,
   ) {}
 
@@ -44,9 +48,31 @@ export class TenantsService {
       this.handlerError.handle(error, this.logger);
     }
   }
+  async createAdmin(tenantAdministradorDto: TenantAdministradorDto) {
+    // Crear el tenant
+    try {
+      const tenantAdmin = this.tenantAdministratorRepository.create(
+        tenantAdministradorDto,
+      );
+
+      tenantAdmin.password = await hashPassword(tenantAdmin.password);
+
+      await this.tenantAdministratorRepository.save(tenantAdmin);
+
+      delete tenantAdmin.password;
+
+      return tenantAdmin;
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
+  }
 
   async findAll() {
     return this.tenantRepository.find();
+  }
+
+  async findAllAdmin() {
+    return this.tenantAdministratorRepository.find();
   }
 
   async findOne(id: string) {
@@ -56,6 +82,16 @@ export class TenantsService {
     }
 
     return tenant;
+  }
+  async findOneAdmin(id: string) {
+    const tenantAdmin = await this.tenantAdministratorRepository.findOne({
+      where: { id },
+    });
+    if (!tenantAdmin) {
+      throw new NotFoundException(`Tenant admin with ID ${id} not found`);
+    }
+
+    return tenantAdmin;
   }
 
   async findOneBySubdomain(tenantSubdomain: string) {
@@ -89,6 +125,15 @@ export class TenantsService {
     const tenant = await this.findOne(id);
     try {
       return this.tenantRepository.softRemove(tenant);
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
+  }
+
+  async removeAdmin(id: string) {
+    const tenantAdmin = await this.findOneAdmin(id);
+    try {
+      return this.tenantAdministratorRepository.softRemove(tenantAdmin);
     } catch (error) {
       this.handlerError.handle(error, this.logger);
     }
@@ -228,20 +273,4 @@ export class TenantsService {
       await dataSource.destroy();
     }
   }
-
-  // async addUserToTenant(tenantId: string, userId: string, role: string) {
-  //   const tenantUser = this.tenantUserRepository.create({
-  //     // tenant: { id: tenantId },
-  //     // userId,
-  //     // role,
-  //   });
-
-  //   return this.tenantUserRepository.save(tenantUser);
-  // }
-
-  // async getTenantUsers(tenantId: string) {
-  //   return this.tenantUserRepository.find({
-  //     where: { tenantId, is_active: true },
-  //   });
-  // }
 }

@@ -3,9 +3,9 @@ services:
     image: postgres:15
     container_name: server-db
     environment:
-      POSTGRES_DB: cropco
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
+      POSTGRES_DB: cropco_management
+      POSTGRES_USER: admin-cropco
+      POSTGRES_PASSWORD: oBg24_7u9f32
     ports:
       - '5432:5432'
     healthcheck:
@@ -15,4 +15,4 @@ services:
       retries: 5
     volumes:
       - ./data-server-db-development:/var/lib/postgresql/data
-      - ./sql-scripts:/docker-entrypoint-initdb.d/
+      # - ./sql-scripts:/docker-entrypoint-initdb.d/

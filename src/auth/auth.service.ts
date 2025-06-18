@@ -12,9 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Request } from 'express';
 import { pathsClientsController } from 'src/clients/clients.controller';
-import {
-  PathProperties
-} from 'src/common/interfaces/PathsController';
+import { PathProperties } from 'src/common/interfaces/PathsController';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { pathsConsumptionController } from 'src/consumptions/consumptions.controller';
 import { pathsCropsController } from 'src/crops/crops.controller';
@@ -58,13 +56,17 @@ export class AuthService {
     private readonly userService: UsersService,
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.usersRepository = this.request['tenantConnection'].getRepository(User);
-    this.userActionsRepository =
-      this.request['tenantConnection'].getRepository(UserActions);
-    this.modulesRepository =
-      this.request['tenantConnection'].getRepository(Module);
-    this.moduleActionsRepository =
-      this.request['tenantConnection'].getRepository(ModuleActions);
+    const tenantConnection = this.request['tenantConnection'];
+    if (!!tenantConnection) {
+      this.usersRepository =
+        this.request['tenantConnection'].getRepository(User);
+      this.userActionsRepository =
+        this.request['tenantConnection'].getRepository(UserActions);
+      this.modulesRepository =
+        this.request['tenantConnection'].getRepository(Module);
+      this.moduleActionsRepository =
+        this.request['tenantConnection'].getRepository(ModuleActions);
+    }
   }
 
   async login(
