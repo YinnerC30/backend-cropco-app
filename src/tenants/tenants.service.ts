@@ -48,31 +48,9 @@ export class TenantsService {
       this.handlerError.handle(error, this.logger);
     }
   }
-  async createAdmin(tenantAdministradorDto: TenantAdministradorDto) {
-    // Crear el tenant
-    try {
-      const tenantAdmin = this.tenantAdministratorRepository.create(
-        tenantAdministradorDto,
-      );
-
-      tenantAdmin.password = await hashPassword(tenantAdmin.password);
-
-      await this.tenantAdministratorRepository.save(tenantAdmin);
-
-      delete tenantAdmin.password;
-
-      return tenantAdmin;
-    } catch (error) {
-      this.handlerError.handle(error, this.logger);
-    }
-  }
 
   async findAll() {
     return this.tenantRepository.find();
-  }
-
-  async findAllAdmin() {
-    return this.tenantAdministratorRepository.find();
   }
 
   async findOne(id: string) {
@@ -82,16 +60,6 @@ export class TenantsService {
     }
 
     return tenant;
-  }
-  async findOneAdmin(id: string) {
-    const tenantAdmin = await this.tenantAdministratorRepository.findOne({
-      where: { id },
-    });
-    if (!tenantAdmin) {
-      throw new NotFoundException(`Tenant admin with ID ${id} not found`);
-    }
-
-    return tenantAdmin;
   }
 
   async findOneBySubdomain(tenantSubdomain: string) {
@@ -130,14 +98,7 @@ export class TenantsService {
     }
   }
 
-  async removeAdmin(id: string) {
-    const tenantAdmin = await this.findOneAdmin(id);
-    try {
-      return this.tenantAdministratorRepository.softRemove(tenantAdmin);
-    } catch (error) {
-      this.handlerError.handle(error, this.logger);
-    }
-  }
+  // Tenants Databases
 
   private async createTenantDatabase(tenantId: string, databaseName: string) {
     try {
@@ -148,12 +109,7 @@ export class TenantsService {
       const tenantDatabase = this.tenantDatabaseRepository.create({
         tenant: { id: tenantId },
         database_name: databaseName,
-        connection_config: {
-          host: process.env.DB_HOST,
-          port: parseInt(process.env.DB_PORT),
-          username: process.env.DB_USERNAME,
-          password: process.env.DB_PASSWORD,
-        },
+        is_migrated: false,
       });
 
       return await this.tenantDatabaseRepository.save(tenantDatabase);
@@ -175,7 +131,7 @@ export class TenantsService {
     }
   }
 
-  async getOneTenantConfigDB(tenantId: string) {
+  async getOneTenantDatabase(tenantId: string) {
     try {
       const tenantDatabase = await this.tenantDatabaseRepository
         .createQueryBuilder('tenant_databases')
@@ -184,33 +140,21 @@ export class TenantsService {
         .getOne();
 
       if (!tenantDatabase) {
-        throw new Error(`Database for tenant ${tenantId} not found`);
+        throw new NotFoundException(
+          `Database for tenant ${tenantId} not found`,
+        );
       }
 
-      return {
-        config: {
-          type: 'postgres',
-          host: process.env.DB_HOST,
-          port: parseInt(process.env.DB_PORT),
-          username: process.env.DB_USERNAME,
-          password: process.env.DB_PASSWORD,
-          database: tenantDatabase.database_name,
-          entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
-          synchronize: true,
-        },
-        is_migrated: tenantDatabase.is_migrated,
-        id_database: tenantDatabase.id,
-      };
+      return tenantDatabase;
     } catch (error) {
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async configDataBaseTenant(tenantId: string) {
-    const { config, is_migrated, id_database } =
-      await this.getOneTenantConfigDB(tenantId);
+    const tenantDatabase = await this.getOneTenantDatabase(tenantId);
 
-    if (is_migrated) {
+    if (tenantDatabase.is_migrated) {
       return {
         msg: 'The database has already been migrated',
       };
@@ -218,13 +162,13 @@ export class TenantsService {
 
     const dataSource = new DataSource({
       type: 'postgres',
-      host: config.host,
-      port: config.port,
-      username: config.username,
-      password: config.password,
-      database: config.database,
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT),
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: tenantDatabase.database_name,
       entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
-      synchronize: !is_migrated,
+      synchronize: !tenantDatabase.is_migrated,
     });
 
     await dataSource.initialize();
@@ -258,8 +202,8 @@ export class TenantsService {
 
       await queryRunner.commitTransaction();
 
-      if (!is_migrated) {
-        await this.updateStatusMigrationDB(id_database, true);
+      if (!tenantDatabase.is_migrated) {
+        await this.updateStatusMigrationDB(tenantDatabase.id, true);
       }
 
       return {
@@ -271,6 +215,50 @@ export class TenantsService {
     } finally {
       await queryRunner.release();
       await dataSource.destroy();
+    }
+  }
+
+  // Tenants Administrators
+  async createAdmin(tenantAdministradorDto: TenantAdministradorDto) {
+    // Crear el tenant
+    try {
+      const tenantAdmin = this.tenantAdministratorRepository.create(
+        tenantAdministradorDto,
+      );
+
+      tenantAdmin.password = await hashPassword(tenantAdmin.password);
+
+      await this.tenantAdministratorRepository.save(tenantAdmin);
+
+      delete tenantAdmin.password;
+
+      return tenantAdmin;
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
+  }
+
+  async findAllAdmin() {
+    return this.tenantAdministratorRepository.find();
+  }
+
+  async findOneAdmin(id: string) {
+    const tenantAdmin = await this.tenantAdministratorRepository.findOne({
+      where: { id },
+    });
+    if (!tenantAdmin) {
+      throw new NotFoundException(`Tenant admin with ID ${id} not found`);
+    }
+
+    return tenantAdmin;
+  }
+
+  async removeAdmin(id: string) {
+    const tenantAdmin = await this.findOneAdmin(id);
+    try {
+      return this.tenantAdministratorRepository.softRemove(tenantAdmin);
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
     }
   }
 }

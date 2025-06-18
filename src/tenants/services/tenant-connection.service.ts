@@ -17,16 +17,16 @@ export class TenantConnectionService {
   async getTenantConnection(tenantId: string): Promise<DataSource> {
     try {
       if (!this.tenantConnections.has(tenantId)) {
-        const { config } =
-          await this.tenantsService.getOneTenantConfigDB(tenantId);
+        const tenantDatabase =
+          await this.tenantsService.getOneTenantDatabase(tenantId);
 
         const dataSource = new DataSource({
           type: 'postgres',
-          host: config.host,
-          port: config.port,
-          username: config.username,
-          password: config.password,
-          database: config.database,
+          host: process.env.DB_HOST,
+          port: parseInt(process.env.DB_PORT),
+          username: process.env.DB_USERNAME,
+          password: process.env.DB_PASSWORD,
+          database: tenantDatabase.database_name,
           entities: [__dirname + '/../../**/!(*tenant*).entity{.ts,.js}'],
           synchronize: false,
         });
