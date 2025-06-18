@@ -99,6 +99,22 @@ export class AppModule {
           path: '/tenants/one/config-db/:id',
           method: RequestMethod.PUT,
         },
+        {
+          path: '/auth/management/login',
+          method: RequestMethod.POST,
+        },
+        {
+          path: '/tenants/create/admin',
+          method: RequestMethod.POST,
+        },
+        {
+          path: '/tenants/all',
+          method: RequestMethod.GET,
+        },
+        {
+          path: '/tenants/one/:id',
+          method: RequestMethod.ALL,
+        },
         // { path: 'tenants/create', method: RequestMethod.POST },
         // { path: 'tenants/all', method: RequestMethod.GET },
         // { path: 'tenants/one/:id', method: RequestMethod.GET },

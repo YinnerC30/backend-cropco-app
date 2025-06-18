@@ -13,10 +13,13 @@ import { ModuleActions } from './entities/module-actions.entity';
 import { User } from 'src/users/entities/user.entity';
 import { UserActions } from 'src/users/entities/user-actions.entity';
 import { CommonModule } from 'src/common/common.module';
+import { AuthTenantService } from './services/auth-tenant.service';
+import { TenantAdministrator } from 'src/tenants/entities/tenant-administrator.entity';
+import { JwtTenantStrategy } from './strategies/jwt-tenant-strategy';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy,JwtTenantStrategy, AuthTenantService],
   imports: [
     ConfigModule,
     forwardRef(() => UsersModule),
@@ -39,9 +42,10 @@ import { CommonModule } from 'src/common/common.module';
       ModuleActions,
       User,
       UserActions,
+      TenantAdministrator,
     ]),
     CommonModule,
   ],
-  exports: [JwtStrategy, PassportModule, JwtModule, TypeOrmModule, AuthService],
+  exports: [JwtStrategy,JwtTenantStrategy, PassportModule, JwtModule, TypeOrmModule, AuthService],
 })
 export class AuthModule {}

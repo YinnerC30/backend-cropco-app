@@ -16,7 +16,7 @@ export class TenantAdministrator extends PersonalInformation {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 100, select: false })
+  @Column({ type: 'varchar', length: 100 })
   password: string;
 
   @Column({

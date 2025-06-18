@@ -16,6 +16,6 @@ import { CommonModule } from 'src/common/common.module';
   ],
   controllers: [TenantsController],
   providers: [TenantsService, TenantConnectionService],
-  exports: [TenantsService, TenantConnectionService],
+  exports: [TenantsService, TenantConnectionService,TypeOrmModule],
 })
 export class TenantsModule {}
