@@ -26,11 +26,18 @@ COPY --from=all-deps /app/node_modules ./node_modules
 COPY . .
 COPY certs ./certs
 COPY public ./public
+# Set build-time argument for version
+ARG VERSION
+ENV VERSION=${VERSION}
 RUN npm run build
 
 # Stage 5: Prepare the runtime environment
 FROM node:18-alpine AS runner
 WORKDIR /app
+# Set runtime argument for version
+ARG VERSION
+ENV VERSION=${VERSION}
+ENV NODE_ENV=production
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/certs ./certs
 COPY --from=builder /app/public ./public

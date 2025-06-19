@@ -45,7 +45,41 @@ CropCo Backend es una aplicación desarrollada en NestJS para la gestión integr
 │   ├── supplies/       # 📦 Insumos
 │   ├── users/          # 🧑‍💻 Usuarios del sistema
 │   └── work/           # 🛠️ Trabajos y actividades
+├── scripts/            # 🔧 Scripts de automatización
+├── .github/workflows/  # ⚡ GitHub Actions
+└── docs/              # 📚 Documentación
 ```
+
+## 🚀 Sistema de Versionado Automático
+
+Este proyecto incluye un sistema completo de versionado automático con:
+
+- **Versionado Semántico** (SemVer)
+- **Construcción automática de imágenes Docker**
+- **GitHub Actions** para CI/CD
+- **Tags de Git** automáticos
+
+### Comandos Rápidos
+
+```bash
+# Incrementar versión y construir Docker
+npm run version:patch    # 0.0.1 → 0.0.2
+npm run version:minor    # 0.0.1 → 0.1.0
+npm run version:major    # 0.0.1 → 1.0.0
+
+# Construir imagen Docker
+npm run docker:build
+
+# Release completo (versión + commit + tag)
+npm run release:patch
+```
+
+### Workflow Automatizado
+
+1. **Manual**: Ve a GitHub Actions → "Release and Build Docker Image" → Run workflow
+2. **Con Tags**: `git tag v1.0.0 && git push origin v1.0.0`
+
+📖 [Ver documentación completa del versionado](docs/VERSIONING.md)
 
 ## ⚙️ Instalación y ejecución
 
