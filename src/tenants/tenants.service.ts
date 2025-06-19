@@ -17,6 +17,8 @@ import { TenantConnectionService } from './services/tenant-connection.service';
 import { TenantAdministradorDto } from './dto/tenant-administrator.dto';
 import { hashPassword } from 'src/users/helpers/encrypt-password';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
+import { User } from 'src/users/entities/user.entity';
+import { UserDto } from 'src/users/dto/user.dto';
 
 @Injectable()
 export class TenantsService {
@@ -28,6 +30,8 @@ export class TenantsService {
     private tenantDatabaseRepository: Repository<TenantDatabase>,
     @InjectRepository(TenantAdministrator)
     private tenantAdministratorRepository: Repository<TenantAdministrator>,
+
+    private tenantConnectionService: TenantConnectionService,
 
     private dataSource: DataSource,
 
@@ -324,5 +328,27 @@ export class TenantsService {
     } catch (error) {
       this.handlerError.handle(error, this.logger);
     }
+  }
+
+  // User Tenant DB
+  async addUserAdminTenantDB(tenantId: string) {
+    const tenant = await this.findOne(tenantId);
+    const tenantConnection =
+      await this.tenantConnectionService.getTenantConnection(tenantId);
+
+    const userRepository = tenantConnection.getRepository(User);
+
+    const userDto: UserDto = {
+      first_name: 'Administrator',
+      last_name: tenant.company_name,
+      email: tenant.email,
+      password: await hashPassword('admin1234'),
+      cell_phone_number: tenant.cell_phone_number,
+      roles: ['admin'],
+      actions: [],
+    };
+
+    const user = userRepository.create(userDto);
+    return await userRepository.save(user);
   }
 }
