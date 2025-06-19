@@ -171,8 +171,8 @@ export class TenantsController {
 
   @AuthTenant()
   @Get(findAllTenantsAdmins.path)
-  findAllAdmin() {
-    return this.tenantsService.findAllAdmin();
+  findAllAdmin(@Query() queryParams: QueryParamsDto) {
+    return this.tenantsService.findAllAdmin(queryParams);
   }
 
   @AuthTenant()
