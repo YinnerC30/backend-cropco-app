@@ -103,21 +103,24 @@ const {
   removeTenantsAdmin,
 } = pathsTenantsController;
 
-@AuthTenant()
+// @AuthTenant()
 @Controller('tenants')
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
+  @AuthTenant()
   @Post(create.path)
   create(@Body() createTenantDto: CreateTenantDto) {
     return this.tenantsService.create(createTenantDto);
   }
 
+  @AuthTenant()
   @Get(findAllTenants.path)
   findAll(@Query() queryParams: QueryParamsDto) {
     return this.tenantsService.findAll(queryParams);
   }
 
+  @AuthTenant()
   @Get(findOneTenant.path)
   findOne(@Param('id') id: string) {
     return this.tenantsService.findOne(id);
@@ -128,43 +131,51 @@ export class TenantsController {
     return this.tenantsService.findOneBySubdomain(subdomain);
   }
 
+  @AuthTenant()
   @Put(updateTenant.path)
   update(@Param('id') id: string, @Body() updateTenantDto: UpdateTenantDto) {
     return this.tenantsService.update(id, updateTenantDto);
   }
 
+  @AuthTenant()
   @Patch(toggleStatusTenant.path)
   toggleStatusTenant(@Param('id') id: string) {
     return this.tenantsService.toggleStatusTenant(id);
   }
 
+  @AuthTenant()
   @Delete(removeTenant.path)
   remove(@Param('id') id: string) {
     return this.tenantsService.remove(id);
   }
 
   // Tenants Databases
+  @AuthTenant()
   @Put(configDataBaseTenant.path)
   configDataBaseTanent(@Param('id') id: string) {
     return this.tenantsService.configDataBaseTenant(id);
   }
 
   // Tenants Administrators
+  @AuthTenant()
   @Post(createTenantAdmin.path)
   createAdmin(@Body() tenantAdministradorDto: TenantAdministradorDto) {
     return this.tenantsService.createAdmin(tenantAdministradorDto);
   }
 
+  @AuthTenant()
   @Get(findOneTenantsAdmin.path)
   findOneAdmin(@Param('id') id: string) {
     return this.tenantsService.findOneAdmin(id);
   }
 
+  @AuthTenant()
   @Get(findAllTenantsAdmins.path)
   findAllAdmin() {
     return this.tenantsService.findAllAdmin();
   }
 
+  @AuthTenant()
   @Patch(updateTenantsAdmin.path)
   updateAdmin(
     @Param('id') id: string,
@@ -173,6 +184,7 @@ export class TenantsController {
     return this.tenantsService.updateAdmin(id, tenantAdministradorDto);
   }
 
+  @AuthTenant()
   @Delete(removeTenantsAdmin.path)
   removeAdmin(@Param('id') id: string) {
     return this.tenantsService.removeAdmin(id);
