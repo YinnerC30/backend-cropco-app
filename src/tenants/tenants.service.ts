@@ -238,6 +238,14 @@ export class TenantsService {
           alter function convert_to_grams(text, numeric) owner to "admin-cropco";
     `);
 
+      const fs = require('fs');
+      const path = require('path');
+
+      const scriptPath = path.join(__dirname, '../../sql-scripts/2-script.sql');
+      const sqlScript = fs.readFileSync(scriptPath, 'utf8');
+
+      await queryRunner.query(sqlScript);
+
       await queryRunner.commitTransaction();
 
       if (!tenantDatabase.is_migrated) {
