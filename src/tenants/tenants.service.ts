@@ -89,7 +89,7 @@ export class TenantsService {
       total_row_count: count,
       current_row_count: tenants.length,
       total_page_count: Math.ceil(count / limit),
-      current_page_count: Math.ceil(offset / limit) + 1,
+      current_page_count: offset + 1,
       records: tenants,
     };
   }
@@ -390,17 +390,31 @@ export class TenantsService {
     }
   }
 
-  async findAllAdmin() {
+  async findAllAdmin(queryParams: QueryParamsDto) {
+    const { offset = 0, limit = 10, query = '' } = queryParams;
+
     const queryBuilder = this.tenantAdministratorRepository.createQueryBuilder(
       'tenant_administrators',
     );
+
+    queryBuilder
+      .where('tenant_administrators.first_name ILIKE :query', {
+        query: `${query}%`,
+      })
+      .orWhere('tenant_administrators.last_name ILIKE :query', {
+        query: `${query}%`,
+      })
+      .orWhere('tenant_administrators.email ILIKE :query', {
+        query: `${query}%`,
+      });
+
     const [tenantAdmins, count] = await queryBuilder.getManyAndCount();
 
     return {
       total_row_count: count,
       current_row_count: tenantAdmins.length,
-      total_page_count: 1,
-      current_page_count: 1,
+      total_page_count: Math.ceil(count / limit),
+      current_page_count: offset + 1,
       records: tenantAdmins,
     };
   }
