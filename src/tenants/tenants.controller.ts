@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { AuthTenant } from 'src/auth/decorators/auth-tenant.decorator';
 import { PathsController } from 'src/common/interfaces/PathsController';
@@ -14,6 +15,7 @@ import { CreateTenantDto } from './dto/create-tenant.dto';
 import { TenantAdministradorDto } from './dto/tenant-administrator.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantsService } from './tenants.service';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 
 export const pathsTenantsController: PathsController = {
   create: {
@@ -112,8 +114,8 @@ export class TenantsController {
   }
 
   @Get(findAllTenants.path)
-  findAll() {
-    return this.tenantsService.findAll();
+  findAll(@Query() queryParams: QueryParamsDto) {
+    return this.tenantsService.findAll(queryParams);
   }
 
   @Get(findOneTenant.path)
