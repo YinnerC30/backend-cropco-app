@@ -89,7 +89,7 @@ export class TenantsService {
 
   async findOneBySubdomain(tenantSubdomain: string) {
     const tenant = await this.tenantRepository.findOne({
-      where: { subdomain: tenantSubdomain },
+      where: { subdomain: tenantSubdomain, is_active: true },
     });
     if (!tenant) {
       throw new NotFoundException(
@@ -170,6 +170,7 @@ export class TenantsService {
         .createQueryBuilder('tenant_databases')
         .leftJoinAndSelect('tenant_databases.tenant', 'tenant')
         .where('tenant.id = :tenantId', { tenantId })
+        .andWhere('tenant.is_active = true')
         .getOne();
 
       if (!tenantDatabase) {
