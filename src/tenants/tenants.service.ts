@@ -74,7 +74,12 @@ export class TenantsService {
   }
 
   async findOne(id: string) {
-    const tenant = await this.tenantRepository.findOne({ where: { id } });
+    const tenant = await this.tenantRepository.findOne({
+      where: { id },
+      relations: {
+        databases: true,
+      },
+    });
     if (!tenant) {
       throw new NotFoundException(`Tenant with ID ${id} not found`);
     }
