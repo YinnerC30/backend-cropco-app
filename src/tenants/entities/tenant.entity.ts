@@ -30,7 +30,9 @@ export class Tenant {
   @Column({ default: true })
   is_active: boolean;
 
-  @OneToMany(() => TenantDatabase, (database) => database.tenant)
+  @OneToMany(() => TenantDatabase, (database) => database.tenant, {
+    cascade: true,
+  })
   databases: TenantDatabase[];
 
   @CreateDateColumn()
