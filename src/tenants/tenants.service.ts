@@ -19,6 +19,23 @@ import { hashPassword } from 'src/users/helpers/encrypt-password';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { User } from 'src/users/entities/user.entity';
 import { UserDto } from 'src/users/dto/user.dto';
+import { pathsAuthController } from 'src/auth/auth.controller';
+import { pathsClientsController } from 'src/clients/clients.controller';
+import { PathProperties } from 'src/common/interfaces/PathsController';
+import { pathsConsumptionController } from 'src/consumptions/consumptions.controller';
+import { pathsCropsController } from 'src/crops/crops.controller';
+import { pathsDashboardController } from 'src/dashboard/dashboard.controller';
+import { pathsEmployeesController } from 'src/employees/employees.controller';
+import { pathsHarvestsController } from 'src/harvest/harvest.controller';
+import { pathsPaymentsController } from 'src/payments/payments.controller';
+import { pathsSalesController } from 'src/sales/sales.controller';
+import { pathsShoppingController } from 'src/shopping/shopping.controller';
+import { pathsSuppliersController } from 'src/suppliers/suppliers.controller';
+import { pathsSuppliesController } from 'src/supplies/supplies.controller';
+import { pathsUsersController } from 'src/users/users.controller';
+import { pathsWorksController } from 'src/work/work.controller';
+import { ModuleActions } from 'src/auth/entities/module-actions.entity';
+import { Module } from 'src/auth/entities/module.entity';
 
 @Injectable()
 export class TenantsService {
@@ -189,6 +206,101 @@ export class TenantsService {
     }
   }
 
+  async createModulesWithActions(tenantConnection: DataSource): Promise<void> {
+    const modulesRepository = tenantConnection.getRepository(Module);
+    const moduleActionsRepository =
+      tenantConnection.getRepository(ModuleActions);
+
+    const modules = {
+      auth: {
+        label: 'autenticación',
+        paths: pathsAuthController,
+      },
+
+      clients: {
+        label: 'clientes',
+        paths: pathsClientsController,
+      },
+      crops: {
+        label: 'cultivos',
+        paths: pathsCropsController,
+      },
+      employees: {
+        label: 'empleados',
+        paths: pathsEmployeesController,
+      },
+      harvests: {
+        label: 'cosechas',
+        paths: pathsHarvestsController,
+      },
+      payments: {
+        label: 'pagos',
+        paths: pathsPaymentsController,
+      },
+      sales: {
+        label: 'ventas',
+        paths: pathsSalesController,
+      },
+      suppliers: {
+        label: 'proveedores',
+        paths: pathsSuppliersController,
+      },
+      supplies: {
+        label: 'insumos',
+        paths: pathsSuppliesController,
+      },
+      consumptions: {
+        label: 'consumos',
+        paths: pathsConsumptionController,
+      },
+      shopping: {
+        label: 'compras',
+        paths: pathsShoppingController,
+      },
+      users: {
+        label: 'usuarios',
+        paths: pathsUsersController,
+      },
+      works: {
+        label: 'trabajos',
+        paths: pathsWorksController,
+      },
+      dashboard: {
+        label: 'panel de control',
+        paths: pathsDashboardController,
+      },
+    };
+
+    await modulesRepository.delete({});
+
+    for (const nameModule of Object.keys(modules)) {
+      const modelEntity = modulesRepository.create({
+        name: nameModule,
+        label: modules[nameModule].label,
+      });
+
+      const pathList = Object.keys(modules[nameModule].paths).map((key) => {
+        const element = modules[nameModule].paths[key];
+        return {
+          ...element,
+          path: `/${nameModule}/${element.path}`,
+        };
+      });
+
+      modelEntity.actions = pathList.map(
+        ({ path, description, name, visibleToUser = true }: PathProperties) =>
+          moduleActionsRepository.create({
+            name: name,
+            description: description.trim(),
+            path_endpoint: path,
+            is_visible: visibleToUser,
+          }),
+      );
+
+      await modulesRepository.save(modelEntity);
+    }
+  }
+
   async configDataBaseTenant(tenantId: string) {
     const tenantDatabase = await this.getOneTenantDatabase(tenantId);
 
@@ -238,15 +350,9 @@ export class TenantsService {
           alter function convert_to_grams(text, numeric) owner to "admin-cropco";
     `);
 
-      const fs = require('fs');
-      const path = require('path');
-
-      const scriptPath = path.join(__dirname, '../../sql-scripts/2-script.sql');
-      const sqlScript = fs.readFileSync(scriptPath, 'utf8');
-
-      await queryRunner.query(sqlScript);
-
       await queryRunner.commitTransaction();
+
+      await this.createModulesWithActions(dataSource);
 
       if (!tenantDatabase.is_migrated) {
         await this.updateStatusMigrationDB(tenantDatabase.id, true);
