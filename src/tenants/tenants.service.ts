@@ -50,7 +50,9 @@ export class TenantsService {
   }
 
   async findAll() {
-    const queryBuilder = this.tenantRepository.createQueryBuilder('tenants');
+    const queryBuilder = this.tenantRepository
+      .createQueryBuilder('tenants')
+      .leftJoinAndSelect('tenants.databases', 'databases');
     const [tenants, count] = await queryBuilder.getManyAndCount();
 
     return {
