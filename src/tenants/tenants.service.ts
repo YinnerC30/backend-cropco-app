@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantAdministrator } from './entities/tenant-administrator.entity';
@@ -206,10 +206,10 @@ export class TenantsService {
     }
   }
 
-  async createModulesWithActions(tenantConnection: DataSource): Promise<void> {
-    const modulesRepository = tenantConnection.getRepository(Module);
+  async createModulesWithActions(queryRunner: QueryRunner): Promise<void> {
+    const modulesRepository = queryRunner.manager.getRepository(Module);
     const moduleActionsRepository =
-      tenantConnection.getRepository(ModuleActions);
+      queryRunner.manager.getRepository(ModuleActions);
 
     const modules = {
       auth: {
@@ -350,9 +350,9 @@ export class TenantsService {
           alter function convert_to_grams(text, numeric) owner to "admin-cropco";
     `);
 
-      await queryRunner.commitTransaction();
+      await this.createModulesWithActions(queryRunner);
 
-      await this.createModulesWithActions(dataSource);
+      await queryRunner.commitTransaction();
 
       if (!tenantDatabase.is_migrated) {
         await this.updateStatusMigrationDB(tenantDatabase.id, true);
