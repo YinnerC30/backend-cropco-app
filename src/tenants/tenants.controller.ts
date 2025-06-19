@@ -42,6 +42,11 @@ export const pathsTenantsController: PathsController = {
     description: 'actualizar 1 inquilino',
     name: 'update_one_tenant',
   },
+  toggleStatusTenant: {
+    path: 'toggle-status/one/:id',
+    description: 'cambiar el estado de 1 inquilino',
+    name: 'toggle_status_one_tenant',
+  },
   removeTenant: {
     path: 'remove/one/:id',
     description: 'eliminar 1 inquilino',
@@ -86,6 +91,7 @@ const {
   findOneTenant,
   findOneBySubdomain,
   updateTenant,
+  toggleStatusTenant,
   removeTenant,
   configDataBaseTenant,
   createTenantAdmin,
@@ -115,11 +121,6 @@ export class TenantsController {
     return this.tenantsService.findOne(id);
   }
 
-  @Get(findOneTenantsAdmin.path)
-  findOneAdmin(@Param('id') id: string) {
-    return this.tenantsService.findOneAdmin(id);
-  }
-
   @Get(findOneBySubdomain.path)
   findOneBySubdomain(@Param('TenantSubdomain') subdomain: string) {
     return this.tenantsService.findOneBySubdomain(subdomain);
@@ -128,6 +129,11 @@ export class TenantsController {
   @Put(updateTenant.path)
   update(@Param('id') id: string, @Body() updateTenantDto: UpdateTenantDto) {
     return this.tenantsService.update(id, updateTenantDto);
+  }
+
+  @Patch(toggleStatusTenant.path)
+  toggleStatusTenant(@Param('id') id: string) {
+    return this.tenantsService.toggleStatusTenant(id);
   }
 
   @Delete(removeTenant.path)
@@ -145,6 +151,11 @@ export class TenantsController {
   @Post(createTenantAdmin.path)
   createAdmin(@Body() tenantAdministradorDto: TenantAdministradorDto) {
     return this.tenantsService.createAdmin(tenantAdministradorDto);
+  }
+
+  @Get(findOneTenantsAdmin.path)
+  findOneAdmin(@Param('id') id: string) {
+    return this.tenantsService.findOneAdmin(id);
   }
 
   @Get(findAllTenantsAdmins.path)

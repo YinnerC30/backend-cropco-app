@@ -107,6 +107,14 @@ export class TenantsService {
     }
   }
 
+  async toggleStatusTenant(id: string): Promise<void> {
+    const tenant = await this.findOne(id);
+
+    await this.tenantRepository.update(tenant.id, {
+      is_active: !tenant.is_active,
+    });
+  }
+
   // Tenants Databases
 
   private async createTenantDatabase(tenantId: string, databaseName: string) {
