@@ -22,7 +22,17 @@
     "test:cov": "jest --config jest.unit.config.ts --coverage",
     "test:e2e:cov": "jest --config jest.e2e.config.ts --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --config jest.unit.config.ts --runInBand",
-    "test:e2e:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --config jest.e2e.config.ts --runInBand"
+    "test:e2e:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --config jest.e2e.config.ts --runInBand",
+    "version:patch": "npm version patch --no-git-tag-version && npm run docker:build",
+    "version:minor": "npm version minor --no-git-tag-version && npm run docker:build",
+    "version:major": "npm version major --no-git-tag-version && npm run docker:build",
+    "docker:build": "docker build -t cropco-api-rest:$(node -p \"require('./package.json').version\") .",
+    "docker:build:latest": "docker build -t cropco-api-rest:latest .",
+    "docker:push": "docker push cropco-api-rest:$(node -p \"require('./package.json').version\")",
+    "docker:push:latest": "docker push cropco-api-rest:latest",
+    "release:patch": "npm run version:patch && git add . && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\")",
+    "release:minor": "npm run version:minor && git add . && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\")",
+    "release:major": "npm run version:major && git add . && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\")"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
