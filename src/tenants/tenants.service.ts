@@ -218,7 +218,7 @@ export class TenantsService {
       await queryRunner.startTransaction();
 
       await queryRunner.query(`
-          create function convert_to_grams(unit text, amount numeric) returns numeric
+          create or replace function convert_to_grams(unit text, amount numeric) returns numeric
             language plpgsql
           as
           $$
