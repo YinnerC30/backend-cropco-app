@@ -16,6 +16,7 @@ import { Tenant } from './entities/tenant.entity';
 import { TenantConnectionService } from './services/tenant-connection.service';
 import { TenantAdministradorDto } from './dto/tenant-administrator.dto';
 import { hashPassword } from 'src/users/helpers/encrypt-password';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 
 @Injectable()
 export class TenantsService {
@@ -49,17 +50,25 @@ export class TenantsService {
     }
   }
 
-  async findAll() {
+  async findAll(queryParams: QueryParamsDto) {
+    const { offset = 0, limit = 10, query = '' } = queryParams;
     const queryBuilder = this.tenantRepository
       .createQueryBuilder('tenants')
-      .leftJoinAndSelect('tenants.databases', 'databases');
+      .leftJoinAndSelect('tenants.databases', 'databases')
+      .where('tenants.company_name ILIKE :query', { query: `%${query}%` })
+      .orWhere('tenants.subdomain ILIKE :query', { query: `%${query}%` })
+      .orWhere('tenants.email ILIKE :query', { query: `%${query}%` })
+      .orderBy('tenants.subdomain', 'DESC')
+      .skip(offset * limit)
+      .take(limit);
+
     const [tenants, count] = await queryBuilder.getManyAndCount();
 
     return {
       total_row_count: count,
       current_row_count: tenants.length,
-      total_page_count: 1,
-      current_page_count: 1,
+      total_page_count: Math.ceil(count / limit),
+      current_page_count: Math.ceil(offset / limit) + 1,
       records: tenants,
     };
   }
