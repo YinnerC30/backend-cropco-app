@@ -11,7 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { AuthTenant } from 'src/auth/decorators/auth-tenant.decorator';
-import { GetPropertyFromToken } from 'src/auth/decorators/get-property-from-user-token.decorator';
+import { GetPropertyFromTokenAdministrator } from 'src/auth/decorators/get-property-from-administrator-token.decorator';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { ChangePasswordDto } from 'src/users/dto/change-password.dto';
@@ -95,7 +95,7 @@ export const pathsTenantsController: PathsController = {
     name: 'reset_password_admin',
   },
   changePasswordAdmin: {
-    path: 'change-password/one/admin/:id',
+    path: 'change-password/one/admin',
     description: 'cambio de contraseña',
     name: 'change_password_admin',
   },
@@ -227,7 +227,7 @@ export class TenantsController {
   @AuthTenant()
   @Put(changePasswordAdmin.path)
   changePassword(
-    @Param('id', ParseUUIDPipe) id: string,
+    @GetPropertyFromTokenAdministrator('id', ParseUUIDPipe) id: string,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
     return this.tenantsService.changePassword(id, changePasswordDto);
