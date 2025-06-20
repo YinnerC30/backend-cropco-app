@@ -33,13 +33,14 @@ import { pathsUsersController } from 'src/users/users.controller';
 import { pathsWorksController } from 'src/work/work.controller';
 import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { CreateTenantDto } from './dto/create-tenant.dto';
-import { TenantAdministradorDto } from './dto/tenant-administrator.dto';
+import { CreateTenantAdministradorDto } from './dto/create-tenant-administrator.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantAdministrator } from './entities/tenant-administrator.entity';
 import { TenantDatabase } from './entities/tenant-database.entity';
 import { Tenant } from './entities/tenant.entity';
 import { TenantConnectionService } from './services/tenant-connection.service';
 import { ChangePasswordDto } from 'src/users/dto/change-password.dto';
+import { UpdateTenantAdministradorDto } from './dto/update-tenant-administrator.dto';
 
 @Injectable()
 export class TenantsService {
@@ -378,7 +379,7 @@ export class TenantsService {
   }
 
   // Tenants Administrators
-  async createAdmin(tenantAdministradorDto: TenantAdministradorDto) {
+  async createAdmin(tenantAdministradorDto: CreateTenantAdministradorDto) {
     // Crear el tenant
     try {
       const tenantAdmin = this.tenantAdministratorRepository.create(
@@ -449,7 +450,7 @@ export class TenantsService {
 
   async updateAdmin(
     id: string,
-    tenantAdministradorDto: TenantAdministradorDto,
+    tenantAdministradorDto: UpdateTenantAdministradorDto,
   ) {
     const tenantAdmin = await this.findOneAdmin(id);
     if (tenantAdmin.role === 'admin') {

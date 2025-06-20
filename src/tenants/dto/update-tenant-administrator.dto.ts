@@ -1,15 +1,11 @@
 import {
-  IsArray,
   IsEmail,
   IsIn,
-  IsOptional,
   IsString,
-  MaxLength,
-  MinLength,
+  MaxLength
 } from 'class-validator';
-import { RoleUser } from 'src/users/types/role-user.type';
 
-export class TenantAdministradorDto {
+export class UpdateTenantAdministradorDto {
   @IsString()
   @MaxLength(100)
   first_name: string;
@@ -22,11 +18,6 @@ export class TenantAdministradorDto {
   @IsEmail()
   @MaxLength(100)
   email: string;
-
-  @IsString()
-  @MinLength(6)
-  @MaxLength(100)
-  password: string;
 
   @IsString()
   @MaxLength(10)
