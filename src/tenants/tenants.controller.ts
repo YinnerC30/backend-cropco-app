@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Put,
@@ -16,6 +17,8 @@ import { TenantAdministradorDto } from './dto/tenant-administrator.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantsService } from './tenants.service';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
+import { ChangePasswordDto } from 'src/users/dto/change-password.dto';
+import { GetPropertyFromToken } from 'src/auth/decorators/get-property-from-user-token.decorator';
 
 export const pathsTenantsController: PathsController = {
   create: {
@@ -85,6 +88,21 @@ export const pathsTenantsController: PathsController = {
     description: 'eliminar 1 administrador de inquilinos',
     name: 'remove_one_tenants_admin',
   },
+  resetPasswordAdmin: {
+    path: 'reset-password/one/:id',
+    description: 'restablecimiento de contraseña',
+    name: 'reset_password_admin',
+  },
+  changePasswordAdmin: {
+    path: 'change-password/one',
+    description: 'cambio de contraseña',
+    name: 'change_password_admin',
+  },
+  toggleStatusAdmin: {
+    path: 'toggle-status/one/:id',
+    description: 'cambio de estado de usuario',
+    name: 'toggle_status_admin',
+  },
 };
 
 const {
@@ -101,6 +119,9 @@ const {
   findOneTenantsAdmin,
   updateTenantsAdmin,
   removeTenantsAdmin,
+  resetPasswordAdmin,
+  changePasswordAdmin,
+  toggleStatusAdmin,
 } = pathsTenantsController;
 
 // @AuthTenant()
@@ -188,5 +209,26 @@ export class TenantsController {
   @Delete(removeTenantsAdmin.path)
   removeAdmin(@Param('id') id: string) {
     return this.tenantsService.removeAdmin(id);
+  }
+
+  @AuthTenant()
+  @Put(toggleStatusAdmin.path)
+  toggleStatusAdmin(@Param('id', ParseUUIDPipe) id: string) {
+    return this.tenantsService.toggleStatusAdmin(id);
+  }
+
+  @AuthTenant()
+  @Put(resetPasswordAdmin.path)
+  resetPassword(@Param('id', ParseUUIDPipe) id: string) {
+    return this.tenantsService.resetPassword(id);
+  }
+
+  @AuthTenant()
+  @Put(changePasswordAdmin.path)
+  changePassword(
+    @GetPropertyFromToken('id', ParseUUIDPipe) id: string,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return this.tenantsService.changePassword(id, changePasswordDto);
   }
 }

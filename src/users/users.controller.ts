@@ -109,10 +109,7 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @Put(toggleStatusUser.path)
-  toggleStatusUser(@Param('id', ParseUUIDPipe) id: string) {
-    return this.usersService.toggleStatusUser(id);
-  }
+  
 
   @Delete(removeUser.path)
   remove(@Param('id', ParseUUIDPipe) id: string) {
@@ -122,6 +119,11 @@ export class UsersController {
   @Delete(removeUsers.path)
   removeBulk(@Body() removeBulkUsersDto: RemoveBulkRecordsDto<User>) {
     return this.usersService.removeBulk(removeBulkUsersDto);
+  }
+
+  @Put(toggleStatusUser.path)
+  toggleStatusUser(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.toggleStatusUser(id);
   }
 
   @Put(resetPassword.path)
