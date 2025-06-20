@@ -1,27 +1,20 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { HandlerErrorService } from 'src/common/services/handler-error.service';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
-import { CreateTenantDto } from './dto/create-tenant.dto';
-import { UpdateTenantDto } from './dto/update-tenant.dto';
-import { TenantAdministrator } from './entities/tenant-administrator.entity';
-import { TenantDatabase } from './entities/tenant-database.entity';
-import { Tenant } from './entities/tenant.entity';
-import { TenantConnectionService } from './services/tenant-connection.service';
-import { TenantAdministradorDto } from './dto/tenant-administrator.dto';
-import { hashPassword } from 'src/users/helpers/encrypt-password';
-import { QueryParamsDto } from 'src/common/dto/query-params.dto';
-import { User } from 'src/users/entities/user.entity';
-import { UserDto } from 'src/users/dto/user.dto';
+import * as bcrypt from 'bcrypt';
 import { pathsAuthController } from 'src/auth/auth.controller';
+import { ModuleActions } from 'src/auth/entities/module-actions.entity';
+import { Module } from 'src/auth/entities/module.entity';
 import { pathsClientsController } from 'src/clients/clients.controller';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { PathProperties } from 'src/common/interfaces/PathsController';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { pathsConsumptionController } from 'src/consumptions/consumptions.controller';
 import { pathsCropsController } from 'src/crops/crops.controller';
 import { pathsDashboardController } from 'src/dashboard/dashboard.controller';
@@ -32,10 +25,21 @@ import { pathsSalesController } from 'src/sales/sales.controller';
 import { pathsShoppingController } from 'src/shopping/shopping.controller';
 import { pathsSuppliersController } from 'src/suppliers/suppliers.controller';
 import { pathsSuppliesController } from 'src/supplies/supplies.controller';
+import { UserDto } from 'src/users/dto/user.dto';
+import { User } from 'src/users/entities/user.entity';
+import { hashPassword } from 'src/users/helpers/encrypt-password';
+import { generatePassword } from 'src/users/helpers/generate-password';
 import { pathsUsersController } from 'src/users/users.controller';
 import { pathsWorksController } from 'src/work/work.controller';
-import { ModuleActions } from 'src/auth/entities/module-actions.entity';
-import { Module } from 'src/auth/entities/module.entity';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { CreateTenantDto } from './dto/create-tenant.dto';
+import { TenantAdministradorDto } from './dto/tenant-administrator.dto';
+import { UpdateTenantDto } from './dto/update-tenant.dto';
+import { TenantAdministrator } from './entities/tenant-administrator.entity';
+import { TenantDatabase } from './entities/tenant-database.entity';
+import { Tenant } from './entities/tenant.entity';
+import { TenantConnectionService } from './services/tenant-connection.service';
+import { ChangePasswordDto } from 'src/users/dto/change-password.dto';
 
 @Injectable()
 export class TenantsService {
@@ -422,8 +426,18 @@ export class TenantsService {
     };
   }
 
-  async findOneAdmin(id: string) {
+  async findOneAdmin(id: string, showPassword = false) {
     const tenantAdmin = await this.tenantAdministratorRepository.findOne({
+      select: {
+        id: true,
+        cell_phone_number: true,
+        email: true,
+        first_name: true,
+        last_name: true,
+        is_active: true,
+        password: showPassword,
+        role: true,
+      },
       where: { id },
     });
     if (!tenantAdmin) {
@@ -459,6 +473,58 @@ export class TenantsService {
     } catch (error) {
       this.handlerError.handle(error, this.logger);
     }
+  }
+
+  private async updatePassword(
+    userId: string,
+    newPassword: string,
+  ): Promise<void> {
+    await this.tenantAdministratorRepository.update(
+      {
+        id: userId,
+      },
+      { password: newPassword },
+    );
+  }
+
+  async resetPassword(id: string): Promise<{ password: string }> {
+    const user = await this.findOneAdmin(id);
+    if (user.role === 'admin') {
+      throw new ForbiddenException(
+        'You cannot reset the password of an admin user',
+      );
+    }
+    const password = generatePassword();
+    const encryptPassword = await hashPassword(password);
+    await this.updatePassword(id, encryptPassword);
+    return { password };
+  }
+
+  async changePassword(
+    id: string,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<void> {
+    const { old_password, new_password } = changePasswordDto;
+    const user = await this.findOneAdmin(id, true);
+    const valid_password = bcrypt.compareSync(old_password, user.password);
+    if (!valid_password) {
+      throw new BadRequestException('Old password incorrect, retry');
+    }
+    const encryptPassword = await hashPassword(new_password);
+    await this.updatePassword(id, encryptPassword);
+  }
+
+  async toggleStatusAdmin(id: string): Promise<void> {
+    const tenantAdmin = await this.findOneAdmin(id);
+
+    if (tenantAdmin.role === 'admin') {
+      throw new ForbiddenException(
+        'You cannot change the status of an admin user',
+      );
+    }
+    await this.tenantAdministratorRepository.update(tenantAdmin.id, {
+      is_active: !tenantAdmin.is_active,
+    });
   }
 
   // User Tenant DB
