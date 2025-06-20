@@ -15,6 +15,8 @@ import { Auth } from './decorators/auth.decorator';
 import { GetToken } from './decorators/get-token.headers.decorator';
 import { LoginUserDto } from './dto/login-user.dto';
 import { AuthTenantService } from './services/auth-tenant.service';
+import { AuthTenant } from './decorators/auth-tenant.decorator';
+import { GetTokenTenantManagement } from './decorators/get-token-tenant-management.headers.decorator';
 
 export const pathsAuthController: PathsController = {
   login: {
@@ -41,6 +43,12 @@ export const pathsAuthController: PathsController = {
     name: 'check_status_token',
     visibleToUser: false,
   },
+  checkAuthStatusManagement: {
+    path: 'management/check-status',
+    description: 'verificar estado del token',
+    name: 'check_status_token_management',
+    visibleToUser: false,
+  },
   createModuleActions: {
     path: 'module-actions/create',
     description: 'crear acciones de los modulos',
@@ -64,6 +72,7 @@ const {
   login,
   renewToken,
   checkAuthStatus,
+  checkAuthStatusManagement,
   findAllModules,
   createModuleActions,
   // convertToAdmin,
@@ -98,6 +107,12 @@ export class AuthController {
   @Get(checkAuthStatus.path)
   checkAuthStatus(@GetToken() token: string) {
     return this.authService.checkAuthStatus(token);
+  }
+
+  @AuthTenant()
+  @Get(checkAuthStatusManagement.path)
+  checkAuthStatusManagement(@GetTokenTenantManagement() token: string) {
+    return this.authTenantService.checkAuthStatus(token);
   }
 
   @Auth({ skipValidationPath: true })
