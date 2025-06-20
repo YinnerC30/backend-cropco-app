@@ -10,7 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { TenantAdministrator } from 'src/tenants/entities/tenant-administrator.entity';
 import { Repository } from 'typeorm';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -23,6 +23,10 @@ export class AuthTenantService {
     private readonly handlerError: HandlerErrorService,
   ) {}
 
+  private generateJwtToken(payload: JwtPayload): string {
+    const token = this.jwtService.sign(payload, { expiresIn: '6h' });
+    return token;
+  }
   async login(loginUserDto: LoginUserDto) {
     const user = await this.tenantAdministratorRepository.findOne({
       where: { email: loginUserDto.email },
@@ -53,8 +57,21 @@ export class AuthTenantService {
     };
   }
 
-  generateJwtToken(payload: JwtPayload): string {
-    const token = this.jwtService.sign(payload, { expiresIn: '6h' });
-    return token;
+  async checkAuthStatus(
+    token: string,
+  ): Promise<{ message: string; statusCode: number }> {
+    try {
+      this.jwtService.verify(token);
+      return {
+        message: 'Token valid',
+        statusCode: 200,
+      };
+    } catch (error: any) {
+      if (error instanceof TokenExpiredError) {
+        throw new UnauthorizedException('Token has expired');
+      } else {
+        throw new UnauthorizedException('Invalid token');
+      }
+    }
   }
 }
