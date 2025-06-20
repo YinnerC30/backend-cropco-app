@@ -90,17 +90,17 @@ export const pathsTenantsController: PathsController = {
     name: 'remove_one_tenants_admin',
   },
   resetPasswordAdmin: {
-    path: 'reset-password/one/:id',
+    path: 'reset-password/one/admin/:id',
     description: 'restablecimiento de contraseña',
     name: 'reset_password_admin',
   },
   changePasswordAdmin: {
-    path: 'change-password/one',
+    path: 'change-password/one/admin/:id',
     description: 'cambio de contraseña',
     name: 'change_password_admin',
   },
   toggleStatusAdmin: {
-    path: 'toggle-status/one/:id',
+    path: 'toggle-status/one/admin/:id',
     description: 'cambio de estado de usuario',
     name: 'toggle_status_admin',
   },
@@ -227,7 +227,7 @@ export class TenantsController {
   @AuthTenant()
   @Put(changePasswordAdmin.path)
   changePassword(
-    @GetPropertyFromToken('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
     return this.tenantsService.changePassword(id, changePasswordDto);
