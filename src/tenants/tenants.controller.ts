@@ -11,14 +11,15 @@ import {
   Query,
 } from '@nestjs/common';
 import { AuthTenant } from 'src/auth/decorators/auth-tenant.decorator';
+import { GetPropertyFromToken } from 'src/auth/decorators/get-property-from-user-token.decorator';
+import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
+import { ChangePasswordDto } from 'src/users/dto/change-password.dto';
+import { CreateTenantAdministradorDto } from './dto/create-tenant-administrator.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
-import { TenantAdministradorDto } from './dto/tenant-administrator.dto';
+import { UpdateTenantAdministradorDto } from './dto/update-tenant-administrator.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantsService } from './tenants.service';
-import { QueryParamsDto } from 'src/common/dto/query-params.dto';
-import { ChangePasswordDto } from 'src/users/dto/change-password.dto';
-import { GetPropertyFromToken } from 'src/auth/decorators/get-property-from-user-token.decorator';
 
 export const pathsTenantsController: PathsController = {
   create: {
@@ -180,7 +181,7 @@ export class TenantsController {
   // Tenants Administrators
   @AuthTenant()
   @Post(createTenantAdmin.path)
-  createAdmin(@Body() tenantAdministradorDto: TenantAdministradorDto) {
+  createAdmin(@Body() tenantAdministradorDto: CreateTenantAdministradorDto) {
     return this.tenantsService.createAdmin(tenantAdministradorDto);
   }
 
@@ -200,7 +201,7 @@ export class TenantsController {
   @Patch(updateTenantsAdmin.path)
   updateAdmin(
     @Param('id') id: string,
-    @Body() tenantAdministradorDto: TenantAdministradorDto,
+    @Body() tenantAdministradorDto: UpdateTenantAdministradorDto,
   ) {
     return this.tenantsService.updateAdmin(id, tenantAdministradorDto);
   }
