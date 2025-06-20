@@ -138,7 +138,8 @@ export class TenantsService {
   async remove(id: string) {
     const tenant = await this.findOne(id);
     try {
-      return this.tenantRepository.softRemove(tenant);
+      await this.tenantRepository.softRemove(tenant);
+      await this.tenantConnectionService.closeTenantConnection(id);
     } catch (error) {
       this.handlerError.handle(error, this.logger);
     }
@@ -150,6 +151,8 @@ export class TenantsService {
     await this.tenantRepository.update(tenant.id, {
       is_active: !tenant.is_active,
     });
+
+    await this.tenantConnectionService.closeTenantConnection(id);
   }
 
   // Tenants Databases
