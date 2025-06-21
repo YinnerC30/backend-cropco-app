@@ -24,6 +24,7 @@ import { pathsSalesController } from 'src/sales/sales.controller';
 import { pathsShoppingController } from 'src/shopping/shopping.controller';
 import { pathsSuppliersController } from 'src/suppliers/suppliers.controller';
 import { pathsSuppliesController } from 'src/supplies/supplies.controller';
+import { UserActionDto } from 'src/users/dto/user-action.dto';
 import { UserDto } from 'src/users/dto/user.dto';
 import { User } from 'src/users/entities/user.entity';
 import { hashPassword } from 'src/users/helpers/encrypt-password';
@@ -35,8 +36,6 @@ import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantDatabase } from './entities/tenant-database.entity';
 import { Tenant } from './entities/tenant.entity';
 import { TenantConnectionService } from './services/tenant-connection.service';
-import { UserActionDto } from 'src/users/dto/user-action.dto';
-import { UserActions } from 'src/users/entities/user-actions.entity';
 
 @Injectable()
 export class TenantsService {
@@ -370,8 +369,8 @@ export class TenantsService {
   }
 
   // User Tenant DB
-  async addUserAdminTenantDB(tenantId: string) {
-    const tenant = await this.findOne(tenantId);
+  async addUserAdminTenantDB(tenantId: string, createUserDto: UserDto) {
+    await this.findOne(tenantId);
     const tenantConnection =
       await this.tenantConnectionService.getTenantConnection(tenantId);
 
@@ -379,38 +378,16 @@ export class TenantsService {
     const moduleActionsRepository =
       tenantConnection.getRepository(ModuleActions);
 
-    const userActionsRepository = tenantConnection.getRepository(UserActions);
-
     const actions = (await moduleActionsRepository.find({
       select: {
         id: true,
       },
     })) as UserActionDto[];
 
-    const userDto: UserDto = {
-      first_name: 'Administrator',
-      last_name: tenant.company_name,
-      email: tenant.email,
-      password: await hashPassword('admin1234'),
-      cell_phone_number: tenant.cell_phone_number,
-      roles: ['admin'],
-      actions: [...actions],
-    };
+    const user = userRepository.create({ ...createUserDto, actions });
+    user.password = await hashPassword(user.password);
+    const result = await userRepository.save(user);
 
-    const user = userRepository.create(userDto);
-    const { id } = await userRepository.save(user);
-
-    const actionsEntity = userDto.actions.map((act: UserActionDto) => {
-      return userActionsRepository.create({ action: act, user: { id } });
-    });
-
-    await Promise.all(
-      actionsEntity.map((action) => userActionsRepository.save(action)),
-    );
-
-    return {
-      id,
-      ...user,
-    };
+    return result;
   }
 }
