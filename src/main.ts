@@ -4,7 +4,28 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    cors: true,
+    cors: {
+      origin: [
+        'https://cropco.org',
+        'https://*.cropco.org',
+        // Para desarrollo local, puedes agregar:
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://*.localhost:3000',
+        'http://*.localhost:3001',
+      ],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: [
+        'Origin',
+        'X-Requested-With',
+        'Content-Type',
+        'Accept',
+        'Authorization',
+        'x-tenant-id',
+        'x-tenant-token',
+      ],
+      credentials: true,
+    },
   });
 
   app.useGlobalPipes(
