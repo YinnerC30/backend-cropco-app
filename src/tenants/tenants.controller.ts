@@ -15,6 +15,7 @@ import { PathsController } from 'src/common/interfaces/PathsController';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantsService } from './tenants.service';
+import { UserDto } from 'src/users/dto/user.dto';
 
 export const pathsTenantsController: PathsController = {
   create: {
@@ -124,7 +125,7 @@ export class TenantsController {
   }
 
   @Post(addUserAdminToTenantDB.path)
-  addUserAdminToTenantDB(@Param('id') id: string) {
-    return this.tenantsService.addUserAdminTenantDB(id);
+  addUserAdminToTenantDB(@Param('id') id: string, @Body() createUserDto: UserDto) {
+    return this.tenantsService.addUserAdminTenantDB(id, createUserDto);
   }
 }

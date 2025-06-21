@@ -32,6 +32,7 @@ export class UserDto {
   password: string;
 
   @IsString()
+  @MinLength(10)
   @MaxLength(10)
   cell_phone_number: string;
 
