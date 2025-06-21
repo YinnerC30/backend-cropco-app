@@ -371,6 +371,17 @@ export class TenantsService {
   }
 
   // User Tenant DB
+
+  async getAllUsersTenant(tenantId: string) {
+    await this.findOne(tenantId);
+    const tenantConnection =
+      await this.tenantConnectionService.getTenantConnection(tenantId);
+
+    const userRepository = tenantConnection.getRepository(User);
+
+    return userRepository.find();
+  }
+
   async addUserAdminTenantDB(tenantId: string, createUserDto: UserTenantDto) {
     await this.findOne(tenantId);
     const tenantConnection =
