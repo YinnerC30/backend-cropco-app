@@ -18,8 +18,8 @@ export class TenantDatabase {
   @Column({ unique: true })
   database_name: string;
 
-  @Column({ default: true })
-  is_active: boolean;
+  // @Column({ default: true })
+  // is_active: boolean;
 
   // @Column({ type: 'jsonb', nullable: true })
   // connection_config: {
@@ -35,8 +35,8 @@ export class TenantDatabase {
   @JoinColumn({ name: 'tenantId' })
   tenant: Tenant;
 
-  @Column({ default: false })
-  is_migrated: boolean;
+  // @Column({ default: false })
+  // is_migrated: boolean;
 
   @CreateDateColumn()
   createdAt: Date;
