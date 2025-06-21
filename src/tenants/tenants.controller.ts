@@ -71,7 +71,7 @@ export const pathsTenantsController: PathsController = {
     name: '',
   },
   removeUserAdminToTenantDB: {
-    path: 'remove-tenant-user/one/:tenantId?userId=:userId',
+    path: 'remove-tenant-user/one/:tenantId/:userId',
     description: '',
     name: '',
   },
