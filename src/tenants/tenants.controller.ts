@@ -58,6 +58,11 @@ export const pathsTenantsController: PathsController = {
   //   description: 'configurar base de datos de 1 inquilino',
   //   name: 'config_data_base_tenant',
   // },
+  addUserAdminToTenantDB: {
+    path: 'add-admin-user/one/:id',
+    description: '',
+    name: '',
+  },
 };
 
 const {
@@ -69,6 +74,7 @@ const {
   toggleStatusTenant,
   removeTenant,
   // configDataBaseTenant,
+  addUserAdminToTenantDB,
 } = pathsTenantsController;
 
 // @AuthTenant()
@@ -115,5 +121,10 @@ export class TenantsController {
   @Delete(removeTenant.path)
   remove(@Param('id') id: string) {
     return this.tenantsService.remove(id);
+  }
+
+  @Post(addUserAdminToTenantDB.path)
+  addUserAdminToTenantDB(@Param('id') id: string) {
+    return this.tenantsService.addUserAdminTenantDB(id);
   }
 }
