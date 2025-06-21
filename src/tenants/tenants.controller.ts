@@ -61,17 +61,17 @@ export const pathsTenantsController: PathsController = {
   //   name: 'config_data_base_tenant',
   // },
   getAllUsersToTenantDB: {
-    path: 'all-admin-users/:id',
+    path: 'all-tenant-users/:id',
     description: '',
     name: '',
   },
   addUserAdminToTenantDB: {
-    path: 'add-admin-user/one/:id',
+    path: 'add-tenant-user/one/:id',
     description: '',
     name: '',
   },
   removeUserAdminToTenantDB: {
-    path: 'remove-admin-user/one/:id',
+    path: 'remove-tenant-user/one/:id',
     description: '',
     name: '',
   },
