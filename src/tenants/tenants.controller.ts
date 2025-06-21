@@ -179,57 +179,57 @@ export class TenantsController {
   // }
 
   // Tenants Administrators
-  @AuthTenant()
-  @Post(createTenantAdmin.path)
-  createAdmin(@Body() tenantAdministradorDto: CreateTenantAdministradorDto) {
-    return this.tenantsService.createAdmin(tenantAdministradorDto);
-  }
+  // @AuthTenant()
+  // @Post(createTenantAdmin.path)
+  // createAdmin(@Body() tenantAdministradorDto: CreateTenantAdministradorDto) {
+  //   return this.tenantsService.createAdmin(tenantAdministradorDto);
+  // }
 
-  @AuthTenant()
-  @Get(findOneTenantsAdmin.path)
-  findOneAdmin(@Param('id') id: string) {
-    return this.tenantsService.findOneAdmin(id);
-  }
+  // @AuthTenant()
+  // @Get(findOneTenantsAdmin.path)
+  // findOneAdmin(@Param('id') id: string) {
+  //   return this.tenantsService.findOneAdmin(id);
+  // }
 
-  @AuthTenant()
-  @Get(findAllTenantsAdmins.path)
-  findAllAdmin(@Query() queryParams: QueryParamsDto) {
-    return this.tenantsService.findAllAdmin(queryParams);
-  }
+  // @AuthTenant()
+  // @Get(findAllTenantsAdmins.path)
+  // findAllAdmin(@Query() queryParams: QueryParamsDto) {
+  //   return this.tenantsService.findAllAdmin(queryParams);
+  // }
 
-  @AuthTenant()
-  @Patch(updateTenantsAdmin.path)
-  updateAdmin(
-    @Param('id') id: string,
-    @Body() tenantAdministradorDto: UpdateTenantAdministradorDto,
-  ) {
-    return this.tenantsService.updateAdmin(id, tenantAdministradorDto);
-  }
+  // @AuthTenant()
+  // @Patch(updateTenantsAdmin.path)
+  // updateAdmin(
+  //   @Param('id') id: string,
+  //   @Body() tenantAdministradorDto: UpdateTenantAdministradorDto,
+  // ) {
+  //   return this.tenantsService.updateAdmin(id, tenantAdministradorDto);
+  // }
 
-  @AuthTenant()
-  @Delete(removeTenantsAdmin.path)
-  removeAdmin(@Param('id') id: string) {
-    return this.tenantsService.removeAdmin(id);
-  }
+  // @AuthTenant()
+  // @Delete(removeTenantsAdmin.path)
+  // removeAdmin(@Param('id') id: string) {
+  //   return this.tenantsService.removeAdmin(id);
+  // }
 
-  @AuthTenant()
-  @Put(toggleStatusAdmin.path)
-  toggleStatusAdmin(@Param('id', ParseUUIDPipe) id: string) {
-    return this.tenantsService.toggleStatusAdmin(id);
-  }
+  // @AuthTenant()
+  // @Put(toggleStatusAdmin.path)
+  // toggleStatusAdmin(@Param('id', ParseUUIDPipe) id: string) {
+  //   return this.tenantsService.toggleStatusAdmin(id);
+  // }
 
-  @AuthTenant()
-  @Put(resetPasswordAdmin.path)
-  resetPassword(@Param('id', ParseUUIDPipe) id: string) {
-    return this.tenantsService.resetPassword(id);
-  }
+  // @AuthTenant()
+  // @Put(resetPasswordAdmin.path)
+  // resetPassword(@Param('id', ParseUUIDPipe) id: string) {
+  //   return this.tenantsService.resetPassword(id);
+  // }
 
-  @AuthTenant()
-  @Put(changePasswordAdmin.path)
-  changePassword(
-    @GetPropertyFromTokenAdministrator('id', ParseUUIDPipe) id: string,
-    @Body() changePasswordDto: ChangePasswordDto,
-  ) {
-    return this.tenantsService.changePassword(id, changePasswordDto);
-  }
+  // @AuthTenant()
+  // @Put(changePasswordAdmin.path)
+  // changePassword(
+  //   @GetPropertyFromTokenAdministrator('id', ParseUUIDPipe) id: string,
+  //   @Body() changePasswordDto: ChangePasswordDto,
+  // ) {
+  //   return this.tenantsService.changePassword(id, changePasswordDto);
+  // }
 }
