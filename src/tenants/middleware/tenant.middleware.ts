@@ -27,7 +27,7 @@ export class TenantMiddleware implements NestMiddleware {
         req['tenantConnection'] = tenantConnection;
       }
     } catch (error) {
-      throw new NotFoundException('The requested resource could not be found');
+      throw error
     }
 
     next();

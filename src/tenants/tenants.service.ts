@@ -197,15 +197,22 @@ export class TenantsService {
   async getOneTenantDatabase(tenantId: string) {
     try {
       const tenantDatabase = await this.tenantDatabaseRepository
+
         .createQueryBuilder('tenant_databases')
         .leftJoinAndSelect('tenant_databases.tenant', 'tenant')
         .where('tenant.id = :tenantId', { tenantId })
-        .andWhere('tenant.is_active = true')
+        // .andWhere('tenant.is_active = true')
         .getOne();
 
       if (!tenantDatabase) {
         throw new NotFoundException(
           `Database for tenant ${tenantId} not found`,
+        );
+      }
+
+      if (tenantDatabase.tenant.is_active === false) {
+        throw new ForbiddenException(
+          `Database for tenant ${tenantId} is disabled`,
         );
       }
 
