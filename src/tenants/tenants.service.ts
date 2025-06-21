@@ -171,7 +171,7 @@ export class TenantsService {
       const tenantDatabase = this.tenantDatabaseRepository.create({
         tenant: { id: tenantId },
         database_name: databaseName,
-        is_migrated: false,
+        // is_migrated: false,
       });
 
       await this.tenantDatabaseRepository.save(tenantDatabase);
@@ -181,18 +181,18 @@ export class TenantsService {
     }
   }
 
-  async updateStatusMigrationDB(tenantDataBaseId: string, status: boolean) {
-    try {
-      await this.tenantDatabaseRepository.update(
-        { id: tenantDataBaseId },
-        {
-          is_migrated: status,
-        },
-      );
-    } catch (error) {
-      this.handlerError.handle(error, this.logger);
-    }
-  }
+  // async updateStatusMigrationDB(tenantDataBaseId: string, status: boolean) {
+  //   try {
+  //     await this.tenantDatabaseRepository.update(
+  //       { id: tenantDataBaseId },
+  //       {
+  //         is_migrated: status,
+  //       },
+  //     );
+  //   } catch (error) {
+  //     this.handlerError.handle(error, this.logger);
+  //   }
+  // }
 
   async getOneTenantDatabase(tenantId: string) {
     try {
@@ -320,11 +320,11 @@ export class TenantsService {
   private async configDataBaseTenant(tenantId: string) {
     const tenantDatabase = await this.getOneTenantDatabase(tenantId);
 
-    if (tenantDatabase.is_migrated) {
-      return {
-        msg: 'The database has already been migrated',
-      };
-    }
+    // if (tenantDatabase.is_migrated) {
+    //   return {
+    //     msg: 'The database has already been migrated',
+    //   };
+    // }
 
     const dataSource = new DataSource({
       type: 'postgres',
@@ -334,7 +334,7 @@ export class TenantsService {
       password: process.env.DB_PASSWORD,
       database: tenantDatabase.database_name,
       entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
-      synchronize: !tenantDatabase.is_migrated,
+      synchronize: true,
     });
 
     await dataSource.initialize();
@@ -370,9 +370,9 @@ export class TenantsService {
 
       await queryRunner.commitTransaction();
 
-      if (!tenantDatabase.is_migrated) {
-        await this.updateStatusMigrationDB(tenantDatabase.id, true);
-      }
+      // if (!tenantDatabase.is_migrated) {
+      //   await this.updateStatusMigrationDB(tenantDatabase.id, true);
+      // }
 
       return {
         msg: '¡Database ready to use!',
