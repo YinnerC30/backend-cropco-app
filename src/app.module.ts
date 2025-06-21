@@ -1,31 +1,32 @@
 import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ClientsModule } from './clients/clients.module';
-import { CommonModule } from './common/common.module';
-import { CropsModule } from './crops/crops.module';
-import { EmployeesModule } from './employees/employees.module';
-import { HarvestModule } from './harvest/harvest.module';
-import { SalesModule } from './sales/sales.module';
-import { SeedModule } from './seed/seed.module';
-import { SuppliersModule } from './suppliers/suppliers.module';
-import { SuppliesModule } from './supplies/supplies.module';
-import { UsersModule } from './users/users.module';
-import { WorkModule } from './work/work.module';
-import { PaymentsModule } from './payments/payments.module';
-import { AuthModule } from './auth/auth.module';
-import { PrinterModule } from './printer/printer.module';
-import { ConsumptionsModule } from './consumptions/consumptions.module';
-import { ShoppingModule } from './shopping/shopping.module';
-import { DashboardModule } from './dashboard/dashboard.module';
 import * as fs from 'fs';
 import * as path from 'path';
-import { TenantsModule } from './tenants/tenants.module';
-import { Tenant } from './tenants/entities/tenant.entity';
+import { AuthModule } from './auth/auth.module';
+import { ClientsModule } from './clients/clients.module';
+import { CommonModule } from './common/common.module';
+import { ConsumptionsModule } from './consumptions/consumptions.module';
+import { CropsModule } from './crops/crops.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { EmployeesModule } from './employees/employees.module';
+import { HarvestModule } from './harvest/harvest.module';
+import { PaymentsModule } from './payments/payments.module';
+import { PrinterModule } from './printer/printer.module';
+import { SalesModule } from './sales/sales.module';
+import { SeedModule } from './seed/seed.module';
+import { ShoppingModule } from './shopping/shopping.module';
+import { SuppliersModule } from './suppliers/suppliers.module';
+import { SuppliesModule } from './supplies/supplies.module';
 import { TenantDatabase } from './tenants/entities/tenant-database.entity';
-import { Administrator } from './tenants/entities/administrator.entity';
-import { TenantMiddleware } from './tenants/middleware/tenant.middleware';
+import { Tenant } from './tenants/entities/tenant.entity';
+import { TenantsModule } from './tenants/tenants.module';
+import { UsersModule } from './users/users.module';
+import { WorkModule } from './work/work.module';
+
 import { AdministratorsModule } from './administrators/administrators.module';
+import { Administrator } from './administrators/entities/administrator.entity';
+import { TenantMiddleware } from './tenants/middleware/tenant.middleware';
 
 @Module({
   imports: [

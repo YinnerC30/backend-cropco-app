@@ -7,18 +7,19 @@ import {
 import { LoginUserDto } from '../dto/login-user.dto';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Administrator } from 'src/tenants/entities/administrator.entity';
+
 import { Repository } from 'typeorm';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { Administrator } from 'src/administrators/entities/administrator.entity';
 
 @Injectable()
 export class AuthTenantService {
   private readonly logger = new Logger('AuthTenantService');
   constructor(
     @InjectRepository(Administrator)
-    private readonly tenantAdministratorRepository: Repository<Administrator>,
+    private readonly administratorsRepository: Repository<Administrator>,
     private readonly jwtService: JwtService,
     private readonly handlerError: HandlerErrorService,
   ) {}
@@ -28,7 +29,7 @@ export class AuthTenantService {
     return token;
   }
   async login(loginUserDto: LoginUserDto) {
-    const user = await this.tenantAdministratorRepository.findOne({
+    const user = await this.administratorsRepository.findOne({
       where: { email: loginUserDto.email },
     });
 
@@ -43,9 +44,6 @@ export class AuthTenantService {
         `User ${user.first_name} is inactive, talk with administrator`,
       );
     }
-    // console.log('🚀 ~ AuthTenantService ~ login ~ loginUserDto:', loginUserDto);
-    // console.log('🚀 ~ AuthTenantService ~ login ~ user:', user);
-
     if (!bcrypt.compareSync(loginUserDto.password, user.password))
       throw new UnauthorizedException('Credentials are not valid (password)');
 
