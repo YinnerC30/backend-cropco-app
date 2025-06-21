@@ -9,9 +9,9 @@ import { Repository } from 'typeorm';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 
 @Injectable()
-export class JwtTenantStrategy extends PassportStrategy(
+export class JwtAdministrationStrategy extends PassportStrategy(
   Strategy,
-  'jwt-tenant',
+  'jwt-administration',
 ) {
   constructor(
     @InjectRepository(Administrator)
@@ -20,7 +20,7 @@ export class JwtTenantStrategy extends PassportStrategy(
   ) {
     super({
       secretOrKey: configService.get('JWT_SECRET'),
-      jwtFromRequest: ExtractJwt.fromHeader('x-tenant-token'),
+      jwtFromRequest: ExtractJwt.fromHeader('x-administration-token'),
       ignoreExpiration: false,
     });
   }
@@ -33,12 +33,12 @@ export class JwtTenantStrategy extends PassportStrategy(
 
     if (!user) {
       throw new UnauthorizedException(
-        'Token is not valid - Admin tenant no exist',
+        'Token is not valid - Admin cropco user no exist',
       );
     }
     if (!user.is_active) {
       throw new UnauthorizedException(
-        'User tenant is inactive, talk with an administrator',
+        'Administration cropco user is inactive, talk with an system administrator',
       );
     }
 

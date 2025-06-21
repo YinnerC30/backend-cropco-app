@@ -44,7 +44,7 @@ async function bootstrap() {
         'Accept',
         'Authorization',
         'x-tenant-id',
-        'x-tenant-token',
+        'x-administration-token',
       ],
       credentials: true,
     },

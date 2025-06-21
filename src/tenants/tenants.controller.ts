@@ -4,20 +4,15 @@ import {
   Delete,
   Get,
   Param,
-  ParseUUIDPipe,
   Patch,
   Post,
   Put,
   Query,
 } from '@nestjs/common';
-import { AuthTenant } from 'src/auth/decorators/auth-tenant.decorator';
-import { GetPropertyFromTokenAdministrator } from 'src/auth/decorators/get-property-from-administrator-token.decorator';
+import { AuthAdministration } from 'src/auth/decorators/auth-administrator.decorator';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
-import { ChangePasswordDto } from 'src/users/dto/change-password.dto';
-import { CreateTenantAdministradorDto } from './dto/create-tenant-administrator.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
-import { UpdateTenantAdministradorDto } from './dto/update-tenant-administrator.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantsService } from './tenants.service';
 
@@ -63,47 +58,6 @@ export const pathsTenantsController: PathsController = {
   //   description: 'configurar base de datos de 1 inquilino',
   //   name: 'config_data_base_tenant',
   // },
-  createTenantAdmin: {
-    path: 'create/one/admin',
-    description: 'Crear usuario capaz de manipular los inquilinos',
-    name: 'create_tenant_admin',
-    visibleToUser: false,
-  },
-  findAllTenantsAdmins: {
-    path: 'all/admin',
-    description: 'obtener todos los usuarios administradores de inquilinos',
-    name: 'find_all_tenants_admins',
-  },
-  findOneTenantsAdmin: {
-    path: 'one/admin/:id',
-    description: 'obtener 1 administrador de inquilinos',
-    name: 'find_one_tenants_admin',
-  },
-  updateTenantsAdmin: {
-    path: 'update/one/admin/:id',
-    description: 'actualizar 1 administrador de inquilinos',
-    name: 'update_one_tenants_admin',
-  },
-  removeTenantsAdmin: {
-    path: 'remove/one/admin/:id',
-    description: 'eliminar 1 administrador de inquilinos',
-    name: 'remove_one_tenants_admin',
-  },
-  resetPasswordAdmin: {
-    path: 'reset-password/one/admin/:id',
-    description: 'restablecimiento de contraseña',
-    name: 'reset_password_admin',
-  },
-  changePasswordAdmin: {
-    path: 'change-password/one/admin',
-    description: 'cambio de contraseña',
-    name: 'change_password_admin',
-  },
-  toggleStatusAdmin: {
-    path: 'toggle-status/one/admin/:id',
-    description: 'cambio de estado de usuario',
-    name: 'toggle_status_admin',
-  },
 };
 
 const {
@@ -115,14 +69,6 @@ const {
   toggleStatusTenant,
   removeTenant,
   // configDataBaseTenant,
-  createTenantAdmin,
-  findAllTenantsAdmins,
-  findOneTenantsAdmin,
-  updateTenantsAdmin,
-  removeTenantsAdmin,
-  resetPasswordAdmin,
-  changePasswordAdmin,
-  toggleStatusAdmin,
 } = pathsTenantsController;
 
 // @AuthTenant()
@@ -130,19 +76,19 @@ const {
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
-  @AuthTenant()
+  @AuthAdministration()
   @Post(create.path)
   create(@Body() createTenantDto: CreateTenantDto) {
     return this.tenantsService.create(createTenantDto);
   }
 
-  @AuthTenant()
+  @AuthAdministration()
   @Get(findAllTenants.path)
   findAll(@Query() queryParams: QueryParamsDto) {
     return this.tenantsService.findAll(queryParams);
   }
 
-  @AuthTenant()
+  @AuthAdministration()
   @Get(findOneTenant.path)
   findOne(@Param('id') id: string) {
     return this.tenantsService.findOne(id);
@@ -153,83 +99,21 @@ export class TenantsController {
     return this.tenantsService.findOneBySubdomain(subdomain);
   }
 
-  @AuthTenant()
+  @AuthAdministration()
   @Put(updateTenant.path)
   update(@Param('id') id: string, @Body() updateTenantDto: UpdateTenantDto) {
     return this.tenantsService.update(id, updateTenantDto);
   }
 
-  @AuthTenant()
+  @AuthAdministration()
   @Patch(toggleStatusTenant.path)
   toggleStatusTenant(@Param('id') id: string) {
     return this.tenantsService.toggleStatusTenant(id);
   }
 
-  @AuthTenant()
+  @AuthAdministration()
   @Delete(removeTenant.path)
   remove(@Param('id') id: string) {
     return this.tenantsService.remove(id);
   }
-
-  // Tenants Databases
-  // @AuthTenant()
-  // @Put(configDataBaseTenant.path)
-  // configDataBaseTanent(@Param('id') id: string) {
-  //   return this.tenantsService.configDataBaseTenant(id);
-  // }
-
-  // Tenants Administrators
-  // @AuthTenant()
-  // @Post(createTenantAdmin.path)
-  // createAdmin(@Body() tenantAdministradorDto: CreateTenantAdministradorDto) {
-  //   return this.tenantsService.createAdmin(tenantAdministradorDto);
-  // }
-
-  // @AuthTenant()
-  // @Get(findOneTenantsAdmin.path)
-  // findOneAdmin(@Param('id') id: string) {
-  //   return this.tenantsService.findOneAdmin(id);
-  // }
-
-  // @AuthTenant()
-  // @Get(findAllTenantsAdmins.path)
-  // findAllAdmin(@Query() queryParams: QueryParamsDto) {
-  //   return this.tenantsService.findAllAdmin(queryParams);
-  // }
-
-  // @AuthTenant()
-  // @Patch(updateTenantsAdmin.path)
-  // updateAdmin(
-  //   @Param('id') id: string,
-  //   @Body() tenantAdministradorDto: UpdateTenantAdministradorDto,
-  // ) {
-  //   return this.tenantsService.updateAdmin(id, tenantAdministradorDto);
-  // }
-
-  // @AuthTenant()
-  // @Delete(removeTenantsAdmin.path)
-  // removeAdmin(@Param('id') id: string) {
-  //   return this.tenantsService.removeAdmin(id);
-  // }
-
-  // @AuthTenant()
-  // @Put(toggleStatusAdmin.path)
-  // toggleStatusAdmin(@Param('id', ParseUUIDPipe) id: string) {
-  //   return this.tenantsService.toggleStatusAdmin(id);
-  // }
-
-  // @AuthTenant()
-  // @Put(resetPasswordAdmin.path)
-  // resetPassword(@Param('id', ParseUUIDPipe) id: string) {
-  //   return this.tenantsService.resetPassword(id);
-  // }
-
-  // @AuthTenant()
-  // @Put(changePasswordAdmin.path)
-  // changePassword(
-  //   @GetPropertyFromTokenAdministrator('id', ParseUUIDPipe) id: string,
-  //   @Body() changePasswordDto: ChangePasswordDto,
-  // ) {
-  //   return this.tenantsService.changePassword(id, changePasswordDto);
-  // }
 }
