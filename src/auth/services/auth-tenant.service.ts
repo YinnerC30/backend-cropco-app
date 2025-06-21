@@ -7,7 +7,7 @@ import {
 import { LoginUserDto } from '../dto/login-user.dto';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TenantAdministrator } from 'src/tenants/entities/tenant-administrator.entity';
+import { Administrator } from 'src/tenants/entities/administrator.entity';
 import { Repository } from 'typeorm';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
@@ -17,8 +17,8 @@ import * as bcrypt from 'bcrypt';
 export class AuthTenantService {
   private readonly logger = new Logger('AuthTenantService');
   constructor(
-    @InjectRepository(TenantAdministrator)
-    private readonly tenantAdministratorRepository: Repository<TenantAdministrator>,
+    @InjectRepository(Administrator)
+    private readonly tenantAdministratorRepository: Repository<Administrator>,
     private readonly jwtService: JwtService,
     private readonly handlerError: HandlerErrorService,
   ) {}

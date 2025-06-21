@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TenantDatabase } from './entities/tenant-database.entity';
-import { TenantAdministrator } from './entities/tenant-administrator.entity';
+import { Administrator } from './entities/administrator.entity';
 import { Tenant } from './entities/tenant.entity';
 import { TenantsController } from './tenants.controller';
 import { TenantsService } from './tenants.service';
@@ -11,7 +11,7 @@ import { CommonModule } from 'src/common/common.module';
 @Global()
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Tenant, TenantDatabase, TenantAdministrator]),
+    TypeOrmModule.forFeature([Tenant, TenantDatabase, Administrator]),
     CommonModule,
   ],
   controllers: [TenantsController],

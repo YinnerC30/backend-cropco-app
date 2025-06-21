@@ -23,7 +23,7 @@ import * as path from 'path';
 import { TenantsModule } from './tenants/tenants.module';
 import { Tenant } from './tenants/entities/tenant.entity';
 import { TenantDatabase } from './tenants/entities/tenant-database.entity';
-import { TenantAdministrator } from './tenants/entities/tenant-administrator.entity';
+import { Administrator } from './tenants/entities/administrator.entity';
 import { TenantMiddleware } from './tenants/middleware/tenant.middleware';
 
 @Module({
@@ -55,7 +55,7 @@ import { TenantMiddleware } from './tenants/middleware/tenant.middleware';
           username: configService.get<string>('DB_USERNAME'),
           password: configService.get<string>('DB_PASSWORD'),
           database: 'cropco_management',
-          entities: [Tenant, TenantDatabase, TenantAdministrator],
+          entities: [Tenant, TenantDatabase, Administrator],
           synchronize: true,
           ssl: false,
           logging: true,

@@ -35,7 +35,7 @@ import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { CreateTenantAdministradorDto } from './dto/create-tenant-administrator.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
-import { TenantAdministrator } from './entities/tenant-administrator.entity';
+import { Administrator } from './entities/administrator.entity';
 import { TenantDatabase } from './entities/tenant-database.entity';
 import { Tenant } from './entities/tenant.entity';
 import { TenantConnectionService } from './services/tenant-connection.service';
@@ -50,8 +50,8 @@ export class TenantsService {
     private tenantRepository: Repository<Tenant>,
     @InjectRepository(TenantDatabase)
     private tenantDatabaseRepository: Repository<TenantDatabase>,
-    @InjectRepository(TenantAdministrator)
-    private tenantAdministratorRepository: Repository<TenantAdministrator>,
+    @InjectRepository(Administrator)
+    private tenantAdministratorRepository: Repository<Administrator>,
 
     private tenantConnectionService: TenantConnectionService,
 

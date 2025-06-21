@@ -12,7 +12,7 @@ import { Tenant } from './tenant.entity';
 import { PersonalInformation } from 'src/common/entities/personal-information.entity';
 
 @Entity('administrators')
-export class TenantAdministrator extends PersonalInformation {
+export class Administrator extends PersonalInformation {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
