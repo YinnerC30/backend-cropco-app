@@ -14,8 +14,8 @@ async function bootstrap() {
         // Validar dominio principal y subdominios
         const allowedDomains = [
           'https://cropco.org',
-          'http://localhost:3000',
-          'http://localhost:3001',
+          'http://localhost:5173',
+          'http://localhost:4173',
         ];
 
         // Verificar si es el dominio principal
