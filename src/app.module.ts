@@ -25,6 +25,7 @@ import { Tenant } from './tenants/entities/tenant.entity';
 import { TenantDatabase } from './tenants/entities/tenant-database.entity';
 import { Administrator } from './tenants/entities/administrator.entity';
 import { TenantMiddleware } from './tenants/middleware/tenant.middleware';
+import { AdministratorsModule } from './administrators/administrators.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { TenantMiddleware } from './tenants/middleware/tenant.middleware';
     ConsumptionsModule,
     ShoppingModule,
     DashboardModule,
+    AdministratorsModule,
   ],
 })
 export class AppModule {
@@ -87,8 +89,8 @@ export class AppModule {
     consumer
       .apply(TenantMiddleware)
       .exclude(
+        { path: 'administrators/(.*)', method: RequestMethod.ALL },
         { path: 'tenants/(.*)', method: RequestMethod.ALL },
-
         {
           path: '/auth/management/login',
           method: RequestMethod.POST,
@@ -96,7 +98,7 @@ export class AppModule {
         {
           path: '/auth/management/check-status',
           method: RequestMethod.GET,
-        }
+        },
       )
       .forRoutes('*');
   }
