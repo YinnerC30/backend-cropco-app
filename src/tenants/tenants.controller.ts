@@ -65,6 +65,11 @@ export const pathsTenantsController: PathsController = {
     description: '',
     name: '',
   },
+  removeUserAdminToTenantDB: {
+    path: 'remove-admin-user/one/:id',
+    description: '',
+    name: '',
+  },
 };
 
 const {
@@ -77,6 +82,7 @@ const {
   removeTenant,
   // configDataBaseTenant,
   addUserAdminToTenantDB,
+  removeUserAdminToTenantDB,
 } = pathsTenantsController;
 
 // @AuthTenant()
@@ -125,8 +131,21 @@ export class TenantsController {
     return this.tenantsService.remove(id);
   }
 
+  // Tenant Users
+
   @Post(addUserAdminToTenantDB.path)
-  addUserAdminToTenantDB(@Param('id') id: string, @Body() createUserDto: UserTenantDto) {
+  addUserAdminToTenantDB(
+    @Param('id') id: string,
+    @Body() createUserDto: UserTenantDto,
+  ) {
     return this.tenantsService.addUserAdminTenantDB(id, createUserDto);
+  }
+
+  @Delete(removeUserAdminToTenantDB.path)
+  removeUserAdminToTenantDB(
+    @Param('tenantId') tenantId: string,
+    @Param('userId') userId: string,
+  ) {
+    return this.tenantsService.removeUserAdminTenantDB(tenantId, userId);
   }
 }

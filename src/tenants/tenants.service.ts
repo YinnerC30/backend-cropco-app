@@ -405,4 +405,17 @@ export class TenantsService {
       this.handlerError.handle(error, this.logger);
     }
   }
+  async removeUserAdminTenantDB(tenantId: string, userId: string) {
+    await this.findOne(tenantId);
+    const tenantConnection =
+      await this.tenantConnectionService.getTenantConnection(tenantId);
+
+    const userRepository = tenantConnection.getRepository(User);
+
+    try {
+      await userRepository.delete({ id: userId });
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
+  }
 }
