@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   forwardRef,
   Inject,
@@ -30,12 +31,13 @@ import { User } from 'src/users/entities/user.entity';
 import { hashPassword } from 'src/users/helpers/encrypt-password';
 import { pathsUsersController } from 'src/users/users.controller';
 import { pathsWorksController } from 'src/work/work.controller';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, In, QueryRunner, Raw, Repository } from 'typeorm';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantDatabase } from './entities/tenant-database.entity';
 import { Tenant } from './entities/tenant.entity';
 import { TenantConnectionService } from './services/tenant-connection.service';
+import { UserTenantDto } from './dto/user-tenant.dto';
 
 @Injectable()
 export class TenantsService {
@@ -369,12 +371,23 @@ export class TenantsService {
   }
 
   // User Tenant DB
-  async addUserAdminTenantDB(tenantId: string, createUserDto: UserDto) {
+  async addUserAdminTenantDB(tenantId: string, createUserDto: UserTenantDto) {
     await this.findOne(tenantId);
     const tenantConnection =
       await this.tenantConnectionService.getTenantConnection(tenantId);
 
     const userRepository = tenantConnection.getRepository(User);
+
+    const [, count] = await userRepository.findAndCount({
+      where: {
+        roles: Raw(() => `roles @> '["admin"]'`),
+      },
+    });
+
+    if (createUserDto.role === 'admin' && count > 1) {
+      throw new BadRequestException('Only one admin user is allowed');
+    }
+
     const moduleActionsRepository =
       tenantConnection.getRepository(ModuleActions);
 
@@ -384,10 +397,12 @@ export class TenantsService {
       },
     })) as UserActionDto[];
 
-    const user = userRepository.create({ ...createUserDto, actions });
-    user.password = await hashPassword(user.password);
-    const result = await userRepository.save(user);
-
-    return result;
+    try {
+      const user = userRepository.create({ ...createUserDto, actions });
+      user.password = await hashPassword(user.password);
+      await userRepository.save(user);
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
   }
 }
