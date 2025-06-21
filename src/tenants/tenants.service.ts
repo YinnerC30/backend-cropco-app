@@ -410,17 +410,17 @@ export class TenantsService {
     const { offset = 0, limit = 10, query = '' } = queryParams;
 
     const queryBuilder = this.tenantAdministratorRepository.createQueryBuilder(
-      'tenant_administrators',
+      'administrators',
     );
 
     queryBuilder
-      .where('tenant_administrators.first_name ILIKE :query', {
+      .where('administrators.first_name ILIKE :query', {
         query: `${query}%`,
       })
-      .orWhere('tenant_administrators.last_name ILIKE :query', {
+      .orWhere('administrators.last_name ILIKE :query', {
         query: `${query}%`,
       })
-      .orWhere('tenant_administrators.email ILIKE :query', {
+      .orWhere('administrators.email ILIKE :query', {
         query: `${query}%`,
       });
 

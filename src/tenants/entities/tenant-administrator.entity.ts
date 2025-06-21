@@ -11,7 +11,7 @@ import {
 import { Tenant } from './tenant.entity';
 import { PersonalInformation } from 'src/common/entities/personal-information.entity';
 
-@Entity('tenant_administrators')
+@Entity('administrators')
 export class TenantAdministrator extends PersonalInformation {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -1,13 +1,10 @@
 import {
-  IsArray,
   IsEmail,
   IsIn,
-  IsOptional,
   IsString,
   MaxLength,
-  MinLength,
+  MinLength
 } from 'class-validator';
-import { RoleUser } from 'src/users/types/role-user.type';
 
 export class CreateTenantAdministradorDto {
   @IsString()
