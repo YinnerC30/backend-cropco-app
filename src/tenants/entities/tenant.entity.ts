@@ -8,7 +8,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { TenantDatabase } from './tenant-database.entity';
-import { TenantAdministrator } from './tenant-administrator.entity';
+import { Administrator } from './administrator.entity';
 
 @Entity('tenants')
 export class Tenant {

@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { TenantAdministrator } from 'src/tenants/entities/tenant-administrator.entity';
+import { Administrator } from 'src/tenants/entities/administrator.entity';
 import { Repository } from 'typeorm';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 
@@ -14,8 +14,8 @@ export class JwtTenantStrategy extends PassportStrategy(
   'jwt-tenant',
 ) {
   constructor(
-    @InjectRepository(TenantAdministrator)
-    private tenantAdministratorRepository: Repository<TenantAdministrator>,
+    @InjectRepository(Administrator)
+    private tenantAdministratorRepository: Repository<Administrator>,
     private readonly configService: ConfigService,
   ) {
     super({
@@ -25,7 +25,7 @@ export class JwtTenantStrategy extends PassportStrategy(
     });
   }
 
-  async validate(payload: JwtPayload): Promise<TenantAdministrator | any> {
+  async validate(payload: JwtPayload): Promise<Administrator | any> {
     const { id } = payload;
     const user = await this.tenantAdministratorRepository.findOne({
       where: { id },

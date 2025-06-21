@@ -14,7 +14,7 @@ import { User } from 'src/users/entities/user.entity';
 import { UserActions } from 'src/users/entities/user-actions.entity';
 import { CommonModule } from 'src/common/common.module';
 import { AuthTenantService } from './services/auth-tenant.service';
-import { TenantAdministrator } from 'src/tenants/entities/tenant-administrator.entity';
+import { Administrator } from 'src/tenants/entities/administrator.entity';
 import { JwtTenantStrategy } from './strategies/jwt-tenant-strategy';
 
 @Module({
@@ -42,7 +42,7 @@ import { JwtTenantStrategy } from './strategies/jwt-tenant-strategy';
       ModuleActions,
       User,
       UserActions,
-      TenantAdministrator,
+      Administrator,
     ]),
     CommonModule,
   ],
