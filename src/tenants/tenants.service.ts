@@ -35,6 +35,8 @@ import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantDatabase } from './entities/tenant-database.entity';
 import { Tenant } from './entities/tenant.entity';
 import { TenantConnectionService } from './services/tenant-connection.service';
+import { UserActionDto } from 'src/users/dto/user-action.dto';
+import { UserActions } from 'src/users/entities/user-actions.entity';
 
 @Injectable()
 export class TenantsService {
@@ -374,6 +376,16 @@ export class TenantsService {
       await this.tenantConnectionService.getTenantConnection(tenantId);
 
     const userRepository = tenantConnection.getRepository(User);
+    const moduleActionsRepository =
+      tenantConnection.getRepository(ModuleActions);
+
+    const userActionsRepository = tenantConnection.getRepository(UserActions);
+
+    const actions = (await moduleActionsRepository.find({
+      select: {
+        id: true,
+      },
+    })) as UserActionDto[];
 
     const userDto: UserDto = {
       first_name: 'Administrator',
@@ -382,10 +394,23 @@ export class TenantsService {
       password: await hashPassword('admin1234'),
       cell_phone_number: tenant.cell_phone_number,
       roles: ['admin'],
-      actions: [],
+      actions: [...actions],
     };
 
     const user = userRepository.create(userDto);
-    return await userRepository.save(user);
+    const { id } = await userRepository.save(user);
+
+    const actionsEntity = userDto.actions.map((act: UserActionDto) => {
+      return userActionsRepository.create({ action: act, user: { id } });
+    });
+
+    await Promise.all(
+      actionsEntity.map((action) => userActionsRepository.save(action)),
+    );
+
+    return {
+      id,
+      ...user,
+    };
   }
 }
