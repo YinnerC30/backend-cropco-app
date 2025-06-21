@@ -60,6 +60,11 @@ export const pathsTenantsController: PathsController = {
   //   description: 'configurar base de datos de 1 inquilino',
   //   name: 'config_data_base_tenant',
   // },
+  getAllUsersToTenantDB: {
+    path: 'all-admin-users/:id',
+    description: '',
+    name: '',
+  },
   addUserAdminToTenantDB: {
     path: 'add-admin-user/one/:id',
     description: '',
@@ -81,6 +86,7 @@ const {
   toggleStatusTenant,
   removeTenant,
   // configDataBaseTenant,
+  getAllUsersToTenantDB,
   addUserAdminToTenantDB,
   removeUserAdminToTenantDB,
 } = pathsTenantsController;
@@ -132,6 +138,11 @@ export class TenantsController {
   }
 
   // Tenant Users
+
+  @Get(getAllUsersToTenantDB.path)
+  getAllUsersToTenantDB(@Param('id') id: string) {
+    return this.tenantsService.getAllUsersTenant(id);
+  }
 
   @Post(addUserAdminToTenantDB.path)
   addUserAdminToTenantDB(
