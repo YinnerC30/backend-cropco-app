@@ -1,8 +1,7 @@
 import {
   BadRequestException,
   Injectable,
-  NestMiddleware,
-  NotFoundException,
+  NestMiddleware
 } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
 import { TenantConnectionService } from '../services/tenant-connection.service';

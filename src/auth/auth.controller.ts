@@ -15,7 +15,7 @@ import { Auth } from './decorators/auth.decorator';
 import { GetToken } from './decorators/get-token.headers.decorator';
 import { LoginUserDto } from './dto/login-user.dto';
 import { AuthTenantService } from './services/auth-tenant.service';
-import { AuthTenant } from './decorators/auth-tenant.decorator';
+import { AuthAdministration } from './decorators/auth-administrator.decorator';
 import { GetTokenTenantManagement } from './decorators/get-token-tenant-management.headers.decorator';
 
 export const pathsAuthController: PathsController = {
@@ -109,7 +109,7 @@ export class AuthController {
     return this.authService.checkAuthStatus(token);
   }
 
-  @AuthTenant()
+  @AuthAdministration()
   @Get(checkAuthStatusManagement.path)
   checkAuthStatusManagement(@GetTokenTenantManagement() token: string) {
     return this.authTenantService.checkAuthStatus(token);
