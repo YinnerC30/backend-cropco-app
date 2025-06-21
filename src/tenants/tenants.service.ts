@@ -174,7 +174,8 @@ export class TenantsService {
         is_migrated: false,
       });
 
-      return await this.tenantDatabaseRepository.save(tenantDatabase);
+      await this.tenantDatabaseRepository.save(tenantDatabase);
+      await this.configDataBaseTenant(tenantId);
     } catch (error) {
       this.handlerError.handle(error, this.logger);
     }
@@ -309,7 +310,7 @@ export class TenantsService {
     }
   }
 
-  async configDataBaseTenant(tenantId: string) {
+  private async configDataBaseTenant(tenantId: string) {
     const tenantDatabase = await this.getOneTenantDatabase(tenantId);
 
     if (tenantDatabase.is_migrated) {

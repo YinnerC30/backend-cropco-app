@@ -58,11 +58,11 @@ export const pathsTenantsController: PathsController = {
     description: 'eliminar 1 inquilino',
     name: 'remove_one_tenant',
   },
-  configDataBaseTenant: {
-    path: 'config-db/one/:id',
-    description: 'configurar base de datos de 1 inquilino',
-    name: 'config_data_base_tenant',
-  },
+  // configDataBaseTenant: {
+  //   path: 'config-db/one/:id',
+  //   description: 'configurar base de datos de 1 inquilino',
+  //   name: 'config_data_base_tenant',
+  // },
   createTenantAdmin: {
     path: 'create/one/admin',
     description: 'Crear usuario capaz de manipular los inquilinos',
@@ -114,7 +114,7 @@ const {
   updateTenant,
   toggleStatusTenant,
   removeTenant,
-  configDataBaseTenant,
+  // configDataBaseTenant,
   createTenantAdmin,
   findAllTenantsAdmins,
   findOneTenantsAdmin,
@@ -172,11 +172,11 @@ export class TenantsController {
   }
 
   // Tenants Databases
-  @AuthTenant()
-  @Put(configDataBaseTenant.path)
-  configDataBaseTanent(@Param('id') id: string) {
-    return this.tenantsService.configDataBaseTenant(id);
-  }
+  // @AuthTenant()
+  // @Put(configDataBaseTenant.path)
+  // configDataBaseTanent(@Param('id') id: string) {
+  //   return this.tenantsService.configDataBaseTenant(id);
+  // }
 
   // Tenants Administrators
   @AuthTenant()
