@@ -115,7 +115,7 @@ export class TenantsService {
 
   async findOneBySubdomain(tenantSubdomain: string) {
     const tenant = await this.tenantRepository.findOne({
-      where: { subdomain: tenantSubdomain, is_active: true },
+      where: { subdomain: tenantSubdomain },
     });
     if (!tenant) {
       throw new NotFoundException(
@@ -124,7 +124,7 @@ export class TenantsService {
     }
 
     if (!tenant.is_active) {
-      throw new UnauthorizedException('The tenant is currently disabled');
+      throw new ForbiddenException('The tenant is currently disabled');
     }
 
     return { id: tenant.id, subdomain: tenant.subdomain };
