@@ -157,6 +157,7 @@ export class TenantsService {
     try {
       await this.tenantRepository.update({ id }, { ...updateTenantDto });
       await this.updateDBName(id, updateTenantDto.subdomain);
+      await this.tenantConnectionService.closeTenantConnection(id);
       return await this.findOne(id);
     } catch (error) {
       this.handlerError.handle(error, this.logger);
