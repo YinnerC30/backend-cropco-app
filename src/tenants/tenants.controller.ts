@@ -65,12 +65,12 @@ export const pathsTenantsController: PathsController = {
     description: '',
     name: '',
   },
-  addUserAdminToTenantDB: {
+  addUserToTenantDB: {
     path: 'add-tenant-user/one/:id',
     description: '',
     name: '',
   },
-  removeUserAdminToTenantDB: {
+  removeUserToTenantDB: {
     path: 'remove-tenant-user/one/:tenantId/:userId',
     description: '',
     name: '',
@@ -87,8 +87,8 @@ const {
   removeTenant,
   // configDataBaseTenant,
   getAllUsersToTenantDB,
-  addUserAdminToTenantDB,
-  removeUserAdminToTenantDB,
+  addUserToTenantDB,
+  removeUserToTenantDB,
 } = pathsTenantsController;
 
 // @AuthTenant()
@@ -139,12 +139,14 @@ export class TenantsController {
 
   // Tenant Users
 
+  @AuthAdministration()
   @Get(getAllUsersToTenantDB.path)
   getAllUsersToTenantDB(@Param('id') id: string) {
     return this.tenantsService.getAllUsersTenant(id);
   }
 
-  @Post(addUserAdminToTenantDB.path)
+  @AuthAdministration()
+  @Post(addUserToTenantDB.path)
   addUserAdminToTenantDB(
     @Param('id') id: string,
     @Body() createUserDto: UserTenantDto,
@@ -152,7 +154,8 @@ export class TenantsController {
     return this.tenantsService.addUserAdminTenantDB(id, createUserDto);
   }
 
-  @Delete(removeUserAdminToTenantDB.path)
+  @AuthAdministration()
+  @Delete(removeUserToTenantDB.path)
   removeUserAdminToTenantDB(
     @Param('tenantId') tenantId: string,
     @Param('userId') userId: string,
