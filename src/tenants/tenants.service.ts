@@ -127,10 +127,36 @@ export class TenantsService {
     return { id: tenant.id, subdomain: tenant.subdomain };
   }
 
+  async updateDBName(tenantId: string, newName: string) {
+    try {
+      const tenantDb = await this.getOneTenantDatabase(tenantId);
+
+      const newDatabaseName = `cropco_tenant_${newName}`;
+
+      // Renombrar la base de datos
+      await this.dataSource.query(
+        `ALTER DATABASE "${tenantDb.database_name}" RENAME TO "${newDatabaseName}"`,
+      );
+
+      // Actualizar el nombre en la tabla tenant_databases
+      await this.tenantDatabaseRepository.update(
+        { id: tenantDb.id },
+        { database_name: newDatabaseName },
+      );
+
+      this.logger.log(
+        `Database renamed from ${tenantDb.database_name} to ${newDatabaseName}`,
+      );
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
+  }
+
   async update(id: string, updateTenantDto: UpdateTenantDto) {
     await this.findOne(id);
     try {
       await this.tenantRepository.update({ id }, { ...updateTenantDto });
+      await this.updateDBName(id, updateTenantDto.subdomain);
       return await this.findOne(id);
     } catch (error) {
       this.handlerError.handle(error, this.logger);
