@@ -396,7 +396,7 @@ export class TenantsService {
       },
     });
 
-    if (createUserDto.role === 'admin' && count > 1) {
+    if (createUserDto.roles[0] === 'admin' && count >= 1) {
       throw new BadRequestException('Only one admin user is allowed');
     }
 
@@ -408,7 +408,6 @@ export class TenantsService {
         id: true,
       },
     })) as UserActionDto[];
-    
 
     try {
       const user = userRepository.create({ ...createUserDto });
