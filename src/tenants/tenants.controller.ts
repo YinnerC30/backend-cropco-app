@@ -121,7 +121,7 @@ export class TenantsController {
 
   @AuthAdministration()
   @Put(updateTenant.path)
-  update(@Param('id') id: string, @Body() updateTenantDto: UpdateTenantDto) {
+  update(@Param('id') id: string, @Body() updateTenantDto: CreateTenantDto) {
     return this.tenantsService.update(id, updateTenantDto);
   }
 

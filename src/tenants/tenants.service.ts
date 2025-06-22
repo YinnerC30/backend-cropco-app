@@ -152,7 +152,7 @@ export class TenantsService {
     }
   }
 
-  async update(id: string, updateTenantDto: UpdateTenantDto) {
+  async update(id: string, updateTenantDto: CreateTenantDto) {
     await this.findOne(id);
     try {
       await this.tenantRepository.update({ id }, { ...updateTenantDto });
