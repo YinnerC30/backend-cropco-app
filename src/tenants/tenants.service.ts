@@ -128,10 +128,10 @@ export class TenantsService {
   }
 
   async update(id: string, updateTenantDto: UpdateTenantDto) {
-    const tenant = await this.findOne(id);
+    await this.findOne(id);
     try {
-      Object.assign(tenant, updateTenantDto);
-      return this.tenantRepository.save(tenant);
+      await this.tenantRepository.update({ id }, { ...updateTenantDto });
+      return await this.findOne(id);
     } catch (error) {
       this.handlerError.handle(error, this.logger);
     }
