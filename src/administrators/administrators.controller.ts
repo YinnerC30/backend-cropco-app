@@ -74,30 +74,28 @@ const {
   toggleStatusAdmin,
 } = pathsTenantsController;
 
+@AuthAdministration()
 @Controller('administrators')
 export class AdministratorsController {
   constructor(private readonly administratorsService: AdministratorsService) {}
 
   // Tenants Administrators
-  @AuthAdministration()
+
   @Post(createTenantAdmin.path)
   createAdmin(@Body() tenantAdministradorDto: CreateAdministradorDto) {
     return this.administratorsService.createAdmin(tenantAdministradorDto);
   }
 
-  @AuthAdministration()
   @Get(findOneTenantsAdmin.path)
   findOneAdmin(@Param('id') id: string) {
     return this.administratorsService.findOneAdmin(id);
   }
 
-  @AuthAdministration()
   @Get(findAllTenantsAdmins.path)
   findAllAdmin(@Query() queryParams: QueryParamsDto) {
     return this.administratorsService.findAllAdmin(queryParams);
   }
 
-  @AuthAdministration()
   @Patch(updateTenantsAdmin.path)
   updateAdmin(
     @Param('id') id: string,
@@ -106,25 +104,21 @@ export class AdministratorsController {
     return this.administratorsService.updateAdmin(id, tenantAdministradorDto);
   }
 
-  @AuthAdministration()
   @Delete(removeTenantsAdmin.path)
   removeAdmin(@Param('id') id: string) {
     return this.administratorsService.removeAdmin(id);
   }
 
-  @AuthAdministration()
   @Put(toggleStatusAdmin.path)
   toggleStatusAdmin(@Param('id', ParseUUIDPipe) id: string) {
     return this.administratorsService.toggleStatusAdmin(id);
   }
 
-  @AuthAdministration()
   @Put(resetPasswordAdmin.path)
   resetPassword(@Param('id', ParseUUIDPipe) id: string) {
     return this.administratorsService.resetPassword(id);
   }
 
-  @AuthAdministration()
   @Put(changePasswordAdmin.path)
   changePassword(
     @GetPropertyFromTokenAdministrator('id', ParseUUIDPipe) id: string,
