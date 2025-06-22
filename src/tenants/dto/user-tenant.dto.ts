@@ -1,9 +1,10 @@
 import {
-    IsEmail,
-    IsIn,
-    IsString,
-    MaxLength,
-    MinLength
+  IsArray,
+  IsEmail,
+  IsIn,
+  IsString,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
 import { RoleUser } from 'src/users/types/role-user.type';
 
@@ -31,7 +32,8 @@ export class UserTenantDto {
   @MaxLength(10)
   cell_phone_number: string;
 
-  @IsString()
-  @IsIn(['admin', 'user'])
-  role: RoleUser;
+  @IsArray()
+  @IsString({ each: true })
+  @IsIn(['admin', 'user'], { each: true })
+  roles?: RoleUser[];
 }
