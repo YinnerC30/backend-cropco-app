@@ -26,18 +26,18 @@ import { pathsShoppingController } from 'src/shopping/shopping.controller';
 import { pathsSuppliersController } from 'src/suppliers/suppliers.controller';
 import { pathsSuppliesController } from 'src/supplies/supplies.controller';
 import { UserActionDto } from 'src/users/dto/user-action.dto';
-import { UserDto } from 'src/users/dto/user.dto';
+import { UserActions } from 'src/users/entities/user-actions.entity';
 import { User } from 'src/users/entities/user.entity';
 import { hashPassword } from 'src/users/helpers/encrypt-password';
 import { pathsUsersController } from 'src/users/users.controller';
 import { pathsWorksController } from 'src/work/work.controller';
-import { DataSource, In, QueryRunner, Raw, Repository } from 'typeorm';
+import { DataSource, QueryRunner, Raw, Repository } from 'typeorm';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
+import { UserTenantDto } from './dto/user-tenant.dto';
 import { TenantDatabase } from './entities/tenant-database.entity';
 import { Tenant } from './entities/tenant.entity';
 import { TenantConnectionService } from './services/tenant-connection.service';
-import { UserTenantDto } from './dto/user-tenant.dto';
 
 @Injectable()
 export class TenantsService {
@@ -388,6 +388,7 @@ export class TenantsService {
       await this.tenantConnectionService.getTenantConnection(tenantId);
 
     const userRepository = tenantConnection.getRepository(User);
+    const userActionsRepository = tenantConnection.getRepository(UserActions);
 
     const [, count] = await userRepository.findAndCount({
       where: {
@@ -407,11 +408,20 @@ export class TenantsService {
         id: true,
       },
     })) as UserActionDto[];
+    
 
     try {
-      const user = userRepository.create({ ...createUserDto, actions });
+      const user = userRepository.create({ ...createUserDto });
       user.password = await hashPassword(user.password);
-      await userRepository.save(user);
+      const userInDB = await userRepository.save(user);
+      const actionsEntity = actions.map((act: UserActionDto) => {
+        return userActionsRepository.create({
+          action: act,
+          user: { id: userInDB.id },
+        });
+      });
+      userInDB.actions = actionsEntity;
+      await userRepository.save(userInDB);
     } catch (error) {
       this.handlerError.handle(error, this.logger);
     }
