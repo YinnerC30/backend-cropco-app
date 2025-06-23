@@ -7,13 +7,15 @@ import { DataSource, Repository } from 'typeorm';
 @Injectable()
 export abstract class BaseTenantService {
   protected currentTenantId: string;
-  protected currentUser: User | undefined;
   protected tenantConnection: DataSource;
 
   constructor(@Inject(REQUEST) protected readonly request: Request) {
     this.currentTenantId = this.request.headers['x-tenant-id'] as string;
-    this.currentUser = this.request.user as User;
     this.tenantConnection = this.request['tenantConnection'];
+  }
+
+  private get currentUser(): User | undefined {
+    return this.request.user as User;
   }
 
   protected getTenantRepository<T>(entity: any): Repository<T> {
