@@ -435,10 +435,10 @@ export class SalesService {
     return { success, failed };
   }
 
-  async exportSaleToPDF(id: string) {
+  async exportSaleToPDF(id: string, subdomain: string) {
     const sale = await this.findOne(id);
 
-    const docDefinition = getSaleReport({ data: sale });
+    const docDefinition = getSaleReport({ data: sale, subdomain });
 
     return this.printerService.createPdf({ docDefinition });
   }
