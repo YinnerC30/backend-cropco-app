@@ -28,6 +28,7 @@ import { Request } from 'express';
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger('UsersService');
+  private currentTenantId: string;
 
   constructor(
     @Inject(REQUEST) private readonly request: Request,
@@ -50,19 +51,24 @@ export class UsersService {
         this.request['tenantConnection'].getRepository(UserActions);
       this.modulesRepository =
         this.request['tenantConnection'].getRepository(Module);
+      this.currentTenantId = this.request.headers['x-tenant-id'] as string;
     }
   }
 
   async create(createUserDto: UserDto): Promise<User> {
-    this.logger.log(`Creating new user with email: ${createUserDto.email}`);
-    
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Creating new user with email: ${createUserDto.email}`,
+    );
+
     try {
       const user = this.usersRepository.create(createUserDto);
       user.password = await hashPassword(user.password);
 
       const { id } = await this.usersRepository.save(user);
 
-      this.logger.log(`User created successfully with ID: ${id}`);
+      this.logger.log(
+        `[Tenant: ${this.currentTenantId}] User created successfully with ID: ${id}`,
+      );
 
       const actionsEntity = createUserDto.actions.map((act: UserActionDto) => {
         return this.userActionsRepository.create({ action: act, user: { id } });
@@ -72,18 +78,25 @@ export class UsersService {
         actionsEntity.map((action) => this.userActionsRepository.save(action)),
       );
 
-      this.logger.log(`User actions assigned successfully for user ID: ${id}, total actions: ${actionsEntity.length}`);
+      this.logger.log(
+        `[Tenant: ${this.currentTenantId}] User actions assigned successfully for user ID: ${id}, total actions: ${actionsEntity.length}`,
+      );
 
       delete user.password;
       return user;
     } catch (error) {
-      this.logger.error(`Failed to create user with email: ${createUserDto.email}`, error.stack);
+      this.logger.error(
+        `[Tenant: ${this.currentTenantId}] Failed to create user with email: ${createUserDto.email}`,
+        error.stack,
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async findAll(queryParams: QueryParamsDto) {
-    this.logger.log(`Finding all users with query: "${queryParams.query || 'no query'}", limit: ${queryParams.limit || 10}, offset: ${queryParams.offset || 0}`);
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Finding all users with query: "${queryParams.query || 'no query'}", limit: ${queryParams.limit || 10}, offset: ${queryParams.offset || 0}`,
+    );
 
     const { query = '', limit = 10, offset = 0 } = queryParams;
 
@@ -99,7 +112,9 @@ export class UsersService {
 
     const [users, count] = await queryBuilder.getManyAndCount();
 
-    this.logger.log(`Found ${users.length} users out of ${count} total users`);
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Found ${users.length} users out of ${count} total users`,
+    );
 
     if (users.length === 0 && count > 0) {
       throw new NotFoundException(
@@ -120,7 +135,9 @@ export class UsersService {
     id: string,
     showPassword = false,
   ): Promise<Partial<User> & { modules: Module[] }> {
-    this.logger.log(`Finding user by ID: ${id}, showPassword: ${showPassword}`);
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Finding user by ID: ${id}, showPassword: ${showPassword}`,
+    );
 
     const user = await this.usersRepository.findOne({
       select: {
@@ -138,9 +155,11 @@ export class UsersService {
         actions: true,
       },
     });
-    
+
     if (!user) {
-      this.logger.warn(`User with ID: ${id} not found`);
+      this.logger.warn(
+        `[Tenant: ${this.currentTenantId}] User with ID: ${id} not found`,
+      );
       throw new NotFoundException(`User with id: ${id} not found`);
     }
 
@@ -168,7 +187,9 @@ export class UsersService {
       },
     });
 
-    this.logger.log(`User found successfully with ID: ${id}, modules count: ${userActions.length}`);
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] User found successfully with ID: ${id}, modules count: ${userActions.length}`,
+    );
 
     return {
       ...user,
@@ -181,11 +202,15 @@ export class UsersService {
     updateUserDto: UpdateUserDto,
     ignoreAdmin = false,
   ): Promise<Partial<User> & { modules: Module[] }> {
-    this.logger.log(`Updating user with ID: ${id}, ignoreAdmin: ${ignoreAdmin}`);
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Updating user with ID: ${id}, ignoreAdmin: ${ignoreAdmin}`,
+    );
 
     const user = await this.findOne(id);
     if (user.roles.includes('admin') && !ignoreAdmin) {
-      this.logger.warn(`Attempt to update admin user with ID: ${id} was blocked`);
+      this.logger.warn(
+        `[Tenant: ${this.currentTenantId}] Attempt to update admin user with ID: ${id} was blocked`,
+      );
       throw new ForbiddenException('You cannot update an admin user');
     }
 
@@ -194,7 +219,9 @@ export class UsersService {
 
       await this.usersRepository.update(id, rest);
 
-      this.logger.log(`User basic information updated successfully for ID: ${id}`);
+      this.logger.log(
+        `[Tenant: ${this.currentTenantId}] User basic information updated successfully for ID: ${id}`,
+      );
 
       // Acciones
       await this.userActionsRepository.delete({ user: { id } });
@@ -207,31 +234,44 @@ export class UsersService {
         actionsEntity.map((action) => this.userActionsRepository.save(action)),
       );
 
-      this.logger.log(`User actions updated successfully for ID: ${id}, new actions count: ${actionsEntity.length}`);
+      this.logger.log(
+        `[Tenant: ${this.currentTenantId}] User actions updated successfully for ID: ${id}, new actions count: ${actionsEntity.length}`,
+      );
 
       return await this.findOne(id);
     } catch (error) {
-      this.logger.error(`Failed to update user with ID: ${id}`, error.stack);
+      this.logger.error(
+        `[Tenant: ${this.currentTenantId}] Failed to update user with ID: ${id}`,
+        error.stack,
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async remove(id: string): Promise<void> {
-    this.logger.log(`Attempting to remove user with ID: ${id}`);
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Attempting to remove user with ID: ${id}`,
+    );
 
     const { roles } = await this.findOne(id);
 
     if (roles.includes('admin')) {
-      this.logger.warn(`Attempt to delete admin user with ID: ${id} was blocked`);
+      this.logger.warn(
+        `[Tenant: ${this.currentTenantId}] Attempt to delete admin user with ID: ${id} was blocked`,
+      );
       throw new ForbiddenException('You cannot delete an admin user');
     }
 
     await this.usersRepository.delete(id);
-    this.logger.log(`User with ID: ${id} removed successfully`);
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] User with ID: ${id} removed successfully`,
+    );
   }
 
   async removeBulk(removeBulkUsersDto: RemoveBulkRecordsDto<User>) {
-    this.logger.log(`Starting bulk removal of ${removeBulkUsersDto.recordsIds.length} users`);
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Starting bulk removal of ${removeBulkUsersDto.recordsIds.length} users`,
+    );
 
     const success: string[] = [];
     const failed: { id: string; error: string }[] = [];
@@ -245,19 +285,28 @@ export class UsersService {
       }
     }
 
-    this.logger.log(`Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`);
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+    );
 
     return { success, failed };
   }
 
   async deleteAllUsers() {
-    this.logger.warn('Deleting ALL users - this is a destructive operation');
+    this.logger.warn(
+      `[Tenant: ${this.currentTenantId}] Deleting ALL users - this is a destructive operation`,
+    );
 
     try {
       await this.usersRepository.delete({});
-      this.logger.log('All users deleted successfully');
+      this.logger.log(
+        `[Tenant: ${this.currentTenantId}] All users deleted successfully`,
+      );
     } catch (error) {
-      this.logger.error('Failed to delete all users', error.stack);
+      this.logger.error(
+        `[Tenant: ${this.currentTenantId}] Failed to delete all users`,
+        error.stack,
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -275,22 +324,28 @@ export class UsersService {
   }
 
   async resetPassword(id: string): Promise<{ password: string }> {
-    this.logger.log(`Resetting password for user ID: ${id}`);
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Resetting password for user ID: ${id}`,
+    );
 
     const user = await this.findOne(id);
     if (user.roles.includes('admin')) {
-      this.logger.warn(`Attempt to reset password for admin user with ID: ${id} was blocked`);
+      this.logger.warn(
+        `[Tenant: ${this.currentTenantId}] Attempt to reset password for admin user with ID: ${id} was blocked`,
+      );
       throw new ForbiddenException(
         'You cannot reset the password of an admin user',
       );
     }
-    
+
     const password = generatePassword();
     const encryptPassword = await hashPassword(password);
     await this.updatePassword(id, encryptPassword);
-    
-    this.logger.log(`Password reset successfully for user ID: ${id}`);
-    
+
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Password reset successfully for user ID: ${id}`,
+    );
+
     return { password };
   }
 
@@ -298,37 +353,49 @@ export class UsersService {
     id: string,
     changePasswordDto: ChangePasswordDto,
   ): Promise<void> {
-    this.logger.log(`Changing password for user ID: ${id}`);
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Changing password for user ID: ${id}`,
+    );
 
     const { old_password, new_password } = changePasswordDto;
     const user = await this.findOne(id, true);
     const valid_password = bcrypt.compareSync(old_password, user.password);
-    
+
     if (!valid_password) {
-      this.logger.warn(`Failed password change attempt for user ID: ${id} - incorrect old password`);
+      this.logger.warn(
+        `[Tenant: ${this.currentTenantId}] Failed password change attempt for user ID: ${id} - incorrect old password`,
+      );
       throw new BadRequestException('Old password incorrect, retry');
     }
-    
+
     const encryptPassword = await hashPassword(new_password);
     await this.updatePassword(id, encryptPassword);
-    
-    this.logger.log(`Password changed successfully for user ID: ${id}`);
+
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Password changed successfully for user ID: ${id}`,
+    );
   }
 
   async toggleStatusUser(id: string): Promise<void> {
-    this.logger.log(`Toggling status for user ID: ${id}`);
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Toggling status for user ID: ${id}`,
+    );
 
     const user = await this.findOne(id);
 
     if (user.roles.includes('admin')) {
-      this.logger.warn(`Attempt to toggle status for admin user with ID: ${id} was blocked`);
+      this.logger.warn(
+        `[Tenant: ${this.currentTenantId}] Attempt to toggle status for admin user with ID: ${id} was blocked`,
+      );
       throw new ForbiddenException(
         'You cannot change the status of an admin user',
       );
     }
-    
+
     await this.usersRepository.update(user.id, { is_active: !user.is_active });
-    
-    this.logger.log(`Status toggled successfully for user ID: ${id}, new status: ${!user.is_active ? 'active' : 'inactive'}`);
+
+    this.logger.log(
+      `[Tenant: ${this.currentTenantId}] Status toggled successfully for user ID: ${id}, new status: ${!user.is_active ? 'active' : 'inactive'}`,
+    );
   }
 }
