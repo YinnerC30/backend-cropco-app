@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   ParseUUIDPipe,
   Post,
@@ -86,14 +87,17 @@ export class PaymentsController {
   }
 
   @Get(exportPaymentToPDF.path)
+  @Header('Content-Type', 'application/pdf')
   async exportWorkToPDF(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() response: Response,
     @GetSubdomain() subdomain: string,
   ) {
     const pdfDoc = await this.paymentsService.exportPaymentToPDF(id, subdomain);
-    response.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.info.Title = 'Registro de pago';
+    response.setHeader(
+      'Content-Disposition',
+      `inline; filename="registro-pago-${id}.pdf"`,
+    );
     pdfDoc.pipe(response);
     pdfDoc.end();
   }
