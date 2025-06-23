@@ -21,6 +21,7 @@ import { Work } from './entities/work.entity';
 import { WorkService } from './work.service';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
+import { GetSubdomain } from 'src/common/decorators/get-subdomain.decorator';
 
 export const pathsWorksController: PathsController = {
   createWork: {
@@ -93,8 +94,9 @@ export class WorkController {
   async exportWorkToPDF(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() response: Response,
+    @GetSubdomain() subdomain: string,
   ) {
-    const pdfDoc = await this.workService.exportWorkToPDF(id);
+    const pdfDoc = await this.workService.exportWorkToPDF(id, subdomain);
     response.setHeader('Content-Type', 'application/pdf');
     pdfDoc.info.Title = 'Registro de trabajo';
     pdfDoc.pipe(response);

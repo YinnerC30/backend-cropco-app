@@ -279,10 +279,8 @@ export class WorkService {
     return { success, failed };
   }
 
-  async exportWorkToPDF(id: string) {
+  async exportWorkToPDF(id: string, subdomain: string) {
     const work = await this.findOne(id);
-    const origin = this.request.headers.origin as string;
-    const subdomain = origin ? new URL(origin).hostname.split('.')[0] : null;
     const docDefinition = getWorkReport({ data: work, subdomain });
     return this.printerService.createPdf({ docDefinition });
   }
