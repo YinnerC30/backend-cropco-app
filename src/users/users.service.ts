@@ -27,7 +27,7 @@ import { Request } from 'express';
 
 @Injectable()
 export class UsersService extends BaseTenantService {
-  private readonly logger = new Logger('UsersService');
+  protected readonly logger = new Logger('UsersService');
   private usersRepository: Repository<User>;
   private userActionsRepository: Repository<UserActions>;
   private modulesRepository: Repository<Module>;
@@ -40,6 +40,9 @@ export class UsersService extends BaseTenantService {
     private readonly handlerError: HandlerErrorService,
   ) {
     super(request);
+    
+    // Configurar el logger de BaseTenantService para usar el logger de UsersService
+    this.setLogger(this.logger);
     
     this.usersRepository = this.tenantConnection 
       ? this.getTenantRepository(User)
