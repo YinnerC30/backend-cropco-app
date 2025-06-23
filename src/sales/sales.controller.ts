@@ -22,6 +22,7 @@ import { Sale } from './entities/sale.entity';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Response } from 'express';
 import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
+import { GetSubdomain } from 'src/common/decorators/get-subdomain.decorator';
 
 export const pathsSalesController: PathsController = {
   createSale: {
@@ -85,8 +86,9 @@ export class SalesController {
   async exportWorkToPDF(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() response: Response,
+    @GetSubdomain() subdomain: string,
   ) {
-    const pdfDoc = await this.salesService.exportSaleToPDF(id);
+    const pdfDoc = await this.salesService.exportSaleToPDF(id, subdomain);
     response.setHeader('Content-Type', 'application/pdf');
     pdfDoc.info.Title = 'Registro de venta';
     pdfDoc.pipe(response);
