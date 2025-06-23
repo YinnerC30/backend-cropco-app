@@ -282,6 +282,12 @@ export class PaymentsService {
   async exportPaymentToPDF(id: string, subdomain: string) {
     const payment = await this.findOne(id);
     const docDefinition = getPaymentReport({ data: payment, subdomain });
-    return this.printerService.createPdf({ docDefinition });
+    const pdfDoc = this.printerService.createPdf({
+      docDefinition,
+      title: 'Registro de pago',
+      keywords: 'report-payment',
+    });
+
+    return pdfDoc;
   }
 }
