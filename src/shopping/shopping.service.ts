@@ -470,9 +470,9 @@ export class ShoppingService {
     }
   }
 
-  async exportShoppingToPDF(id: string) {
+  async exportShoppingToPDF(id: string, subdomain: string) {
     const shopping = await this.findOneShopping(id);
-    const docDefinition = getShoppingReport({ data: shopping });
+    const docDefinition = getShoppingReport({ data: shopping, subdomain });
     return this.printerService.createPdf({ docDefinition });
   }
 }
