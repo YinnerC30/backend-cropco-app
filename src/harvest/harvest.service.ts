@@ -680,7 +680,15 @@ export class HarvestService {
   async exportHarvestToPDF(id: string, subdomain: string) {
     const harvest = await this.findOne(id);
     const docDefinition = getHarvestReport({ data: harvest, subdomain });
-    return this.printerService.createPdf({ docDefinition });
+    const pdfDoc = this.printerService.createPdf({ docDefinition });
+    
+    // Configurar metadatos del PDF
+    pdfDoc.info.Title = 'Registro de cosecha';
+    pdfDoc.info.Author = 'CropCo-System';
+    pdfDoc.info.Keywords = 'report-harvest';
+    pdfDoc.info.CreationDate = new Date();
+    
+    return pdfDoc;
   }
 
   private async getHarvestDataForYear(
