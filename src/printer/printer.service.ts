@@ -59,6 +59,9 @@ const customTableLayouts: Record<string, CustomTableLayout> = {
 
 interface CreatePdfProps {
   title?: string;
+  author?: string;
+  keywords?: string;
+  creationDate?: Date;
   docDefinition: TDocumentDefinitions;
   options?: {
     tableLayouts: Record<string, CustomTableLayout>;
@@ -71,11 +74,17 @@ export class PrinterService {
 
   createPdf({
     title = '',
+    author = 'CropCo-System',
+    keywords = 'report-cropco-system',
+    creationDate = new Date(),
     docDefinition,
     options = { tableLayouts: customTableLayouts },
   }: CreatePdfProps): PDFKit.PDFDocument {
     const document = this.printer.createPdfKitDocument(docDefinition, options);
     document.info.Title = title;
+    document.info.Author = author;
+    document.info.Keywords = keywords;
+    document.info.CreationDate = creationDate;
     return document;
   }
 }
