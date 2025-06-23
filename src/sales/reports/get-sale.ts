@@ -66,13 +66,14 @@ export const getSaleReport = (options: ReportOptions): TDocumentDefinitions => {
       {
         table: {
           headerRows: 1,
-          widths: [100, 'auto', 'auto', 'auto', 'auto', 'auto'],
+          widths: [100, 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
           body: [
             [
               { text: 'Id Cliente', style: 'tableHeader' },
               { text: 'Cliente', style: 'tableHeader' },
               { text: 'Cultivo', style: 'tableHeader' },
               { text: 'Cantidad', style: 'tableHeader' },
+              { text: 'Unidad de medida', style: 'tableHeader' },
               { text: 'Valor a pagar', style: 'tableHeader' },
               { text: 'Pendiente de pago', style: 'tableHeader' },
             ],
@@ -92,6 +93,11 @@ export const getSaleReport = (options: ReportOptions): TDocumentDefinitions => {
               },
               {
                 text: FormatNumber(detail.amount),
+                style: 'tableCell',
+                alignment: 'center',
+              },
+              {
+                text: detail.unit_of_measure,
                 style: 'tableCell',
                 alignment: 'center',
               },

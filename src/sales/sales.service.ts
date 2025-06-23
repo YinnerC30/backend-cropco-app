@@ -438,7 +438,17 @@ export class SalesService {
   async exportSaleToPDF(id: string, subdomain: string) {
     const sale = await this.findOne(id);
 
-    const docDefinition = getSaleReport({ data: sale, subdomain });
+    const docDefinition = getSaleReport({
+      data: {
+        ...sale,
+        amount: this.unitConversionService.convert(
+          sale.amount,
+          'GRAMOS',
+          'KILOGRAMOS',
+        ),
+      },
+      subdomain,
+    });
 
     const pdfDoc = this.printerService.createPdf({
       docDefinition,
