@@ -106,28 +106,21 @@ export class HarvestController {
 
   @Get(exportHarvestToPDF.path)
   @Header('Content-Type', 'application/pdf')
-  @Header('Content-Disposition', 'inline; filename="registro-cosecha.pdf"')
   async exportHarvestToPDF(
     @Param('id', ParseUUIDPipe) id: string,
     @GetSubdomain() subdomain: string,
     @Res() response: Response,
   ): Promise<void> {
+    // Establecer el header dinámicamente
+    response.setHeader(
+      'Content-Disposition',
+      `inline; filename="registro-cosecha-${id}.pdf"`,
+    );
+
     const pdfDoc = await this.harvestService.exportHarvestToPDF(id, subdomain);
     pdfDoc.pipe(response);
     pdfDoc.end();
   }
-
-  // Versión alternativa aún más simplificada usando StreamableFile
-  // @Get(exportHarvestToPDF.path)
-  // @Header('Content-Type', 'application/pdf')
-  // @Header('Content-Disposition', 'inline; filename="registro-cosecha.pdf"')
-  // async exportHarvestToPDFStreamable(
-  //   @Param('id', ParseUUIDPipe) id: string,
-  //   @GetSubdomain() subdomain: string,
-  // ): Promise<StreamableFile> {
-  //   const pdfDoc = await this.harvestService.exportHarvestToPDF(id, subdomain);
-  //   return new StreamableFile(pdfDoc);
-  // }
 
   @Post(createHarvest.path)
   create(@Body() createHarvestDto: HarvestDto) {
