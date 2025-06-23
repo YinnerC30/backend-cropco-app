@@ -23,6 +23,7 @@ import { getWorkReport } from './reports/get-work';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 import { QueryTotalWorksInYearDto } from './dto/query-params-total-works-year';
 import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
 export class WorkService {
@@ -36,8 +37,7 @@ export class WorkService {
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.workRepository =
-      this.request['tenantConnection'].getRepository(Work);
+    this.workRepository = this.request['tenantConnection'].getRepository(Work);
     this.dataSource = this.request['tenantConnection'];
   }
 
@@ -281,7 +281,9 @@ export class WorkService {
 
   async exportWorkToPDF(id: string) {
     const work = await this.findOne(id);
-    const docDefinition = getWorkReport({ data: work });
+    const origin = this.request.headers.origin as string;
+    const subdomain = origin ? new URL(origin).hostname.split('.')[0] : null;
+    const docDefinition = getWorkReport({ data: work, subdomain });
     return this.printerService.createPdf({ docDefinition });
   }
 

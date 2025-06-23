@@ -7,6 +7,7 @@ import { headerSection } from 'src/common/reports/sections/header.section';
 import { MyStyles } from 'src/common/reports/sections/styles-dictionary';
 import { Harvest } from '../entities/harvest.entity';
 import { DateFormatter } from 'src/common/helpers';
+import { buildFrontendURL } from 'src/common/utils/constants';
 
 interface ReportOptions {
   data: Harvest & { total_amount_processed: number };
@@ -18,10 +19,7 @@ export const getHarvestReport = (
 ): TDocumentDefinitions => {
   const { data, subdomain } = options;
 
-  const isLocalEnvironment = process.env.STATUS_PROJECT === 'development';
-  const pathFrontend = isLocalEnvironment
-    ? `http://${subdomain}.localhost:5173`
-    : `https://${subdomain}.cropco.org`;
+  const pathFrontend = buildFrontendURL(subdomain).url;
 
   return {
     header: headerSection({
