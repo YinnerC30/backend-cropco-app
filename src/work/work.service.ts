@@ -293,7 +293,7 @@ export class WorkService {
       .leftJoin('details.employee', 'employee')
       .select([
         'CAST(EXTRACT(MONTH FROM work.date) AS INTEGER) as month',
-        'CAST(SUM(DISTINCT work.value_pay) AS INTEGER) as value_pay',
+        'CAST(SUM(DISTINCT details.value_pay) AS INTEGER) as value_pay',
         'COUNT(work) as quantity_works',
       ])
       .where('EXTRACT(YEAR FROM work.date) = :year', { year })
