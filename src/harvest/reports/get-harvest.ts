@@ -146,12 +146,13 @@ export const getHarvestReport = (
       {
         table: {
           headerRows: 1,
-          widths: [100, 'auto', 'auto', 'auto', 'auto'],
+          widths: [100, 'auto', 'auto', 'auto', 'auto', 'auto'],
           body: [
             [
               { text: 'Id Empleado', style: 'tableHeader' },
               { text: 'Empleado', style: 'tableHeader' },
               { text: 'Total cosechado', style: 'tableHeader' },
+              { text: 'Unidad de medida', style: 'tableHeader' },
               { text: 'Valor a pagar', style: 'tableHeader' },
               { text: 'Pendiente de pago', style: 'tableHeader' },
             ],
@@ -167,6 +168,11 @@ export const getHarvestReport = (
               },
               {
                 text: FormatNumber(detail.amount),
+                style: 'tableCell',
+                alignment: 'center',
+              },
+              {
+                text: detail.unit_of_measure,
                 style: 'tableCell',
                 alignment: 'center',
               },
@@ -212,12 +218,13 @@ export const getHarvestReport = (
             {
               table: {
                 headerRows: 1,
-                widths: ['auto', 'auto', 'auto'],
+                widths: ['auto', 'auto', 'auto', 'auto'],
                 body: [
                   [
                     { text: 'Id', style: 'tableHeader' },
                     { text: 'Fecha', style: 'tableHeader' },
                     { text: 'Total', style: 'tableHeader' },
+                    { text: 'Unidad de medida', style: 'tableHeader' },
                   ],
                   ...data.processed.map((proc) => [
                     {
@@ -231,6 +238,11 @@ export const getHarvestReport = (
                     },
                     {
                       text: FormatNumber(proc.amount),
+                      style: 'tableCell',
+                      alignment: 'center',
+                    },
+                    {
+                      text: proc.unit_of_measure,
                       style: 'tableCell',
                       alignment: 'center',
                     },
