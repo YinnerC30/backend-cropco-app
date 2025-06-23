@@ -677,9 +677,7 @@ export class HarvestService {
     return { success, failed };
   }
 
-  async exportHarvestToPDF(id: string) {
-    const origin = this.request.headers.origin as string;
-    const subdomain = origin ? new URL(origin).hostname.split('.')[0] : null;
+  async exportHarvestToPDF(id: string, subdomain: string) {
     const harvest = await this.findOne(id);
     const docDefinition = getHarvestReport({ data: harvest, subdomain });
     return this.printerService.createPdf({ docDefinition });

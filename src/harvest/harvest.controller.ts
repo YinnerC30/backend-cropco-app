@@ -14,6 +14,7 @@ import {
 
 import { Response } from 'express';
 import { Auth } from 'src/auth/decorators/auth.decorator';
+import { GetSubdomain } from 'src/common/decorators/get-subdomain.decorator';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { PathsController } from 'src/common/interfaces/PathsController';
 
@@ -104,9 +105,10 @@ export class HarvestController {
   @Get(exportHarvestToPDF.path)
   async exportHarvestToPDF(
     @Param('id', ParseUUIDPipe) id: string,
+    @GetSubdomain() subdomain: string,
     @Res() response: Response,
   ) {
-    const pdfDoc = await this.harvestService.exportHarvestToPDF(id);
+    const pdfDoc = await this.harvestService.exportHarvestToPDF(id, subdomain);
     response.setHeader('Content-Type', 'application/pdf');
     pdfDoc.info.Title = 'Registro de cosecha';
     pdfDoc.info.Author = 'CropCo-System';
