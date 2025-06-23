@@ -279,9 +279,9 @@ export class PaymentsService {
     return { success, failed };
   }
 
-  async exportPaymentToPDF(id: string) {
+  async exportPaymentToPDF(id: string, subdomain: string) {
     const payment = await this.findOne(id);
-    const docDefinition = getPaymentReport({ data: payment });
+    const docDefinition = getPaymentReport({ data: payment, subdomain });
     return this.printerService.createPdf({ docDefinition });
   }
 }

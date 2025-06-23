@@ -21,6 +21,7 @@ import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Response } from 'express';
 import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
+import { GetSubdomain } from 'src/common/decorators/get-subdomain.decorator';
 
 export const pathsPaymentsController: PathsController = {
   createPayment: {
@@ -88,8 +89,9 @@ export class PaymentsController {
   async exportWorkToPDF(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() response: Response,
+    @GetSubdomain() subdomain: string,
   ) {
-    const pdfDoc = await this.paymentsService.exportPaymentToPDF(id);
+    const pdfDoc = await this.paymentsService.exportPaymentToPDF(id, subdomain);
     response.setHeader('Content-Type', 'application/pdf');
     pdfDoc.info.Title = 'Registro de pago';
     pdfDoc.pipe(response);
