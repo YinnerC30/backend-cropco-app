@@ -34,30 +34,14 @@ export class UsersService extends BaseTenantService {
 
   constructor(
     @Inject(REQUEST) request: Request,
-    @InjectRepository(User) defaultUsersRepo: Repository<User>,
-    @InjectRepository(UserActions) defaultActionsRepo: Repository<UserActions>,
-    @InjectRepository(Module) defaultModulesRepo: Repository<Module>,
     private readonly handlerError: HandlerErrorService,
   ) {
     super(request);
-
-    // Configurar el logger de BaseTenantService para usar el logger de UsersService
     this.setLogger(this.logger);
-
-    this.usersRepository = this.tenantConnection
-      ? this.getTenantRepository(User)
-      : defaultUsersRepo;
-
-    this.userActionsRepository = this.tenantConnection
-      ? this.getTenantRepository(UserActions)
-      : defaultActionsRepo;
-
-    this.modulesRepository = this.tenantConnection
-      ? this.getTenantRepository(Module)
-      : defaultModulesRepo;
+    this.usersRepository = this.getTenantRepository(User);
+    this.userActionsRepository = this.getTenantRepository(UserActions);
+    this.modulesRepository = this.getTenantRepository(Module);
   }
-
-  // Removemos el getter currentUser porque ya está disponible en BaseTenantService
 
   async create(createUserDto: UserDto): Promise<User> {
     this.logWithContext(`Creating new user with email: ${createUserDto.email}`);
@@ -255,7 +239,7 @@ export class UsersService extends BaseTenantService {
       throw new ForbiddenException('You cannot delete an admin user');
     }
 
-    await this.usersRepository.delete(id);
+    await this.usersRepository.softDelete(id);
     this.logWithContext(`User with ID: ${id} removed successfully`);
   }
 
