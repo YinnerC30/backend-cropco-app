@@ -7,138 +7,232 @@ import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { Supplier } from './entities/supplier.entity';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import { BaseTenantService } from 'src/common/services/base-tenant.service';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 
 @Injectable()
-export class SuppliersService {
-  private readonly logger = new Logger('SuppliersService');
+export class SuppliersService extends BaseTenantService {
+  protected readonly logger = new Logger('SuppliersService');
+  private supplierRepository: Repository<Supplier>;
 
   constructor(
-    @Inject(REQUEST) private readonly request: Request,
-    @InjectRepository(Supplier)
-    private readonly supplierRepository: Repository<Supplier>,
+    @Inject(REQUEST) request: Request,
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.supplierRepository =
-      this.request['tenantConnection'].getRepository(Supplier);
+    super(request);
+    this.setLogger(this.logger);
+    this.supplierRepository = this.getTenantRepository(Supplier);
   }
 
   async create(createSupplierDto: CreateSupplierDto) {
+    this.logWithContext(
+      `Creating new supplier with email: ${createSupplierDto.email}`,
+    );
+
     try {
       const supplier = this.supplierRepository.create(createSupplierDto);
-      await this.supplierRepository.save(supplier);
-      return supplier;
+      const savedSupplier = await this.supplierRepository.save(supplier);
+
+      this.logWithContext(
+        `Supplier created successfully with ID: ${savedSupplier.id}`,
+      );
+      return savedSupplier;
     } catch (error) {
+      this.logWithContext(
+        `Failed to create supplier with email: ${createSupplierDto.email}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async findAll(queryParams: QueryParamsDto) {
-    const {
-      query = '',
-      limit = 10,
-      offset = 0,
-      all_records = false,
-    } = queryParams;
+    this.logWithContext(
+      `Finding all suppliers with query: "${queryParams.query || 'no query'}", limit: ${queryParams.limit || 10}, offset: ${queryParams.offset || 0}, all_records: ${queryParams.all_records || false}`,
+    );
 
-    const queryBuilder =
-      this.supplierRepository.createQueryBuilder('suppliers');
+    try {
+      const {
+        query = '',
+        limit = 10,
+        offset = 0,
+        all_records = false,
+      } = queryParams;
 
-    !!query &&
-      !all_records &&
-      queryBuilder
-        .where('suppliers.first_name ILIKE :query', { query: `${query}%` })
-        .orWhere('suppliers.last_name ILIKE :query', { query: `${query}%` })
-        .orWhere('suppliers.email ILIKE :query', { query: `${query}%` });
+      const queryBuilder =
+        this.supplierRepository.createQueryBuilder('suppliers');
 
-    !all_records && queryBuilder.take(limit).skip(offset * limit);
+      !!query &&
+        !all_records &&
+        queryBuilder
+          .where('suppliers.first_name ILIKE :query', { query: `${query}%` })
+          .orWhere('suppliers.last_name ILIKE :query', { query: `${query}%` })
+          .orWhere('suppliers.email ILIKE :query', { query: `${query}%` });
 
-    const [suppliers, count] = await queryBuilder.getManyAndCount();
+      !all_records && queryBuilder.take(limit).skip(offset * limit);
 
-    if (suppliers.length === 0 && count > 0) {
-      throw new NotFoundException(
-        'There are no supplier records with the requested pagination',
+      const [suppliers, count] = await queryBuilder.getManyAndCount();
+
+      this.logWithContext(
+        `Found ${suppliers.length} suppliers out of ${count} total suppliers`,
       );
-    }
 
-    return {
-      total_row_count: count,
-      current_row_count: suppliers.length,
-      total_page_count: all_records ? 1 : Math.ceil(count / limit),
-      current_page_count: all_records ? 1 : offset + 1,
-      records: suppliers,
-    };
+      if (suppliers.length === 0 && count > 0) {
+        throw new NotFoundException(
+          'There are no supplier records with the requested pagination',
+        );
+      }
+
+      return {
+        total_row_count: count,
+        current_row_count: suppliers.length,
+        total_page_count: all_records ? 1 : Math.ceil(count / limit),
+        current_page_count: all_records ? 1 : offset + 1,
+        records: suppliers,
+      };
+    } catch (error) {
+      this.logWithContext(
+        `Failed to find suppliers with query: "${queryParams.query || 'no query'}"`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async findAllSuppliersWithShopping() {
-    const [suppliers, count] = await this.supplierRepository.findAndCount({
-      where: {
-        supplies_shopping_details: MoreThan(0),
-      },
-      relations: {
-        supplies_shopping_details: true,
-      },
-    });
-    return {
-      total_row_count: count,
-      current_row_count: suppliers.length,
-      total_page_count: 1,
-      current_page_count: 1,
-      records: suppliers,
-    };
+    this.logWithContext('Finding all suppliers with shopping records');
+
+    try {
+      const [suppliers, count] = await this.supplierRepository.findAndCount({
+        where: {
+          supplies_shopping_details: MoreThan(0),
+        },
+        relations: {
+          supplies_shopping_details: true,
+        },
+      });
+
+      this.logWithContext(
+        `Found ${suppliers.length} suppliers with shopping records`,
+      );
+
+      return {
+        total_row_count: count,
+        current_row_count: suppliers.length,
+        total_page_count: 1,
+        current_page_count: 1,
+        records: suppliers,
+      };
+    } catch (error) {
+      this.logWithContext(
+        'Failed to find suppliers with shopping records',
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async findOne(id: string) {
-    const supplier = await this.supplierRepository.findOne({
-      where: { id },
-      relations: {
-        supplies_shopping_details: {
-          supply: true,
+    this.logWithContext(`Finding supplier by ID: ${id}`);
+
+    try {
+      const supplier = await this.supplierRepository.findOne({
+        where: { id },
+        relations: {
+          supplies_shopping_details: {
+            supply: true,
+          },
         },
-      },
-    });
-    if (!supplier)
-      throw new NotFoundException(`Supplier with id: ${id} not found`);
-    return supplier;
+      });
+
+      if (!supplier) {
+        this.logWithContext(`Supplier with ID: ${id} not found`, 'warn');
+        throw new NotFoundException(`Supplier with id: ${id} not found`);
+      }
+
+      this.logWithContext(`Supplier found successfully with ID: ${id}`);
+      return supplier;
+    } catch (error) {
+      this.logWithContext(`Failed to find supplier with ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async update(id: string, updateSupplierDto: UpdateSupplierDto) {
-    await this.findOne(id);
+    this.logWithContext(`Updating supplier with ID: ${id}`);
+
     try {
+      await this.findOne(id);
       await this.supplierRepository.update(id, updateSupplierDto);
-      return await this.findOne(id);
+      const updatedSupplier = await this.findOne(id);
+
+      this.logWithContext(`Supplier updated successfully with ID: ${id}`);
+      return updatedSupplier;
     } catch (error) {
+      this.logWithContext(`Failed to update supplier with ID: ${id}`, 'error');
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async remove(id: string) {
-    const supplier = await this.findOne(id);
-    await this.supplierRepository.softRemove(supplier);
+    this.logWithContext(`Attempting to remove supplier with ID: ${id}`);
+
+    try {
+      const supplier = await this.findOne(id);
+      await this.supplierRepository.softRemove(supplier);
+
+      this.logWithContext(`Supplier with ID: ${id} removed successfully`);
+    } catch (error) {
+      this.logWithContext(`Failed to remove supplier with ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async deleteAllSupplier() {
+    this.logWithContext(
+      'Deleting ALL suppliers - this is a destructive operation',
+      'warn',
+    );
+
     try {
       await this.supplierRepository.delete({});
+      this.logWithContext('All suppliers deleted successfully');
     } catch (error) {
+      this.logWithContext('Failed to delete all suppliers', 'error');
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async removeBulk(removeBulkSuppliersDto: RemoveBulkRecordsDto<Supplier>) {
-    const success: string[] = [];
-    const failed: { id: string; error: string }[] = [];
+    this.logWithContext(
+      `Starting bulk removal of ${removeBulkSuppliersDto.recordsIds.length} suppliers`,
+    );
 
-    for (const { id } of removeBulkSuppliersDto.recordsIds) {
-      try {
-        await this.remove(id);
-        success.push(id);
-      } catch (error) {
-        failed.push({ id, error: error.message });
+    try {
+      const success: string[] = [];
+      const failed: { id: string; error: string }[] = [];
+
+      for (const { id } of removeBulkSuppliersDto.recordsIds) {
+        try {
+          await this.remove(id);
+          success.push(id);
+        } catch (error) {
+          failed.push({ id, error: error.message });
+        }
       }
-    }
 
-    return { success, failed };
+      this.logWithContext(
+        `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+      );
+
+      return { success, failed };
+    } catch (error) {
+      this.logWithContext(
+        'Failed to execute bulk removal of suppliers',
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 }
