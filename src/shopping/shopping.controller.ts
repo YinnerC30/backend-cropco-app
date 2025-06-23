@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -91,14 +92,20 @@ export class ShoppingController {
   }
 
   @Get(exportShoppingToPDF.path)
+  @Header('Content-Type', 'application/pdf')
   async exportShoppingToPDF(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() response: Response,
     @GetSubdomain() subdomain: string,
   ) {
-    const pdfDoc = await this.shoppingService.exportShoppingToPDF(id, subdomain);
-    response.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.info.Title = 'Registro de compra';
+    const pdfDoc = await this.shoppingService.exportShoppingToPDF(
+      id,
+      subdomain,
+    );
+    response.setHeader(
+      'Content-Disposition',
+      `inline; filename="registro-compra-${id}.pdf"`,
+    );
     pdfDoc.pipe(response);
     pdfDoc.end();
   }

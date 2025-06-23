@@ -44,8 +44,9 @@ export class ShoppingService {
   ) {
     this.suppliesShoppingRepository =
       this.request['tenantConnection'].getRepository(SuppliesShopping);
-    this.suppliesShoppingDetailsRepository =
-      this.request['tenantConnection'].getRepository(SuppliesShoppingDetails);
+    this.suppliesShoppingDetailsRepository = this.request[
+      'tenantConnection'
+    ].getRepository(SuppliesShoppingDetails);
     this.dataSource = this.request['tenantConnection'];
   }
 
@@ -473,6 +474,12 @@ export class ShoppingService {
   async exportShoppingToPDF(id: string, subdomain: string) {
     const shopping = await this.findOneShopping(id);
     const docDefinition = getShoppingReport({ data: shopping, subdomain });
-    return this.printerService.createPdf({ docDefinition });
+    const pdfDoc = this.printerService.createPdf({
+      docDefinition,
+      title: 'Registro de compra',
+      keywords: 'report-shopping',
+    });
+
+    return pdfDoc;
   }
 }
