@@ -27,7 +27,10 @@ export class Crop {
   @Column({ type: 'text' })
   description: string;
 
-  @Column({ type: 'int4' })
+  @Column({ type: 'float' })
+  number_hectares: number;
+
+  @Column({ type: 'float' })
   units: number;
 
   @Column({ type: 'text' })
