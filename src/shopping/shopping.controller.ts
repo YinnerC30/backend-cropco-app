@@ -21,6 +21,7 @@ import { Response } from 'express';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
 import { ShoppingSuppliesDto } from './dto/shopping-supplies.dto';
+import { GetSubdomain } from 'src/common/decorators/get-subdomain.decorator';
 
 export const pathsShoppingController: PathsController = {
   createShopping: {
@@ -93,8 +94,9 @@ export class ShoppingController {
   async exportShoppingToPDF(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() response: Response,
+    @GetSubdomain() subdomain: string,
   ) {
-    const pdfDoc = await this.shoppingService.exportShoppingToPDF(id);
+    const pdfDoc = await this.shoppingService.exportShoppingToPDF(id, subdomain);
     response.setHeader('Content-Type', 'application/pdf');
     pdfDoc.info.Title = 'Registro de compra';
     pdfDoc.pipe(response);
