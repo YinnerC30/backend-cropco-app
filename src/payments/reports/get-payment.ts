@@ -7,19 +7,21 @@ import { FormatMoneyValue } from 'src/common/helpers/money-formatter';
 import { FormatNumber } from 'src/common/helpers/number-formatter';
 import { MyStyles } from 'src/common/reports/sections/styles-dictionary';
 import { Payment } from '../entities/payment.entity';
+import { buildFrontendURL } from 'src/common/utils/constants';
 
 interface ReportOptions {
   title?: string;
   subTitle?: string;
   data: Payment;
+  subdomain: string;
 }
-
-const pathFrontend = process.env['HOST_FRONTED'] ?? 'http://localhost:5173';
 
 export const getPaymentReport = (
   options: ReportOptions,
 ): TDocumentDefinitions => {
-  const { title, subTitle, data } = options;
+  const { title, subTitle, data, subdomain } = options;
+
+  const pathFrontend = buildFrontendURL(subdomain).url;
 
   return {
     header: headerSection({
