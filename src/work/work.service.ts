@@ -282,7 +282,13 @@ export class WorkService {
   async exportWorkToPDF(id: string, subdomain: string) {
     const work = await this.findOne(id);
     const docDefinition = getWorkReport({ data: work, subdomain });
-    return this.printerService.createPdf({ docDefinition });
+    const pdfDoc = this.printerService.createPdf({
+      docDefinition,
+      title: 'Registro de trabajo',
+      keywords: 'report-work',
+    });
+
+    return pdfDoc;
   }
 
   async getWorkData(year: number, cropId: string, employeeId: string) {

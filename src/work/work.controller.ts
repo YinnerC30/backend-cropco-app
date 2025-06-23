@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -91,14 +92,17 @@ export class WorkController {
   }
 
   @Get(exportWorkToPDF.path)
+  @Header('Content-Type', 'application/pdf')
   async exportWorkToPDF(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() response: Response,
     @GetSubdomain() subdomain: string,
   ) {
     const pdfDoc = await this.workService.exportWorkToPDF(id, subdomain);
-    response.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.info.Title = 'Registro de trabajo';
+    response.setHeader(
+      'Content-Disposition',
+      `inline; filename="registro-trabajo-${id}.pdf"`,
+    );
     pdfDoc.pipe(response);
     pdfDoc.end();
   }
