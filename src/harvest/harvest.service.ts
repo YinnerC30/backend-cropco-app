@@ -679,7 +679,22 @@ export class HarvestService {
 
   async exportHarvestToPDF(id: string, subdomain: string) {
     const harvest = await this.findOne(id);
-    const docDefinition = getHarvestReport({ data: harvest, subdomain });
+    const docDefinition = getHarvestReport({
+      data: {
+        ...harvest,
+        amount: this.unitConversionService.convert(
+          harvest.amount,
+          'GRAMOS',
+          'KILOGRAMOS',
+        ),
+        total_amount_processed: this.unitConversionService.convert(
+          harvest.total_amount_processed,
+          'GRAMOS',
+          'KILOGRAMOS',
+        ),
+      },
+      subdomain,
+    });
     const pdfDoc = this.printerService.createPdf({
       docDefinition,
       title: 'Registro de cosecha',
