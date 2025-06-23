@@ -81,37 +81,45 @@ export class UsersService extends BaseTenantService {
       `Finding all users with query: "${queryParams.query || 'no query'}", limit: ${queryParams.limit || 10}, offset: ${queryParams.offset || 0}`,
     );
 
-    const { query = '', limit = 10, offset = 0 } = queryParams;
+    try {
+      const { query = '', limit = 10, offset = 0 } = queryParams;
 
-    const queryBuilder = this.usersRepository.createQueryBuilder('users');
+      const queryBuilder = this.usersRepository.createQueryBuilder('users');
 
-    !!query &&
-      queryBuilder
-        .where('users.first_name ILIKE :query', { query: `${query}%` })
-        .orWhere('users.last_name ILIKE :query', { query: `${query}%` })
-        .orWhere('users.email ILIKE :query', { query: `${query}%` });
+      !!query &&
+        queryBuilder
+          .where('users.first_name ILIKE :query', { query: `${query}%` })
+          .orWhere('users.last_name ILIKE :query', { query: `${query}%` })
+          .orWhere('users.email ILIKE :query', { query: `${query}%` });
 
-    queryBuilder.take(limit).skip(offset * limit);
+      queryBuilder.take(limit).skip(offset * limit);
 
-    const [users, count] = await queryBuilder.getManyAndCount();
+      const [users, count] = await queryBuilder.getManyAndCount();
 
-    this.logWithContext(
-      `Found ${users.length} users out of ${count} total users`,
-    );
-
-    if (users.length === 0 && count > 0) {
-      throw new NotFoundException(
-        'There are no user records with the requested pagination',
+      this.logWithContext(
+        `Found ${users.length} users out of ${count} total users`,
       );
-    }
 
-    return {
-      total_row_count: count,
-      current_row_count: users.length,
-      total_page_count: Math.ceil(count / limit),
-      current_page_count: offset + 1,
-      records: users,
-    };
+      if (users.length === 0 && count > 0) {
+        throw new NotFoundException(
+          'There are no user records with the requested pagination',
+        );
+      }
+
+      return {
+        total_row_count: count,
+        current_row_count: users.length,
+        total_page_count: Math.ceil(count / limit),
+        current_page_count: offset + 1,
+        records: users,
+      };
+    } catch (error) {
+      this.logWithContext(
+        `Failed to find users with query: "${queryParams.query || 'no query'}"`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async findOne(
@@ -122,60 +130,65 @@ export class UsersService extends BaseTenantService {
       `Finding user by ID: ${id}, showPassword: ${showPassword}`,
     );
 
-    const user = await this.usersRepository.findOne({
-      select: {
-        id: true,
-        cell_phone_number: true,
-        email: true,
-        first_name: true,
-        last_name: true,
-        is_active: true,
-        password: showPassword,
-        roles: true,
-      },
-      where: { id },
-      relations: {
-        actions: true,
-      },
-    });
-
-    if (!user) {
-      this.logWithContext(`User with ID: ${id} not found`, 'warn');
-      throw new NotFoundException(`User with id: ${id} not found`);
-    }
-
-    const userActions = await this.modulesRepository.find({
-      select: {
-        name: true,
-        actions: {
+    try {
+      const user = await this.usersRepository.findOne({
+        select: {
           id: true,
-          description: true,
-          path_endpoint: true,
-          name: true,
+          cell_phone_number: true,
+          email: true,
+          first_name: true,
+          last_name: true,
+          is_active: true,
+          password: showPassword,
+          roles: true,
         },
-      },
-      relations: {
-        actions: true,
-      },
-      where: {
-        actions: {
-          users_actions: {
-            user: {
-              id,
+        where: { id },
+        relations: {
+          actions: true,
+        },
+      });
+
+      if (!user) {
+        this.logWithContext(`User with ID: ${id} not found`, 'warn');
+        throw new NotFoundException(`User with id: ${id} not found`);
+      }
+
+      const userActions = await this.modulesRepository.find({
+        select: {
+          name: true,
+          actions: {
+            id: true,
+            description: true,
+            path_endpoint: true,
+            name: true,
+          },
+        },
+        relations: {
+          actions: true,
+        },
+        where: {
+          actions: {
+            users_actions: {
+              user: {
+                id,
+              },
             },
           },
         },
-      },
-    });
+      });
 
-    this.logWithContext(
-      `User found successfully with ID: ${id}, modules count: ${userActions.length}`,
-    );
+      this.logWithContext(
+        `User found successfully with ID: ${id}, modules count: ${userActions.length}`,
+      );
 
-    return {
-      ...user,
-      modules: userActions,
-    };
+      return {
+        ...user,
+        modules: userActions,
+      };
+    } catch (error) {
+      this.logWithContext(`Failed to find user with ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async update(
@@ -229,18 +242,23 @@ export class UsersService extends BaseTenantService {
   async remove(id: string): Promise<void> {
     this.logWithContext(`Attempting to remove user with ID: ${id}`);
 
-    const { roles } = await this.findOne(id);
+    try {
+      const { roles } = await this.findOne(id);
 
-    if (roles.includes('admin')) {
-      this.logWithContext(
-        `Attempt to delete admin user with ID: ${id} was blocked`,
-        'warn',
-      );
-      throw new ForbiddenException('You cannot delete an admin user');
+      if (roles.includes('admin')) {
+        this.logWithContext(
+          `Attempt to delete admin user with ID: ${id} was blocked`,
+          'warn',
+        );
+        throw new ForbiddenException('You cannot delete an admin user');
+      }
+
+      await this.usersRepository.softDelete(id);
+      this.logWithContext(`User with ID: ${id} removed successfully`);
+    } catch (error) {
+      this.logWithContext(`Failed to remove user with ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
     }
-
-    await this.usersRepository.softDelete(id);
-    this.logWithContext(`User with ID: ${id} removed successfully`);
   }
 
   async removeBulk(removeBulkUsersDto: RemoveBulkRecordsDto<User>) {
@@ -248,23 +266,31 @@ export class UsersService extends BaseTenantService {
       `Starting bulk removal of ${removeBulkUsersDto.recordsIds.length} users`,
     );
 
-    const success: string[] = [];
-    const failed: { id: string; error: string }[] = [];
+    try {
+      const success: string[] = [];
+      const failed: { id: string; error: string }[] = [];
 
-    for (const { id } of removeBulkUsersDto.recordsIds) {
-      try {
-        await this.remove(id);
-        success.push(id);
-      } catch (error) {
-        failed.push({ id, error: error.message });
+      for (const { id } of removeBulkUsersDto.recordsIds) {
+        try {
+          await this.remove(id);
+          success.push(id);
+        } catch (error) {
+          failed.push({ id, error: error.message });
+        }
       }
+
+      this.logWithContext(
+        `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+      );
+
+      return { success, failed };
+    } catch (error) {
+      this.logWithContext(
+        `Failed to execute bulk removal of users`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
     }
-
-    this.logWithContext(
-      `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
-    );
-
-    return { success, failed };
   }
 
   async deleteAllUsers() {
@@ -286,35 +312,48 @@ export class UsersService extends BaseTenantService {
     userId: string,
     newPassword: string,
   ): Promise<void> {
-    await this.usersRepository.update(
-      {
-        id: userId,
-      },
-      { password: newPassword },
-    );
+    this.logWithContext(`Updating password for user ID: ${userId}`);
+
+    try {
+      await this.usersRepository.update(
+        {
+          id: userId,
+        },
+        { password: newPassword },
+      );
+      this.logWithContext(`Password updated successfully for user ID: ${userId}`);
+    } catch (error) {
+      this.logWithContext(`Failed to update password for user ID: ${userId}`, 'error');
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async resetPassword(id: string): Promise<{ password: string }> {
     this.logWithContext(`Resetting password for user ID: ${id}`);
 
-    const user = await this.findOne(id);
-    if (user.roles.includes('admin')) {
-      this.logWithContext(
-        `Attempt to reset password for admin user with ID: ${id} was blocked`,
-        'warn',
-      );
-      throw new ForbiddenException(
-        'You cannot reset the password of an admin user',
-      );
+    try {
+      const user = await this.findOne(id);
+      if (user.roles.includes('admin')) {
+        this.logWithContext(
+          `Attempt to reset password for admin user with ID: ${id} was blocked`,
+          'warn',
+        );
+        throw new ForbiddenException(
+          'You cannot reset the password of an admin user',
+        );
+      }
+
+      const password = generatePassword();
+      const encryptPassword = await hashPassword(password);
+      await this.updatePassword(id, encryptPassword);
+
+      this.logWithContext(`Password reset successfully for user ID: ${id}`);
+
+      return { password };
+    } catch (error) {
+      this.logWithContext(`Failed to reset password for user ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
     }
-
-    const password = generatePassword();
-    const encryptPassword = await hashPassword(password);
-    await this.updatePassword(id, encryptPassword);
-
-    this.logWithContext(`Password reset successfully for user ID: ${id}`);
-
-    return { password };
   }
 
   async changePassword(
@@ -323,43 +362,53 @@ export class UsersService extends BaseTenantService {
   ): Promise<void> {
     this.logWithContext(`Changing password for user ID: ${id}`);
 
-    const { old_password, new_password } = changePasswordDto;
-    const user = await this.findOne(id, true);
-    const valid_password = bcrypt.compareSync(old_password, user.password);
+    try {
+      const { old_password, new_password } = changePasswordDto;
+      const user = await this.findOne(id, true);
+      const valid_password = bcrypt.compareSync(old_password, user.password);
 
-    if (!valid_password) {
-      this.logWithContext(
-        `Failed password change attempt for user ID: ${id} - incorrect old password`,
-        'warn',
-      );
-      throw new BadRequestException('Old password incorrect, retry');
+      if (!valid_password) {
+        this.logWithContext(
+          `Failed password change attempt for user ID: ${id} - incorrect old password`,
+          'warn',
+        );
+        throw new BadRequestException('Old password incorrect, retry');
+      }
+
+      const encryptPassword = await hashPassword(new_password);
+      await this.updatePassword(id, encryptPassword);
+
+      this.logWithContext(`Password changed successfully for user ID: ${id}`);
+    } catch (error) {
+      this.logWithContext(`Failed to change password for user ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
     }
-
-    const encryptPassword = await hashPassword(new_password);
-    await this.updatePassword(id, encryptPassword);
-
-    this.logWithContext(`Password changed successfully for user ID: ${id}`);
   }
 
   async toggleStatusUser(id: string): Promise<void> {
     this.logWithContext(`Toggling status for user ID: ${id}`);
 
-    const user = await this.findOne(id);
+    try {
+      const user = await this.findOne(id);
 
-    if (user.roles.includes('admin')) {
+      if (user.roles.includes('admin')) {
+        this.logWithContext(
+          `Attempt to toggle status for admin user with ID: ${id} was blocked`,
+          'warn',
+        );
+        throw new ForbiddenException(
+          'You cannot change the status of an admin user',
+        );
+      }
+
+      await this.usersRepository.update(user.id, { is_active: !user.is_active });
+
       this.logWithContext(
-        `Attempt to toggle status for admin user with ID: ${id} was blocked`,
-        'warn',
+        `Status toggled successfully for user ID: ${id}, new status: ${!user.is_active ? 'active' : 'inactive'}`,
       );
-      throw new ForbiddenException(
-        'You cannot change the status of an admin user',
-      );
+    } catch (error) {
+      this.logWithContext(`Failed to toggle status for user ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
     }
-
-    await this.usersRepository.update(user.id, { is_active: !user.is_active });
-
-    this.logWithContext(
-      `Status toggled successfully for user ID: ${id}, new status: ${!user.is_active ? 'active' : 'inactive'}`,
-    );
   }
 }
