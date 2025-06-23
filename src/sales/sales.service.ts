@@ -41,8 +41,7 @@ export class SalesService {
     private readonly handlerError: HandlerErrorService,
     private readonly unitConversionService: UnitConversionService,
   ) {
-    this.saleRepository =
-      this.request['tenantConnection'].getRepository(Sale);
+    this.saleRepository = this.request['tenantConnection'].getRepository(Sale);
     this.dataSource = this.request['tenantConnection'];
   }
 
@@ -346,7 +345,20 @@ export class SalesService {
         await queryRunner.manager.save(record);
       }
 
-      await queryRunner.manager.update(Sale, { id }, rest);
+      const totalAmountInGrams = newDetails.reduce((total, detail) => {
+        const amountInGrams = this.unitConversionService.convert(
+          detail.amount,
+          detail.unit_of_measure,
+          'GRAMOS',
+        );
+        return total + amountInGrams;
+      }, 0);
+
+      await queryRunner.manager.update(
+        Sale,
+        { id },
+        { ...rest, amount: totalAmountInGrams },
+      );
 
       await queryRunner.commitTransaction();
       return await this.findOne(id);
