@@ -1,6 +1,7 @@
 import {
   IsDateString,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Length,
@@ -17,11 +18,11 @@ export class CreateCropDto {
   @Length(0, 500)
   description: string;
 
-  @IsFloat()
+  @IsNumber()
   @Min(0)
   number_hectares: number;
 
-  @IsInt()
+  @IsNumber()
   @Min(1)
   units: number;
 
@@ -36,9 +37,4 @@ export class CreateCropDto {
   @IsDateString()
   date_of_termination: string;
 }
-function IsFloat(): (
-  target: CreateCropDto,
-  propertyKey: 'number_hectares',
-) => void {
-  throw new Error('Function not implemented.');
-}
+
