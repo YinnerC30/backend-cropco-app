@@ -3,12 +3,14 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   ParseUUIDPipe,
   Put,
   Post,
   Query,
   Res,
+  StreamableFile,
   UseInterceptors,
 } from '@nestjs/common';
 
@@ -103,20 +105,29 @@ export class HarvestController {
   constructor(private readonly harvestService: HarvestService) {}
 
   @Get(exportHarvestToPDF.path)
+  @Header('Content-Type', 'application/pdf')
+  @Header('Content-Disposition', 'inline; filename="registro-cosecha.pdf"')
   async exportHarvestToPDF(
     @Param('id', ParseUUIDPipe) id: string,
     @GetSubdomain() subdomain: string,
     @Res() response: Response,
-  ) {
+  ): Promise<void> {
     const pdfDoc = await this.harvestService.exportHarvestToPDF(id, subdomain);
-    response.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.info.Title = 'Registro de cosecha';
-    pdfDoc.info.Author = 'CropCo-System';
-    pdfDoc.info.Keywords = 'report-harvest';
-    pdfDoc.info.CreationDate = new Date();
     pdfDoc.pipe(response);
     pdfDoc.end();
   }
+
+  // Versión alternativa aún más simplificada usando StreamableFile
+  // @Get(exportHarvestToPDF.path)
+  // @Header('Content-Type', 'application/pdf')
+  // @Header('Content-Disposition', 'inline; filename="registro-cosecha.pdf"')
+  // async exportHarvestToPDFStreamable(
+  //   @Param('id', ParseUUIDPipe) id: string,
+  //   @GetSubdomain() subdomain: string,
+  // ): Promise<StreamableFile> {
+  //   const pdfDoc = await this.harvestService.exportHarvestToPDF(id, subdomain);
+  //   return new StreamableFile(pdfDoc);
+  // }
 
   @Post(createHarvest.path)
   create(@Body() createHarvestDto: HarvestDto) {
