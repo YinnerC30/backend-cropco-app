@@ -678,8 +678,10 @@ export class HarvestService {
   }
 
   async exportHarvestToPDF(id: string) {
+    const origin = this.request.headers.origin as string;
+    const subdomain = origin ? new URL(origin).hostname.split('.')[0] : null;
     const harvest = await this.findOne(id);
-    const docDefinition = getHarvestReport({ data: harvest });
+    const docDefinition = getHarvestReport({ data: harvest, subdomain });
     return this.printerService.createPdf({ docDefinition });
   }
 

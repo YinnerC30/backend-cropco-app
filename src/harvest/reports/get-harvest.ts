@@ -10,14 +10,18 @@ import { DateFormatter } from 'src/common/helpers';
 
 interface ReportOptions {
   data: Harvest & { total_amount_processed: number };
+  subdomain: string;
 }
 
 export const getHarvestReport = (
   options: ReportOptions,
 ): TDocumentDefinitions => {
-  const { data } = options;
+  const { data, subdomain } = options;
 
-  const pathFrontend = process.env['HOST_FRONTED'] ?? 'http://localhost:5173';
+  const isLocalEnvironment = process.env.STATUS_PROJECT === 'development';
+  const pathFrontend = isLocalEnvironment
+    ? `http://${subdomain}.localhost:5173`
+    : `https://${subdomain}.cropco.org`;
 
   return {
     header: headerSection({
@@ -204,7 +208,7 @@ export const getHarvestReport = (
       },
 
       // Procesos realizados
-      data.processed.length > 0 
+      data.processed.length > 0
         ? [
             { text: 'Información sobre cosecha procesada', style: 'subheader' },
             {
