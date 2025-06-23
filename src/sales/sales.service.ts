@@ -440,7 +440,13 @@ export class SalesService {
 
     const docDefinition = getSaleReport({ data: sale, subdomain });
 
-    return this.printerService.createPdf({ docDefinition });
+    const pdfDoc = this.printerService.createPdf({
+      docDefinition,
+      title: 'Registro de venta',
+      keywords: 'report-sale',
+    });
+
+    return pdfDoc;
   }
 
   async findTotalSalesInYear({
