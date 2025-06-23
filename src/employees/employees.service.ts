@@ -19,271 +19,442 @@ import { Employee } from './entities/employee.entity';
 import { getEmploymentLetterByIdReport } from './reports/employment-letter-by-id.report';
 
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import { BaseTenantService } from 'src/common/services/base-tenant.service';
 import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 
 @Injectable()
-export class EmployeesService {
-  private readonly logger = new Logger('EmployeesService');
+export class EmployeesService extends BaseTenantService {
+  protected readonly logger = new Logger('EmployeesService');
+  private employeeRepository: Repository<Employee>;
 
   constructor(
-    @Inject(REQUEST) private readonly request: Request,
-    @InjectRepository(Employee)
-    private readonly employeeRepository: Repository<Employee>,
+    @Inject(REQUEST) request: Request,
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.employeeRepository =
-      this.request['tenantConnection'].getRepository(Employee);
+    super(request);
+    this.setLogger(this.logger);
+    this.employeeRepository = this.getTenantRepository(Employee);
   }
 
   async findOneCertification(id: string) {
-    const employee = await this.findOne(id);
+    this.logWithContext(
+      `Generating employment certification for employee ID: ${id}`,
+    );
 
-    const docDefinition = getEmploymentLetterByIdReport({
-      employerName: 'Carlos',
-      employerPosition: 'Gerente de RRHH',
-      employeeName: employee.first_name,
-      employeePosition: 'Jornalero',
-      employeeStartDate: new Date(),
-      employeeHours: 48,
-      employeeWorkSchedule: 'Lunes a Viernes',
-      employerCompany: 'Cropco Corp.',
-    });
-    const doc = this.printerService.createPdf({ docDefinition });
-    return doc;
+    try {
+      const employee = await this.findOne(id);
+
+      const docDefinition = getEmploymentLetterByIdReport({
+        employerName: 'Carlos',
+        employerPosition: 'Gerente de RRHH',
+        employeeName: employee.first_name,
+        employeePosition: 'Jornalero',
+        employeeStartDate: new Date(),
+        employeeHours: 48,
+        employeeWorkSchedule: 'Lunes a Viernes',
+        employerCompany: 'Cropco Corp.',
+      });
+
+      const doc = this.printerService.createPdf({ docDefinition });
+      this.logWithContext(
+        `Employment certification generated successfully for employee ID: ${id}`,
+      );
+
+      return doc;
+    } catch (error) {
+      this.logWithContext(
+        `Failed to generate employment certification for employee ID: ${id}`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async create(createEmployeeDto: CreateEmployeeDto) {
+    this.logWithContext(
+      `Creating new employee with email: ${createEmployeeDto.email}`,
+    );
+
     try {
       const employee = this.employeeRepository.create(createEmployeeDto);
-      await this.employeeRepository.save(employee);
-      return employee;
+      const savedEmployee = await this.employeeRepository.save(employee);
+
+      this.logWithContext(
+        `Employee created successfully with ID: ${savedEmployee.id}`,
+      );
+      return savedEmployee;
     } catch (error) {
+      this.logWithContext(
+        `Failed to create employee with email: ${createEmployeeDto.email}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async findAll(queryParams: QueryParamsDto) {
-    const {
-      query = '',
-      limit = 10,
-      offset = 0,
-      all_records = false,
-    } = queryParams;
+    this.logWithContext(
+      `Finding all employees with query: "${queryParams.query || 'no query'}", limit: ${queryParams.limit || 10}, offset: ${queryParams.offset || 0}, all_records: ${queryParams.all_records || false}`,
+    );
 
-    const queryBuilder =
-      this.employeeRepository.createQueryBuilder('employees');
+    try {
+      const {
+        query = '',
+        limit = 10,
+        offset = 0,
+        all_records = false,
+      } = queryParams;
 
-    !!query &&
-      !all_records &&
-      queryBuilder
-        .where('employees.first_name ILIKE :query', { query: `${query}%` })
-        .orWhere('employees.last_name ILIKE :query', { query: `${query}%` })
-        .orWhere('employees.email ILIKE :query', { query: `${query}%` });
+      const queryBuilder =
+        this.employeeRepository.createQueryBuilder('employees');
 
-    !all_records && queryBuilder.take(limit).skip(offset * limit);
+      !!query &&
+        !all_records &&
+        queryBuilder
+          .where('employees.first_name ILIKE :query', { query: `${query}%` })
+          .orWhere('employees.last_name ILIKE :query', { query: `${query}%` })
+          .orWhere('employees.email ILIKE :query', { query: `${query}%` });
 
-    const [employees, count] = await queryBuilder.getManyAndCount();
+      !all_records && queryBuilder.take(limit).skip(offset * limit);
 
-    if (employees.length === 0 && count > 0) {
-      throw new NotFoundException(
-        'There are no employee records with the requested pagination',
+      const [employees, count] = await queryBuilder.getManyAndCount();
+
+      this.logWithContext(
+        `Found ${employees.length} employees out of ${count} total employees`,
       );
-    }
 
-    return {
-      total_row_count: count,
-      current_row_count: employees.length,
-      total_page_count: all_records ? 1 : Math.ceil(count / limit),
-      current_page_count: all_records ? 1 : offset + 1,
-      records: employees,
-    };
+      if (employees.length === 0 && count > 0) {
+        throw new NotFoundException(
+          'There are no employee records with the requested pagination',
+        );
+      }
+
+      return {
+        total_row_count: count,
+        current_row_count: employees.length,
+        total_page_count: all_records ? 1 : Math.ceil(count / limit),
+        current_page_count: all_records ? 1 : offset + 1,
+        records: employees,
+      };
+    } catch (error) {
+      this.logWithContext(
+        `Failed to find employees with query: "${queryParams.query || 'no query'}"`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async findAllEmployeesWithPaymentsPending() {
-    const [employees, count] = await this.employeeRepository.findAndCount({
-      select: {
-        id: true,
-        first_name: true,
-        last_name: true,
-      },
-      where: [
-        {
-          harvests_detail: {
-            payment_is_pending: true,
-          },
-        },
-        {
-          works_detail: {
-            payment_is_pending: true,
-          },
-        },
-      ],
-    });
+    this.logWithContext('Finding all employees with pending payments');
 
-    return {
-      total_row_count: count,
-      current_row_count: employees.length,
-      total_page_count: 1,
-      current_page_count: 1,
-      records: employees,
-    };
+    try {
+      const [employees, count] = await this.employeeRepository.findAndCount({
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+        },
+        where: [
+          {
+            harvests_detail: {
+              payment_is_pending: true,
+            },
+          },
+          {
+            works_detail: {
+              payment_is_pending: true,
+            },
+          },
+        ],
+      });
+
+      this.logWithContext(
+        `Found ${employees.length} employees with pending payments`,
+      );
+
+      return {
+        total_row_count: count,
+        current_row_count: employees.length,
+        total_page_count: 1,
+        current_page_count: 1,
+        records: employees,
+      };
+    } catch (error) {
+      this.logWithContext(
+        'Failed to find employees with pending payments',
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async findAllEmployeesWithPaymentsMade() {
-    const [employees, count] = await this.employeeRepository
-      .createQueryBuilder('employee')
-      .withDeleted()
-      .leftJoinAndSelect('employee.payments', 'payments')
-      .where('payments.id IS NOT NULL') // Filtrar solo empleados con pagos
-      .select([
-        'employee.id',
-        'employee.first_name',
-        'employee.last_name',
-        'payments', // Si quieres incluir información de los pagos
-      ])
-      .getManyAndCount();
+    this.logWithContext('Finding all employees with payments made');
 
-    return {
-      total_row_count: count,
-      current_row_count: employees.length,
-      total_page_count: 1,
-      current_page_count: 1,
-      records: employees,
-    };
-  }
-  async findOneEmployeeWithPaymentsPending(id: string) {
-    const employee = await this.employeeRepository.findOne({
-      withDeleted: true,
-      where: [
-        {
-          id,
-          harvests_detail: { payment_is_pending: true },
-        },
-        {
-          id,
-          works_detail: { payment_is_pending: true },
-        },
-      ],
-      relations: {
-        harvests_detail: { harvest: true },
-        works_detail: { work: true },
-      },
-    });
-    if (!employee) {
-      throw new NotFoundException(`Employee with id: ${id} not found`);
+    try {
+      const [employees, count] = await this.employeeRepository
+        .createQueryBuilder('employee')
+        .withDeleted()
+        .leftJoinAndSelect('employee.payments', 'payments')
+        .where('payments.id IS NOT NULL')
+        .select([
+          'employee.id',
+          'employee.first_name',
+          'employee.last_name',
+          'payments',
+        ])
+        .getManyAndCount();
+
+      this.logWithContext(
+        `Found ${employees.length} employees with payments made`,
+      );
+
+      return {
+        total_row_count: count,
+        current_row_count: employees.length,
+        total_page_count: 1,
+        current_page_count: 1,
+        records: employees,
+      };
+    } catch (error) {
+      this.logWithContext(
+        'Failed to find employees with payments made',
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
     }
+  }
 
-    return employee;
+  async findOneEmployeeWithPaymentsPending(id: string) {
+    this.logWithContext(`Finding employee with pending payments for ID: ${id}`);
+
+    try {
+      const employee = await this.employeeRepository.findOne({
+        withDeleted: true,
+        where: [
+          {
+            id,
+            harvests_detail: { payment_is_pending: true },
+          },
+          {
+            id,
+            works_detail: { payment_is_pending: true },
+          },
+        ],
+        relations: {
+          harvests_detail: { harvest: true },
+          works_detail: { work: true },
+        },
+      });
+
+      if (!employee) {
+        this.logWithContext(
+          `Employee with pending payments not found for ID: ${id}`,
+          'warn',
+        );
+        throw new NotFoundException(`Employee with id: ${id} not found`);
+      }
+
+      this.logWithContext(
+        `Employee with pending payments found successfully for ID: ${id}`,
+      );
+      return employee;
+    } catch (error) {
+      this.logWithContext(
+        `Failed to find employee with pending payments for ID: ${id}`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async findAllEmployeesWithHarvests() {
-    const [employees, count] = await this.employeeRepository.findAndCount({
-      relations: {
-        harvests_detail: true,
-      },
-      where: {
-        harvests_detail: MoreThan(0),
-      },
-    });
-    return {
-      total_row_count: count,
-      current_row_count: employees.length,
-      total_page_count: 1,
-      current_page_count: 1,
-      records: employees,
-    };
+    this.logWithContext('Finding all employees with harvests');
+
+    try {
+      const [employees, count] = await this.employeeRepository.findAndCount({
+        relations: {
+          harvests_detail: true,
+        },
+        where: {
+          harvests_detail: MoreThan(0),
+        },
+      });
+
+      this.logWithContext(`Found ${employees.length} employees with harvests`);
+
+      return {
+        total_row_count: count,
+        current_row_count: employees.length,
+        total_page_count: 1,
+        current_page_count: 1,
+        records: employees,
+      };
+    } catch (error) {
+      this.logWithContext('Failed to find employees with harvests', 'error');
+      this.handlerError.handle(error, this.logger);
+    }
   }
+
   async findAllEmployeesWithWorks() {
-    const [employees, count] = await this.employeeRepository.findAndCount({
-      relations: {
-        works_detail: true,
-      },
-      where: {
-        works_detail: MoreThan(0),
-      },
-    });
-    return {
-      total_row_count: count,
-      current_row_count: employees.length,
-      total_page_count: 1,
-      current_page_count: 1,
-      records: employees,
-    };
+    this.logWithContext('Finding all employees with works');
+
+    try {
+      const [employees, count] = await this.employeeRepository.findAndCount({
+        relations: {
+          works_detail: true,
+        },
+        where: {
+          works_detail: MoreThan(0),
+        },
+      });
+
+      this.logWithContext(`Found ${employees.length} employees with works`);
+
+      return {
+        total_row_count: count,
+        current_row_count: employees.length,
+        total_page_count: 1,
+        current_page_count: 1,
+        records: employees,
+      };
+    } catch (error) {
+      this.logWithContext('Failed to find employees with works', 'error');
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async findOne(id: string) {
-    const employee = await this.employeeRepository.findOne({
-      where: { id },
-      relations: {
-        harvests_detail: { harvest: true },
-        payments: true,
-        works_detail: { work: true },
-      },
-    });
-    if (!employee)
-      throw new NotFoundException(`Employee with id: ${id} not found`);
-    return employee;
+    this.logWithContext(`Finding employee by ID: ${id}`);
+
+    try {
+      const employee = await this.employeeRepository.findOne({
+        where: { id },
+        relations: {
+          harvests_detail: { harvest: true },
+          payments: true,
+          works_detail: { work: true },
+        },
+      });
+
+      if (!employee) {
+        this.logWithContext(`Employee with ID: ${id} not found`, 'warn');
+        throw new NotFoundException(`Employee with id: ${id} not found`);
+      }
+
+      this.logWithContext(`Employee found successfully with ID: ${id}`);
+      return employee;
+    } catch (error) {
+      this.logWithContext(`Failed to find employee with ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async update(id: string, updateEmployeeDto: UpdateEmployeeDto) {
-    await this.findOne(id);
+    this.logWithContext(`Updating employee with ID: ${id}`);
+
     try {
+      await this.findOne(id);
       await this.employeeRepository.update(id, updateEmployeeDto);
-      return await this.findOne(id);
+      const updatedEmployee = await this.findOne(id);
+
+      this.logWithContext(`Employee updated successfully with ID: ${id}`);
+      return updatedEmployee;
     } catch (error) {
+      this.logWithContext(`Failed to update employee with ID: ${id}`, 'error');
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async remove(id: string) {
-    const employee = await this.findOne(id);
+    this.logWithContext(`Attempting to remove employee with ID: ${id}`);
 
-    if (
-      employee.harvests_detail.some(
-        (item: HarvestDetails) => item.payment_is_pending === true,
-      )
-    ) {
-      throw new ConflictException(
-        `Employee with id ${employee.id} cannot be removed, has unpaid harvests`,
-      );
+    try {
+      const employee = await this.findOne(id);
+
+      if (
+        employee.harvests_detail.some(
+          (item: HarvestDetails) => item.payment_is_pending === true,
+        )
+      ) {
+        this.logWithContext(
+          `Cannot remove employee with ID: ${id} - has unpaid harvests`,
+          'warn',
+        );
+        throw new ConflictException(
+          `Employee with id ${employee.id} cannot be removed, has unpaid harvests`,
+        );
+      }
+
+      if (
+        employee.works_detail.some(
+          (item: WorkDetails) => item.payment_is_pending === true,
+        )
+      ) {
+        this.logWithContext(
+          `Cannot remove employee with ID: ${id} - has unpaid works`,
+          'warn',
+        );
+        throw new ConflictException(
+          `Employee with id ${employee.id} cannot be removed, has unpaid works`,
+        );
+      }
+
+      await this.employeeRepository.softRemove(employee);
+      this.logWithContext(`Employee with ID: ${id} removed successfully`);
+    } catch (error) {
+      this.logWithContext(`Failed to remove employee with ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
     }
-
-    if (
-      employee.works_detail.some(
-        (item: WorkDetails) => item.payment_is_pending === true,
-      )
-    ) {
-      throw new ConflictException(
-        `Employee with id ${employee.id} cannot be removed, has unpaid works`,
-      );
-    }
-
-    await this.employeeRepository.softRemove(employee);
   }
 
   async removeBulk(removeBulkEmployeesDto: RemoveBulkRecordsDto<Employee>) {
-    const success: string[] = [];
-    const failed: { id: string; error: string }[] = [];
+    this.logWithContext(
+      `Starting bulk removal of ${removeBulkEmployeesDto.recordsIds.length} employees`,
+    );
 
-    for (const { id } of removeBulkEmployeesDto.recordsIds) {
-      try {
-        await this.remove(id);
-        success.push(id);
-      } catch (error) {
-        failed.push({ id, error: error.message });
+    try {
+      const success: string[] = [];
+      const failed: { id: string; error: string }[] = [];
+
+      for (const { id } of removeBulkEmployeesDto.recordsIds) {
+        try {
+          await this.remove(id);
+          success.push(id);
+        } catch (error) {
+          failed.push({ id, error: error.message });
+        }
       }
-    }
 
-    return { success, failed }; // Retorna un resumen de las operaciones
+      this.logWithContext(
+        `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+      );
+
+      return { success, failed };
+    } catch (error) {
+      this.logWithContext(
+        'Failed to execute bulk removal of employees',
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async deleteAllEmployees() {
+    this.logWithContext(
+      'Deleting ALL employees - this is a destructive operation',
+      'warn',
+    );
+
     try {
       await this.employeeRepository.delete({});
+      this.logWithContext('All employees deleted successfully');
     } catch (error) {
+      this.logWithContext('Failed to delete all employees', 'error');
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -293,63 +464,92 @@ export class EmployeesService {
   async findTopEmployeesInHarvests({
     year = new Date().getFullYear(),
   }: QueryForYearDto) {
-    const employees = await this.employeeRepository.query(
-      `
-      SELECT hd."employeeId" as id,
-             emp.first_name,
-             emp.last_name,
-             SUM(convert_to_grams(hd.unit_of_measure::TEXT, hd.amount::NUMERIC)) AS total_harvests_amount,
-             CAST(SUM(hd.value_pay) AS INTEGER) AS total_value_pay
-      FROM harvests_detail hd
-      JOIN harvests h ON hd."harvestId" = h.id
-      JOIN employees emp ON hd."employeeId" = emp.id
-      WHERE EXTRACT(YEAR FROM h.date) = $1
-      GROUP BY hd."employeeId", emp.first_name, emp.last_name
-      ORDER BY total_harvests_amount DESC
-      LIMIT 5
-    `,
-      [year],
-    );
+    this.logWithContext(`Finding top employees in harvests for year: ${year}`);
 
-    const count = employees.length;
+    try {
+      const employees = await this.employeeRepository.query(
+        `
+        SELECT hd."employeeId" as id,
+               emp.first_name,
+               emp.last_name,
+               SUM(convert_to_grams(hd.unit_of_measure::TEXT, hd.amount::NUMERIC)) AS total_harvests_amount,
+               CAST(SUM(hd.value_pay) AS INTEGER) AS total_value_pay
+        FROM harvests_detail hd
+        JOIN harvests h ON hd."harvestId" = h.id
+        JOIN employees emp ON hd."employeeId" = emp.id
+        WHERE EXTRACT(YEAR FROM h.date) = $1
+        GROUP BY hd."employeeId", emp.first_name, emp.last_name
+        ORDER BY total_harvests_amount DESC
+        LIMIT 5
+      `,
+        [year],
+      );
 
-    return {
-      total_row_count: count,
-      current_row_count: count,
-      total_page_count: count > 0 ? 1 : 0,
-      current_page_count: count > 0 ? 1 : 0,
-      records: employees,
-    };
+      const count = employees.length;
+
+      this.logWithContext(
+        `Found ${count} top employees in harvests for year: ${year}`,
+      );
+
+      return {
+        total_row_count: count,
+        current_row_count: count,
+        total_page_count: count > 0 ? 1 : 0,
+        current_page_count: count > 0 ? 1 : 0,
+        records: employees,
+      };
+    } catch (error) {
+      this.logWithContext(
+        `Failed to find top employees in harvests for year: ${year}`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
+
   async findTopEmployeesInWorks({
     year = new Date().getFullYear(),
   }: QueryForYearDto) {
-    const employees = await this.employeeRepository.query(
-      `
-        SELECT wd."employeeId",
-               emp.first_name,
-               emp.last_name,
-               CAST(COUNT(wd.id) AS INTEGER)      AS total_works,
-               CAST(SUM(wd.value_pay) AS INTEGER) AS total_value_pay
-        FROM works_detail wd
-                 JOIN works w ON wd."workId" = w.id
-                 JOIN employees emp ON wd."employeeId" = emp.id
-        WHERE EXTRACT(YEAR FROM w.date) = $1
-        GROUP BY wd."employeeId", emp.first_name, emp.last_name
-        ORDER BY total_works DESC
-        LIMIT 5
-      `,
-      [year],
-    );
+    this.logWithContext(`Finding top employees in works for year: ${year}`);
 
-    const count = employees.length;
+    try {
+      const employees = await this.employeeRepository.query(
+        `
+          SELECT wd."employeeId",
+                 emp.first_name,
+                 emp.last_name,
+                 CAST(COUNT(wd.id) AS INTEGER)      AS total_works,
+                 CAST(SUM(wd.value_pay) AS INTEGER) AS total_value_pay
+          FROM works_detail wd
+                   JOIN works w ON wd."workId" = w.id
+                   JOIN employees emp ON wd."employeeId" = emp.id
+          WHERE EXTRACT(YEAR FROM w.date) = $1
+          GROUP BY wd."employeeId", emp.first_name, emp.last_name
+          ORDER BY total_works DESC
+          LIMIT 5
+        `,
+        [year],
+      );
 
-    return {
-      total_row_count: count,
-      current_row_count: count,
-      total_page_count: count > 0 ? 1 : 0,
-      current_page_count: count > 0 ? 1 : 0,
-      records: employees,
-    };
+      const count = employees.length;
+
+      this.logWithContext(
+        `Found ${count} top employees in works for year: ${year}`,
+      );
+
+      return {
+        total_row_count: count,
+        current_row_count: count,
+        total_page_count: count > 0 ? 1 : 0,
+        current_page_count: count > 0 ? 1 : 0,
+        records: employees,
+      };
+    } catch (error) {
+      this.logWithContext(
+        `Failed to find top employees in works for year: ${year}`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 }
