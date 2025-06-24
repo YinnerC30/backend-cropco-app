@@ -228,13 +228,8 @@ export class AuthService extends BaseTenantService {
         statusCode: 200,
       };
     } catch (error: any) {
-      if (error instanceof TokenExpiredError) {
-        this.logWithContext('Token validation failed - token expired', 'warn');
-        throw new UnauthorizedException('Token has expired');
-      } else {
-        this.logWithContext('Token validation failed - invalid token', 'warn');
-        throw new UnauthorizedException('Invalid token');
-      }
+      this.logWithContext('Token validation failed', 'warn');
+      this.handlerError.handle(error, this.logger);
     }
   }
 
