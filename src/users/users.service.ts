@@ -34,14 +34,30 @@ export class UsersService extends BaseTenantService {
 
   constructor(
     @Inject(REQUEST) request: Request,
+    @InjectRepository(User) defaultUsersRepo: Repository<User>,
+    @InjectRepository(UserActions) defaultActionsRepo: Repository<UserActions>,
+    @InjectRepository(Module) defaultModulesRepo: Repository<Module>,
     private readonly handlerError: HandlerErrorService,
   ) {
     super(request);
+
+    // Configurar el logger de BaseTenantService para usar el logger de UsersService
     this.setLogger(this.logger);
-    this.usersRepository = this.getTenantRepository(User);
-    this.userActionsRepository = this.getTenantRepository(UserActions);
-    this.modulesRepository = this.getTenantRepository(Module);
+
+    this.usersRepository = this.tenantConnection
+      ? this.getTenantRepository(User)
+      : defaultUsersRepo;
+
+    this.userActionsRepository = this.tenantConnection
+      ? this.getTenantRepository(UserActions)
+      : defaultActionsRepo;
+
+    this.modulesRepository = this.tenantConnection
+      ? this.getTenantRepository(Module)
+      : defaultModulesRepo;
   }
+
+  // Removemos el getter currentUser porque ya está disponible en BaseTenantService
 
   async create(createUserDto: UserDto): Promise<User> {
     this.logWithContext(`Creating new user with email: ${createUserDto.email}`);
@@ -285,10 +301,7 @@ export class UsersService extends BaseTenantService {
 
       return { success, failed };
     } catch (error) {
-      this.logWithContext(
-        `Failed to execute bulk removal of users`,
-        'error',
-      );
+      this.logWithContext(`Failed to execute bulk removal of users`, 'error');
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -321,9 +334,14 @@ export class UsersService extends BaseTenantService {
         },
         { password: newPassword },
       );
-      this.logWithContext(`Password updated successfully for user ID: ${userId}`);
+      this.logWithContext(
+        `Password updated successfully for user ID: ${userId}`,
+      );
     } catch (error) {
-      this.logWithContext(`Failed to update password for user ID: ${userId}`, 'error');
+      this.logWithContext(
+        `Failed to update password for user ID: ${userId}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -351,7 +369,10 @@ export class UsersService extends BaseTenantService {
 
       return { password };
     } catch (error) {
-      this.logWithContext(`Failed to reset password for user ID: ${id}`, 'error');
+      this.logWithContext(
+        `Failed to reset password for user ID: ${id}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -380,7 +401,10 @@ export class UsersService extends BaseTenantService {
 
       this.logWithContext(`Password changed successfully for user ID: ${id}`);
     } catch (error) {
-      this.logWithContext(`Failed to change password for user ID: ${id}`, 'error');
+      this.logWithContext(
+        `Failed to change password for user ID: ${id}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -401,13 +425,18 @@ export class UsersService extends BaseTenantService {
         );
       }
 
-      await this.usersRepository.update(user.id, { is_active: !user.is_active });
+      await this.usersRepository.update(user.id, {
+        is_active: !user.is_active,
+      });
 
       this.logWithContext(
         `Status toggled successfully for user ID: ${id}, new status: ${!user.is_active ? 'active' : 'inactive'}`,
       );
     } catch (error) {
-      this.logWithContext(`Failed to toggle status for user ID: ${id}`, 'error');
+      this.logWithContext(
+        `Failed to toggle status for user ID: ${id}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
