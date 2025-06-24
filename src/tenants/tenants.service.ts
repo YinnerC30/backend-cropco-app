@@ -38,11 +38,16 @@ import { UserTenantDto } from './dto/user-tenant.dto';
 import { TenantDatabase } from './entities/tenant-database.entity';
 import { Tenant } from './entities/tenant.entity';
 import { TenantConnectionService } from './services/tenant-connection.service';
+import { BaseAdministratorService } from 'src/auth/services/base-administrator.service';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @Injectable()
-export class TenantsService {
-  private readonly logger = new Logger('TenantsService');
+export class TenantsService extends BaseAdministratorService {
+  protected readonly logger = new Logger('TenantsService');
+
   constructor(
+    @Inject(REQUEST) request: Request,
     @Inject(forwardRef(() => TenantConnectionService))
     private tenantConnectionService: TenantConnectionService,
 
@@ -55,82 +60,156 @@ export class TenantsService {
     private dataSource: DataSource,
 
     private readonly handlerError: HandlerErrorService,
-  ) {}
+  ) {
+    super(request);
+    this.setLogger(this.logger);
+  }
 
   async create(createTenantDto: CreateTenantDto) {
-    // Crear el tenant
+    this.logWithContext(
+      `Creating new tenant with subdomain: ${createTenantDto.subdomain}, company: ${createTenantDto.company_name}`,
+    );
+
     try {
       const tenant = this.tenantRepository.create(createTenantDto);
       await this.tenantRepository.save(tenant);
+
+      this.logWithContext(
+        `Tenant created successfully with ID: ${tenant.id}, subdomain: ${tenant.subdomain}`,
+      );
 
       // Crear la base de datos para el tenant
       const databaseName = `cropco_tenant_${tenant.subdomain}`;
       await this.createTenantDatabase(tenant.id, databaseName);
 
+      this.logWithContext(
+        `Tenant setup completed successfully for ID: ${tenant.id}`,
+      );
+
       return tenant;
     } catch (error) {
+      this.logWithContext(
+        `Failed to create tenant with subdomain: ${createTenantDto.subdomain}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async findAll(queryParams: QueryParamsDto) {
-    const { offset = 0, limit = 10, query = '' } = queryParams;
-    const queryBuilder = this.tenantRepository
-      .createQueryBuilder('tenants')
-      .leftJoinAndSelect('tenants.databases', 'databases')
-      .where('tenants.company_name ILIKE :query', { query: `%${query}%` })
-      .orWhere('tenants.subdomain ILIKE :query', { query: `%${query}%` })
-      .orWhere('tenants.email ILIKE :query', { query: `%${query}%` })
-      .orderBy('tenants.subdomain', 'DESC')
-      .skip(offset * limit)
-      .take(limit);
+    this.logWithContext(
+      `Finding all tenants with query: "${queryParams.query || 'no query'}", limit: ${queryParams.limit || 10}, offset: ${queryParams.offset || 0}`,
+    );
 
-    const [tenants, count] = await queryBuilder.getManyAndCount();
+    try {
+      const { offset = 0, limit = 10, query = '' } = queryParams;
+      const queryBuilder = this.tenantRepository
+        .createQueryBuilder('tenants')
+        .leftJoinAndSelect('tenants.databases', 'databases')
+        .where('tenants.company_name ILIKE :query', { query: `%${query}%` })
+        .orWhere('tenants.subdomain ILIKE :query', { query: `%${query}%` })
+        .orWhere('tenants.email ILIKE :query', { query: `%${query}%` })
+        .orderBy('tenants.subdomain', 'DESC')
+        .skip(offset * limit)
+        .take(limit);
 
-    return {
-      total_row_count: count,
-      current_row_count: tenants.length,
-      total_page_count: Math.ceil(count / limit),
-      current_page_count: offset + 1,
-      records: tenants,
-    };
+      const [tenants, count] = await queryBuilder.getManyAndCount();
+
+      this.logWithContext(
+        `Found ${tenants.length} tenants out of ${count} total tenants`,
+      );
+
+      return {
+        total_row_count: count,
+        current_row_count: tenants.length,
+        total_page_count: Math.ceil(count / limit),
+        current_page_count: offset + 1,
+        records: tenants,
+      };
+    } catch (error) {
+      this.logWithContext(
+        `Failed to find tenants with query: "${queryParams.query || 'no query'}"`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async findOne(id: string) {
-    const tenant = await this.tenantRepository.findOne({
-      where: { id },
-      relations: {
-        databases: true,
-      },
-    });
-    if (!tenant) {
-      throw new NotFoundException(`Tenant with ID ${id} not found`);
-    }
+    this.logWithContext(`Finding tenant by ID: ${id}`);
 
-    return tenant;
+    try {
+      const tenant = await this.tenantRepository.findOne({
+        where: { id },
+        relations: {
+          databases: true,
+        },
+      });
+
+      if (!tenant) {
+        this.logWithContext(`Tenant with ID: ${id} not found`, 'warn');
+        throw new NotFoundException(`Tenant with ID ${id} not found`);
+      }
+
+      this.logWithContext(
+        `Tenant found successfully with ID: ${id}, subdomain: ${tenant.subdomain}`,
+      );
+
+      return tenant;
+    } catch (error) {
+      this.logWithContext(`Failed to find tenant with ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async findOneBySubdomain(tenantSubdomain: string) {
-    const tenant = await this.tenantRepository.findOne({
-      where: { subdomain: tenantSubdomain },
-    });
-    if (!tenant) {
-      throw new NotFoundException(
-        `Tenant with subdomain ${tenantSubdomain} not found`,
+    this.logWithContext(`Finding tenant by subdomain: ${tenantSubdomain}`);
+
+    try {
+      const tenant = await this.tenantRepository.findOne({
+        where: { subdomain: tenantSubdomain },
+      });
+
+      if (!tenant) {
+        this.logWithContext(
+          `Tenant with subdomain: ${tenantSubdomain} not found`,
+          'warn',
+        );
+        throw new NotFoundException(
+          `Tenant with subdomain ${tenantSubdomain} not found`,
+        );
+      }
+
+      if (!tenant.is_active) {
+        this.logWithContext(
+          `Tenant with subdomain: ${tenantSubdomain} is disabled`,
+          'warn',
+        );
+        throw new ForbiddenException('The tenant is currently disabled');
+      }
+
+      this.logWithContext(
+        `Tenant found successfully by subdomain: ${tenantSubdomain}, ID: ${tenant.id}`,
       );
-    }
 
-    if (!tenant.is_active) {
-      throw new ForbiddenException('The tenant is currently disabled');
+      return { id: tenant.id, subdomain: tenant.subdomain };
+    } catch (error) {
+      this.logWithContext(
+        `Failed to find tenant by subdomain: ${tenantSubdomain}`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
     }
-
-    return { id: tenant.id, subdomain: tenant.subdomain };
   }
 
   async updateDBName(tenantId: string, newName: string) {
+    this.logWithContext(
+      `Updating database name for tenant ID: ${tenantId} to: ${newName}`,
+    );
+
     try {
       const tenantDb = await this.getOneTenantDatabase(tenantId);
-
+      const oldDatabaseName = tenantDb.database_name;
       const newDatabaseName = `cropco_tenant_${newName}`;
 
       // Renombrar la base de datos
@@ -144,219 +223,313 @@ export class TenantsService {
         { database_name: newDatabaseName },
       );
 
-      this.logger.log(
-        `Database renamed from ${tenantDb.database_name} to ${newDatabaseName}`,
+      this.logWithContext(
+        `Database renamed successfully from ${oldDatabaseName} to ${newDatabaseName} for tenant ID: ${tenantId}`,
       );
     } catch (error) {
+      this.logWithContext(
+        `Failed to update database name for tenant ID: ${tenantId}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async update(id: string, updateTenantDto: CreateTenantDto) {
+    this.logWithContext(
+      `Updating tenant with ID: ${id}, new subdomain: ${updateTenantDto.subdomain}`,
+    );
+
     await this.findOne(id);
+
     try {
       await this.tenantRepository.update({ id }, { ...updateTenantDto });
       await this.updateDBName(id, updateTenantDto.subdomain);
       await this.tenantConnectionService.closeTenantConnection(id);
+
+      this.logWithContext(`Tenant updated successfully with ID: ${id}`);
+
       return await this.findOne(id);
     } catch (error) {
+      this.logWithContext(`Failed to update tenant with ID: ${id}`, 'error');
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async remove(id: string) {
+    this.logWithContext(`Removing tenant with ID: ${id}`);
+
     const tenant = await this.findOne(id);
+
     try {
       await this.tenantRepository.softRemove(tenant);
       await this.tenantConnectionService.closeTenantConnection(id);
+
+      this.logWithContext(
+        `Tenant removed successfully with ID: ${id}, subdomain: ${tenant.subdomain}`,
+      );
     } catch (error) {
+      this.logWithContext(`Failed to remove tenant with ID: ${id}`, 'error');
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async toggleStatusTenant(id: string): Promise<void> {
-    const tenant = await this.findOne(id);
+    this.logWithContext(`Toggling status for tenant ID: ${id}`);
 
-    await this.tenantRepository.update(tenant.id, {
-      is_active: !tenant.is_active,
-    });
+    try {
+      const tenant = await this.findOne(id);
 
-    await this.tenantConnectionService.closeTenantConnection(id);
+      await this.tenantRepository.update(tenant.id, {
+        is_active: !tenant.is_active,
+      });
+
+      await this.tenantConnectionService.closeTenantConnection(id);
+
+      this.logWithContext(
+        `Status toggled successfully for tenant ID: ${id}, new status: ${!tenant.is_active ? 'active' : 'inactive'}`,
+      );
+    } catch (error) {
+      this.logWithContext(
+        `Failed to toggle status for tenant ID: ${id}`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   // Tenants Databases
 
   private async createTenantDatabase(tenantId: string, databaseName: string) {
+    this.logWithContext(
+      `Creating tenant database: ${databaseName} for tenant ID: ${tenantId}`,
+    );
+
     try {
       // Crear la base de datos
       await this.dataSource.query(`CREATE DATABASE ${databaseName}`);
+
+      this.logWithContext(
+        `Database ${databaseName} created successfully for tenant ID: ${tenantId}`,
+      );
 
       // Guardar la configuración de la base de datos
       const tenantDatabase = this.tenantDatabaseRepository.create({
         tenant: { id: tenantId },
         database_name: databaseName,
-        // is_migrated: false,
       });
 
       await this.tenantDatabaseRepository.save(tenantDatabase);
+
+      this.logWithContext(
+        `Tenant database configuration saved for tenant ID: ${tenantId}`,
+      );
+
       await this.configDataBaseTenant(tenantId);
+
+      this.logWithContext(
+        `Tenant database setup completed for tenant ID: ${tenantId}`,
+      );
     } catch (error) {
+      this.logWithContext(
+        `Failed to create tenant database for tenant ID: ${tenantId}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async getOneTenantDatabase(tenantId: string) {
+    this.logWithContext(
+      `Getting database configuration for tenant ID: ${tenantId}`,
+    );
+
     try {
       const tenantDatabase = await this.tenantDatabaseRepository
-
         .createQueryBuilder('tenant_databases')
         .leftJoinAndSelect('tenant_databases.tenant', 'tenant')
         .where('tenant.id = :tenantId', { tenantId })
-        // .andWhere('tenant.is_active = true')
         .getOne();
 
       if (!tenantDatabase) {
+        this.logWithContext(
+          `Database configuration not found for tenant ID: ${tenantId}`,
+          'warn',
+        );
         throw new NotFoundException(
           `Database for tenant ${tenantId} not found`,
         );
       }
 
       if (tenantDatabase.tenant.is_active === false) {
+        this.logWithContext(
+          `Database access denied for disabled tenant ID: ${tenantId}`,
+          'warn',
+        );
         throw new ForbiddenException(
           `Database for tenant ${tenantId} is disabled`,
         );
       }
 
+      this.logWithContext(
+        `Database configuration retrieved successfully for tenant ID: ${tenantId}`,
+      );
+
       return tenantDatabase;
     } catch (error) {
+      this.logWithContext(
+        `Failed to get database configuration for tenant ID: ${tenantId}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async createModulesWithActions(queryRunner: QueryRunner): Promise<void> {
-    const modulesRepository = queryRunner.manager.getRepository(Module);
-    const moduleActionsRepository =
-      queryRunner.manager.getRepository(ModuleActions);
+    this.logWithContext('Creating modules with actions for tenant database');
 
-    const modules = {
-      auth: {
-        label: 'autenticación',
-        paths: pathsAuthController,
-      },
+    try {
+      const modulesRepository = queryRunner.manager.getRepository(Module);
+      const moduleActionsRepository =
+        queryRunner.manager.getRepository(ModuleActions);
 
-      clients: {
-        label: 'clientes',
-        paths: pathsClientsController,
-      },
-      crops: {
-        label: 'cultivos',
-        paths: pathsCropsController,
-      },
-      employees: {
-        label: 'empleados',
-        paths: pathsEmployeesController,
-      },
-      harvests: {
-        label: 'cosechas',
-        paths: pathsHarvestsController,
-      },
-      payments: {
-        label: 'pagos',
-        paths: pathsPaymentsController,
-      },
-      sales: {
-        label: 'ventas',
-        paths: pathsSalesController,
-      },
-      suppliers: {
-        label: 'proveedores',
-        paths: pathsSuppliersController,
-      },
-      supplies: {
-        label: 'insumos',
-        paths: pathsSuppliesController,
-      },
-      consumptions: {
-        label: 'consumos',
-        paths: pathsConsumptionController,
-      },
-      shopping: {
-        label: 'compras',
-        paths: pathsShoppingController,
-      },
-      users: {
-        label: 'usuarios',
-        paths: pathsUsersController,
-      },
-      works: {
-        label: 'trabajos',
-        paths: pathsWorksController,
-      },
-      dashboard: {
-        label: 'panel de control',
-        paths: pathsDashboardController,
-      },
-    };
+      const modules = {
+        auth: {
+          label: 'autenticación',
+          paths: pathsAuthController,
+        },
+        clients: {
+          label: 'clientes',
+          paths: pathsClientsController,
+        },
+        crops: {
+          label: 'cultivos',
+          paths: pathsCropsController,
+        },
+        employees: {
+          label: 'empleados',
+          paths: pathsEmployeesController,
+        },
+        harvests: {
+          label: 'cosechas',
+          paths: pathsHarvestsController,
+        },
+        payments: {
+          label: 'pagos',
+          paths: pathsPaymentsController,
+        },
+        sales: {
+          label: 'ventas',
+          paths: pathsSalesController,
+        },
+        suppliers: {
+          label: 'proveedores',
+          paths: pathsSuppliersController,
+        },
+        supplies: {
+          label: 'insumos',
+          paths: pathsSuppliesController,
+        },
+        consumptions: {
+          label: 'consumos',
+          paths: pathsConsumptionController,
+        },
+        shopping: {
+          label: 'compras',
+          paths: pathsShoppingController,
+        },
+        users: {
+          label: 'usuarios',
+          paths: pathsUsersController,
+        },
+        works: {
+          label: 'trabajos',
+          paths: pathsWorksController,
+        },
+        dashboard: {
+          label: 'panel de control',
+          paths: pathsDashboardController,
+        },
+      };
 
-    await modulesRepository.delete({});
+      this.logWithContext('Deleting existing modules before creating new ones');
+      await modulesRepository.delete({});
 
-    for (const nameModule of Object.keys(modules)) {
-      const modelEntity = modulesRepository.create({
-        name: nameModule,
-        label: modules[nameModule].label,
-      });
+      for (const nameModule of Object.keys(modules)) {
+        this.logWithContext(
+          `Creating module: ${nameModule} (${modules[nameModule].label})`,
+        );
 
-      const pathList = Object.keys(modules[nameModule].paths).map((key) => {
-        const element = modules[nameModule].paths[key];
-        return {
-          ...element,
-          path: `/${nameModule}/${element.path}`,
-        };
-      });
+        const modelEntity = modulesRepository.create({
+          name: nameModule,
+          label: modules[nameModule].label,
+        });
 
-      modelEntity.actions = pathList.map(
-        ({ path, description, name, visibleToUser = true }: PathProperties) =>
-          moduleActionsRepository.create({
-            name: name,
-            description: description.trim(),
-            path_endpoint: path,
-            is_visible: visibleToUser,
-          }),
+        const pathList = Object.keys(modules[nameModule].paths).map((key) => {
+          const element = modules[nameModule].paths[key];
+          return {
+            ...element,
+            path: `/${nameModule}/${element.path}`,
+          };
+        });
+
+        modelEntity.actions = pathList.map(
+          ({ path, description, name, visibleToUser = true }: PathProperties) =>
+            moduleActionsRepository.create({
+              name: name,
+              description: description.trim(),
+              path_endpoint: path,
+              is_visible: visibleToUser,
+            }),
+        );
+
+        await modulesRepository.save(modelEntity);
+        this.logWithContext(
+          `Module ${nameModule} created successfully with ${modelEntity.actions.length} actions`,
+        );
+      }
+
+      this.logWithContext(
+        `Modules creation completed successfully. Total modules created: ${Object.keys(modules).length}`,
       );
-
-      await modulesRepository.save(modelEntity);
+    } catch (error) {
+      this.logWithContext('Failed to create modules with actions', 'error');
+      throw error; // Re-throw para que sea manejado por el método padre
     }
   }
 
   private async configDataBaseTenant(tenantId: string) {
-    const tenantDatabase = await this.getOneTenantDatabase(tenantId);
-
-    // if (tenantDatabase.is_migrated) {
-    //   return {
-    //     msg: 'The database has already been migrated',
-    //   };
-    // }
-
-    const dataSource = new DataSource({
-      type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: tenantDatabase.database_name,
-      entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
-      synchronize: true,
-    });
-
-    await dataSource.initialize();
-
-    const queryRunner = dataSource.createQueryRunner();
+    this.logWithContext(`Configuring database for tenant ID: ${tenantId}`);
 
     try {
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
+      const tenantDatabase = await this.getOneTenantDatabase(tenantId);
 
-      await queryRunner.query(`
+      const dataSource = new DataSource({
+        type: 'postgres',
+        host: process.env.DB_HOST,
+        port: parseInt(process.env.DB_PORT),
+        username: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD,
+        database: tenantDatabase.database_name,
+        entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
+        synchronize: true,
+      });
+
+      this.logWithContext(
+        `Initializing database connection for tenant ID: ${tenantId}`,
+      );
+      await dataSource.initialize();
+
+      const queryRunner = dataSource.createQueryRunner();
+
+      try {
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+
+        this.logWithContext(
+          `Creating database functions for tenant ID: ${tenantId}`,
+        );
+        await queryRunner.query(`
           create or replace function convert_to_grams(unit text, amount numeric) returns numeric
             language plpgsql
           as
@@ -375,93 +548,149 @@ export class TenantsService {
           $$;
     
           alter function convert_to_grams(text, numeric) owner to "admin-cropco";
-    `);
+        `);
 
-      await this.createModulesWithActions(queryRunner);
+        await this.createModulesWithActions(queryRunner);
 
-      await queryRunner.commitTransaction();
+        await queryRunner.commitTransaction();
 
-      // if (!tenantDatabase.is_migrated) {
-      //   await this.updateStatusMigrationDB(tenantDatabase.id, true);
-      // }
+        this.logWithContext(
+          `Database configuration completed successfully for tenant ID: ${tenantId}`,
+        );
 
-      return {
-        msg: '¡Database ready to use!',
-      };
+        return {
+          msg: '¡Database ready to use!',
+        };
+      } catch (error) {
+        this.logWithContext(
+          `Rolling back database configuration for tenant ID: ${tenantId}`,
+          'error',
+        );
+        await queryRunner.rollbackTransaction();
+        throw error;
+      } finally {
+        await queryRunner.release();
+        await dataSource.destroy();
+      }
     } catch (error) {
-      await queryRunner.rollbackTransaction();
+      this.logWithContext(
+        `Failed to configure database for tenant ID: ${tenantId}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
-    } finally {
-      await queryRunner.release();
-      await dataSource.destroy();
     }
   }
 
   // User Tenant DB
 
   async getAllUsersTenant(tenantId: string) {
-    await this.findOne(tenantId);
-    const tenantConnection =
-      await this.tenantConnectionService.getTenantConnection(tenantId);
+    this.logWithContext(`Getting all users for tenant ID: ${tenantId}`);
 
-    const userRepository = tenantConnection.getRepository(User);
+    try {
+      await this.findOne(tenantId);
+      const tenantConnection =
+        await this.tenantConnectionService.getTenantConnection(tenantId);
 
-    return userRepository.find();
+      const userRepository = tenantConnection.getRepository(User);
+      const users = await userRepository.find();
+
+      this.logWithContext(
+        `Found ${users.length} users for tenant ID: ${tenantId}`,
+      );
+
+      return users;
+    } catch (error) {
+      this.logWithContext(
+        `Failed to get users for tenant ID: ${tenantId}`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async addUserAdminTenantDB(tenantId: string, createUserDto: UserTenantDto) {
-    await this.findOne(tenantId);
-    const tenantConnection =
-      await this.tenantConnectionService.getTenantConnection(tenantId);
-
-    const userRepository = tenantConnection.getRepository(User);
-    const userActionsRepository = tenantConnection.getRepository(UserActions);
-
-    const [, count] = await userRepository.findAndCount({
-      where: {
-        roles: Raw(() => `roles @> '["admin"]'`),
-      },
-    });
-
-    if (createUserDto.roles[0] === 'admin' && count >= 1) {
-      throw new BadRequestException('Only one admin user is allowed');
-    }
-
-    const moduleActionsRepository =
-      tenantConnection.getRepository(ModuleActions);
-
-    const actions = (await moduleActionsRepository.find({
-      select: {
-        id: true,
-      },
-    })) as UserActionDto[];
+    this.logWithContext(
+      `Adding admin user to tenant ID: ${tenantId}, email: ${createUserDto.email}`,
+    );
 
     try {
+      await this.findOne(tenantId);
+      const tenantConnection =
+        await this.tenantConnectionService.getTenantConnection(tenantId);
+
+      const userRepository = tenantConnection.getRepository(User);
+      const userActionsRepository = tenantConnection.getRepository(UserActions);
+
+      const [, count] = await userRepository.findAndCount({
+        where: {
+          roles: Raw(() => `roles @> '["admin"]'`),
+        },
+      });
+
+      if (createUserDto.roles[0] === 'admin' && count >= 1) {
+        this.logWithContext(
+          `Admin user creation blocked for tenant ID: ${tenantId} - only one admin allowed`,
+          'warn',
+        );
+        throw new BadRequestException('Only one admin user is allowed');
+      }
+
+      const moduleActionsRepository =
+        tenantConnection.getRepository(ModuleActions);
+
+      const actions = (await moduleActionsRepository.find({
+        select: {
+          id: true,
+        },
+      })) as UserActionDto[];
+
       const user = userRepository.create({ ...createUserDto });
       user.password = await hashPassword(user.password);
       const userInDB = await userRepository.save(user);
+
       const actionsEntity = actions.map((act: UserActionDto) => {
         return userActionsRepository.create({
           action: act,
           user: { id: userInDB.id },
         });
       });
+
       userInDB.actions = actionsEntity;
       await userRepository.save(userInDB);
+
+      this.logWithContext(
+        `Admin user created successfully for tenant ID: ${tenantId}, user ID: ${userInDB.id}, total actions: ${actions.length}`,
+      );
     } catch (error) {
+      this.logWithContext(
+        `Failed to add admin user to tenant ID: ${tenantId}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
-  async removeUserAdminTenantDB(tenantId: string, userId: string) {
-    await this.findOne(tenantId);
-    const tenantConnection =
-      await this.tenantConnectionService.getTenantConnection(tenantId);
 
-    const userRepository = tenantConnection.getRepository(User);
+  async removeUserAdminTenantDB(tenantId: string, userId: string) {
+    this.logWithContext(
+      `Removing admin user ID: ${userId} from tenant ID: ${tenantId}`,
+    );
 
     try {
+      await this.findOne(tenantId);
+      const tenantConnection =
+        await this.tenantConnectionService.getTenantConnection(tenantId);
+
+      const userRepository = tenantConnection.getRepository(User);
       await userRepository.delete({ id: userId });
+
+      this.logWithContext(
+        `Admin user removed successfully from tenant ID: ${tenantId}, user ID: ${userId}`,
+      );
     } catch (error) {
+      this.logWithContext(
+        `Failed to remove admin user from tenant ID: ${tenantId}, user ID: ${userId}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
