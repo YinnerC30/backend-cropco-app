@@ -736,7 +736,7 @@ describe('WorksController (e2e)', () => {
     it('should return the specified number of works passed by the query (max value_pay)', async () => {
       const queryData = {
         filter_by_value_pay: true,
-        type_filter_value_pay: TypeFilterNumber.MAX,
+        type_filter_value_pay: TypeFilterNumber.GREATER_THAN,
         value_pay: 60_000,
       };
       const response = await request
@@ -785,7 +785,7 @@ describe('WorksController (e2e)', () => {
     it('should return the specified number of works passed by the query (min value_pay)', async () => {
       const queryData = {
         filter_by_value_pay: true,
-        type_filter_value_pay: TypeFilterNumber.MIN,
+        type_filter_value_pay: TypeFilterNumber.LESS_THAN,
         value_pay: 180_000,
       };
       const response = await request
@@ -836,7 +836,7 @@ describe('WorksController (e2e)', () => {
       const queryData = {
         crop: crop1.id,
         filter_by_value_pay: true,
-        type_filter_value_pay: TypeFilterNumber.MIN,
+        type_filter_value_pay: TypeFilterNumber.LESS_THAN,
         value_pay: 180_000,
       };
       const response = await request
@@ -887,7 +887,7 @@ describe('WorksController (e2e)', () => {
       const queryData = {
         crop: crop2.id,
         filter_by_value_pay: true,
-        type_filter_value_pay: TypeFilterNumber.MAX,
+        type_filter_value_pay: TypeFilterNumber.GREATER_THAN,
         value_pay: 180_000,
       };
       const response = await request

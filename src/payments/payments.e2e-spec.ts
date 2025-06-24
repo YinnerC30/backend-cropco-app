@@ -568,7 +568,7 @@ describe('PaymentsController (e2e)', () => {
     it('should return the specified number of payments passed by the query (max value_pay)', async () => {
       const queryData = {
         filter_by_value_pay: true,
-        type_filter_value_pay: TypeFilterNumber.MAX,
+        type_filter_value_pay: TypeFilterNumber.GREATER_THAN,
         value_pay: 60_000,
       };
       const response = await request
@@ -608,7 +608,7 @@ describe('PaymentsController (e2e)', () => {
     it('should return the specified number of payments passed by the query (min value_pay)', async () => {
       const queryData = {
         filter_by_value_pay: true,
-        type_filter_value_pay: TypeFilterNumber.MIN,
+        type_filter_value_pay: TypeFilterNumber.LESS_THAN,
         value_pay: 100_000,
       };
       const response = await request
@@ -681,10 +681,10 @@ describe('PaymentsController (e2e)', () => {
         ]);
       });
 
-      it('should return the specified number of payments passed by the query (MAX value_pay , employee)', async () => {
+      it('should return the specified number of payments passed by the query (GREATER_THAN value_pay , employee)', async () => {
         const queryData = {
           filter_by_value_pay: true,
-          type_filter_value_pay: TypeFilterNumber.MAX,
+          type_filter_value_pay: TypeFilterNumber.GREATER_THAN,
           value_pay: 115_000,
           employee: employee3.id,
         };
@@ -722,10 +722,10 @@ describe('PaymentsController (e2e)', () => {
           expect(payment.payments_work).toBeInstanceOf(Array);
         });
       });
-      it('should return the specified number of payments passed by the query (MIN value_pay , employee)', async () => {
+      it('should return the specified number of payments passed by the query (LESS_THAN value_pay , employee)', async () => {
         const queryData = {
           filter_by_value_pay: true,
-          type_filter_value_pay: TypeFilterNumber.MIN,
+          type_filter_value_pay: TypeFilterNumber.LESS_THAN,
           value_pay: 120_000,
           employee: employee4.id,
         };

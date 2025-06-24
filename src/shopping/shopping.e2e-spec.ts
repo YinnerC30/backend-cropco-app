@@ -749,7 +749,7 @@ describe('ShoppingController (e2e)', () => {
     it('should return the specified number of shopping passed by the query (max value_pay)', async () => {
       const queryData = {
         filter_by_value_pay: true,
-        type_filter_value_pay: TypeFilterNumber.MAX,
+        type_filter_value_pay: TypeFilterNumber.GREATER_THAN,
         value_pay: 60_000,
       };
       const response = await request
@@ -797,7 +797,7 @@ describe('ShoppingController (e2e)', () => {
     it('should return the specified number of shopping passed by the query (min value_pay)', async () => {
       const queryData = {
         filter_by_value_pay: true,
-        type_filter_value_pay: TypeFilterNumber.MIN,
+        type_filter_value_pay: TypeFilterNumber.LESS_THAN,
         value_pay: 180_000,
       };
       const response = await request
@@ -965,14 +965,14 @@ describe('ShoppingController (e2e)', () => {
         });
       });
 
-      it('should return the specified number of shopping passed by the query (MAX date, value_pay, supplies, suppliers)', async () => {
+      it('should return the specified number of shopping passed by the query (GREATER_THAN date, value_pay, supplies, suppliers)', async () => {
         const queryData = {
           filter_by_date: true,
           type_filter_date: TypeFilterDate.AFTER,
           date: dateShopping2,
 
           filter_by_value_pay: true,
-          type_filter_value_pay: TypeFilterNumber.MAX,
+          type_filter_value_pay: TypeFilterNumber.GREATER_THAN,
           value_pay: 60_000,
 
           supplies: supply2.id,
@@ -1033,14 +1033,14 @@ describe('ShoppingController (e2e)', () => {
           expect(flatSuppliers).toContain(queryData.suppliers);
         });
       });
-      it('should return the specified number of shopping passed by the query (MIN date, value_pay, supplies, suppliers)', async () => {
+      it('should return the specified number of shopping passed by the query (LESS_THAN date, value_pay, supplies, suppliers)', async () => {
         const queryData = {
           filter_by_date: true,
           type_filter_date: TypeFilterDate.BEFORE,
           date: dateShopping1,
 
           filter_by_value_pay: true,
-          type_filter_value_pay: TypeFilterNumber.MIN,
+          type_filter_value_pay: TypeFilterNumber.LESS_THAN,
           value_pay: 360_000,
 
           supplies: supply1.id,

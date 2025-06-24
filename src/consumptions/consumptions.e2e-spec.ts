@@ -759,7 +759,7 @@ describe('ConsumptionController (e2e)', () => {
         });
       });
 
-      it('should return the specified number of consumption passed by the query (MAX date, supplies, crops)', async () => {
+      it('should return the specified number of consumption passed by the query (GREATER_THAN date, supplies, crops)', async () => {
         const queryData = {
           filter_by_date: true,
           type_filter_date: TypeFilterDate.AFTER,
@@ -816,7 +816,7 @@ describe('ConsumptionController (e2e)', () => {
           expect(flatCrops).toContain(queryData.crops);
         });
       });
-      it('should return the specified number of consumption passed by the query (MIN date, supplies, crops)', async () => {
+      it('should return the specified number of consumption passed by the query (LESS_THAN date, supplies, crops)', async () => {
         const queryData = {
           filter_by_date: true,
           type_filter_date: TypeFilterDate.BEFORE,

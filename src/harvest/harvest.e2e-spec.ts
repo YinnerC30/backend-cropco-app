@@ -783,7 +783,7 @@ describe('HarvestsController (e2e)', () => {
     it('should return the specified number of harvests passed by the query (max amount)', async () => {
       const queryData = {
         filter_by_amount: true,
-        type_filter_amount: TypeFilterNumber.MAX,
+        type_filter_amount: TypeFilterNumber.GREATER_THAN,
         amount: 100,
       };
       const response = await request
@@ -834,7 +834,7 @@ describe('HarvestsController (e2e)', () => {
     it('should return the specified number of harvests passed by the query (min amount)', async () => {
       const queryData = {
         filter_by_amount: true,
-        type_filter_amount: TypeFilterNumber.MIN,
+        type_filter_amount: TypeFilterNumber.LESS_THAN,
         amount: 300,
       };
       const response = await request
@@ -936,7 +936,7 @@ describe('HarvestsController (e2e)', () => {
     it('should return the specified number of harvests passed by the query (max value_pay)', async () => {
       const queryData = {
         filter_by_value_pay: true,
-        type_filter_value_pay: TypeFilterNumber.MAX,
+        type_filter_value_pay: TypeFilterNumber.GREATER_THAN,
         value_pay: 60_000,
       };
       const response = await request
@@ -987,7 +987,7 @@ describe('HarvestsController (e2e)', () => {
     it('should return the specified number of harvests passed by the query (min value_pay)', async () => {
       const queryData = {
         filter_by_value_pay: true,
-        type_filter_value_pay: TypeFilterNumber.MIN,
+        type_filter_value_pay: TypeFilterNumber.LESS_THAN,
         value_pay: 180_000,
       };
       const response = await request
@@ -1039,7 +1039,7 @@ describe('HarvestsController (e2e)', () => {
       const queryData = {
         crop: crop1.id,
         filter_by_value_pay: true,
-        type_filter_value_pay: TypeFilterNumber.MIN,
+        type_filter_value_pay: TypeFilterNumber.LESS_THAN,
         value_pay: 180_000,
       };
       const response = await request
@@ -1092,7 +1092,7 @@ describe('HarvestsController (e2e)', () => {
       const queryData = {
         crop: crop2.id,
         filter_by_value_pay: true,
-        type_filter_value_pay: TypeFilterNumber.MAX,
+        type_filter_value_pay: TypeFilterNumber.GREATER_THAN,
         value_pay: 180_000,
       };
       const response = await request
@@ -1156,13 +1156,13 @@ describe('HarvestsController (e2e)', () => {
         ]);
       });
 
-      it('should return the specified number of harvests passed by the query (MAX value_pay , amount)', async () => {
+      it('should return the specified number of harvests passed by the query (GREATER_THAN value_pay , amount)', async () => {
         const queryData = {
           filter_by_value_pay: true,
-          type_filter_value_pay: TypeFilterNumber.MAX,
+          type_filter_value_pay: TypeFilterNumber.GREATER_THAN,
           value_pay: 200_000,
           filter_by_amount: true,
-          type_filter_amount: TypeFilterNumber.MAX,
+          type_filter_amount: TypeFilterNumber.GREATER_THAN,
           amount: 400,
         };
         const response = await request
@@ -1212,13 +1212,13 @@ describe('HarvestsController (e2e)', () => {
           });
         });
       });
-      it('should return the specified number of harvests passed by the query (MIN 1 value_pay , amount)', async () => {
+      it('should return the specified number of harvests passed by the query (LESS_THAN 1 value_pay , amount)', async () => {
         const queryData = {
           filter_by_value_pay: true,
-          type_filter_value_pay: TypeFilterNumber.MIN,
+          type_filter_value_pay: TypeFilterNumber.LESS_THAN,
           value_pay: 400_000,
           filter_by_amount: true,
-          type_filter_amount: TypeFilterNumber.MIN,
+          type_filter_amount: TypeFilterNumber.LESS_THAN,
           amount: 500,
         };
         const response = await request
@@ -1268,14 +1268,14 @@ describe('HarvestsController (e2e)', () => {
           });
         });
       });
-      it('should return the specified number of harvests passed by the query (MIN 2 value_pay , amount)', async () => {
+      it('should return the specified number of harvests passed by the query (LESS_THAN 2 value_pay , amount)', async () => {
         const queryData = {
           offset: 1,
           filter_by_value_pay: true,
-          type_filter_value_pay: TypeFilterNumber.MIN,
+          type_filter_value_pay: TypeFilterNumber.LESS_THAN,
           value_pay: 400_000,
           filter_by_amount: true,
-          type_filter_amount: TypeFilterNumber.MIN,
+          type_filter_amount: TypeFilterNumber.LESS_THAN,
           amount: 500,
         };
         const response = await request
@@ -1325,15 +1325,15 @@ describe('HarvestsController (e2e)', () => {
           });
         });
       });
-      it('should return the specified number of harvests passed by the query (MIN 3 value_pay , amount)', async () => {
+      it('should return the specified number of harvests passed by the query (LESS_THAN 3 value_pay , amount)', async () => {
         const queryData = {
           limit: 12,
           offset: 1,
           filter_by_value_pay: true,
-          type_filter_value_pay: TypeFilterNumber.MIN,
+          type_filter_value_pay: TypeFilterNumber.LESS_THAN,
           value_pay: 400_000,
           filter_by_amount: true,
-          type_filter_amount: TypeFilterNumber.MIN,
+          type_filter_amount: TypeFilterNumber.LESS_THAN,
           amount: 500,
         };
         const response = await request

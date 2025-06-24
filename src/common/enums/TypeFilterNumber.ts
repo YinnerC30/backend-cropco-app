@@ -1,5 +1,5 @@
 export enum TypeFilterNumber {
-  MIN = 'MIN',
-  MAX = 'MAX',
+  LESS_THAN = 'LESS_THAN',
+  GREATER_THAN = 'GREATER_THAN',
   EQUAL = 'EQUAL',
 }
