@@ -14,7 +14,7 @@ import { AuthService } from './auth.service';
 import { Auth } from './decorators/auth.decorator';
 import { GetToken } from './decorators/get-token.headers.decorator';
 import { LoginUserDto } from './dto/login-user.dto';
-import { AuthTenantService } from './services/auth-tenant.service';
+import { AuthAdministratorService } from './services/auth-administrator.service';
 import { AuthAdministration } from './decorators/auth-administrator.decorator';
 import { GetTokenTenantManagement } from './decorators/get-token-tenant-management.headers.decorator';
 
@@ -83,7 +83,7 @@ const {
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly authTenantService: AuthTenantService,
+    private readonly authTenantService: AuthAdministratorService,
   ) {}
 
   @Post(login.path)

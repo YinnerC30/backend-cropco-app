@@ -13,7 +13,7 @@ import { ModuleActions } from './entities/module-actions.entity';
 import { User } from 'src/users/entities/user.entity';
 import { UserActions } from 'src/users/entities/user-actions.entity';
 import { CommonModule } from 'src/common/common.module';
-import { AuthTenantService } from './services/auth-tenant.service';
+import { AuthAdministratorService } from './services/auth-administrator.service';
 
 import { Administrator } from 'src/administrators/entities/administrator.entity';
 import { JwtAdministrationStrategy } from './strategies/jwt-administration-strategy';
@@ -24,7 +24,7 @@ import { JwtAdministrationStrategy } from './strategies/jwt-administration-strat
     AuthService,
     JwtStrategy,
     JwtAdministrationStrategy,
-    AuthTenantService,
+    AuthAdministratorService,
   ],
   imports: [
     ConfigModule,
