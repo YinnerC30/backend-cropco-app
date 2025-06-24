@@ -5,7 +5,7 @@ import {
   IsDateString,
   IsEnum,
   IsIn,
-  IsInt,
+  IsNumber,
   IsNotEmpty,
   IsOptional,
   IsPositive,
@@ -58,7 +58,7 @@ export class QueryParamsHarvest extends QueryParamsDto {
 
  @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   amount?: number;
 
@@ -72,7 +72,7 @@ export class QueryParamsHarvest extends QueryParamsDto {
 
  @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   @IsPositive()
   value_pay?: number;

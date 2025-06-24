@@ -3,9 +3,8 @@ import {
   IsBoolean,
   IsDefined,
   IsIn,
-  IsInt,
-  IsNotEmpty,
   IsNumber,
+  IsNotEmpty,
   IsOptional,
   IsPositive,
   IsString,
@@ -39,7 +38,7 @@ export class SaleDetailsDto {
   @IsPositive()
   amount: number;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   value_pay: number;
 

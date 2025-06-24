@@ -1,7 +1,7 @@
 import {
   IsBoolean,
   IsDefined,
-  IsInt,
+  IsNumber,
   IsOptional,
   IsPositive,
   IsUUID,
@@ -22,7 +22,7 @@ export class WorkDetailsDto {
   @Type(() => ValidateUUID)
   employee: DeepPartial<Employee>;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   value_pay: number;
 }

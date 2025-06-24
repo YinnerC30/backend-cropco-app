@@ -2,20 +2,19 @@ import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsDateString,
-  IsNumber,
   IsDefined,
-  IsInt,
+  IsNumber,
   IsPositive,
   IsString,
   ValidateNested,
 } from 'class-validator';
 
+import { MatchTotals } from 'src/common/decorators/match-totals.decorator';
+import { UniqueRecordIdInArray } from 'src/common/decorators/unique-id-in-array.decorator';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
 import { HarvestDetailsDto } from './harvest-details.dto';
-import { MatchTotals } from 'src/common/decorators/match-totals.decorator';
-import { UniqueRecordIdInArray } from 'src/common/decorators/unique-id-in-array.decorator';
 
 export class HarvestDto {
   @IsDateString()
@@ -30,7 +29,7 @@ export class HarvestDto {
   @IsPositive()
   amount: number;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   value_pay: number;
 

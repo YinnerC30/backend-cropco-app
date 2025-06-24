@@ -3,7 +3,7 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsDateString,
-  IsInt,
+  IsNumber,
   IsPositive,
   IsString,
   Length,
@@ -23,7 +23,7 @@ export class WorkDto {
   @Length(10, 500)
   description: string;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   value_pay: number;
 

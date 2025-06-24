@@ -4,7 +4,6 @@ import {
   IsArray,
   IsBoolean,
   IsDateString,
-  IsInt,
   IsNumber,
   IsPositive,
   ValidateNested,
@@ -19,7 +18,7 @@ export class SaleDto {
   @IsPositive()
   amount: number;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   value_pay: number;
 
