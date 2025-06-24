@@ -7,6 +7,7 @@ import {
   IsIn,
   IsInt,
   IsOptional,
+  IsPositive,
   IsString,
   IsUUID,
 } from 'class-validator';
@@ -39,6 +40,7 @@ export class QueryParamsSale extends QueryParamsDto {
   @IsOptional()
   @Type(() => Number) // Transformará el valor a un número
   @IsInt()
+  @IsPositive()
   value_pay?: number;
 
   @IsOptional()
@@ -64,6 +66,7 @@ export class QueryParamsSale extends QueryParamsDto {
   @IsOptional()
   @Type(() => Number) // Transformará el valor a un número
   @IsInt()
+  @IsPositive()
   amount?: number;
 
   @IsOptional()
