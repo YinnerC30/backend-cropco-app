@@ -6,6 +6,7 @@ import {
   IsIn,
   IsInt,
   IsOptional,
+  IsPositive,
 } from 'class-validator';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { Transform, Type } from 'class-transformer';
@@ -53,5 +54,6 @@ export class QueryParamsPayment extends QueryParamsDto {
   @IsOptional()
   @Type(() => Number) // Transformará el valor a un número
   @IsInt()
+  @IsPositive()
   value_pay?: number;
 }

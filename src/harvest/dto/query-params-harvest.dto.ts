@@ -8,6 +8,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsOptional,
+  IsPositive,
   IsString,
   IsUUID,
   ValidateNested,
@@ -55,9 +56,10 @@ export class QueryParamsHarvest extends QueryParamsDto {
   ])
   type_unit_of_measure: MassUnit;
 
-  @IsOptional()
+ @IsOptional()
   @Type(() => Number)
   @IsInt()
+  @IsPositive()
   amount?: number;
 
   @IsOptional()
@@ -68,9 +70,11 @@ export class QueryParamsHarvest extends QueryParamsDto {
   @IsEnum(TypeFilterNumber)
   type_filter_value_pay?: TypeFilterNumber;
 
-  @IsOptional()
+ @IsOptional()
   @Type(() => Number)
   @IsInt()
+  @IsPositive()
+  @IsPositive()
   value_pay?: number;
 
   @IsOptional()

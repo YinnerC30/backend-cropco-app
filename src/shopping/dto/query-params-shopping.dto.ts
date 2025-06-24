@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsInt,
   IsOptional,
+  IsPositive,
   IsUUID,
 } from 'class-validator';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
@@ -36,6 +37,7 @@ export class QueryParamsShopping extends QueryParamsDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
+  @IsPositive()
   value_pay?: number;
 
   @IsOptional()
