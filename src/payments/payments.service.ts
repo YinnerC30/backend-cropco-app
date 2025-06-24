@@ -5,7 +5,6 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { WorkDetails } from 'src/work/entities/work-details.entity';
@@ -21,28 +20,33 @@ import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
 import { PrinterService } from 'src/printer/printer.service';
 import { getPaymentReport } from './reports/get-payment';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import { BaseTenantService } from 'src/common/services/base-tenant.service';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 
 @Injectable()
-export class PaymentsService {
-  private readonly logger = new Logger('PaymentsService');
+export class PaymentsService extends BaseTenantService {
+  protected readonly logger = new Logger('PaymentsService');
+  private paymentRepository: Repository<Payment>;
+  private dataSource: DataSource;
 
   constructor(
-    @Inject(REQUEST) private readonly request: Request,
-    @InjectRepository(Payment)
-    private readonly paymentRepository: Repository<Payment>,
-    private readonly dataSource: DataSource,
-    private printerService: PrinterService,
+    @Inject(REQUEST) request: Request,
+    private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
   ) {
-    this.paymentRepository =
-      this.request['tenantConnection'].getRepository(Payment);
-    this.dataSource = this.request['tenantConnection'];
+    super(request);
+    this.setLogger(this.logger);
+    this.paymentRepository = this.getTenantRepository(Payment);
+    this.dataSource = this.tenantConnection;
   }
 
   async create(createPaymentDto: PaymentDto) {
+    this.logWithContext(
+      `Creating new payment with ${createPaymentDto.categories.harvests.length} harvests and ${createPaymentDto.categories.works.length} works`,
+    );
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -121,9 +125,18 @@ export class PaymentsService {
 
       await queryRunner.manager.save(Payment, payment);
       await queryRunner.commitTransaction();
+      
+      this.logWithContext(
+        `Payment created successfully with ID: ${payment.id} and total value: $${payment.value_pay}`,
+      );
+      
       return payment;
     } catch (error) {
       await queryRunner.rollbackTransaction();
+      this.logWithContext(
+        `Failed to create payment with ${createPaymentDto.categories.harvests.length} harvests and ${createPaymentDto.categories.works.length} works`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
@@ -131,163 +144,216 @@ export class PaymentsService {
   }
 
   async findAll(queryParams: QueryParamsPayment) {
-    const {
-      limit = 10,
-      offset = 0,
+    this.logWithContext(
+      `Finding all payments with filters - employee: ${queryParams.employee || 'any'}, filter_by_date: ${queryParams.filter_by_date || false}, filter_by_value_pay: ${queryParams.filter_by_value_pay || false}, filter_by_method_of_payment: ${queryParams.filter_by_method_of_payment || false}`,
+    );
 
-      employee = '',
+    try {
+      const {
+        limit = 10,
+        offset = 0,
 
-      filter_by_date = false,
-      type_filter_date,
-      date,
+        employee = '',
 
-      filter_by_value_pay = false,
-      type_filter_value_pay,
-      value_pay,
+        filter_by_date = false,
+        type_filter_date,
+        date,
 
-      filter_by_method_of_payment = false,
-      method_of_payment = MethodOfPayment.EFECTIVO,
-    } = queryParams;
+        filter_by_value_pay = false,
+        type_filter_value_pay,
+        value_pay,
 
-    const queryBuilder = this.paymentRepository
-      .createQueryBuilder('payment')
-      .withDeleted()
-      .leftJoinAndSelect('payment.employee', 'employee')
-      .leftJoinAndSelect('payment.payments_harvest', 'payments_harvest')
-      .leftJoinAndSelect('payment.payments_work', 'payments_work')
-      .orderBy('payment.date', 'DESC')
-      .take(limit)
-      .skip(offset * limit);
+        filter_by_method_of_payment = false,
+        method_of_payment = MethodOfPayment.EFECTIVO,
+      } = queryParams;
 
-    employee.length > 0 &&
-      queryBuilder.andWhere('employee.id = :employeeId', {
-        employeeId: employee,
-      });
+      const queryBuilder = this.paymentRepository
+        .createQueryBuilder('payment')
+        .withDeleted()
+        .leftJoinAndSelect('payment.employee', 'employee')
+        .leftJoinAndSelect('payment.payments_harvest', 'payments_harvest')
+        .leftJoinAndSelect('payment.payments_work', 'payments_work')
+        .orderBy('payment.date', 'DESC')
+        .take(limit)
+        .skip(offset * limit);
 
-    filter_by_date &&
-      queryBuilder.andWhere(
-        `payment.date ${getComparisonOperator(type_filter_date)} :date`,
-        { date },
-      );
+      employee.length > 0 &&
+        queryBuilder.andWhere('employee.id = :employeeId', {
+          employeeId: employee,
+        });
 
-    filter_by_value_pay &&
-      queryBuilder.andWhere(
-        `payment.value_pay ${getComparisonOperator(type_filter_value_pay)} :value_pay`,
-        {
-          value_pay,
-        },
-      );
+      filter_by_date &&
+        queryBuilder.andWhere(
+          `payment.date ${getComparisonOperator(type_filter_date)} :date`,
+          { date },
+        );
 
-    filter_by_method_of_payment &&
-      queryBuilder.andWhere('payment.method_of_payment = :method_of_payment', {
-        method_of_payment,
-      });
+      filter_by_value_pay &&
+        queryBuilder.andWhere(
+          `payment.value_pay ${getComparisonOperator(type_filter_value_pay)} :value_pay`,
+          {
+            value_pay,
+          },
+        );
 
-    const [payments, count] = await queryBuilder.getManyAndCount();
+      filter_by_method_of_payment &&
+        queryBuilder.andWhere('payment.method_of_payment = :method_of_payment', {
+          method_of_payment,
+        });
 
-    if (payments.length === 0 && count > 0) {
-      throw new NotFoundException(
-        'There are no payment records with the requested pagination',
-      );
+      const [payments, count] = await queryBuilder.getManyAndCount();
+
+      this.logWithContext(`Found ${payments.length} payment records out of ${count} total records`);
+
+      if (payments.length === 0 && count > 0) {
+        throw new NotFoundException(
+          'There are no payment records with the requested pagination',
+        );
+      }
+
+      return {
+        total_row_count: count,
+        current_row_count: payments.length,
+        total_page_count: Math.ceil(count / limit),
+        current_page_count: payments.length > 0 ? offset + 1 : 0,
+        records: payments,
+      };
+    } catch (error) {
+      this.logWithContext('Failed to find payment records with filters', 'error');
+      this.handlerError.handle(error, this.logger);
     }
-
-    return {
-      total_row_count: count,
-      current_row_count: payments.length,
-      total_page_count: Math.ceil(count / limit),
-      current_page_count: payments.length > 0 ? offset + 1 : 0,
-      records: payments,
-    };
   }
 
   async findOne(id: string) {
-    const payment = await this.paymentRepository.findOne({
-      withDeleted: true,
-      where: {
-        id,
-      },
-      relations: {
-        employee: true,
-        payments_harvest: {
-          harvests_detail: {
-            harvest: true,
+    this.logWithContext(`Finding payment by ID: ${id}`);
+
+    try {
+      const payment = await this.paymentRepository.findOne({
+        withDeleted: true,
+        where: {
+          id,
+        },
+        relations: {
+          employee: true,
+          payments_harvest: {
+            harvests_detail: {
+              harvest: true,
+            },
+          },
+          payments_work: {
+            works_detail: {
+              work: true,
+            },
           },
         },
-        payments_work: {
-          works_detail: {
-            work: true,
-          },
-        },
-      },
-    });
-    if (!payment)
-      throw new NotFoundException(`Payment with id: ${id} not found`);
-    return payment;
+      });
+      
+      if (!payment) {
+        this.logWithContext(`Payment with ID: ${id} not found`, 'warn');
+        throw new NotFoundException(`Payment with id: ${id} not found`);
+      }
+      
+      this.logWithContext(`Payment found successfully with ID: ${id}`);
+      return payment;
+    } catch (error) {
+      this.logWithContext(`Failed to find payment with ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async remove(id: string) {
-    const payment = await this.findOne(id);
+    this.logWithContext(`Attempting to remove payment with ID: ${id}`);
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
     try {
-      await queryRunner.manager.delete(Payment, { id });
+      const payment = await this.findOne(id);
 
-      const { payments_harvest, payments_work } = payment;
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      
+      try {
+        await queryRunner.manager.delete(Payment, { id });
 
-      payments_harvest.forEach(async (record) => {
-        const { id } = record.harvests_detail;
-        await queryRunner.manager.update(
-          HarvestDetails,
-          { id },
-          { payment_is_pending: true },
-        );
-      });
+        const { payments_harvest, payments_work } = payment;
 
-      payments_work.forEach(async (record) => {
-        const { id } = record.works_detail;
-        await queryRunner.manager.update(
-          WorkDetails,
-          { id },
-          { payment_is_pending: true },
-        );
-      });
+        payments_harvest.forEach(async (record) => {
+          const { id } = record.harvests_detail;
+          await queryRunner.manager.update(
+            HarvestDetails,
+            { id },
+            { payment_is_pending: true },
+          );
+        });
 
-      await queryRunner.commitTransaction();
+        payments_work.forEach(async (record) => {
+          const { id } = record.works_detail;
+          await queryRunner.manager.update(
+            WorkDetails,
+            { id },
+            { payment_is_pending: true },
+          );
+        });
+
+        await queryRunner.commitTransaction();
+        this.logWithContext(`Payment with ID: ${id} removed successfully`);
+      } catch (error) {
+        await queryRunner.rollbackTransaction();
+        throw error;
+      } finally {
+        await queryRunner.release();
+      }
     } catch (error) {
-      await queryRunner.rollbackTransaction();
+      this.logWithContext(`Failed to remove payment with ID: ${id}`, 'error');
       this.handlerError.handle(error, this.logger);
-    } finally {
-      await queryRunner.release();
     }
   }
 
   async removeBulk(removeBulkPaymentsDto: RemoveBulkRecordsDto<Payment>) {
-    const success: string[] = [];
-    const failed: { id: string; error: string }[] = [];
+    this.logWithContext(
+      `Starting bulk removal of ${removeBulkPaymentsDto.recordsIds.length} payment records`,
+    );
 
-    for (const { id } of removeBulkPaymentsDto.recordsIds) {
-      try {
-        await this.remove(id);
-        success.push(id);
-      } catch (error) {
-        failed.push({ id, error: error.message });
+    try {
+      const success: string[] = [];
+      const failed: { id: string; error: string }[] = [];
+
+      for (const { id } of removeBulkPaymentsDto.recordsIds) {
+        try {
+          await this.remove(id);
+          success.push(id);
+        } catch (error) {
+          failed.push({ id, error: error.message });
+        }
       }
-    }
 
-    return { success, failed };
+      this.logWithContext(
+        `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+      );
+
+      return { success, failed };
+    } catch (error) {
+      this.logWithContext('Failed to execute bulk removal of payment records', 'error');
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async exportPaymentToPDF(id: string, subdomain: string) {
-    const payment = await this.findOne(id);
-    const docDefinition = getPaymentReport({ data: payment, subdomain });
-    const pdfDoc = this.printerService.createPdf({
-      docDefinition,
-      title: 'Registro de pago',
-      keywords: 'report-payment',
-    });
+    this.logWithContext(`Exporting payment to PDF for ID: ${id}`);
 
-    return pdfDoc;
+    try {
+      const payment = await this.findOne(id);
+      const docDefinition = getPaymentReport({ data: payment, subdomain });
+      const pdfDoc = this.printerService.createPdf({
+        docDefinition,
+        title: 'Registro de pago',
+        keywords: 'report-payment',
+      });
+
+      this.logWithContext(`Payment PDF exported successfully for ID: ${id}`);
+      return pdfDoc;
+    } catch (error) {
+      this.logWithContext(`Failed to export payment PDF for ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
+    }
   }
 }
