@@ -240,11 +240,13 @@ export class TenantsService extends BaseAdministratorService {
       `Updating tenant with ID: ${id}, new subdomain: ${updateTenantDto.subdomain}`,
     );
 
-    await this.findOne(id);
+    const tenant = await this.findOne(id);
 
     try {
       await this.tenantRepository.update({ id }, { ...updateTenantDto });
-      await this.updateDBName(id, updateTenantDto.subdomain);
+      if (updateTenantDto.subdomain !== tenant.subdomain) {
+        await this.updateDBName(id, updateTenantDto.subdomain);
+      }
       await this.tenantConnectionService.closeTenantConnection(id);
 
       this.logWithContext(`Tenant updated successfully with ID: ${id}`);
