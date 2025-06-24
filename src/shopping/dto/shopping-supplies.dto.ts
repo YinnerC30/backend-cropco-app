@@ -2,7 +2,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsDateString,
-  IsInt,
+  IsNumber,
   IsPositive,
   ValidateNested,
 } from 'class-validator';
@@ -14,7 +14,7 @@ export class ShoppingSuppliesDto {
   @IsDateString()
   date: string;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   @IsMultipleOf(50, { message: 'The value must be a multiple of 50' })
   value_pay: number;

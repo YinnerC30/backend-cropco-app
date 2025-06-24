@@ -3,7 +3,7 @@ import { DeepPartial } from 'typeorm';
 import {
   IsDefined,
   IsIn,
-  IsInt,
+  IsNumber,
   IsNotEmpty,
   IsOptional,
   IsPositive,
@@ -56,7 +56,7 @@ export class ConsumptionSuppliesDetailsDto {
   ])
   unit_of_measure: UnitType;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   amount: number;
 }

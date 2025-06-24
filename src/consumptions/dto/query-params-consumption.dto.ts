@@ -3,7 +3,7 @@ import {
   IsBooleanString,
   IsDateString,
   IsEnum,
-  IsInt,
+  IsNumber,
   IsOptional,
   IsUUID,
 } from 'class-validator';

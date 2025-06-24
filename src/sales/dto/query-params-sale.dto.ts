@@ -5,7 +5,7 @@ import {
   IsDateString,
   IsEnum,
   IsIn,
-  IsInt,
+  IsNumber,
   IsOptional,
   IsPositive,
   IsString,
@@ -39,7 +39,7 @@ export class QueryParamsSale extends QueryParamsDto {
 
   @IsOptional()
   @Type(() => Number) // Transformará el valor a un número
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   value_pay?: number;
 
@@ -65,7 +65,7 @@ export class QueryParamsSale extends QueryParamsDto {
 
   @IsOptional()
   @Type(() => Number) // Transformará el valor a un número
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   amount?: number;
 

@@ -1,7 +1,7 @@
 import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
-  IsInt,
+  IsNumber,
   IsOptional,
   IsPositive,
   IsString,
@@ -10,14 +10,14 @@ import {
 
 export class QueryParamsDto {
   @IsOptional()
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   @Min(10)
   @Type(() => Number)
   limit?: number;
 
   @IsOptional()
-  @IsInt()
+  @IsNumber()
   @Min(0)
   @Type(() => Number)
   offset?: number;

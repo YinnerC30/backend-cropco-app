@@ -3,7 +3,7 @@ import {
   IsDateString,
   IsDefined,
   IsIn,
-  IsInt,
+  IsNumber,
   IsNotEmpty,
   IsPositive,
   IsString,
@@ -29,7 +29,7 @@ export class PaymentDto {
   @IsIn(['EFECTIVO', 'TRANSFERENCIA', 'INTERCAMBIO'])
   method_of_payment: MethodOfPayment;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   value_pay: number;
 

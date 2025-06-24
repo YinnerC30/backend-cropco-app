@@ -1,4 +1,4 @@
-import { IsDefined, IsInt, IsPositive, ValidateNested } from 'class-validator';
+import { IsDefined, IsNumber, IsPositive, ValidateNested } from 'class-validator';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
@@ -10,7 +10,7 @@ export class HarvestStockDto {
   @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   amount: number;
 }

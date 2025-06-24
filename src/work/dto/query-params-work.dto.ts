@@ -3,7 +3,7 @@ import {
   IsBooleanString,
   IsDateString,
   IsEnum,
-  IsInt,
+  IsNumber,
   IsOptional,
   IsPositive,
   IsString,
@@ -41,7 +41,7 @@ export class QueryParamsWork extends QueryParamsDto {
 
  @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   value_pay?: number;
 
