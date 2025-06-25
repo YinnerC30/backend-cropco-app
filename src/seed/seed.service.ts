@@ -430,7 +430,7 @@ export class SeedService {
     mapperToDto = false,
   }): Promise<Crop | EntityConvertedToDto<Crop>> {
     const data: CreateCropDto = {
-      name: 'Crop ' + InformationGenerator.generateRandomId(),
+      name: 'Crop ' + InformationGenerator.generateRandomId().substring(0, 5),
       description: InformationGenerator.generateDescription(),
       units: 1000,
       location: InformationGenerator.generateAddress(),
@@ -732,7 +732,7 @@ export class SeedService {
     mapperToDto = false,
   }): Promise<Supply | EntityConvertedToDto<Supply>> {
     const data: CreateSupplyDto = {
-      name: 'Supply ' + InformationGenerator.generateRandomId(),
+      name: 'Supply ' + InformationGenerator.generateRandomId().substring(0, 5),
       brand: InformationGenerator.generateSupplyBrand(),
       unit_of_measure: InformationGenerator.generateUnitOfMeasure(),
       observation: InformationGenerator.generateObservation(),
