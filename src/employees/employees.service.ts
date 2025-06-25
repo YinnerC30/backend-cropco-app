@@ -40,7 +40,7 @@ export class EmployeesService extends BaseTenantService {
     this.employeeRepository = this.getTenantRepository(Employee);
   }
 
-  async findOneCertification(
+  async generateCertification(
     id: string,
     employeeCertificationDto: EmployeeCertificationDto,
   ) {
