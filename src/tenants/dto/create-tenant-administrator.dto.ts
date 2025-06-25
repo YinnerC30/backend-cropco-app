@@ -1,10 +1,4 @@
-import {
-  IsEmail,
-  IsIn,
-  IsString,
-  MaxLength,
-  MinLength
-} from 'class-validator';
+import { IsEmail, IsIn, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateTenantAdministradorDto {
   @IsString()
@@ -26,7 +20,8 @@ export class CreateTenantAdministradorDto {
   password: string;
 
   @IsString()
-  @MaxLength(10)
+  @MaxLength(15)
+  @MinLength(9)
   cell_phone_number: string;
 
   @IsIn(['admin', 'user', 'manager'])
