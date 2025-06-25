@@ -98,7 +98,7 @@ export const getShoppingReport = (
                 style: 'tableCell',
               },
               {
-                text: detail.supply.unit_of_measure,
+                text: detail.unit_of_measure,
                 style: 'tableCell',
               },
 
