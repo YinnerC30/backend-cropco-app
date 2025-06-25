@@ -432,6 +432,7 @@ export class SeedService {
     const data: CreateCropDto = {
       name: 'Crop ' + InformationGenerator.generateRandomId().substring(0, 5),
       description: InformationGenerator.generateDescription(),
+      number_hectares: 12,
       units: 1000,
       location: InformationGenerator.generateAddress(),
       date_of_creation: InformationGenerator.generateRandomDate({}),
@@ -445,6 +446,7 @@ export class SeedService {
       id: crop.id,
       name: crop.name,
       description: crop.description,
+      number_hectares: crop.number_hectares,
       units: crop.units,
       location: crop.location,
       date_of_creation: crop.date_of_creation,
