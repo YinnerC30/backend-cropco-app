@@ -1,4 +1,4 @@
-import { IsEmail, IsIn, IsString, MaxLength } from 'class-validator';
+import { IsEmail, IsIn, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class UpdateAdministradorDto {
   @IsString()
@@ -15,7 +15,8 @@ export class UpdateAdministradorDto {
   email: string;
 
   @IsString()
-  @MaxLength(10)
+  @MinLength(9)
+  @MaxLength(15)
   cell_phone_number: string;
 
   @IsIn(['admin', 'user', 'manager'])

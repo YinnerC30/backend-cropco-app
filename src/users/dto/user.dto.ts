@@ -32,8 +32,8 @@ export class UserDto {
   password: string;
 
   @IsString()
-  @MinLength(10)
-  @MaxLength(10)
+  @MaxLength(15)
+  @MinLength(9)
   cell_phone_number: string;
 
   @IsArray()

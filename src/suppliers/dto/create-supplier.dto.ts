@@ -29,7 +29,8 @@ export class CreateSupplierDto {
   email: string;
 
   @IsNumberString()
-  @MaxLength(10)
+  @MaxLength(9)
+  @MaxLength(15)
   cell_phone_number: string;
 
   @IsString()

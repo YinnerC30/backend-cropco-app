@@ -21,7 +21,8 @@ export class CreateAdministradorDto {
   password: string;
 
   @IsString()
-  @MaxLength(10)
+  @MinLength(9)
+  @MaxLength(15)
   cell_phone_number: string;
 
   @IsString()
