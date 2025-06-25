@@ -23,6 +23,7 @@ import { EmployeesService } from './employees.service';
 import { Employee } from './entities/employee.entity';
 import { Response } from 'express';
 import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
+import { EmployeeCertificationDto } from './dto/employee-certification.dto';
 
 export const pathsEmployeesController: PathsController = {
   createEmployee: {
@@ -123,9 +124,10 @@ export class EmployeesController {
   @Get(findCertification.path)
   async createCertification(
     @Param('id', ParseUUIDPipe) id: string,
+    @Body() employeeCertificationDto: EmployeeCertificationDto,
     @Res() response: ResponseExpress,
   ) {
-    const pdfDoc = await this.employeesService.findOneCertification(id);
+    const pdfDoc = await this.employeesService.findOneCertification(id,employeeCertificationDto);
     response.setHeader('Content-Type', 'application/pdf');
     pdfDoc.info.Title = 'Employment-Letter';
     pdfDoc.pipe(response);
