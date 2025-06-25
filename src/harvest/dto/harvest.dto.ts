@@ -9,6 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+import { MatchAmount } from 'src/common/decorators/match-amount.decorator';
 import { MatchTotals } from 'src/common/decorators/match-totals.decorator';
 import { UniqueRecordIdInArray } from 'src/common/decorators/unique-id-in-array.decorator';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
@@ -27,21 +28,24 @@ export class HarvestDto {
 
   @IsNumber()
   @IsPositive()
+  @MatchAmount({
+    nameArrayToCalculate: 'details',
+    targetUnit: 'GRAMOS',
+  })
   amount: number;
 
   @IsNumber()
   @IsPositive()
+  @MatchTotals({
+    fields: ['value_pay'],
+    nameArrayToCalculate: 'details',
+  })
   value_pay: number;
 
   @IsString()
   observation: string;
 
   @ArrayNotEmpty()
-  // TODO: Crear decorador personalizado para validar unidades de medida del amount de cada registro
-  @MatchTotals({
-    fields: ['value_pay'],
-    nameArrayToCalculate: 'details',
-  })
   @UniqueRecordIdInArray('employee')
   @ValidateNested({ each: true })
   @Type(() => HarvestDetailsDto)
