@@ -23,6 +23,7 @@ import { BaseTenantService } from 'src/common/services/base-tenant.service';
 import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import { EmployeeCertificationDto } from './dto/employee-certification.dto';
 
 @Injectable()
 export class EmployeesService extends BaseTenantService {
@@ -39,7 +40,10 @@ export class EmployeesService extends BaseTenantService {
     this.employeeRepository = this.getTenantRepository(Employee);
   }
 
-  async findOneCertification(id: string) {
+  async findOneCertification(
+    id: string,
+    employeeCertificationDto: EmployeeCertificationDto,
+  ) {
     this.logWithContext(
       `Generating employment certification for employee ID: ${id}`,
     );
@@ -48,14 +52,14 @@ export class EmployeesService extends BaseTenantService {
       const employee = await this.findOne(id);
 
       const docDefinition = getEmploymentLetterByIdReport({
-        employerName: 'Carlos',
-        employerPosition: 'Gerente de RRHH',
-        employeeName: employee.first_name,
-        employeePosition: 'Jornalero',
-        employeeStartDate: new Date(),
-        employeeHours: 48,
+        employerName: employeeCertificationDto.generator_name,
+        employerPosition: employeeCertificationDto.generator_position,
+        employeeName: employee.first_name + ' ' + employee.last_name,
+        employeePosition: employeeCertificationDto.employee_position,
+        employeeStartDate: employeeCertificationDto.start_date,
+        employeeHours: employeeCertificationDto.weekly_working_hours,
         employeeWorkSchedule: 'Lunes a Viernes',
-        employerCompany: 'Cropco Corp.',
+        employerCompany: employeeCertificationDto.company_name,
       });
 
       const doc = this.printerService.createPdf({ docDefinition });
