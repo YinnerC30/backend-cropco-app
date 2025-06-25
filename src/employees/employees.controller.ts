@@ -81,10 +81,10 @@ export const pathsEmployeesController: PathsController = {
     description: 'eliminar varios empleados',
     name: 'remove_bulk_employees',
   },
-  findCertification: {
-    path: 'find/certification/one/:id',
-    description: 'obtener certificación de empleo',
-    name: 'find_certification_employee',
+  generateCertification: {
+    path: 'generate/certification/one/:id',
+    description: 'generar certificación de empleo',
+    name: 'generate_certification_employee',
   },
   findTopEmployeesInHarvests: {
     path: 'find/top-employees-in-harvests',
@@ -109,7 +109,7 @@ const {
   updateEmployee,
   removeEmployee,
   removeEmployees,
-  findCertification,
+  generateCertification,
   findAllEmployeesWithHarvests,
   findAllEmployeesWithWorks,
   findTopEmployeesInHarvests,
@@ -121,13 +121,16 @@ const {
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
 
-  @Get(findCertification.path)
+  @Post(generateCertification.path)
   async createCertification(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() employeeCertificationDto: EmployeeCertificationDto,
     @Res() response: ResponseExpress,
   ) {
-    const pdfDoc = await this.employeesService.findOneCertification(id,employeeCertificationDto);
+    const pdfDoc = await this.employeesService.generateCertification(
+      id,
+      employeeCertificationDto,
+    );
     response.setHeader('Content-Type', 'application/pdf');
     pdfDoc.info.Title = 'Employment-Letter';
     pdfDoc.pipe(response);
