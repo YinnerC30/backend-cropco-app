@@ -16,14 +16,14 @@ export class ShoppingSuppliesDto {
 
   @IsNumber()
   @IsPositive()
-  @IsMultipleOf(50, { message: 'The value must be a multiple of 50' })
-  value_pay: number;
-
-  @ArrayNotEmpty()
   @MatchTotals({
     fields: ['value_pay'],
     nameArrayToCalculate: 'details',
   })
+  @IsMultipleOf(50, { message: 'The value must be a multiple of 50' })
+  value_pay: number;
+
+  @ArrayNotEmpty()
   @ValidateNested({ each: true })
   @Type(() => ShoppingSuppliesDetailsDto)
   details: ShoppingSuppliesDetailsDto[];

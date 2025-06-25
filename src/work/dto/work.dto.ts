@@ -25,6 +25,10 @@ export class WorkDto {
 
   @IsNumber()
   @IsPositive()
+  @MatchTotals({
+    fields: ['value_pay'],
+    nameArrayToCalculate: 'details',
+  })
   value_pay: number;
 
   @ValidateNested()
@@ -33,10 +37,6 @@ export class WorkDto {
 
   @IsArray()
   @ArrayNotEmpty()
-  @MatchTotals({
-    fields: ['value_pay'],
-    nameArrayToCalculate: 'details',
-  })
   @ValidateNested({ each: true })
   @Type(() => WorkDetailsDto)
   details: WorkDetailsDto[];
