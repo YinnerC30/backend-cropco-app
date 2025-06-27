@@ -21,13 +21,13 @@ export class TenantDatabase {
   // @Column({ default: true })
   // is_active: boolean;
 
-  // @Column({ type: 'jsonb', nullable: true })
-  // connection_config: {
-  //   host: string;
-  //   port: number;
-  //   username: string;
-  //   password: string;
-  // };
+  @Column({ type: 'jsonb', nullable: true })
+  connection_config: {
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+  };
 
   @ManyToOne(() => Tenant, (tenant) => tenant.databases, {
     onDelete: 'CASCADE',

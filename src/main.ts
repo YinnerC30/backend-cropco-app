@@ -16,6 +16,7 @@ async function bootstrap() {
           'https://cropco.org',
           'http://localhost:5173',
           'http://localhost:4173',
+          'http://localhost:8080',
         ];
 
         // Verificar si es el dominio principal

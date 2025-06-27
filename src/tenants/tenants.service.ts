@@ -41,6 +41,8 @@ import { TenantConnectionService } from './services/tenant-connection.service';
 import { BaseAdministratorService } from 'src/auth/services/base-administrator.service';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import * as crypto from 'crypto';
+import * as generator from 'generate-password';
 
 @Injectable()
 export class TenantsService extends BaseAdministratorService {
@@ -63,6 +65,64 @@ export class TenantsService extends BaseAdministratorService {
   ) {
     super(request);
     this.setLogger(this.logger);
+  }
+
+  /**
+   * Genera una contraseña segura para un tenant
+   */
+  private generateSecurePassword(): string {
+    return generator.generate({
+      length: 32,
+      numbers: true,
+      symbols: true,
+      uppercase: true,
+      lowercase: true,
+      excludeSimilarCharacters: true,
+    });
+  }
+
+  /**
+   * Encripta una contraseña usando AES-256-GCM
+   */
+  private async encryptPassword(password: string): Promise<string> {
+    const algorithm = 'aes-256-gcm';
+    const secretKey =
+      process.env.TENANT_ENCRYPTION_KEY || 'default-key-change-this';
+    const key = crypto.scryptSync(secretKey, 'salt', 32);
+
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(algorithm, key, iv);
+    cipher.setAAD(Buffer.from('additional-auth-data'));
+
+    let encrypted = cipher.update(password, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+
+    const authTag = cipher.getAuthTag();
+
+    return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
+  }
+
+  /**
+   * Desencripta una contraseña
+   */
+  private async decryptPassword(encryptedPassword: string): Promise<string> {
+    const algorithm = 'aes-256-gcm';
+    const secretKey =
+      process.env.TENANT_ENCRYPTION_KEY || 'default-key-change-this';
+    const key = crypto.scryptSync(secretKey, 'salt', 32);
+
+    const [ivHex, authTagHex, encrypted] = encryptedPassword.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const authTag = Buffer.from(authTagHex, 'hex');
+
+    const decipher = crypto.createDecipheriv(algorithm, key, iv);
+    decipher.setAuthTag(authTag);
+    decipher.setAAD(Buffer.from('additional-auth-data'));
+
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    return decrypted;
   }
 
   async create(createTenantDto: CreateTenantDto) {
@@ -308,6 +368,10 @@ export class TenantsService extends BaseAdministratorService {
     );
 
     try {
+      // Generar credenciales únicas para el tenant
+      const tenantUsername = `tenant_${databaseName.replace('cropco_tenant_', '')}_user`;
+      const tenantPassword = this.generateSecurePassword();
+
       // Crear la base de datos
       await this.dataSource.query(`CREATE DATABASE ${databaseName}`);
 
@@ -315,10 +379,28 @@ export class TenantsService extends BaseAdministratorService {
         `Database ${databaseName} created successfully for tenant ID: ${tenantId}`,
       );
 
-      // Guardar la configuración de la base de datos
+      // Crear usuario específico para este tenant
+      await this.dataSource.query(`SELECT create_tenant_user($1, $2)`, [
+        databaseName.replace('cropco_tenant_', ''),
+        tenantPassword,
+      ]);
+
+      // Asignar propiedad de la base de datos al usuario del tenant
+      await this.dataSource.query(
+        `ALTER DATABASE "${databaseName}" OWNER TO "${tenantUsername}"`,
+      );
+
+      // Guardar la configuración de la base de datos con credenciales encriptadas
       const tenantDatabase = this.tenantDatabaseRepository.create({
         tenant: { id: tenantId },
         database_name: databaseName,
+        connection_config: {
+          username: tenantUsername,
+          // Encriptar la contraseña antes de guardarla
+          password: await this.encryptPassword(tenantPassword),
+          host: process.env.DB_HOST,
+          port: parseInt(process.env.DB_PORT),
+        },
       });
 
       await this.tenantDatabaseRepository.save(tenantDatabase);
@@ -327,7 +409,7 @@ export class TenantsService extends BaseAdministratorService {
         `Tenant database configuration saved for tenant ID: ${tenantId}`,
       );
 
-      await this.configDataBaseTenant(tenantId);
+      await this.configDataBaseTenant(tenantId, tenantUsername, tenantPassword);
 
       this.logWithContext(
         `Tenant database setup completed for tenant ID: ${tenantId}`,
@@ -500,25 +582,32 @@ export class TenantsService extends BaseAdministratorService {
     }
   }
 
-  private async configDataBaseTenant(tenantId: string) {
-    this.logWithContext(`Configuring database for tenant ID: ${tenantId}`);
+  private async configDataBaseTenant(
+    tenantId: string,
+    tenantUsername: string,
+    tenantPassword: string,
+  ) {
+    this.logWithContext(
+      `Configuring database for tenant ID: ${tenantId} with user: ${tenantUsername}`,
+    );
 
     try {
       const tenantDatabase = await this.getOneTenantDatabase(tenantId);
 
+      // Usar las credenciales específicas del tenant para configurar la base de datos
       const dataSource = new DataSource({
         type: 'postgres',
         host: process.env.DB_HOST,
         port: parseInt(process.env.DB_PORT),
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
+        username: tenantUsername, // Usuario específico del tenant
+        password: tenantPassword, // Contraseña específica del tenant
         database: tenantDatabase.database_name,
         entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
         synchronize: true,
       });
 
       this.logWithContext(
-        `Initializing database connection for tenant ID: ${tenantId}`,
+        `Initializing database connection for tenant ID: ${tenantId} with tenant user`,
       );
       await dataSource.initialize();
 
@@ -549,7 +638,8 @@ export class TenantsService extends BaseAdministratorService {
           END;
           $$;
     
-          alter function convert_to_grams(text, numeric) owner to "admin-cropco";
+          -- Asignar la función al usuario del tenant en lugar de admin-cropco
+          alter function convert_to_grams(text, numeric) owner to "${tenantUsername}";
         `);
 
         await this.createModulesWithActions(queryRunner);
