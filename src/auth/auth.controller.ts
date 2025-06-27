@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Res,
 } from '@nestjs/common';
 
 import { PathsController } from 'src/common/interfaces/PathsController';
@@ -17,6 +18,9 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { AuthAdministratorService } from './services/auth-administrator.service';
 import { AuthAdministration } from './decorators/auth-administrator.decorator';
 import { GetTokenTenantManagement } from './decorators/get-token-tenant-management.headers.decorator';
+import { Response } from 'express';
+import { User } from 'src/users/entities/user.entity';
+import { Module } from './entities/module.entity';
 
 export const pathsAuthController: PathsController = {
   login: {
@@ -87,8 +91,21 @@ export class AuthController {
   ) {}
 
   @Post(login.path)
-  login(@Body() loginUserDto: LoginUserDto) {
-    return this.authService.login(loginUserDto);
+  async login(
+    @Body() loginUserDto: LoginUserDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result: any = await this.authService.login(loginUserDto);
+
+    // Establecer la cookie con el token
+    response.cookie('user-token', result.token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: 6 * 60 * 60 * 1000, // 6 horas en milisegundos
+    });
+
+    return result;
   }
 
   @Post(loginManagement.path)

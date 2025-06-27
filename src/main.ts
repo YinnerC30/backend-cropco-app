@@ -1,11 +1,15 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { CookiesLoggerInterceptor } from './common/interceptors/cookies-logger.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     cors: {
-      origin: (origin: string, callback: (err: Error | null, allow?: boolean) => void) => {
+      origin: (
+        origin: string,
+        callback: (err: Error | null, allow?: boolean) => void,
+      ) => {
         // Permitir requests sin origin (como aplicaciones móviles o Postman)
         if (!origin) {
           return callback(null, true);
@@ -51,6 +55,9 @@ async function bootstrap() {
     },
   });
 
+  // Configurar cookie-parser como middleware global
+  // app.use(require('cookie-parser')());
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -59,6 +66,9 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // Agregar interceptor global para loggear cookies
+  // app.useGlobalInterceptors(new CookiesLoggerInterceptor());
 
   await app.listen(3000);
 }
