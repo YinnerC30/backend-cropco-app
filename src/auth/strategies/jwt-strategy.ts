@@ -32,6 +32,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       this.modulesRepository =
         request['tenantConnection'].getRepository(Module);
 
+      const userTokenCookie = request.cookies?.['user-token'] || null;
+      console.log("🚀 ~ JwtStrategy ~ validate ~ userTokenCookie:", userTokenCookie)
+
       const { id } = payload;
       const user = await this.userRepository.findOne({
         where: { id },
