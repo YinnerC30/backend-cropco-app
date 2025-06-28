@@ -100,8 +100,8 @@ export class AuthController {
     // Establecer la cookie con el token
     response.cookie('user-token', result.token, {
       httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 6 * 60 * 60 * 1000, // 6 horas en milisegundos
     });
 
