@@ -65,6 +65,12 @@ export const pathsAuthController: PathsController = {
     name: 'logout_user',
     visibleToUser: false,
   },
+  logoutAdministrator: {
+    path: 'management/logout',
+    description: 'logout administrador',
+    name: 'logout_administrator',
+    visibleToUser: false,
+  },
   findAllModules: {
     path: 'modules/all',
     description: 'obtener todos los modulos del sistema',
@@ -86,6 +92,7 @@ const {
   findAllModules,
   createModuleActions,
   logout,
+  logoutAdministrator,
   // convertToAdmin,
   loginManagement,
 } = pathsAuthController;
@@ -179,6 +186,26 @@ export class AuthController {
 
     // Limpiar la cookie del cliente
     response.clearCookie('user-token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+    });
+
+    return { message: 'Logout exitoso' };
+  }
+
+  @AuthAdministration()
+  @Post(logoutAdministrator.path)
+  @HttpCode(200)
+  async logoutAdministrator(
+    @GetTokenTenantManagement() token: string,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    // Invalidar el token en el servidor (opcional, depende de tu estrategia)
+    // await this.authService.logout(token);
+
+    // Limpiar la cookie del cliente
+    response.clearCookie('administrator-token', {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
