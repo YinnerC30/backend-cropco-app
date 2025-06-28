@@ -1,7 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { CookiesLoggerInterceptor } from './common/interceptors/cookies-logger.interceptor';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -56,7 +56,9 @@ async function bootstrap() {
   });
 
   // Configurar cookie-parser como middleware global
-  // app.use(require('cookie-parser')());
+
+  // somewhere in your initialization file
+  app.use(cookieParser());
 
   app.useGlobalPipes(
     new ValidationPipe({
