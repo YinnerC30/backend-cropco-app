@@ -198,6 +198,34 @@ export class AuthService extends BaseTenantService {
     }
   }
 
+  /**
+   * Realiza el logout del usuario invalidando el token
+   * @param token - Token JWT a invalidar
+   */
+  async logout(token: string): Promise<void> {
+    this.logWithContext('Processing logout request');
+
+    try {
+      // Verificar que el token sea válido antes de invalidarlo
+      const payload = this.jwtService.verify(token);
+      this.logWithContext(`Logout successful for user ID: ${payload.id}`);
+      
+      // Aquí podrías implementar una blacklist de tokens si es necesario
+      // Por ejemplo, guardar el token en Redis con un tiempo de expiración
+      // await this.redisService.setex(`blacklist:${token}`, 3600, '1');
+      
+    } catch (error) {
+      if (error instanceof TokenExpiredError) {
+        this.logWithContext('Logout attempted with expired token', 'warn');
+        // No es un error crítico, el token ya está expirado
+        return;
+      }
+      
+      this.logWithContext('Logout failed - invalid token', 'error');
+      this.handlerError.handle(error, this.logger);
+    }
+  }
+
   async renewToken(token: string): Promise<{ token: string }> {
     this.logWithContext('Attempting to renew JWT token');
 

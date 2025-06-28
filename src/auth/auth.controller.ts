@@ -59,6 +59,12 @@ export const pathsAuthController: PathsController = {
     name: 'create_module_actions',
     visibleToUser: false,
   },
+  logout: {
+    path: 'logout',
+    description: 'logout usuario',
+    name: 'logout_user',
+    visibleToUser: false,
+  },
   findAllModules: {
     path: 'modules/all',
     description: 'obtener todos los modulos del sistema',
@@ -79,6 +85,7 @@ const {
   checkAuthStatusManagement,
   findAllModules,
   createModuleActions,
+  logout,
   // convertToAdmin,
   loginManagement,
 } = pathsAuthController;
@@ -142,6 +149,26 @@ export class AuthController {
   @Get(createModuleActions.path)
   createModuleWithActions() {
     return this.authService.createModulesWithActions();
+  }
+
+  @Auth({ skipValidationPath: true })
+  @Post(logout.path)
+  @HttpCode(200)
+  async logout(
+    @GetToken() token: string,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    // Invalidar el token en el servidor (opcional, depende de tu estrategia)
+    await this.authService.logout(token);
+
+    // Limpiar la cookie del cliente
+    response.clearCookie('user-token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+    });
+
+    return { message: 'Logout exitoso' };
   }
 
   // @Get(convertToAdmin.path)
