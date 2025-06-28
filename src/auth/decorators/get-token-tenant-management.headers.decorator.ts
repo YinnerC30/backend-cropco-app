@@ -9,7 +9,7 @@ export const getTokenFactoryTenantManagement = (
   ctx: ExecutionContext,
 ): string | null => {
   const request = ctx.switchToHttp().getRequest();
-  const token = request.headers['x-administration-token'];
+  const token = request.cookies['administrator-token'];
 
   if (!token) throw new UnauthorizedException('Token not found in request');
 
