@@ -4,6 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
+import { Request } from 'express';
 import { Administrator } from 'src/administrators/entities/administrator.entity';
 import { Repository } from 'typeorm';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
@@ -20,7 +21,12 @@ export class JwtAdministrationStrategy extends PassportStrategy(
   ) {
     super({
       secretOrKey: configService.get('JWT_SECRET'),
-      jwtFromRequest: ExtractJwt.fromHeader('x-administration-token'),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        (request: Request) => {
+          return request?.cookies?.['administrator-token'];
+        },
+      ]),
       ignoreExpiration: false,
     });
   }

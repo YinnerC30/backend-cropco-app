@@ -118,8 +118,22 @@ export class AuthController {
   }
 
   @Post(loginManagement.path)
-  loginManagement(@Body() loginUserDto: LoginUserDto) {
-    return this.authTenantService.login(loginUserDto);
+  async loginManagement(
+    @Body() loginUserDto: LoginUserDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authTenantService.login(loginUserDto);
+    // Establecer la cookie  con el token
+    response.cookie('administrator-token', result.token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 6 * 60 * 60 * 1000, // 6 horas en milisegundos
+    });
+
+    delete result.token;
+
+    return result;
   }
 
   @Auth({ skipValidationPath: true })
