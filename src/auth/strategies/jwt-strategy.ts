@@ -20,7 +20,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   ) {
     super({
       secretOrKey: configService.get('JWT_SECRET'),
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        (request: Request) => {
+          return request?.cookies?.['user-token'];
+        },
+      ]),
       ignoreExpiration: false,
       passReqToCallback: true,
     });
@@ -31,9 +36,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       this.userRepository = request['tenantConnection'].getRepository(User);
       this.modulesRepository =
         request['tenantConnection'].getRepository(Module);
-
-      const userTokenCookie = request.cookies?.['user-token'] || null;
-      console.log("🚀 ~ JwtStrategy ~ validate ~ userTokenCookie:", userTokenCookie)
 
       const { id } = payload;
       const user = await this.userRepository.findOne({
