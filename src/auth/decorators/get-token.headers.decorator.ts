@@ -9,17 +9,9 @@ export const getTokenFactory = (
   ctx: ExecutionContext,
 ): string | null => {
   const request = ctx.switchToHttp().getRequest();
-  const authorization =
-    request.headers['authorization'] || request.headers['Authorization'];
+  const token = request.cookies['user-token'];
 
-  if (!authorization)
-    throw new UnauthorizedException('Token not found in request');
-
-  // El encabezado de autorización debería comenzar con 'Bearer '
-  const [bearer, token] = authorization.split(' ');
-
-  if (bearer !== 'Bearer' || !token)
-    throw new UnauthorizedException('Token not found in request');
+  if (!token) throw new UnauthorizedException('Token not found in request');
 
   return token;
 };
