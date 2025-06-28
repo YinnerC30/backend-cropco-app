@@ -112,6 +112,8 @@ export class AuthController {
       maxAge: 6 * 60 * 60 * 1000, // 6 horas en milisegundos
     });
 
+    delete result.token;
+
     return result;
   }
 
