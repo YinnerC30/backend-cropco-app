@@ -60,7 +60,7 @@ import { TenantMiddleware } from './tenants/middleware/tenant.middleware';
           entities: [Tenant, TenantDatabase, Administrator],
           synchronize: true,
           ssl: false,
-          // logging: true,
+          logging: true,
         };
       },
     }),

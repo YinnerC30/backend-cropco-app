@@ -325,6 +325,8 @@ export class TenantsService extends BaseAdministratorService {
       this.logWithContext(
         `Database renamed successfully from ${oldDatabaseName} to ${newDatabaseName} for tenant ID: ${tenantId}`,
       );
+
+      return await this.getOneTenantDatabase(tenantId);
     } catch (error) {
       this.logWithContext(
         `Failed to update database name for tenant ID: ${tenantId}`,
@@ -344,7 +346,38 @@ export class TenantsService extends BaseAdministratorService {
     try {
       await this.tenantConnectionService.closeTenantConnection(id);
       if (updateTenantDto.subdomain !== tenant.subdomain) {
-        await this.updateDBName(id, updateTenantDto.subdomain);
+        const tenantDb = await this.updateDBName(id, updateTenantDto.subdomain);
+        // Update rol
+        // Generar credenciales únicas para el tenant
+        const tenantUsername = `tenant_${tenantDb.database_name.replace('cropco_tenant_', '')}_user`;
+        const tenantPassword = this.generateSecurePassword();
+
+        // Crear usuario específico para este tenant
+        await this.dataSource.query(`SELECT create_tenant_user($1, $2)`, [
+          tenantDb.database_name.replace('cropco_tenant_', ''),
+          tenantPassword,
+        ]);
+
+        // Asignar propiedad de la base de datos al usuario del tenant
+        await this.dataSource.query(
+          `ALTER DATABASE "${tenantDb.database_name}" OWNER TO "${tenantUsername}"`,
+        );
+
+        // Guardar la configuración de la base de datos con credenciales encriptadas
+        await this.tenantDatabaseRepository.update(
+          { id: tenantDb.id },
+          {
+            // tenant: { id: tenantId },
+            // database_name: databaseName,
+            connection_config: {
+              username: tenantUsername,
+              // Encriptar la contraseña antes de guardarla
+              password: await this.encryptPassword(tenantPassword),
+              host: process.env.DB_HOST,
+              port: parseInt(process.env.DB_PORT),
+            },
+          },
+        );
       }
       await this.tenantRepository.update({ id }, { ...updateTenantDto });
 
