@@ -425,6 +425,11 @@ export class TenantsService extends BaseAdministratorService {
 
       await this.tenantDatabaseRepository.save(tenantDatabase);
 
+      await this.tenantRepository.update(
+        { id: tenantId },
+        { is_created_db: true },
+      );
+
       this.logWithContext(
         `Tenant database configuration saved for tenant ID: ${tenantId}`,
       );
@@ -610,6 +615,11 @@ export class TenantsService extends BaseAdministratorService {
 
   async configDataBaseTenant(tenantId: string) {
     const tenantDB = await this.getOneTenantDatabase(tenantId);
+    if (tenantDB.is_migrated) {
+      return {
+        msg: 'Tenant DB is ready to use',
+      };
+    }
     const tenantUsername = tenantDB.connection_config.username;
     const tenantPassword = await this.decryptTenantPassword(
       tenantDB.connection_config.password,
@@ -683,6 +693,11 @@ export class TenantsService extends BaseAdministratorService {
         await this.createModulesWithActions(queryRunner);
 
         await queryRunner.commitTransaction();
+
+        await this.tenantDatabaseRepository.update(
+          { tenant: { id: tenantId } },
+          { is_migrated: true },
+        );
 
         this.logWithContext(
           `Database configuration completed successfully for tenant ID: ${tenantId}`,

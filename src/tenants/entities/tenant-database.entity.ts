@@ -35,8 +35,8 @@ export class TenantDatabase {
   @JoinColumn({ name: 'tenantId' })
   tenant: Tenant;
 
-  // @Column({ default: false })
-  // is_migrated: boolean;
+  @Column({ default: false })
+  is_migrated: boolean;
 
   @CreateDateColumn()
   createdAt: Date;
