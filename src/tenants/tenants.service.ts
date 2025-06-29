@@ -15,6 +15,7 @@ import { pathsClientsController } from 'src/clients/clients.controller';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { PathProperties } from 'src/common/interfaces/PathsController';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import { EncryptionService } from 'src/common/services/encryption.service';
 import { pathsConsumptionController } from 'src/consumptions/consumptions.controller';
 import { pathsCropsController } from 'src/crops/crops.controller';
 import { pathsDashboardController } from 'src/dashboard/dashboard.controller';
@@ -41,8 +42,6 @@ import { TenantConnectionService } from './services/tenant-connection.service';
 import { BaseAdministratorService } from 'src/auth/services/base-administrator.service';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
-import * as crypto from 'crypto';
-import * as generator from 'generate-password';
 
 @Injectable()
 export class TenantsService extends BaseAdministratorService {
@@ -62,68 +61,10 @@ export class TenantsService extends BaseAdministratorService {
     private dataSource: DataSource,
 
     private readonly handlerError: HandlerErrorService,
+    private readonly encryptionService: EncryptionService,
   ) {
     super(request);
     this.setLogger(this.logger);
-  }
-
-  /**
-   * Genera una contraseña segura para un tenant
-   */
-  private generateSecurePassword(): string {
-    return generator.generate({
-      length: 12,
-      numbers: true,
-      symbols: true,
-      uppercase: true,
-      lowercase: true,
-      excludeSimilarCharacters: true,
-    });
-  }
-
-  /**
-   * Encripta una contraseña usando AES-256-GCM
-   */
-  private encryptPassword(password: string): string {
-    const algorithm = 'aes-256-gcm';
-    const secretKey =
-      process.env.TENANT_ENCRYPTION_KEY || 'default-key-change-this';
-    const key = crypto.scryptSync(secretKey, 'salt', 32);
-
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(algorithm, key, iv);
-    cipher.setAAD(Buffer.from('additional-auth-data'));
-
-    let encrypted = cipher.update(password, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-
-    const authTag = cipher.getAuthTag();
-
-    return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
-  }
-
-  /**
-   * Desencripta una contraseña
-   */
-  private decryptPassword(encryptedPassword: string): string {
-    const crypto = require('crypto');
-    const algorithm = 'aes-256-gcm';
-    const secretKey =
-      process.env.TENANT_ENCRYPTION_KEY || 'default-key-change-this';
-    const key = crypto.scryptSync(secretKey, 'salt', 32);
-
-    const [ivHex, authTagHex, encrypted] = encryptedPassword.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const authTag = Buffer.from(authTagHex, 'hex');
-
-    const decipher = crypto.createDecipheriv(algorithm, key, iv);
-    decipher.setAuthTag(authTag);
-    decipher.setAAD(Buffer.from('additional-auth-data'));
-
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-
-    return decrypted;
   }
 
   async create(createTenantDto: CreateTenantDto) {
@@ -328,7 +269,7 @@ export class TenantsService extends BaseAdministratorService {
 
         // Generar credenciales únicas para el tenant
         const tenantUsername = `tenant_${tenantDb.database_name.replace('cropco_tenant_', '')}_user`;
-        const tenantPassword = this.generateSecurePassword();
+        const tenantPassword = this.encryptionService.generateSecurePassword();
 
         // Crear usuario específico para este tenant
         await this.dataSource.query(`SELECT create_tenant_user($1, $2)`, [
@@ -359,7 +300,7 @@ export class TenantsService extends BaseAdministratorService {
             connection_config: {
               username: tenantUsername,
               // Encriptar la contraseña antes de guardarla
-              password: await this.encryptPassword(tenantPassword),
+              password: this.encryptionService.encryptPassword(tenantPassword),
               host: process.env.DB_HOST,
               port: parseInt(process.env.DB_PORT),
             },
@@ -435,7 +376,7 @@ export class TenantsService extends BaseAdministratorService {
     try {
       // Generar credenciales únicas para el tenant
       const tenantUsername = `tenant_${databaseName.replace('cropco_tenant_', '')}_user`;
-      const tenantPassword = this.generateSecurePassword();
+      const tenantPassword = this.encryptionService.generateSecurePassword();
 
       // Crear la base de datos
       await this.dataSource.query(`CREATE DATABASE ${databaseName}`);
@@ -470,7 +411,7 @@ export class TenantsService extends BaseAdministratorService {
         connection_config: {
           username: tenantUsername,
           // Encriptar la contraseña antes de guardarla
-          password: await this.encryptPassword(tenantPassword),
+          password: this.encryptionService.encryptPassword(tenantPassword),
           host: process.env.DB_HOST,
           port: parseInt(process.env.DB_PORT),
         },
@@ -674,7 +615,7 @@ export class TenantsService extends BaseAdministratorService {
       };
     }
     const tenantUsername = tenantDB.connection_config.username;
-    const tenantPassword = await this.decryptPassword(
+    const tenantPassword = this.encryptionService.decryptPassword(
       tenantDB.connection_config.password,
     );
     this.logWithContext(

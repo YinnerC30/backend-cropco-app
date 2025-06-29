@@ -2,6 +2,7 @@ import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { TenantsService } from '../tenants.service';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
+import { EncryptionService } from 'src/common/services/encryption.service';
 
 @Injectable()
 export class TenantConnectionService {
@@ -12,6 +13,7 @@ export class TenantConnectionService {
     @Inject(forwardRef(() => TenantsService))
     private readonly tenantsService: TenantsService,
     private readonly handlerError: HandlerErrorService,
+    private readonly encryptionService: EncryptionService,
   ) {}
 
   async getTenantConnection(tenantId: string): Promise<DataSource> {
@@ -28,7 +30,7 @@ export class TenantConnectionService {
         }
 
         // Desencriptar la contraseña del tenant
-        const decryptedPassword = await this.decryptTenantPassword(
+        const decryptedPassword = await this.encryptionService.decryptPassword(
           connectionConfig.password,
         );
 
@@ -52,32 +54,6 @@ export class TenantConnectionService {
     } catch (error) {
       this.handlerError.handle(error, this.logger);
     }
-  }
-
-  /**
-   * Desencripta la contraseña del tenant
-   */
-  private async decryptTenantPassword(
-    encryptedPassword: string,
-  ): Promise<string> {
-    const crypto = require('crypto');
-    const algorithm = 'aes-256-gcm';
-    const secretKey =
-      process.env.TENANT_ENCRYPTION_KEY || 'default-key-change-this';
-    const key = crypto.scryptSync(secretKey, 'salt', 32);
-
-    const [ivHex, authTagHex, encrypted] = encryptedPassword.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const authTag = Buffer.from(authTagHex, 'hex');
-
-    const decipher = crypto.createDecipheriv(algorithm, key, iv);
-    decipher.setAuthTag(authTag);
-    decipher.setAAD(Buffer.from('additional-auth-data'));
-
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-
-    return decrypted;
   }
 
   async closeTenantConnection(tenantId: string): Promise<void> {
