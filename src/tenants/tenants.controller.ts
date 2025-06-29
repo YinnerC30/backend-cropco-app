@@ -25,6 +25,12 @@ export const pathsTenantsController: PathsController = {
     name: 'create_tenant',
     visibleToUser: false,
   },
+  createDB: {
+    path: 'create/database/:id',
+    description: 'Crear DB del inquilino',
+    name: 'create_tenant_db',
+    visibleToUser: false,
+  },
   findAllTenants: {
     path: 'all',
     description: 'obtener todos los inquilinos',
@@ -55,11 +61,11 @@ export const pathsTenantsController: PathsController = {
     description: 'eliminar 1 inquilino',
     name: 'remove_one_tenant',
   },
-  // configDataBaseTenant: {
-  //   path: 'config-db/one/:id',
-  //   description: 'configurar base de datos de 1 inquilino',
-  //   name: 'config_data_base_tenant',
-  // },
+  configDataBaseTenant: {
+    path: 'config-db/one/:id',
+    description: 'configurar base de datos de 1 inquilino',
+    name: 'config_data_base_tenant',
+  },
   getAllUsersToTenantDB: {
     path: 'all-tenant-users/:id',
     description: '',
@@ -79,13 +85,14 @@ export const pathsTenantsController: PathsController = {
 
 const {
   create,
+  createDB,
   findAllTenants,
   findOneTenant,
   findOneBySubdomain,
   updateTenant,
   toggleStatusTenant,
   removeTenant,
-  // configDataBaseTenant,
+  configDataBaseTenant,
   getAllUsersToTenantDB,
   addUserToTenantDB,
   removeUserToTenantDB,
@@ -100,6 +107,18 @@ export class TenantsController {
   @Post(create.path)
   create(@Body() createTenantDto: CreateTenantDto) {
     return this.tenantsService.create(createTenantDto);
+  }
+
+  @AuthAdministration()
+  @Post(createDB.path)
+  createTenantDB(@Param('id') id: string) {
+    return this.tenantsService.createTenantDatabase(id);
+  }
+
+  @AuthAdministration()
+  @Put(configDataBaseTenant.path)
+  configTenantDB(@Param('id') id: string) {
+    return this.tenantsService.configDataBaseTenant(id);
   }
 
   @AuthAdministration()

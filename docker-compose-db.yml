@@ -19,6 +19,6 @@ services:
     volumes:
       - data-server-db-cropco-multi-tenant:/var/lib/postgresql/data
       # Script de configuración de seguridad
-      - ./scripts:/docker-entrypoint-initdb.d/
+      - ./scripts/sql:/docker-entrypoint-initdb.d/
 volumes:
   data-server-db-cropco-multi-tenant:
