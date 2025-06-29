@@ -125,6 +125,29 @@ export class TenantsService extends BaseAdministratorService {
     return decrypted;
   }
 
+  private async decryptTenantPassword(
+    encryptedPassword: string,
+  ): Promise<string> {
+    const crypto = require('crypto');
+    const algorithm = 'aes-256-gcm';
+    const secretKey =
+      process.env.TENANT_ENCRYPTION_KEY || 'default-key-change-this';
+    const key = crypto.scryptSync(secretKey, 'salt', 32);
+
+    const [ivHex, authTagHex, encrypted] = encryptedPassword.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const authTag = Buffer.from(authTagHex, 'hex');
+
+    const decipher = crypto.createDecipheriv(algorithm, key, iv);
+    decipher.setAuthTag(authTag);
+    decipher.setAAD(Buffer.from('additional-auth-data'));
+
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    return decrypted;
+  }
+
   async create(createTenantDto: CreateTenantDto) {
     this.logWithContext(
       `Creating new tenant with subdomain: ${createTenantDto.subdomain}, company: ${createTenantDto.company_name}`,
@@ -136,14 +159,6 @@ export class TenantsService extends BaseAdministratorService {
 
       this.logWithContext(
         `Tenant created successfully with ID: ${tenant.id}, subdomain: ${tenant.subdomain}`,
-      );
-
-      // Crear la base de datos para el tenant
-      const databaseName = `cropco_tenant_${tenant.subdomain}`;
-      await this.createTenantDatabase(tenant.id, databaseName);
-
-      this.logWithContext(
-        `Tenant setup completed successfully for ID: ${tenant.id}`,
       );
 
       return tenant;
@@ -362,7 +377,13 @@ export class TenantsService extends BaseAdministratorService {
 
   // Tenants Databases
 
-  private async createTenantDatabase(tenantId: string, databaseName: string) {
+  async createTenantDatabase(tenantId: string) {
+    // Crear la base de datos para el tenant
+
+    const tenant = await this.findOne(tenantId);
+
+    const databaseName = `cropco_tenant_${tenant.subdomain}`;
+
     this.logWithContext(
       `Creating tenant database: ${databaseName} for tenant ID: ${tenantId}`,
     );
@@ -371,7 +392,6 @@ export class TenantsService extends BaseAdministratorService {
       // Generar credenciales únicas para el tenant
       const tenantUsername = `tenant_${databaseName.replace('cropco_tenant_', '')}_user`;
       const tenantPassword = this.generateSecurePassword();
-
       // Crear la base de datos
       await this.dataSource.query(`CREATE DATABASE ${databaseName}`);
 
@@ -408,17 +428,23 @@ export class TenantsService extends BaseAdministratorService {
       this.logWithContext(
         `Tenant database configuration saved for tenant ID: ${tenantId}`,
       );
-
-      await this.configDataBaseTenant(tenantId, tenantUsername, tenantPassword);
-
-      this.logWithContext(
-        `Tenant database setup completed for tenant ID: ${tenantId}`,
-      );
     } catch (error) {
       this.logWithContext(
         `Failed to create tenant database for tenant ID: ${tenantId}`,
         'error',
       );
+      // Intentar eliminar la base de datos si existe
+      // try {
+      //   await this.dataSource.query(`DROP DATABASE IF EXISTS ${databaseName}`);
+      //   this.logWithContext(
+      //     `Database ${databaseName} dropped due to error in tenant creation for tenant ID: ${tenantId}`,
+      //   );
+      // } catch (dropError) {
+      //   this.logWithContext(
+      //     `Failed to drop database ${databaseName} after error: ${dropError.message}`,
+      //     'warn',
+      //   );
+      // }
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -582,17 +608,29 @@ export class TenantsService extends BaseAdministratorService {
     }
   }
 
-  private async configDataBaseTenant(
-    tenantId: string,
-    tenantUsername: string,
-    tenantPassword: string,
-  ) {
+  async configDataBaseTenant(tenantId: string) {
+    const tenantDB = await this.getOneTenantDatabase(tenantId);
+    const tenantUsername = tenantDB.connection_config.username;
+    const tenantPassword = await this.decryptTenantPassword(
+      tenantDB.connection_config.password,
+    );
     this.logWithContext(
       `Configuring database for tenant ID: ${tenantId} with user: ${tenantUsername}`,
     );
 
     try {
-      const tenantDatabase = await this.getOneTenantDatabase(tenantId);
+      // const tenantDatabase = await this.getOneTenantDatabase(tenantId);
+
+      console.log({
+        type: 'postgres',
+        host: process.env.DB_HOST,
+        port: parseInt(process.env.DB_PORT),
+        username: tenantUsername, // Usuario específico del tenant
+        password: tenantPassword, // Contraseña específica del tenant
+        database: tenantDB.database_name,
+        entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
+        synchronize: true,
+      });
 
       // Usar las credenciales específicas del tenant para configurar la base de datos
       const dataSource = new DataSource({
@@ -601,7 +639,7 @@ export class TenantsService extends BaseAdministratorService {
         port: parseInt(process.env.DB_PORT),
         username: tenantUsername, // Usuario específico del tenant
         password: tenantPassword, // Contraseña específica del tenant
-        database: tenantDatabase.database_name,
+        database: tenantDB.database_name,
         entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
         synchronize: true,
       });
