@@ -292,28 +292,33 @@ export class TenantsService extends BaseAdministratorService {
         `ALTER DATABASE "${tenantDb.database_name}" RENAME TO "${newDatabaseName}"`,
       );
 
-      // Actualizar el nombre del rol asignado a la base de datos
-      const oldRoleName = `tenant_${tenantDb.tenant.subdomain}_user`;
-      const newRoleName = `tenant_${newName}_user`;
+      // // Actualizar el nombre del rol asignado a la base de datos
+      // const oldRoleName = `tenant_${tenantDb.tenant.subdomain}_user`;
+      // const newRoleName = `tenant_${newName}_user`;
 
-      // Renombrar el rol en PostgreSQL
-      await this.dataSource.query(
-        `ALTER ROLE "${oldRoleName}" RENAME TO "${newRoleName}"`,
-      );
+      // // Renombrar el rol en PostgreSQL
+      // await this.dataSource.query(
+      //   `ALTER ROLE "${oldRoleName}" RENAME TO "${newRoleName}"`,
+      // );
 
-      this.logWithContext(
-        `Role renamed successfully from ${oldRoleName} to ${newRoleName} for tenant ID: ${tenantId}`,
-      );
+      // // Asignar propiedad de la base de datos al usuario del tenant
+      // await this.dataSource.query(
+      //   `ALTER DATABASE "${newDatabaseName}" OWNER TO "${newRoleName}"`,
+      // );
+
+      // this.logWithContext(
+      //   `Role renamed successfully from ${oldRoleName} to ${newRoleName} for tenant ID: ${tenantId}`,
+      // );
 
       // Actualizar el nombre en la tabla tenant_databases
       await this.tenantDatabaseRepository.update(
         { id: tenantDb.id },
         {
           database_name: newDatabaseName,
-          connection_config: {
-            ...tenantDb.connection_config,
-            username: newRoleName,
-          },
+          // connection_config: {
+          //   ...tenantDb.connection_config,
+          //   username: newRoleName,
+          // },
         },
       );
 
