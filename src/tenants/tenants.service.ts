@@ -292,10 +292,29 @@ export class TenantsService extends BaseAdministratorService {
         `ALTER DATABASE "${tenantDb.database_name}" RENAME TO "${newDatabaseName}"`,
       );
 
+      // Actualizar el nombre del rol asignado a la base de datos
+      const oldRoleName = `tenant_${tenantDb.tenant.subdomain}_user`;
+      const newRoleName = `tenant_${newName}_user`;
+
+      // Renombrar el rol en PostgreSQL
+      await this.dataSource.query(
+        `ALTER ROLE "${oldRoleName}" RENAME TO "${newRoleName}"`,
+      );
+
+      this.logWithContext(
+        `Role renamed successfully from ${oldRoleName} to ${newRoleName} for tenant ID: ${tenantId}`,
+      );
+
       // Actualizar el nombre en la tabla tenant_databases
       await this.tenantDatabaseRepository.update(
         { id: tenantDb.id },
-        { database_name: newDatabaseName },
+        {
+          database_name: newDatabaseName,
+          connection_config: {
+            ...tenantDb.connection_config,
+            username: newRoleName,
+          },
+        },
       );
 
       this.logWithContext(
@@ -318,11 +337,11 @@ export class TenantsService extends BaseAdministratorService {
     const tenant = await this.findOne(id);
 
     try {
-      await this.tenantRepository.update({ id }, { ...updateTenantDto });
+      await this.tenantConnectionService.closeTenantConnection(id);
       if (updateTenantDto.subdomain !== tenant.subdomain) {
         await this.updateDBName(id, updateTenantDto.subdomain);
       }
-      await this.tenantConnectionService.closeTenantConnection(id);
+      await this.tenantRepository.update({ id }, { ...updateTenantDto });
 
       this.logWithContext(`Tenant updated successfully with ID: ${id}`);
 
