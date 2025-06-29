@@ -26,6 +26,9 @@ export class Tenant {
   @Column({ nullable: true })
   cell_phone_number: string;
 
+  @Column({ default: false })
+  is_created_db: boolean;
+
   @Column({ default: true })
   is_active: boolean;
 
