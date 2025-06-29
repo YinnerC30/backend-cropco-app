@@ -146,8 +146,17 @@ export class AuthController {
   @Auth({ skipValidationPath: true })
   @Patch(renewToken.path)
   @HttpCode(200)
-  renewToken(@GetToken() token: string) {
-    return this.authService.renewToken(token);
+  async renewToken(
+    @GetToken() token: string,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.renewToken(token);
+    response.cookie('user-token', result.token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      maxAge: 6 * 60 * 60 * 1000, // 6 horas en milisegundos
+    });
   }
 
   @Auth({ skipValidationPath: true })
