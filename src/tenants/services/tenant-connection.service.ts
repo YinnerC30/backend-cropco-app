@@ -40,6 +40,7 @@ export class TenantConnectionService {
           entities: [__dirname + '/../../**/!(*tenant*).entity{.ts,.js}'],
           synchronize: false,
         });
+        console.log("🚀 ~ TenantConnectionService ~ getTenantConnection ~ dataSource:", dataSource)
 
         await dataSource.initialize();
 
