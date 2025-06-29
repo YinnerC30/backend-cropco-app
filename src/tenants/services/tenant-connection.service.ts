@@ -22,13 +22,15 @@ export class TenantConnectionService {
 
         // Extraer credenciales específicas del tenant desde la configuración
         const connectionConfig = tenantDatabase.connection_config as any;
-        
+
         if (!connectionConfig || !connectionConfig.username) {
           throw new Error(`No credentials configured for tenant ${tenantId}`);
         }
 
         // Desencriptar la contraseña del tenant
-        const decryptedPassword = await this.decryptTenantPassword(connectionConfig.password);
+        const decryptedPassword = await this.decryptTenantPassword(
+          connectionConfig.password,
+        );
 
         const dataSource = new DataSource({
           type: 'postgres',
@@ -40,7 +42,6 @@ export class TenantConnectionService {
           entities: [__dirname + '/../../**/!(*tenant*).entity{.ts,.js}'],
           synchronize: false,
         });
-        console.log("🚀 ~ TenantConnectionService ~ getTenantConnection ~ dataSource:", dataSource)
 
         await dataSource.initialize();
 
@@ -56,23 +57,26 @@ export class TenantConnectionService {
   /**
    * Desencripta la contraseña del tenant
    */
-  private async decryptTenantPassword(encryptedPassword: string): Promise<string> {
+  private async decryptTenantPassword(
+    encryptedPassword: string,
+  ): Promise<string> {
     const crypto = require('crypto');
     const algorithm = 'aes-256-gcm';
-    const secretKey = process.env.TENANT_ENCRYPTION_KEY || 'default-key-change-this';
+    const secretKey =
+      process.env.TENANT_ENCRYPTION_KEY || 'default-key-change-this';
     const key = crypto.scryptSync(secretKey, 'salt', 32);
-    
+
     const [ivHex, authTagHex, encrypted] = encryptedPassword.split(':');
     const iv = Buffer.from(ivHex, 'hex');
     const authTag = Buffer.from(authTagHex, 'hex');
-    
+
     const decipher = crypto.createDecipheriv(algorithm, key, iv);
     decipher.setAuthTag(authTag);
     decipher.setAAD(Buffer.from('additional-auth-data'));
-    
+
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
-    
+
     return decrypted;
   }
 

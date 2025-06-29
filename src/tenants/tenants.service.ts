@@ -72,7 +72,7 @@ export class TenantsService extends BaseAdministratorService {
    */
   private generateSecurePassword(): string {
     return generator.generate({
-      length: 32,
+      length: 12,
       numbers: true,
       symbols: true,
       uppercase: true,
@@ -84,7 +84,7 @@ export class TenantsService extends BaseAdministratorService {
   /**
    * Encripta una contraseña usando AES-256-GCM
    */
-  private async encryptPassword(password: string): Promise<string> {
+  private encryptPassword(password: string): string {
     const algorithm = 'aes-256-gcm';
     const secretKey =
       process.env.TENANT_ENCRYPTION_KEY || 'default-key-change-this';
@@ -105,29 +105,7 @@ export class TenantsService extends BaseAdministratorService {
   /**
    * Desencripta una contraseña
    */
-  private async decryptPassword(encryptedPassword: string): Promise<string> {
-    const algorithm = 'aes-256-gcm';
-    const secretKey =
-      process.env.TENANT_ENCRYPTION_KEY || 'default-key-change-this';
-    const key = crypto.scryptSync(secretKey, 'salt', 32);
-
-    const [ivHex, authTagHex, encrypted] = encryptedPassword.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const authTag = Buffer.from(authTagHex, 'hex');
-
-    const decipher = crypto.createDecipheriv(algorithm, key, iv);
-    decipher.setAuthTag(authTag);
-    decipher.setAAD(Buffer.from('additional-auth-data'));
-
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-
-    return decrypted;
-  }
-
-  private async decryptTenantPassword(
-    encryptedPassword: string,
-  ): Promise<string> {
+  private decryptPassword(encryptedPassword: string): string {
     const crypto = require('crypto');
     const algorithm = 'aes-256-gcm';
     const secretKey =
@@ -347,7 +325,7 @@ export class TenantsService extends BaseAdministratorService {
       await this.tenantConnectionService.closeTenantConnection(id);
       if (updateTenantDto.subdomain !== tenant.subdomain) {
         const tenantDb = await this.updateDBName(id, updateTenantDto.subdomain);
-        
+
         // Generar credenciales únicas para el tenant
         const tenantUsername = `tenant_${tenantDb.database_name.replace('cropco_tenant_', '')}_user`;
         const tenantPassword = this.generateSecurePassword();
@@ -369,7 +347,10 @@ export class TenantsService extends BaseAdministratorService {
         );
 
         // Asignar todos los permisos necesarios al usuario del tenant
-        await this.assignTenantUserPermissions(tenantDb.database_name, tenantUsername);
+        await this.assignTenantUserPermissions(
+          tenantDb.database_name,
+          tenantUsername,
+        );
 
         // Guardar la configuración de la base de datos con credenciales encriptadas
         await this.tenantDatabaseRepository.update(
@@ -455,7 +436,7 @@ export class TenantsService extends BaseAdministratorService {
       // Generar credenciales únicas para el tenant
       const tenantUsername = `tenant_${databaseName.replace('cropco_tenant_', '')}_user`;
       const tenantPassword = this.generateSecurePassword();
-      
+
       // Crear la base de datos
       await this.dataSource.query(`CREATE DATABASE ${databaseName}`);
 
@@ -693,7 +674,7 @@ export class TenantsService extends BaseAdministratorService {
       };
     }
     const tenantUsername = tenantDB.connection_config.username;
-    const tenantPassword = await this.decryptTenantPassword(
+    const tenantPassword = await this.decryptPassword(
       tenantDB.connection_config.password,
     );
     this.logWithContext(
@@ -795,6 +776,78 @@ export class TenantsService extends BaseAdministratorService {
         'error',
       );
       this.handlerError.handle(error, this.logger);
+    }
+  }
+
+  /**
+   * Asigna todos los permisos necesarios a un usuario de tenant en su base de datos
+   */
+  private async assignTenantUserPermissions(
+    databaseName: string,
+    tenantUsername: string,
+  ): Promise<void> {
+    this.logWithContext(
+      `Assigning permissions to user ${tenantUsername} for database ${databaseName}`,
+    );
+
+    // Crear una conexión específica a la base de datos del tenant para asignar permisos
+    const tenantDataSource = new DataSource({
+      type: 'postgres',
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT),
+      username: process.env.DB_USERNAME || 'postgres', // Usar usuario admin para asignar permisos
+      password: process.env.DB_PASSWORD,
+      database: databaseName,
+    });
+
+    await tenantDataSource.initialize();
+
+    try {
+      // Asignar permisos dentro de la base de datos del tenant
+      await tenantDataSource.query(
+        `GRANT USAGE ON SCHEMA public TO "${tenantUsername}"`,
+      );
+
+      // Permisos para consultas (SELECT)
+      await tenantDataSource.query(
+        `GRANT SELECT ON ALL TABLES IN SCHEMA public TO "${tenantUsername}"`,
+      );
+
+      // Permisos para actualizaciones (INSERT, UPDATE, DELETE)
+      await tenantDataSource.query(
+        `GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO "${tenantUsername}"`,
+      );
+
+      // Permisos para uso de funciones
+      await tenantDataSource.query(
+        `GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO "${tenantUsername}"`,
+      );
+
+      // Configurar permisos para tablas futuras
+      await tenantDataSource.query(
+        `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "${tenantUsername}"`,
+      );
+
+      // Configurar permisos para funciones futuras
+      await tenantDataSource.query(
+        `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO "${tenantUsername}"`,
+      );
+
+      // Asignar permisos para secuencias (necesario para INSERT con auto-increment)
+      await tenantDataSource.query(
+        `GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO "${tenantUsername}"`,
+      );
+
+      // Configurar permisos para secuencias futuras
+      await tenantDataSource.query(
+        `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO "${tenantUsername}"`,
+      );
+
+      this.logWithContext(
+        `Permissions assigned successfully to user ${tenantUsername} for database ${databaseName}`,
+      );
+    } finally {
+      await tenantDataSource.destroy();
     }
   }
 
@@ -909,78 +962,6 @@ export class TenantsService extends BaseAdministratorService {
         'error',
       );
       this.handlerError.handle(error, this.logger);
-    }
-  }
-
-  /**
-   * Asigna todos los permisos necesarios a un usuario de tenant en su base de datos
-   */
-  private async assignTenantUserPermissions(
-    databaseName: string,
-    tenantUsername: string,
-  ): Promise<void> {
-    this.logWithContext(
-      `Assigning permissions to user ${tenantUsername} for database ${databaseName}`,
-    );
-
-    // Crear una conexión específica a la base de datos del tenant para asignar permisos
-    const tenantDataSource = new DataSource({
-      type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT),
-      username: process.env.DB_USERNAME || 'postgres', // Usar usuario admin para asignar permisos
-      password: process.env.DB_PASSWORD,
-      database: databaseName,
-    });
-
-    await tenantDataSource.initialize();
-
-    try {
-      // Asignar permisos dentro de la base de datos del tenant
-      await tenantDataSource.query(
-        `GRANT USAGE ON SCHEMA public TO "${tenantUsername}"`,
-      );
-
-      // Permisos para consultas (SELECT)
-      await tenantDataSource.query(
-        `GRANT SELECT ON ALL TABLES IN SCHEMA public TO "${tenantUsername}"`,
-      );
-
-      // Permisos para actualizaciones (INSERT, UPDATE, DELETE)
-      await tenantDataSource.query(
-        `GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO "${tenantUsername}"`,
-      );
-
-      // Permisos para uso de funciones
-      await tenantDataSource.query(
-        `GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO "${tenantUsername}"`,
-      );
-
-      // Configurar permisos para tablas futuras
-      await tenantDataSource.query(
-        `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "${tenantUsername}"`,
-      );
-
-      // Configurar permisos para funciones futuras
-      await tenantDataSource.query(
-        `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO "${tenantUsername}"`,
-      );
-
-      // Asignar permisos para secuencias (necesario para INSERT con auto-increment)
-      await tenantDataSource.query(
-        `GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO "${tenantUsername}"`,
-      );
-
-      // Configurar permisos para secuencias futuras
-      await tenantDataSource.query(
-        `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO "${tenantUsername}"`,
-      );
-
-      this.logWithContext(
-        `Permissions assigned successfully to user ${tenantUsername} for database ${databaseName}`,
-      );
-    } finally {
-      await tenantDataSource.destroy();
     }
   }
 }
