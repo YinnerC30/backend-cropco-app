@@ -116,6 +116,8 @@ describe('UsersController e2e', () => {
       imports: [TestAppModule],
     }).compile();
 
+    reqTools = new RequestTools({ moduleFixture });
+
     seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
     tenantsConnectionService = moduleFixture.get<TenantConnectionService>(
@@ -145,13 +147,15 @@ describe('UsersController e2e', () => {
 
     // await userRepository.delete({});
 
-    const tenant = await tenantRepository.findOne({
-      where: { subdomain: 'testtenantend' },
-    });
+    // const tenant = await tenantRepository.findOne({
+    //   where: { subdomain: 'testtenantend' },
+    // });
 
-    tenantId = tenant.id;
+    // tenantId = tenant.id;
 
-    reqTools = new RequestTools({ app, tenantId });
+    reqTools.setApp(app);
+    await reqTools.initializeTenant('testtenantend');
+    tenantId = reqTools.getTenantIdPublic();
 
     userTest = await reqTools.createTestUser();
 
