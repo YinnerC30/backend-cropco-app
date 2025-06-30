@@ -23,7 +23,9 @@ export class RequestTools {
    */
   constructor(params: { moduleFixture: TestingModule }) {
     this.moduleFixture = params.moduleFixture;
-    this.tenantRepository = this.moduleFixture.get<Repository<Tenant>>(getRepositoryToken(Tenant));
+    this.tenantRepository = this.moduleFixture.get<Repository<Tenant>>(
+      getRepositoryToken(Tenant),
+    );
   }
 
   /**
@@ -50,7 +52,9 @@ export class RequestTools {
    * @param subdomain - The subdomain of the tenant.
    */
   public async initializeTenant(subdomain: string): Promise<void> {
-    const tenant = await this.tenantRepository.findOne({ where: { subdomain } });
+    const tenant = await this.tenantRepository.findOne({
+      where: { subdomain },
+    });
     if (!tenant) {
       throw new Error(`Tenant with subdomain: ${subdomain} not found.`);
     }
@@ -74,7 +78,9 @@ export class RequestTools {
    */
   private getTenantId(): string {
     if (!this.tenantId) {
-      throw new Error('TenantId has not been initialized. Call initializeTenant first.');
+      throw new Error(
+        'TenantId has not been initialized. Call initializeTenant first.',
+      );
     }
     return this.tenantId;
   }
@@ -145,6 +151,25 @@ export class RequestTools {
   }
 
   /**
+   * Generates a JWT token for a user by logging in.
+   * @returns The JWT token as a string.
+   */
+  public async generateTokenForUser(user: User): Promise<string> {
+    const response = await request
+      .default(this.getApp().getHttpServer())
+      .post('/auth/login')
+      .set('x-tenant-id', this.getTenantId())
+      .send({
+        email: user.email,
+        password: '123456',
+      });
+
+    return response.headers['set-cookie'][0]
+      .split(';')[0]
+      .replace('user-token=', '');
+  }
+
+  /**
    * Adds an action/permission to a user.
    * @param actionName - The name of the action/permission to add.
    */
@@ -153,6 +178,22 @@ export class RequestTools {
     await request
       .default(this.getApp().getHttpServer())
       .post(`/auth/add-permission/${user.id}/${actionName}`)
+      .set('x-tenant-id', this.getTenantId())
+      .expect(201);
+  }
+
+  /**
+   * Adds an action/permission to a user.
+   * @param actionName - The name of the action/permission to add.
+   */
+  public async addActionForUser(
+    userId: string,
+    actionName: string,
+  ): Promise<void> {
+    const user = this.getUser();
+    await request
+      .default(this.getApp().getHttpServer())
+      .post(`/auth/add-permission/${userId}/${actionName}`)
       .set('x-tenant-id', this.getTenantId())
       .expect(201);
   }

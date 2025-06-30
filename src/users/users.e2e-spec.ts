@@ -111,6 +111,26 @@ describe('UsersController e2e', () => {
 
   const falseUserId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
 
+  const CreateUser = async ({
+    mapperToDto = false,
+    // convertToAdmin = false,
+  }) => {
+    const user = (await reqTools.createSeedData({ users: 1 })).history
+      .insertedUsers[0];
+
+    if (!mapperToDto) return user;
+
+    return {
+      id: user.id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      password: user.password,
+      cell_phone_number: user.cell_phone_number,
+      actions: user.actions,
+    };
+  };
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
@@ -234,8 +254,7 @@ describe('UsersController e2e', () => {
     });
 
     it('should throw exception for trying to create a user with duplicate email.', async () => {
-      const userWithInitialEmail = (await reqTools.createSeedData({ users: 1 }))
-        .history.insertedUsers[0];
+      const userWithInitialEmail = await CreateUser({});
 
       const bodyRequest: UserDto = {
         ...userDtoTemplete,
@@ -259,7 +278,7 @@ describe('UsersController e2e', () => {
   //     await Promise.all(
   //       Array.from({ length: 17 }).map(() => seedService.CreateUser({})),
   //     );
-  //     await authService.addPermission(userTest.id, 'find_all_users');
+  //     await reqTools.addActionToUser('find_all_users');
   //   });
 
   //   it('should throw an exception for not sending a JWT to the protected path /users/all', async () => {
@@ -274,7 +293,8 @@ describe('UsersController e2e', () => {
   //     const response = await request
   //       .default(app.getHttpServer())
   //       .get('/users/all')
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  // .set('Cookie', `user-token=${token}`)
   //       .expect(200);
   //     expect(response.body.total_row_count).toEqual(20);
   //     expect(response.body.current_row_count).toEqual(10);
@@ -287,7 +307,8 @@ describe('UsersController e2e', () => {
   //       .default(app.getHttpServer())
   //       .get(`/users/all`)
   //       .query({ limit: 11, offset: 0 })
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  // .set('Cookie', `user-token=${token}`)
   //       .expect(200);
   //     expect(response.body.total_row_count).toEqual(20);
   //     expect(response.body.current_row_count).toEqual(11);
@@ -310,7 +331,8 @@ describe('UsersController e2e', () => {
   //       .default(app.getHttpServer())
   //       .get(`/users/all`)
   //       .query({ limit: 11, offset: 1 })
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  // .set('Cookie', `user-token=${token}`)
   //       .expect(200);
   //     expect(response.body.total_row_count).toEqual(20);
   //     expect(response.body.current_row_count).toEqual(9);
@@ -333,7 +355,8 @@ describe('UsersController e2e', () => {
   //       .default(app.getHttpServer())
   //       .get('/users/all')
   //       .query({ offset: 10 })
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  // .set('Cookie', `user-token=${token}`)
   //       .expect(404);
   //     expect(body.message).toEqual(
   //       'There are no user records with the requested pagination',
@@ -360,7 +383,8 @@ describe('UsersController e2e', () => {
   //     const response = await request
   //       .default(app.getHttpServer())
   //       .get(`/users/one/${userNormal.id}`)
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  // .set('Cookie', `user-token=${token}`)
   //       .expect(200);
 
   //     expect(response.body).toHaveProperty('id');
@@ -377,7 +401,8 @@ describe('UsersController e2e', () => {
   //     const response = await request
   //       .default(app.getHttpServer())
   //       .get(`/users/one/${userAdmin.id}`)
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  // .set('Cookie', `user-token=${token}`)
   //       .expect(200);
 
   //     expect(response.body).toHaveProperty('id');
@@ -405,7 +430,8 @@ describe('UsersController e2e', () => {
   //     const { body } = await request
   //       .default(app.getHttpServer())
   //       .get(`/users/one/1234`)
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  // .set('Cookie', `user-token=${token}`)
   //       .expect(400);
   //     expect(body.message).toEqual('Validation failed (uuid is expected)');
   //   });
@@ -413,7 +439,8 @@ describe('UsersController e2e', () => {
   //     const { body } = await request
   //       .default(app.getHttpServer())
   //       .get(`/users/one/${falseUserId}`)
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  // .set('Cookie', `user-token=${token}`)
   //       .expect(404);
   //     expect(body.message).toEqual(`User with id: ${falseUserId} not found`);
   //   });
@@ -421,278 +448,295 @@ describe('UsersController e2e', () => {
   //     const { body } = await request
   //       .default(app.getHttpServer())
   //       .get(`/users/one/`)
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  // .set('Cookie', `user-token=${token}`)
   //       .expect(404);
   //     expect(body.error).toEqual('Not Found');
   //   });
   // });
 
-  // describe('users/update/one/:id (PUT)', () => {
-  //   beforeAll(async () => {
-  //     await authService.addPermission(userTest.id, 'update_one_user');
-  //   });
+  describe('users/update/one/:id (PUT)', () => {
+    beforeAll(async () => {
+      await reqTools.addActionToUser('update_one_user');
+    });
 
-  //   it('should throw an exception for not sending a JWT to the protected path users/update/one/:id', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .put(`/users/update/one/${falseUserId}`)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+    it('should throw an exception for not sending a JWT to the protected path users/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/users/update/one/${falseUserId}`)
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('should update one user', async () => {
-  //     const { id, password, ...rest } = await seedService.CreateUser({
-  //       mapperToDto: true,
-  //     });
+    it('should update one user', async () => {
+      const { id, password, ...rest } = await CreateUser({ mapperToDto: true });
 
-  //     const bodyRequest = {
-  //       ...rest,
-  //       first_name: 'John Es Modify',
-  //       last_name: 'Doe Modify',
-  //     };
+      const bodyRequest = {
+        ...rest,
+        first_name: 'John Es Modify',
+        last_name: 'Doe Modify',
+      };
 
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .put(`/users/update/one/${id}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send(bodyRequest)
-  //       .expect(200);
+      const { body } = await request
+        .default(app.getHttpServer())
+        .put(`/users/update/one/${id}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .send(bodyRequest)
+        .expect(200);
 
-  //     expect(body.first_name).toEqual(bodyRequest.first_name);
-  //     expect(body.last_name).toEqual(bodyRequest.last_name);
-  //   });
+      expect(body.first_name).toEqual(bodyRequest.first_name);
+      expect(body.last_name).toEqual(bodyRequest.last_name);
+    });
 
-  //   it('should throw exception for not finding user to update', async () => {
-  //     const { password, ...bodyRequest } = userDtoTemplete;
+    it('should throw exception for not finding user to update', async () => {
+      const { password, ...bodyRequest } = userDtoTemplete;
 
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .put(`/users/update/one/${falseUserId}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send(bodyRequest)
-  //       .expect(404);
+      const { body } = await request
+        .default(app.getHttpServer())
+        .put(`/users/update/one/${falseUserId}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .send(bodyRequest)
+        .expect(404);
 
-  //     expect(body.message).toEqual(`User with id: ${falseUserId} not found`);
-  //   });
+      expect(body.message).toEqual(`User with id: ${falseUserId} not found`);
+    });
 
-  //   it('should throw exception for sending incorrect properties', async () => {
-  //     const bodyRequest = {
-  //       year: 2025,
-  //     };
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .put(`/users/update/one/${falseUserId}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send(bodyRequest)
-  //       .expect(400);
-  //     expect(body.message).toContain('property year should not exist');
-  //   });
+    it('should throw exception for sending incorrect properties', async () => {
+      const bodyRequest = {
+        year: 2025,
+      };
+      const { body } = await request
+        .default(app.getHttpServer())
+        .put(`/users/update/one/${falseUserId}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .send(bodyRequest)
+        .expect(400);
+      expect(body.message).toContain('property year should not exist');
+    });
 
-  //   it('should throw exception for trying to update the email for one that is in use.', async () => {
-  //     const userWithInitialEmail = await seedService.CreateUser({});
-  //     const { id, password, ...rest } = await seedService.CreateUser({
-  //       mapperToDto: true,
-  //     });
+    it('should throw exception for trying to update the email for one that is in use.', async () => {
+      const userWithInitialEmail = await CreateUser({});
+      const { id, password, ...rest } = await CreateUser({ mapperToDto: true });
 
-  //     const bodyRequest = {
-  //       ...rest,
-  //       email: userWithInitialEmail.email,
-  //     };
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .put(`/users/update/one/${id}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send(bodyRequest)
-  //       .expect(400);
-  //     expect(body.message).toEqual(
-  //       `Unique constraint violation, Key (email)=(${userWithInitialEmail.email}) already exists.`,
-  //     );
-  //   });
-  // });
+      const bodyRequest = {
+        ...rest,
+        email: userWithInitialEmail.email,
+      };
+      const { body } = await request
+        .default(app.getHttpServer())
+        .put(`/users/update/one/${id}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .send(bodyRequest)
+        .expect(400);
+      expect(body.message).toEqual(
+        `Unique constraint violation, Key (email)=(${userWithInitialEmail.email}) already exists.`,
+      );
+    });
+  });
 
-  // describe('users/remove/one/:id (DELETE)', () => {
-  //   beforeAll(async () => {
-  //     await authService.addPermission(userTest.id, 'remove_one_user');
-  //   });
+  describe('users/remove/one/:id (DELETE)', () => {
+    beforeAll(async () => {
+      await reqTools.addActionToUser('remove_one_user');
+    });
 
-  //   it('should throw an exception for not sending a JWT to the protected path users/remove/one/:id', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/users/remove/one/${falseUserId}`)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+    it('should throw an exception for not sending a JWT to the protected path users/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/users/remove/one/${falseUserId}`)
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('should delete one user', async () => {
-  //     const { id } = await seedService.CreateUser({});
+    it('should delete one user', async () => {
+      const { id } = await CreateUser({});
 
-  //     await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/users/remove/one/${id}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .expect(200);
+      await request
+        .default(app.getHttpServer())
+        .delete(`/users/remove/one/${id}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
 
-  //     const { notFound } = await request
-  //       .default(app.getHttpServer())
-  //       .get(`/users/one/${id}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .expect(404);
-  //     expect(notFound).toBe(true);
-  //   });
-  //   it('You should throw exception for trying to delete a user that does not exist.', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/users/remove/one/${falseUserId}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .expect(404);
-  //     expect(body.message).toEqual(`User with id: ${falseUserId} not found`);
-  //   });
-  // });
+      // const { notFound, body, status } = await request
+      //   .default(app.getHttpServer())
+      //   .get(`/users/one/${id}`)
+      //   .set('x-tenant-id', tenantId)
+      //   .set('Cookie', `user-token=${token}`);
+      // // .expect(404);
+      // console.log({ body, status });
+      // expect(notFound).toBe(true);
+    });
+    it('You should throw exception for trying to delete a user that does not exist.', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/users/remove/one/${falseUserId}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(404);
+      expect(body.message).toEqual(`User with id: ${falseUserId} not found`);
+    });
+  });
 
-  // describe('users/remove/bulk (DELETE)', () => {
-  //   beforeAll(async () => {
-  //     await authService.addPermission(userTest.id, 'remove_bulk_users');
-  //   });
+  describe('users/remove/bulk (DELETE)', () => {
+    beforeAll(async () => {
+      await reqTools.addActionToUser('remove_bulk_users');
+    });
 
-  //   it('should throw an exception for not sending a JWT to the protected path users/remove/bulk ', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .delete('/users/remove/bulk')
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+    it('should throw an exception for not sending a JWT to the protected path users/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/users/remove/bulk')
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('should delete users bulk', async () => {
-  //     // Crear usuarios de prueba
-  //     const [user1, user2, user3] = await Promise.all([
-  //       seedService.CreateUser({}),
-  //       seedService.CreateUser({}),
-  //       seedService.CreateUser({}),
-  //     ]);
+    it('should delete users bulk', async () => {
+      // Crear usuarios de prueba
+      const [user1, user2, user3] = await Promise.all([
+        CreateUser({}),
+        CreateUser({}),
+        CreateUser({}),
+      ]);
 
-  //     const bodyRequest: RemoveBulkRecordsDto<User> = {
-  //       recordsIds: [{ id: user1.id }, { id: user2.id }],
-  //     };
+      const bodyRequest: RemoveBulkRecordsDto<User> = {
+        recordsIds: [{ id: user1.id }, { id: user2.id }],
+      };
 
-  //     await request
-  //       .default(app.getHttpServer())
-  //       .delete('/users/remove/bulk')
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send(bodyRequest)
-  //       .expect(200);
+      await request
+        .default(app.getHttpServer())
+        .delete('/users/remove/bulk')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .send(bodyRequest)
+        .expect(200);
 
-  //     const [deletedUser1, deletedUser2, remainingUser3] = await Promise.all([
-  //       userRepository.findOne({ where: { id: user1.id } }),
-  //       userRepository.findOne({ where: { id: user2.id } }),
-  //       userRepository.findOne({ where: { id: user3.id } }),
-  //     ]);
+      // const [deletedUser1, deletedUser2, remainingUser3] = await Promise.all([
+      //   userRepository.findOne({ where: { id: user1.id } }),
+      //   userRepository.findOne({ where: { id: user2.id } }),
+      //   userRepository.findOne({ where: { id: user3.id } }),
+      // ]);
 
-  //     expect(deletedUser1).toBeNull();
-  //     expect(deletedUser2).toBeNull();
-  //     expect(remainingUser3).toBeDefined();
-  //   });
+      // expect(deletedUser1).toBeNull();
+      // expect(deletedUser2).toBeNull();
+      // expect(remainingUser3).toBeDefined();
+    });
 
-  //   it('should throw exception when trying to send an empty array.', async () => {
-  //     const bodyRequest = { recordsIds: [] };
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .delete('/users/remove/bulk')
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send(bodyRequest)
-  //       .expect(400);
-  //     expect(body.message[0]).toEqual('recordsIds should not be empty');
-  //   });
-  // });
+    it('should throw exception when trying to send an empty array.', async () => {
+      const bodyRequest = { recordsIds: [] };
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete('/users/remove/bulk')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .send(bodyRequest)
+        .expect(400);
+      expect(body.message[0]).toEqual('recordsIds should not be empty');
+    });
+  });
 
-  // describe('users/reset-password/one/:id (PUT)', () => {
-  //   beforeAll(async () => {
-  //     await authService.addPermission(userTest.id, 'reset_password_user');
-  //   });
+  describe('users/reset-password/one/:id (PUT)', () => {
+    beforeAll(async () => {
+      await reqTools.addActionToUser('reset_password_user');
+    });
 
-  //   it('should throw an exception for not sending a JWT to the protected path users/reset-password/one/:id', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .put(`/users/reset-password/one/${falseUserId}`)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+    it('should throw an exception for not sending a JWT to the protected path users/reset-password/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/users/reset-password/one/${falseUserId}`)
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('should reset the password for one user', async () => {
-  //     const { id } = await seedService.CreateUser({});
+    it('should reset the password for one user', async () => {
+      const { id } = await CreateUser({});
 
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .put(`/users/reset-password/one/${id}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .expect(200);
-  //     expect(body).toHaveProperty('password');
-  //     expect(body.password).not.toEqual('123456');
-  //     expect(body.password).toBeDefined();
-  //   });
-  // });
+      const { body } = await request
+        .default(app.getHttpServer())
+        .put(`/users/reset-password/one/${id}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
+      expect(body).toHaveProperty('password');
+      expect(body.password).not.toEqual('123456');
+      expect(body.password).toBeDefined();
+    });
+  });
 
-  // describe('users/change-password/one (PUT)', () => {
-  //   beforeAll(async () => {
-  //     await authService.addPermission(userTest.id, 'change_password_user');
-  //   });
+  describe('users/change-password/one (PUT)', () => {
+    beforeAll(async () => {
+      await reqTools.addActionToUser('change_password_user');
+    });
 
-  //   it('should throw an exception for not sending a JWT to the protected path users/change-password/one', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .put(`/users/change-password/one`)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+    it('should throw an exception for not sending a JWT to the protected path users/change-password/one', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/users/change-password/one`)
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('should change the password for one user', async () => {
-  //     const userChangePassword = await authService.createUserToTests();
-  //     const token = authService.generateJwtToken({ id: userChangePassword.id });
-  //     await authService.addPermission(
-  //       userChangePassword.id,
-  //       'change_password_user',
-  //     );
+    it('should change the password for one user', async () => {
+      const userChangePassword = await CreateUser({});
+      const localToken =
+        await reqTools.generateTokenForUser(userChangePassword);
+      await reqTools.addActionForUser(
+        userChangePassword.id,
+        'change_password_user',
+      );
 
-  //     const bodyRequest = {
-  //       old_password: '123456',
-  //       new_password: 'otraClave1234',
-  //     };
+      const bodyRequest = {
+        old_password: '123456',
+        new_password: 'otraClave1234',
+      };
 
-  //     await request
-  //       .default(app.getHttpServer())
-  //       .put(`/users/change-password/one`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .send(bodyRequest)
-  //       .expect(200);
-  //   });
-  // });
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/users/change-password/one`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${localToken}`)
+        .send(bodyRequest)
+        .expect(200);
+    });
+  });
 
-  // describe('users/toggle-status/one/:id (PUT)', () => {
-  //   beforeAll(async () => {
-  //     await authService.addPermission(userTest.id, 'toggle_status_user');
-  //   });
+  describe('users/toggle-status/one/:id (PUT)', () => {
+    beforeAll(async () => {
+      await reqTools.addActionToUser('toggle_status_user');
+    });
 
-  //   it('should throw an exception for not sending a JWT to the protected path users/toggle-status/one/:id', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .put(`/users/toggle-status/one/${falseUserId}`)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+    it('should throw an exception for not sending a JWT to the protected path users/toggle-status/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/users/toggle-status/one/${falseUserId}`)
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('should toggle status for one user', async () => {
-  //     const { id } = await seedService.CreateUser({});
+    it('should toggle status for one user', async () => {
+      const { id } = await CreateUser({});
 
-  //     await request
-  //       .default(app.getHttpServer())
-  //       .put(`/users/toggle-status/one/${id}`)
-  //       .set('Authorization', `Bearer ${token}`)
-  //       .expect(200);
+      await request
+        .default(app.getHttpServer())
+        .put(`/users/toggle-status/one/${id}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
 
-  //     const user = await userRepository.findOne({ where: { id } });
-  //     expect(user).toHaveProperty('is_active');
-  //     expect(user.is_active).toEqual(false);
-  //   });
-  // });
+      // const user = await userRepository.findOne({ where: { id } });
+      // expect(user).toHaveProperty('is_active');
+      // expect(user.is_active).toEqual(false);
+    });
+  });
 
   // describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
   //   beforeAll(async () => {
@@ -713,7 +757,8 @@ describe('UsersController e2e', () => {
   //     const response = await request
   //       .default(app.getHttpServer())
   //       .put(`/users/toggle-status/one/${falseUserId}`)
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
   //       .expect(403);
   //     expect(response.body.message).toEqual(
   //       `User ${userTest.first_name} need a permit for this action`,
@@ -724,7 +769,8 @@ describe('UsersController e2e', () => {
   //     const response = await request
   //       .default(app.getHttpServer())
   //       .put(`/users/change-password/one`)
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
   //       .expect(403);
   //     expect(response.body.message).toEqual(
   //       `User ${userTest.first_name} need a permit for this action`,
@@ -735,7 +781,8 @@ describe('UsersController e2e', () => {
   //     const response = await request
   //       .default(app.getHttpServer())
   //       .put(`/users/reset-password/one/${falseUserId}`)
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
   //       .expect(403);
   //     expect(response.body.message).toEqual(
   //       `User ${userTest.first_name} need a permit for this action`,
@@ -746,7 +793,8 @@ describe('UsersController e2e', () => {
   //     const response = await request
   //       .default(app.getHttpServer())
   //       .delete('/users/remove/bulk')
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
   //       .expect(403);
   //     expect(response.body.message).toEqual(
   //       `User ${userTest.first_name} need a permit for this action`,
@@ -757,7 +805,8 @@ describe('UsersController e2e', () => {
   //     const response = await request
   //       .default(app.getHttpServer())
   //       .delete(`/users/remove/one/${falseUserId}`)
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
   //       .expect(403);
   //     expect(response.body.message).toEqual(
   //       `User ${userTest.first_name} need a permit for this action`,
@@ -768,7 +817,8 @@ describe('UsersController e2e', () => {
   //     const response = await request
   //       .default(app.getHttpServer())
   //       .put(`/users/update/one/${falseUserId}`)
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
   //       .expect(403);
   //     expect(response.body.message).toEqual(
   //       `User ${userTest.first_name} need a permit for this action`,
@@ -779,7 +829,8 @@ describe('UsersController e2e', () => {
   //     const response = await request
   //       .default(app.getHttpServer())
   //       .get(`/users/one/${falseUserId}`)
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
   //       .expect(403);
   //     expect(response.body.message).toEqual(
   //       `User ${userTest.first_name} need a permit for this action`,
@@ -790,7 +841,8 @@ describe('UsersController e2e', () => {
   //     const response = await request
   //       .default(app.getHttpServer())
   //       .get('/users/all')
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
   //       .expect(403);
   //     expect(response.body.message).toEqual(
   //       `User ${userTest.first_name} need a permit for this action`,
@@ -805,7 +857,8 @@ describe('UsersController e2e', () => {
   //     const response = await request
   //       .default(app.getHttpServer())
   //       .post('/users/create')
-  //       .set('Authorization', `Bearer ${token}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
   //       .send(bodyRequest)
   //       .expect(403);
   //     expect(response.body.message).toEqual(

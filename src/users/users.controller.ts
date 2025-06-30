@@ -109,8 +109,6 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  
-
   @Delete(removeUser.path)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.remove(id);
