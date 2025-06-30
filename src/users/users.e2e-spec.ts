@@ -153,7 +153,7 @@ describe('UsersController e2e', () => {
 
     reqTools = new RequestTools({ app, tenantId });
 
-    userTest = await reqTools.createUser();
+    userTest = await reqTools.createTestUser();
 
     token = await reqTools.generateTokenUser();
   });

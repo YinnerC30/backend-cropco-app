@@ -8,7 +8,7 @@ import * as request from 'supertest';
 export class RequestTools {
   private readonly app: INestApplication;
   private readonly tenantId: string;
-  private user: User;
+  private user: User | null = null;
 
   /**
    * Creates an instance of RequestTools.
@@ -20,10 +20,25 @@ export class RequestTools {
   }
 
   /**
-   * Creates a new user using the seed controlled endpoint.
+   * Gets the current user. Throws an error if the user is not set.
+   * @returns The current user.
+   */
+  private getUser(): User {
+    if (!this.user) {
+      throw new Error('User has not been created or set.');
+    }
+    return this.user;
+  }
+
+  /**
+   * Creates a new test user using the seed controlled endpoint.
+   * Throws an error if a user already exists.
    * @returns The created user.
    */
-  public async createUser(): Promise<User> {
+  public async createTestUser(): Promise<User> {
+    if (this.user) {
+      throw new Error('A user has already been created.');
+    }
     const { body } = await request
       .default(this.app.getHttpServer())
       .get('/seed/controlled')
@@ -34,30 +49,44 @@ export class RequestTools {
   }
 
   /**
+   * Creates a new user using the seed controlled endpoint.
+   * Throws an error if a user already exists.
+   * @returns The created user.
+   */
+  public async createUser(): Promise<User> {
+    const { body } = await request
+      .default(this.app.getHttpServer())
+      .get('/seed/controlled')
+      .set('x-tenant-id', this.tenantId)
+      .query({ users: 1 });
+    return body.history.insertedUsers[0];
+  }
+
+  /**
    * Deletes a test user by user ID using the corresponding endpoint.
-   * @param userId - The identifier of the user to delete.
    * @returns A promise that resolves when the user is deleted.
    */
   public async deleteTestUser(): Promise<void> {
+    const user = this.getUser();
     await request
       .default(this.app.getHttpServer())
-      .post(`/auth/delete-test-user/${this.user.id}`)
+      .post(`/auth/delete-test-user/${user.id}`)
       .set('x-tenant-id', this.tenantId)
       .expect(201);
   }
 
   /**
    * Generates a JWT token for a user by logging in.
-   * @param user - The user entity.
    * @returns The JWT token as a string.
    */
   public async generateTokenUser(): Promise<string> {
+    const user = this.getUser();
     const response = await request
       .default(this.app.getHttpServer())
       .post('/auth/login')
       .set('x-tenant-id', this.tenantId)
       .send({
-        email: this.user.email,
+        email: user.email,
         password: '123456',
       });
 
@@ -68,13 +97,13 @@ export class RequestTools {
 
   /**
    * Adds an action/permission to a user.
-   * @param user - The user entity.
    * @param actionName - The name of the action/permission to add.
    */
   public async addActionToUser(actionName: string): Promise<void> {
+    const user = this.getUser();
     await request
       .default(this.app.getHttpServer())
-      .post(`/auth/add-permission/${this.user.id}/${actionName}`)
+      .post(`/auth/add-permission/${user.id}/${actionName}`)
       .set('x-tenant-id', this.tenantId)
       .expect(201);
   }
