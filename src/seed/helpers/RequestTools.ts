@@ -183,6 +183,22 @@ export class RequestTools {
   }
 
   /**
+   * Removes all permissions from a user for a specific module.
+   * @param userId - The identifier of the user.
+   * @param moduleName - The name of the module.
+   */
+  public async removePermissionsToModule(
+    userId: string,
+    moduleName: string,
+  ): Promise<void> {
+    await request
+      .default(this.getApp().getHttpServer())
+      .post(`/auth/remove-permissions-to-module/${userId}/${moduleName}`)
+      .set('x-tenant-id', this.getTenantId())
+      .expect(201);
+  }
+
+  /**
    * Adds an action/permission to a user.
    * @param actionName - The name of the action/permission to add.
    */
@@ -194,6 +210,22 @@ export class RequestTools {
     await request
       .default(this.getApp().getHttpServer())
       .post(`/auth/add-permission/${userId}/${actionName}`)
+      .set('x-tenant-id', this.getTenantId())
+      .expect(201);
+  }
+
+  /**
+   * Removes a specific permission from a user.
+   * @param userId - The identifier of the user.
+   * @param actionName - The name of the action/permission to remove.
+   */
+  public async removePermissionFromUser(
+    userId: string,
+    actionName: string,
+  ): Promise<void> {
+    await request
+      .default(this.getApp().getHttpServer())
+      .post(`/auth/remove-permission/${userId}/${actionName}`)
       .set('x-tenant-id', this.getTenantId())
       .expect(201);
   }

@@ -239,6 +239,34 @@ export class AuthController {
   }
 
   /**
+   * Remove all permissions from a user for a specific module.
+   * Only for development purposes.
+   * @param userId User identifier
+   * @param moduleName Name of the module
+   */
+  @Post('remove-permissions-to-module/:userId/:moduleName')
+  async removePermissionsToModule(
+    @Param('userId') userId: string,
+    @Param('moduleName') moduleName: string,
+  ): Promise<void> {
+    return this.authService.removePermissionsToModule(userId, moduleName);
+  }
+
+  /**
+   * Remove a permission from a user.
+   * Only for development purposes.
+   * @param userId User identifier
+   * @param actionName Name of the action to remove
+   */
+  @Post('remove-permission/:userId/:actionName')
+  async removePermissionFromUser(
+    @Param('userId') userId: string,
+    @Param('actionName') actionName: string,
+  ) {
+    return this.authService.removePermission(userId, actionName);
+  }
+
+  /**
    * Delete a test user by ID.
    * Only for development and testing purposes.
    * @param userId User identifier
