@@ -1,13 +1,13 @@
 import {
   INestApplication,
-  ValidationPipe,
   MiddlewareConsumer,
-  RequestMethod,
   Module,
+  RequestMethod,
+  ValidationPipe,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -15,24 +15,21 @@ import { AuthModule } from 'src/auth/auth.module';
 import { AuthService } from 'src/auth/auth.service';
 import { CommonModule } from 'src/common/common.module';
 import { SeedModule } from 'src/seed/seed.module';
-import { SeedService } from 'src/seed/seed.service';
 
-import { DataSource, Repository } from 'typeorm';
 import { UserDto } from './dto/user.dto';
 import { UsersModule } from './users.module';
 
+import cookieParser from 'cookie-parser';
 import { Administrator } from 'src/administrators/entities/administrator.entity';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
+import { RequestTools } from 'src/seed/helpers/RequestTools';
 import { TenantDatabase } from 'src/tenants/entities/tenant-database.entity';
 import { Tenant } from 'src/tenants/entities/tenant.entity';
 import { TenantMiddleware } from 'src/tenants/middleware/tenant.middleware';
 import { TenantsModule } from 'src/tenants/tenants.module';
 import * as request from 'supertest';
 import { User } from './entities/user.entity';
-import cookieParser from 'cookie-parser';
-import { RequestTools } from 'src/seed/helpers/RequestTools';
-import { TenantConnectionService } from 'src/tenants/services/tenant-connection.service';
 
 // Módulo de prueba que configura el middleware
 @Module({
@@ -88,16 +85,10 @@ export class TestAppModule {
 
 describe('UsersController e2e', () => {
   let app: INestApplication;
-  let userRepository: Repository<User>;
-  let seedService: SeedService;
   let authService: AuthService;
   let userTest: User;
   let token: string;
   let reqTools: RequestTools;
-  let tenantConnection: DataSource;
-  let tenantsConnectionService: TenantConnectionService;
-  let tenantRepository: Repository<Tenant>;
-  let tenantDatabaseRepository: Repository<TenantDatabase>;
   let tenantId: string;
 
   const userDtoTemplete: UserDto = {
@@ -138,18 +129,7 @@ describe('UsersController e2e', () => {
 
     reqTools = new RequestTools({ moduleFixture });
 
-    seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
-    // tenantsConnectionService = moduleFixture.get<TenantConnectionService>(
-    //   TenantConnectionService,
-    // );
-
-    // userRepository = moduleFixture.get<Repository<User>>(
-    //   getRepositoryToken(User),
-    // );
-    // tenantRepository = moduleFixture.get<Repository<Tenant>>(
-    //   getRepositoryToken(Tenant),
-    // );
 
     app = moduleFixture.createNestApplication();
 
@@ -165,12 +145,6 @@ describe('UsersController e2e', () => {
 
     await app.init();
 
-    // const tenant = await tenantRepository.findOne({
-    //   where: { subdomain: 'testtenantend' },
-    // });
-
-    // tenantId = tenant.id;
-
     reqTools.setApp(app);
     await reqTools.initializeTenant('testtenantend');
     tenantId = reqTools.getTenantIdPublic();
@@ -180,12 +154,6 @@ describe('UsersController e2e', () => {
     userTest = await reqTools.createTestUser();
 
     token = await reqTools.generateTokenUser();
-
-    // tenantConnection = await reqTools.getCurrentTenantConnection();
-
-    // userRepository = await reqTools.getRepository(User);
-
-    // await userRepository.delete({});
   });
 
   afterAll(async () => {
