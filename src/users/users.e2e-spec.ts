@@ -230,7 +230,8 @@ describe('UsersController e2e', () => {
     });
 
     it('should throw exception for trying to create a user with duplicate email.', async () => {
-      const userWithInitialEmail = await reqTools.createUser();
+      const userWithInitialEmail = (await reqTools.createSeedData({ users: 1 }))
+        .history.insertedUsers[0];
 
       const bodyRequest: UserDto = {
         ...userDtoTemplete,

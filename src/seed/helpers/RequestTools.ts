@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
+import { SeedControlledDto } from '../dto/seed.dto';
 
 /**
  * Utility class for making HTTP requests related to user and permission management in tests.
@@ -53,13 +54,13 @@ export class RequestTools {
    * Throws an error if a user already exists.
    * @returns The created user.
    */
-  public async createUser(): Promise<User> {
+  public async createSeedData(seedDto: SeedControlledDto): Promise<any> {
     const { body } = await request
       .default(this.app.getHttpServer())
       .get('/seed/controlled')
       .set('x-tenant-id', this.tenantId)
-      .query({ users: 1 });
-    return body.history.insertedUsers[0];
+      .query(seedDto);
+    return body;
   }
 
   /**
