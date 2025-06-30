@@ -128,6 +128,14 @@ describe('UsersController e2e', () => {
       .replace('user-token=', '');
   };
 
+  const addActionToUser = async (actionName: string) => {
+    await request
+      .default(app.getHttpServer())
+      .post(`/auth/add-permission/${userTest.id}/${actionName}`)
+      .set('x-tenant-id', tenantId)
+      .expect(201);
+  };
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
@@ -169,12 +177,7 @@ describe('UsersController e2e', () => {
   describe('users/create (POST)', () => {
     beforeAll(async () => {
       // Se realiza una petición al endpoint de auth para añadir una acción al usuario de prueba antes de los tests
-      const actionName = 'create_user';
-      await request
-        .default(app.getHttpServer())
-        .post(`/auth/add-permission/${userTest.id}/${actionName}`)
-        .set('x-tenant-id', tenantId)
-        .expect(201);
+      await addActionToUser('create_user');
     });
 
     it('should throw an exception for not sending a JWT to the protected path /users/create', async () => {
