@@ -381,6 +381,87 @@ export class SeedService {
     };
   }
 
+  async clearDatabaseControlled(
+    clearOptions: {
+      users?: boolean;
+      clients?: boolean;
+      supplies?: boolean;
+      shoppingSupplies?: boolean;
+      suppliers?: boolean;
+      consumptionSupplies?: boolean;
+      harvests?: boolean;
+      works?: boolean;
+      crops?: boolean;
+      employees?: boolean;
+      sales?: boolean;
+    } = {},
+  ) {
+    const {
+      users = false,
+      clients = false,
+      supplies = false,
+      shoppingSupplies = false,
+      suppliers = false,
+      consumptionSupplies = false,
+      harvests = false,
+      works = false,
+      crops = false,
+      employees = false,
+      sales = false,
+    } = clearOptions;
+
+    const clearPromises: Promise<void>[] = [];
+
+    if (users) {
+      clearPromises.push(this.usersService.deleteAllUsers());
+    }
+
+    if (clients) {
+      clearPromises.push(this.clientsService.deleteAllClients());
+    }
+
+    if (supplies) {
+      clearPromises.push(this.suppliesService.deleteAllStockSupplies());
+      clearPromises.push(this.suppliesService.deleteAllSupplies());
+    }
+
+    if (shoppingSupplies) {
+      clearPromises.push(this.shoppingService.deleteAllShoppingSupplies());
+    }
+
+    if (suppliers) {
+      clearPromises.push(this.suppliersService.deleteAllSupplier());
+    }
+
+    if (consumptionSupplies) {
+      clearPromises.push(
+        this.consumptionsService.deleteAllConsumptionSupplies(),
+      );
+    }
+
+    if (harvests) {
+      clearPromises.push(this.harvestsService.deleteAllHarvest());
+    }
+
+    if (works) {
+      clearPromises.push(this.workService.deleteAllWork());
+    }
+
+    if (crops) {
+      clearPromises.push(this.cropsService.deleteAllCrops());
+    }
+
+    if (employees) {
+      clearPromises.push(this.employeesService.deleteAllEmployees());
+    }
+
+    if (sales) {
+      clearPromises.push(this.salesService.deleteAllSales());
+    }
+
+    await Promise.all(clearPromises);
+  }
+
   async runSeed() {
     await this.clearDatabase();
     await this.authService.createModulesWithActions();

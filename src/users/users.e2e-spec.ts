@@ -140,16 +140,16 @@ describe('UsersController e2e', () => {
 
     seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
-    tenantsConnectionService = moduleFixture.get<TenantConnectionService>(
-      TenantConnectionService,
-    );
+    // tenantsConnectionService = moduleFixture.get<TenantConnectionService>(
+    //   TenantConnectionService,
+    // );
 
-    userRepository = moduleFixture.get<Repository<User>>(
-      getRepositoryToken(User),
-    );
-    tenantRepository = moduleFixture.get<Repository<Tenant>>(
-      getRepositoryToken(Tenant),
-    );
+    // userRepository = moduleFixture.get<Repository<User>>(
+    //   getRepositoryToken(User),
+    // );
+    // tenantRepository = moduleFixture.get<Repository<Tenant>>(
+    //   getRepositoryToken(Tenant),
+    // );
 
     app = moduleFixture.createNestApplication();
 
@@ -165,8 +165,6 @@ describe('UsersController e2e', () => {
 
     await app.init();
 
-    // await userRepository.delete({});
-
     // const tenant = await tenantRepository.findOne({
     //   where: { subdomain: 'testtenantend' },
     // });
@@ -177,14 +175,112 @@ describe('UsersController e2e', () => {
     await reqTools.initializeTenant('testtenantend');
     tenantId = reqTools.getTenantIdPublic();
 
+    await reqTools.clearDatabaseControlled({ users: true });
+
     userTest = await reqTools.createTestUser();
 
     token = await reqTools.generateTokenUser();
+
+    // tenantConnection = await reqTools.getCurrentTenantConnection();
+
+    // userRepository = await reqTools.getRepository(User);
+
+    // await userRepository.delete({});
   });
 
   afterAll(async () => {
-    // await reqTools.deleteTestUser();
+    await reqTools.deleteTestUser();
     await app.close();
+  });
+
+  describe('users/all (GET)', () => {
+    beforeAll(async () => {
+      await Promise.all(Array.from({ length: 16 }).map(() => CreateUser({})));
+      await reqTools.addActionToUser('find_all_users');
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /users/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/users/all')
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only 10 users for default by not sending paging parameters', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/users/all')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.current_row_count).toEqual(10);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(1);
+    });
+
+    it('should return the specified number of users passed by the paging arguments by the URL (1)', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/users/all`)
+        .query({ limit: 11, offset: 0 })
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.current_row_count).toEqual(11);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(1);
+      response.body.records.forEach((user: User) => {
+        expect(user).toHaveProperty('id');
+        expect(user).toHaveProperty('first_name');
+        expect(user).toHaveProperty('last_name');
+        expect(user).toHaveProperty('email');
+        expect(user).toHaveProperty('cell_phone_number');
+        expect(user).toHaveProperty('createdDate');
+        expect(user).toHaveProperty('updatedDate');
+        expect(user).toHaveProperty('deletedDate');
+        expect(user.deletedDate).toBeNull();
+      });
+    });
+    it('should return the specified number of users passed by the paging arguments by the URL (2)', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/users/all`)
+        .query({ limit: 11, offset: 1 })
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.current_row_count).toEqual(6);
+      expect(response.body.total_page_count).toEqual(2);
+      expect(response.body.current_page_count).toEqual(2);
+      response.body.records.forEach((user: User) => {
+        expect(user).toHaveProperty('id');
+        expect(user).toHaveProperty('first_name');
+        expect(user).toHaveProperty('last_name');
+        expect(user).toHaveProperty('email');
+        expect(user).toHaveProperty('cell_phone_number');
+        expect(user).toHaveProperty('createdDate');
+        expect(user).toHaveProperty('updatedDate');
+        expect(user).toHaveProperty('deletedDate');
+        expect(user.deletedDate).toBeNull();
+      });
+    });
+    it('You should throw an exception for requesting out-of-scope paging.', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/users/all')
+        .query({ offset: 10 })
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(404);
+      expect(body.message).toEqual(
+        'There are no user records with the requested pagination',
+      );
+    });
   });
 
   describe('users/create (POST)', () => {
@@ -269,96 +365,6 @@ describe('UsersController e2e', () => {
         .expect(400);
       expect(body.message).toEqual(
         `Unique constraint violation, Key (email)=(${bodyRequest.email}) already exists.`,
-      );
-    });
-  });
-
-  describe('users/all (GET)', () => {
-    beforeAll(async () => {
-      await Promise.all(Array.from({ length: 15 }).map(() => CreateUser({})));
-      await reqTools.addActionToUser('find_all_users');
-    });
-
-    it('should throw an exception for not sending a JWT to the protected path /users/all', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/users/all')
-        .set('x-tenant-id', tenantId)
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should get only 10 users for default by not sending paging parameters', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/users/all')
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .expect(200);
-      expect(response.body.total_row_count).toEqual(17);
-      expect(response.body.current_row_count).toEqual(10);
-      expect(response.body.total_page_count).toEqual(2);
-      expect(response.body.current_page_count).toEqual(1);
-    });
-
-    it('should return the specified number of users passed by the paging arguments by the URL (1)', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/users/all`)
-        .query({ limit: 11, offset: 0 })
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .expect(200);
-      expect(response.body.total_row_count).toEqual(17);
-      expect(response.body.current_row_count).toEqual(11);
-      expect(response.body.total_page_count).toEqual(2);
-      expect(response.body.current_page_count).toEqual(1);
-      response.body.records.forEach((user: User) => {
-        expect(user).toHaveProperty('id');
-        expect(user).toHaveProperty('first_name');
-        expect(user).toHaveProperty('last_name');
-        expect(user).toHaveProperty('email');
-        expect(user).toHaveProperty('cell_phone_number');
-        expect(user).toHaveProperty('createdDate');
-        expect(user).toHaveProperty('updatedDate');
-        expect(user).toHaveProperty('deletedDate');
-        expect(user.deletedDate).toBeNull();
-      });
-    });
-    it('should return the specified number of users passed by the paging arguments by the URL (2)', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/users/all`)
-        .query({ limit: 11, offset: 1 })
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .expect(200);
-      expect(response.body.total_row_count).toEqual(17);
-      expect(response.body.current_row_count).toEqual(9);
-      expect(response.body.total_page_count).toEqual(2);
-      expect(response.body.current_page_count).toEqual(2);
-      response.body.records.forEach((user: User) => {
-        expect(user).toHaveProperty('id');
-        expect(user).toHaveProperty('first_name');
-        expect(user).toHaveProperty('last_name');
-        expect(user).toHaveProperty('email');
-        expect(user).toHaveProperty('cell_phone_number');
-        expect(user).toHaveProperty('createdDate');
-        expect(user).toHaveProperty('updatedDate');
-        expect(user).toHaveProperty('deletedDate');
-        expect(user.deletedDate).toBeNull();
-      });
-    });
-    it('You should throw an exception for requesting out-of-scope paging.', async () => {
-      const { body } = await request
-        .default(app.getHttpServer())
-        .get('/users/all')
-        .query({ offset: 10 })
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .expect(404);
-      expect(body.message).toEqual(
-        'There are no user records with the requested pagination',
       );
     });
   });

@@ -52,6 +52,7 @@ export class TenantConnectionService {
 
       return this.tenantConnections.get(tenantId);
     } catch (error) {
+      console.log(error);
       this.handlerError.handle(error, this.logger);
     }
   }

@@ -22,4 +22,29 @@ export class SeedController {
   executeSeedControlled(@Query() seedDto: SeedControlledDto) {
     return this.seedService.runSeedControlled(seedDto);
   }
+
+  /**
+   * Permite limpiar la base de datos de forma controlada, especificando qué entidades eliminar.
+   * @param clearOptions - Objeto con las opciones de limpieza por entidad.
+   * @returns Un mensaje confirmando la limpieza exitosa.
+   */
+  @Get('clear')
+  clearDatabaseControlled(
+    @Query()
+    clearOptions: {
+      users?: boolean;
+      clients?: boolean;
+      supplies?: boolean;
+      shoppingSupplies?: boolean;
+      suppliers?: boolean;
+      consumptionSupplies?: boolean;
+      harvests?: boolean;
+      works?: boolean;
+      crops?: boolean;
+      employees?: boolean;
+      sales?: boolean;
+    } = {},
+  ) {
+    return this.seedService.clearDatabaseControlled(clearOptions);
+  }
 }
