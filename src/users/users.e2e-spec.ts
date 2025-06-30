@@ -155,18 +155,18 @@ describe('UsersController e2e', () => {
 
     userTest = await reqTools.createUser();
 
-    token = await reqTools.generateTokenUser(userTest);
+    token = await reqTools.generateTokenUser();
   });
 
   afterAll(async () => {
-    // await authService.deleteUserToTests(userTest.id);
+    await reqTools.deleteTestUser();
     await app.close();
   });
 
   describe('users/create (POST)', () => {
     beforeAll(async () => {
       // Se realiza una petición al endpoint de auth para añadir una acción al usuario de prueba antes de los tests
-      await reqTools.addActionToUser(userTest, 'create_user');
+      await reqTools.addActionToUser('create_user');
     });
 
     it('should throw an exception for not sending a JWT to the protected path /users/create', async () => {

@@ -8,6 +8,7 @@ import * as request from 'supertest';
 export class RequestTools {
   private readonly app: INestApplication;
   private readonly tenantId: string;
+  private user: User;
 
   /**
    * Creates an instance of RequestTools.
@@ -28,7 +29,21 @@ export class RequestTools {
       .get('/seed/controlled')
       .set('x-tenant-id', this.tenantId)
       .query({ users: 1 });
-    return body.history.insertedUsers[0];
+    this.user = body.history.insertedUsers[0];
+    return this.user;
+  }
+
+  /**
+   * Deletes a test user by user ID using the corresponding endpoint.
+   * @param userId - The identifier of the user to delete.
+   * @returns A promise that resolves when the user is deleted.
+   */
+  public async deleteTestUser(): Promise<void> {
+    await request
+      .default(this.app.getHttpServer())
+      .post(`/auth/delete-test-user/${this.user.id}`)
+      .set('x-tenant-id', this.tenantId)
+      .expect(201);
   }
 
   /**
@@ -36,13 +51,13 @@ export class RequestTools {
    * @param user - The user entity.
    * @returns The JWT token as a string.
    */
-  public async generateTokenUser(user: User): Promise<string> {
+  public async generateTokenUser(): Promise<string> {
     const response = await request
       .default(this.app.getHttpServer())
       .post('/auth/login')
       .set('x-tenant-id', this.tenantId)
       .send({
-        email: user.email,
+        email: this.user.email,
         password: '123456',
       });
 
@@ -56,10 +71,10 @@ export class RequestTools {
    * @param user - The user entity.
    * @param actionName - The name of the action/permission to add.
    */
-  public async addActionToUser(user: User, actionName: string): Promise<void> {
+  public async addActionToUser(actionName: string): Promise<void> {
     await request
       .default(this.app.getHttpServer())
-      .post(`/auth/add-permission/${user.id}/${actionName}`)
+      .post(`/auth/add-permission/${this.user.id}/${actionName}`)
       .set('x-tenant-id', this.tenantId)
       .expect(201);
   }

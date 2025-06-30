@@ -238,6 +238,16 @@ export class AuthController {
     return this.authService.addPermission(userId, actionName);
   }
 
+  /**
+   * Delete a test user by ID.
+   * Only for development and testing purposes.
+   * @param userId User identifier
+   */
+  @Post('delete-test-user/:userId')
+  async deleteTestUser(@Param('userId') userId: string): Promise<void> {
+    return this.authService.deleteUserToTests(userId);
+  }
+
   // @Get(convertToAdmin.path)
   // convertToAdmin(@Param('id', ParseUUIDPipe) id: string) {
   //   return this.authService.convertToAdmin(id);
