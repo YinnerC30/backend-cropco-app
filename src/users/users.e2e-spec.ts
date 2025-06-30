@@ -17,7 +17,7 @@ import { CommonModule } from 'src/common/common.module';
 import { SeedModule } from 'src/seed/seed.module';
 import { SeedService } from 'src/seed/seed.service';
 
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { UserDto } from './dto/user.dto';
 import { UsersModule } from './users.module';
 
@@ -32,6 +32,7 @@ import * as request from 'supertest';
 import { User } from './entities/user.entity';
 import cookieParser from 'cookie-parser';
 import { RequestTools } from 'src/seed/helpers/RequestTools';
+import { TenantConnectionService } from 'src/tenants/services/tenant-connection.service';
 
 // Módulo de prueba que configura el middleware
 @Module({
@@ -93,6 +94,11 @@ describe('UsersController e2e', () => {
   let userTest: User;
   let token: string;
   let reqTools: RequestTools;
+  let tenantConnection: DataSource;
+  let tenantsConnectionService: TenantConnectionService;
+  let tenantRepository: Repository<Tenant>;
+  let tenantDatabaseRepository: Repository<TenantDatabase>;
+  let tenantId: string;
 
   const userDtoTemplete: UserDto = {
     first_name: InformationGenerator.generateFirstName(),
@@ -104,7 +110,6 @@ describe('UsersController e2e', () => {
   };
 
   const falseUserId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
-  const tenantId = '9371d76b-c248-4888-8d1e-26f312173c3d';
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -113,9 +118,15 @@ describe('UsersController e2e', () => {
 
     seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
+    tenantsConnectionService = moduleFixture.get<TenantConnectionService>(
+      TenantConnectionService,
+    );
 
     userRepository = moduleFixture.get<Repository<User>>(
       getRepositoryToken(User),
+    );
+    tenantRepository = moduleFixture.get<Repository<Tenant>>(
+      getRepositoryToken(Tenant),
     );
 
     app = moduleFixture.createNestApplication();
@@ -133,6 +144,12 @@ describe('UsersController e2e', () => {
     await app.init();
 
     // await userRepository.delete({});
+
+    const tenant = await tenantRepository.findOne({
+      where: { subdomain: 'testtenantend' },
+    });
+
+    tenantId = tenant.id;
 
     reqTools = new RequestTools({ app, tenantId });
 
