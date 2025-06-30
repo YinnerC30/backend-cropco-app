@@ -31,6 +31,7 @@ import { TenantsModule } from 'src/tenants/tenants.module';
 import * as request from 'supertest';
 import { User } from './entities/user.entity';
 import cookieParser from 'cookie-parser';
+import { RequestTools } from 'src/seed/helpers/RequestTools';
 
 // Módulo de prueba que configura el middleware
 @Module({
@@ -91,6 +92,7 @@ describe('UsersController e2e', () => {
   let authService: AuthService;
   let userTest: User;
   let token: string;
+  let reqTools: RequestTools;
 
   const userDtoTemplete: UserDto = {
     first_name: InformationGenerator.generateFirstName(),
@@ -103,38 +105,6 @@ describe('UsersController e2e', () => {
 
   const falseUserId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
   const tenantId = '9371d76b-c248-4888-8d1e-26f312173c3d';
-
-  const CreateUser = async () => {
-    const { body } = await request
-      .default(app.getHttpServer())
-      .get('/seed/controlled')
-      .set('x-tenant-id', tenantId)
-      .query({ users: 1 });
-    return body.history.insertedUsers[0];
-  };
-
-  const GenerateTokenUser = async () => {
-    const response = await request
-      .default(app.getHttpServer())
-      .post('/auth/login')
-      .set('x-tenant-id', tenantId)
-      .send({
-        email: userTest.email,
-        password: '123456',
-      });
-
-    return response.headers['set-cookie'][0]
-      .split(';')[0]
-      .replace('user-token=', '');
-  };
-
-  const addActionToUser = async (actionName: string) => {
-    await request
-      .default(app.getHttpServer())
-      .post(`/auth/add-permission/${userTest.id}/${actionName}`)
-      .set('x-tenant-id', tenantId)
-      .expect(201);
-  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -164,9 +134,11 @@ describe('UsersController e2e', () => {
 
     // await userRepository.delete({});
 
-    userTest = await CreateUser();
+    reqTools = new RequestTools({ app, tenantId });
 
-    token = await GenerateTokenUser();
+    userTest = await reqTools.createUser();
+
+    token = await reqTools.generateTokenUser(userTest);
   });
 
   afterAll(async () => {
@@ -177,7 +149,7 @@ describe('UsersController e2e', () => {
   describe('users/create (POST)', () => {
     beforeAll(async () => {
       // Se realiza una petición al endpoint de auth para añadir una acción al usuario de prueba antes de los tests
-      await addActionToUser('create_user');
+      await reqTools.addActionToUser(userTest, 'create_user');
     });
 
     it('should throw an exception for not sending a JWT to the protected path /users/create', async () => {
@@ -241,7 +213,7 @@ describe('UsersController e2e', () => {
     });
 
     it('should throw exception for trying to create a user with duplicate email.', async () => {
-      const userWithInitialEmail = await CreateUser();
+      const userWithInitialEmail = await reqTools.createUser();
 
       const bodyRequest: UserDto = {
         ...userDtoTemplete,
