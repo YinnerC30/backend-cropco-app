@@ -151,15 +151,15 @@ export class AuthService extends BaseTenantService {
         },
       });
 
-      if (userPermits.length === 0) {
-        this.logWithContext(
-          `Login failed - user ${user.first_name} has no permissions`,
-          'warn',
-        );
-        throw new ForbiddenException(
-          `The user does not have enough permissions to access`,
-        );
-      }
+      // if (userPermits.length === 0) {
+      //   this.logWithContext(
+      //     `Login failed - user ${user.first_name} has no permissions`,
+      //     'warn',
+      //   );
+      //   throw new ForbiddenException(
+      //     `The user does not have enough permissions to access`,
+      //   );
+      // }
 
       this.logWithContext(
         `Login successful for user: ${user.first_name} ${user.last_name} (${email}), modules count: ${userPermits.length}`,

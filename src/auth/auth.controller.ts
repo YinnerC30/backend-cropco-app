@@ -223,6 +223,21 @@ export class AuthController {
     return { message: 'Logout exitoso' };
   }
 
+  // Only Development
+  /**
+   * Add a permission to a user.
+   * Only for development purposes.
+   * @param userId User identifier
+   * @param actionName Name of the action to add
+   */
+  @Post('add-permission/:userId/:actionName')
+  async addPermissionToUser(
+    @Param('userId') userId: string,
+    @Param('actionName') actionName: string,
+  ): Promise<string> {
+    return this.authService.addPermission(userId, actionName);
+  }
+
   // @Get(convertToAdmin.path)
   // convertToAdmin(@Param('id', ParseUUIDPipe) id: string) {
   //   return this.authService.convertToAdmin(id);

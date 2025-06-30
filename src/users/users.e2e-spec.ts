@@ -103,8 +103,30 @@ describe('UsersController e2e', () => {
 
   const falseUserId = 'fb3c5165-3ea7-427b-acee-c04cd879cedc';
   const tenantId = '9371d76b-c248-4888-8d1e-26f312173c3d';
-  token =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE2NTRhODQyLTUzMDktNDFiNC1iNmNhLTFmOTNhYzgyOWIwNiIsImlhdCI6MTc1MTIyOTg2OSwiZXhwIjoxNzUxMjUxNDY5fQ.V3DOz47sutcCnqhh5LBm3GvNyn_JTx6ZWQfFa_lDATY';
+
+  const CreateUser = async () => {
+    const { body } = await request
+      .default(app.getHttpServer())
+      .get('/seed/controlled')
+      .set('x-tenant-id', tenantId)
+      .query({ users: 1 });
+    return body.history.insertedUsers[0];
+  };
+
+  const GenerateTokenUser = async () => {
+    const response = await request
+      .default(app.getHttpServer())
+      .post('/auth/login')
+      .set('x-tenant-id', tenantId)
+      .send({
+        email: userTest.email,
+        password: '123456',
+      });
+
+    return response.headers['set-cookie'][0]
+      .split(';')[0]
+      .replace('user-token=', '');
+  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -134,10 +156,9 @@ describe('UsersController e2e', () => {
 
     // await userRepository.delete({});
 
-    // userTest = (await seedService.CreateUser({})) as User;
-    // token = authService.generateJwtToken({
-    //   id: userTest.id,
-    // });
+    userTest = await CreateUser();
+
+    token = await GenerateTokenUser();
   });
 
   afterAll(async () => {
@@ -146,9 +167,15 @@ describe('UsersController e2e', () => {
   });
 
   describe('users/create (POST)', () => {
-    // beforeAll(async () => {
-    //   await authService.addPermission(userTest.id, 'create_user');
-    // });
+    beforeAll(async () => {
+      // Se realiza una petición al endpoint de auth para añadir una acción al usuario de prueba antes de los tests
+      const actionName = 'create_user';
+      await request
+        .default(app.getHttpServer())
+        .post(`/auth/add-permission/${userTest.id}/${actionName}`)
+        .set('x-tenant-id', tenantId)
+        .expect(201);
+    });
 
     it('should throw an exception for not sending a JWT to the protected path /users/create', async () => {
       const bodyRequest: UserDto = {
@@ -180,51 +207,54 @@ describe('UsersController e2e', () => {
       expect(response.body).toMatchObject(bodyRequest);
     });
 
-    // it('should throw exception when fields are missing in the body', async () => {
-    //   const errorMessage = [
-    //     'first_name must be shorter than or equal to 100 characters',
-    //     'first_name must be a string',
-    //     'last_name must be shorter than or equal to 100 characters',
-    //     'last_name must be a string',
-    //     'email must be shorter than or equal to 100 characters',
-    //     'email must be an email',
-    //     'email must be a string',
-    //     'password must be longer than or equal to 6 characters',
-    //     'password must be shorter than or equal to 100 characters',
-    //     'password must be a string',
-    //     'cell_phone_number must be shorter than or equal to 10 characters',
-    //     'cell_phone_number must be a string',
-    //     'actions must be an array',
-    //   ];
+    it('should throw exception when fields are missing in the body', async () => {
+      const errorMessage = [
+        'first_name must be shorter than or equal to 100 characters',
+        'first_name must be a string',
+        'last_name must be shorter than or equal to 100 characters',
+        'last_name must be a string',
+        'email must be shorter than or equal to 100 characters',
+        'email must be an email',
+        'email must be a string',
+        'password must be shorter than or equal to 100 characters',
+        'password must be longer than or equal to 6 characters',
+        'password must be a string',
+        'cell_phone_number must be longer than or equal to 9 characters',
+        'cell_phone_number must be shorter than or equal to 15 characters',
+        'cell_phone_number must be a string',
+        'actions must be an array',
+      ];
 
-    //   const { body } = await request
-    //     .default(app.getHttpServer())
-    //     .post('/users/create')
-    //     .set('Authorization', `Bearer ${token}`)
-    //     .expect(400);
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/users/create')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(400);
 
-    //   errorMessage.forEach((msg) => {
-    //     expect(body.message).toContain(msg);
-    //   });
-    // });
+      errorMessage.forEach((msg) => {
+        expect(body.message).toContain(msg);
+      });
+    });
 
-    // it('should throw exception for trying to create a user with duplicate email.', async () => {
-    //   const userWithInitialEmail = await seedService.CreateUser({});
+    it('should throw exception for trying to create a user with duplicate email.', async () => {
+      const userWithInitialEmail = await CreateUser();
 
-    //   const bodyRequest: UserDto = {
-    //     ...userDtoTemplete,
-    //     email: userWithInitialEmail.email,
-    //   };
-    //   const { body } = await request
-    //     .default(app.getHttpServer())
-    //     .post('/users/create')
-    //     .set('Authorization', `Bearer ${token}`)
-    //     .send(bodyRequest)
-    //     .expect(400);
-    //   expect(body.message).toEqual(
-    //     `Unique constraint violation, Key (email)=(${bodyRequest.email}) already exists.`,
-    //   );
-    // });
+      const bodyRequest: UserDto = {
+        ...userDtoTemplete,
+        email: userWithInitialEmail.email,
+      };
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/users/create')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .send(bodyRequest)
+        .expect(400);
+      expect(body.message).toEqual(
+        `Unique constraint violation, Key (email)=(${bodyRequest.email}) already exists.`,
+      );
+    });
   });
 
   // describe('users/all (GET)', () => {

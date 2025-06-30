@@ -176,6 +176,211 @@ export class SeedService {
     };
   }
 
+  /**
+   * Executes a controlled seed, allowing to specify the exact number of records to create for each entity.
+   * @param options - Object specifying the quantity for each entity to create.
+   * @returns An object with a message and the history of inserted records.
+   */
+  /**
+   * Executes a controlled seed, allowing to specify the exact number of records to create for each entity.
+   * @param options - Object specifying the quantity for each entity to create.
+   * @returns An object with a message and the history of inserted records.
+   */
+  async runSeedControlled(options: {
+    users?: number;
+    clients?: number;
+    suppliers?: number;
+    supplies?: number;
+    employees?: number;
+    crops?: number;
+    harvests?: number;
+    works?: number;
+    sales?: number;
+    shoppings?: number;
+    consumptions?: number;
+  }): Promise<{
+    message: string;
+    history: {
+      insertedUsers?: unknown[];
+      insertedClients?: unknown[];
+      insertedSuppliers?: unknown[];
+      insertedSupplies?: unknown[];
+      insertedEmployees?: unknown[];
+      insertedCrops?: unknown[];
+      insertedHarvests?: unknown[];
+      insertedWorks?: unknown[];
+      insertedSales?: unknown[];
+      insertedShoppingSupplies?: unknown[];
+      insertedConsumptionSupplies?: unknown[];
+    };
+  }> {
+    const {
+      users = 0,
+      clients = 0,
+      suppliers = 0,
+      supplies = 0,
+      employees = 0,
+      crops = 0,
+      harvests = 0,
+      works = 0,
+      sales = 0,
+      shoppings = 0,
+      consumptions = 0,
+    } = options;
+
+    const history: {
+      insertedUsers?: unknown[];
+      insertedClients?: unknown[];
+      insertedSuppliers?: unknown[];
+      insertedSupplies?: unknown[];
+      insertedEmployees?: unknown[];
+      insertedCrops?: unknown[];
+      insertedHarvests?: unknown[];
+      insertedWorks?: unknown[];
+      insertedSales?: unknown[];
+      insertedShoppingSupplies?: unknown[];
+      insertedConsumptionSupplies?: unknown[];
+    } = {};
+
+    if (users > 0) {
+      history.insertedUsers = [];
+      for (let i = 0; i < users; i++) {
+        const user = await this.CreateUser({});
+        history.insertedUsers.push(user);
+      }
+    }
+
+    // if (users > 0) {
+    //   history.insertedUsers = [];
+
+    // }
+
+    // if (clients > 0 && typeof this.insertNewClients === 'function') {
+    //   history.insertedClients = [];
+    //   for (let i = 0; i < clients; i++) {
+    //     const client = await this.insertNewClients();
+    //     if (Array.isArray(client)) {
+    //       history.insertedClients.push(...client);
+    //     } else {
+    //       history.insertedClients.push(client);
+    //     }
+    //   }
+    // }
+
+    // if (suppliers > 0 && typeof this.insertNewSuppliers === 'function') {
+    //   history.insertedSuppliers = [];
+    //   for (let i = 0; i < suppliers; i++) {
+    //     const supplier = await this.insertNewSuppliers();
+    //     if (Array.isArray(supplier)) {
+    //       history.insertedSuppliers.push(...supplier);
+    //     } else {
+    //       history.insertedSuppliers.push(supplier);
+    //     }
+    //   }
+    // }
+
+    // if (supplies > 0 && typeof this.insertNewSupplies === 'function') {
+    //   history.insertedSupplies = [];
+    //   for (let i = 0; i < supplies; i++) {
+    //     const supply = await this.insertNewSupplies();
+    //     if (Array.isArray(supply)) {
+    //       history.insertedSupplies.push(...supply);
+    //     } else {
+    //       history.insertedSupplies.push(supply);
+    //     }
+    //   }
+    // }
+
+    // if (employees > 0 && typeof this.insertNewEmployees === 'function') {
+    //   history.insertedEmployees = [];
+    //   for (let i = 0; i < employees; i++) {
+    //     const employee = await this.insertNewEmployees();
+    //     if (Array.isArray(employee)) {
+    //       history.insertedEmployees.push(...employee);
+    //     } else {
+    //       history.insertedEmployees.push(employee);
+    //     }
+    //   }
+    // }
+
+    // if (crops > 0 && typeof this.insertNewCrops === 'function') {
+    //   history.insertedCrops = [];
+    //   for (let i = 0; i < crops; i++) {
+    //     const crop = await this.insertNewCrops();
+    //     if (Array.isArray(crop)) {
+    //       history.insertedCrops.push(...crop);
+    //     } else {
+    //       history.insertedCrops.push(crop);
+    //     }
+    //   }
+    // }
+
+    // if (harvests > 0 && typeof this.insertNewHarvests === 'function') {
+    //   history.insertedHarvests = [];
+    //   for (let i = 0; i < harvests; i++) {
+    //     const harvest = await this.insertNewHarvests();
+    //     if (Array.isArray(harvest)) {
+    //       history.insertedHarvests.push(...harvest);
+    //     } else {
+    //       history.insertedHarvests.push(harvest);
+    //     }
+    //   }
+    // }
+
+    // if (works > 0 && typeof this.insertNewWorks === 'function') {
+    //   history.insertedWorks = [];
+    //   for (let i = 0; i < works; i++) {
+    //     const work = await this.insertNewWorks();
+    //     if (Array.isArray(work)) {
+    //       history.insertedWorks.push(...work);
+    //     } else {
+    //       history.insertedWorks.push(work);
+    //     }
+    //   }
+    // }
+
+    // if (sales > 0 && typeof this.insertNewSales === 'function') {
+    //   history.insertedSales = [];
+    //   for (let i = 0; i < sales; i++) {
+    //     const sale = await this.insertNewSales();
+    //     if (Array.isArray(sale)) {
+    //       history.insertedSales.push(...sale);
+    //     } else {
+    //       history.insertedSales.push(sale);
+    //     }
+    //   }
+    // }
+
+    // if (shoppings > 0 && typeof this.insertNewShoppingSupplies === 'function') {
+    //   history.insertedShoppingSupplies = [];
+    //   for (let i = 0; i < shoppings; i++) {
+    //     const shopping = await this.insertNewShoppingSupplies();
+    //     if (Array.isArray(shopping)) {
+    //       history.insertedShoppingSupplies.push(...shopping);
+    //     } else {
+    //       history.insertedShoppingSupplies.push(shopping);
+    //     }
+    //   }
+    // }
+
+    // if (consumptions > 0 && typeof this.insertNewConsumptionSupplies === 'function') {
+    //   history.insertedConsumptionSupplies = [];
+    //   for (let i = 0; i < consumptions; i++) {
+    //     const consumption = await this.insertNewConsumptionSupplies();
+    //     if (Array.isArray(consumption)) {
+    //       history.insertedConsumptionSupplies.push(...consumption);
+    //     } else {
+    //       history.insertedConsumptionSupplies.push(consumption);
+    //     }
+    //   }
+    // }
+
+    return {
+      message: 'Controlled seed executed successfully',
+      history,
+    };
+  }
+
   async runSeed() {
     await this.clearDatabase();
     await this.authService.createModulesWithActions();
