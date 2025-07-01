@@ -103,8 +103,6 @@ export class RequestTools {
         password: '123456',
       });
 
-    console.log(loginResponse.body, loginResponse.status);
-
     if (loginResponse.status !== 201) {
       throw new Error(
         `Failed to login administrator: ${loginResponse.body.message}`,
@@ -119,7 +117,6 @@ export class RequestTools {
           ?.split(';')[0]
           ?.split('=')[1]
       : undefined;
-    console.log('🚀 ~ RequestTools ~ initializeTenant ~ token:', token);
 
     const tenant = await this.tenantRepository.findOne({
       where: { subdomain: 'tenanttesting' },
