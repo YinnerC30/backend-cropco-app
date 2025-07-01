@@ -341,11 +341,13 @@ export class RequestTools {
     userId: string,
     actionName: string,
   ): Promise<void> {
-    await request
+    console.log(userId, actionName)
+    const result = await request
       .default(this.getApp().getHttpServer())
       .post(`/auth/remove-permission/${userId}/${actionName}`)
       .set('x-tenant-id', this.getTenantId())
       .expect(201);
+      console.log(result.body, result.status)
   }
 
   /**

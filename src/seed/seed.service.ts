@@ -250,22 +250,13 @@ export class SeedService {
       }
     }
 
-    // if (users > 0) {
-    //   history.insertedUsers = [];
-
-    // }
-
-    // if (clients > 0 && typeof this.insertNewClients === 'function') {
-    //   history.insertedClients = [];
-    //   for (let i = 0; i < clients; i++) {
-    //     const client = await this.insertNewClients();
-    //     if (Array.isArray(client)) {
-    //       history.insertedClients.push(...client);
-    //     } else {
-    //       history.insertedClients.push(client);
-    //     }
-    //   }
-    // }
+    if (clients > 0) {
+      history.insertedClients = [];
+      for (let i = 0; i < clients; i++) {
+        const client = await this.CreateClient({});
+        history.insertedClients.push(client);
+      }
+    }
 
     // if (suppliers > 0 && typeof this.insertNewSuppliers === 'function') {
     //   history.insertedSuppliers = [];
@@ -291,17 +282,13 @@ export class SeedService {
     //   }
     // }
 
-    // if (employees > 0 && typeof this.insertNewEmployees === 'function') {
-    //   history.insertedEmployees = [];
-    //   for (let i = 0; i < employees; i++) {
-    //     const employee = await this.insertNewEmployees();
-    //     if (Array.isArray(employee)) {
-    //       history.insertedEmployees.push(...employee);
-    //     } else {
-    //       history.insertedEmployees.push(employee);
-    //     }
-    //   }
-    // }
+    if (employees > 0) {
+      history.insertedEmployees = [];
+      for (let i = 0; i < employees; i++) {
+        const employee = await this.CreateEmployee({});
+        history.insertedEmployees.push(employee);
+      }
+    }
 
     // if (crops > 0 && typeof this.insertNewCrops === 'function') {
     //   history.insertedCrops = [];

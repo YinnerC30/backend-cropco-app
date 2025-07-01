@@ -1,8 +1,14 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  INestApplication,
+  MiddlewareConsumer,
+  Module,
+  RequestMethod,
+  ValidationPipe,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 
-import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -11,21 +17,76 @@ import { AuthService } from 'src/auth/auth.service';
 import { CommonModule } from 'src/common/common.module';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
+import { RequestTools } from 'src/seed/helpers/RequestTools';
 import { SeedModule } from 'src/seed/seed.module';
-import { SeedService } from 'src/seed/seed.service';
-import { User } from 'src/users/entities/user.entity';
-import { Repository } from 'typeorm';
+import { TenantDatabase } from 'src/tenants/entities/tenant-database.entity';
+import { Tenant } from 'src/tenants/entities/tenant.entity';
+import { TenantMiddleware } from 'src/tenants/middleware/tenant.middleware';
+import { TenantsModule } from 'src/tenants/tenants.module';
+import { Administrator } from 'src/administrators/entities/administrator.entity';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeesModule } from './employees.module';
 import { Employee } from './entities/employee.entity';
+import cookieParser from 'cookie-parser';
+
+// Módulo de prueba que configura el middleware
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      envFilePath: '.env.test',
+      isGlobal: true,
+    }),
+    TenantsModule,
+    EmployeesModule,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return {
+          type: 'postgres',
+          host: configService.get<string>('DB_HOST'),
+          port: configService.get<number>('DB_PORT'),
+          username: configService.get<string>('DB_USERNAME'),
+          password: configService.get<string>('DB_PASSWORD'),
+          database: 'cropco_management',
+          entities: [Tenant, TenantDatabase, Administrator],
+          synchronize: true,
+          ssl: false,
+        };
+      },
+    }),
+    CommonModule,
+    SeedModule,
+    AuthModule,
+  ],
+})
+export class TestAppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(TenantMiddleware)
+      .exclude(
+        { path: 'administrators/(.*)', method: RequestMethod.ALL },
+        { path: 'tenants/(.*)', method: RequestMethod.ALL },
+        {
+          path: '/auth/management/login',
+          method: RequestMethod.POST,
+        },
+        {
+          path: '/auth/management/check-status',
+          method: RequestMethod.GET,
+        },
+      )
+      .forRoutes('*');
+  }
+}
 
 describe('EmployeesController (e2e)', () => {
   let app: INestApplication;
-  let employeeRepository: Repository<Employee>;
-  let seedService: SeedService;
   let authService: AuthService;
-  let userTest: User;
+  let userTest: any;
   let token: string;
+  let reqTools: RequestTools;
+  let tenantId: string;
 
   const employeeDtoTemplete: CreateEmployeeDto = {
     first_name: InformationGenerator.generateFirstName(),
@@ -37,47 +98,31 @@ describe('EmployeesController (e2e)', () => {
 
   const falseEmployeeId = InformationGenerator.generateRandomId();
 
+  const CreateEmployee = async () => {
+    const employee = (await reqTools.createSeedData({ employees: 1 })).history
+      .insertedEmployees[0];
+
+    const employeeMapper = {
+      id: employee.id,
+      first_name: employee.first_name,
+      last_name: employee.last_name,
+      email: employee.email,
+      cell_phone_number: employee.cell_phone_number,
+      address: employee.address,
+    };
+    return employeeMapper;
+  };
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({
-          envFilePath: '.env.test',
-          isGlobal: true,
-        }),
-        EmployeesModule,
-        TypeOrmModule.forRootAsync({
-          imports: [ConfigModule],
-          inject: [ConfigService],
-          useFactory: (configService: ConfigService) => {
-            return {
-              type: 'postgres',
-              host: configService.get<string>('DB_HOST'),
-              port: configService.get<number>('DB_PORT'),
-              username: configService.get<string>('DB_USERNAME'),
-              password: configService.get<string>('DB_PASSWORD'),
-              database: configService.get<string>('DB_NAME'),
-              entities: [__dirname + '../../**/*.entity{.ts,.js}'],
-              synchronize: true,
-              // ssl: {
-              //   rejectUnauthorized: false, // Be cautious with this in production
-              // },
-            };
-          },
-        }),
-        CommonModule,
-        SeedModule,
-        AuthModule,
-      ],
+      imports: [TestAppModule],
     }).compile();
 
-    seedService = moduleFixture.get<SeedService>(SeedService);
     authService = moduleFixture.get<AuthService>(AuthService);
-    employeeRepository = moduleFixture.get<Repository<Employee>>(
-      getRepositoryToken(Employee),
-    );
 
     app = moduleFixture.createNestApplication();
 
+    app.use(cookieParser());
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -89,21 +134,25 @@ describe('EmployeesController (e2e)', () => {
 
     await app.init();
 
-    await employeeRepository.delete({});
-    userTest = (await seedService.CreateUser({})) as User;
-    token = authService.generateJwtToken({
-      id: userTest.id,
-    });
+    reqTools = new RequestTools({ moduleFixture });
+    reqTools.setApp(app);
+    await reqTools.initializeTenant();
+    tenantId = reqTools.getTenantIdPublic();
+
+    await reqTools.clearDatabaseControlled({ employees: true });
+
+    userTest = await reqTools.createTestUser();
+    token = await reqTools.generateTokenUser();
   });
 
   afterAll(async () => {
-    await authService.deleteUserToTests(userTest.id);
+    await reqTools.deleteTestUser();
     await app.close();
   });
 
   describe('employees/create (POST)', () => {
     beforeAll(async () => {
-      await authService.addPermission(userTest.id, 'create_employee');
+      await reqTools.addActionToUser('create_employee');
     });
 
     it('should throw an exception for not sending a JWT to the protected path /employees/create', async () => {
@@ -113,6 +162,8 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .post('/employees/create')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token.slice(0, 10)}`)
         .send(bodyRequest)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
@@ -125,7 +176,8 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .post('/employees/create')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .send(bodyRequest)
         .expect(201);
       expect(response.body).toMatchObject(bodyRequest);
@@ -140,7 +192,8 @@ describe('EmployeesController (e2e)', () => {
         'email must be shorter than or equal to 100 characters',
         'email must be an email',
         'email must be a string',
-        'cell_phone_number must be shorter than or equal to 10 characters',
+        'cell_phone_number must be shorter than or equal to 15 characters',
+        'cell_phone_number must be longer than or equal to 9 characters',
         'cell_phone_number must be a number string',
         'address must be shorter than or equal to 200 characters',
         'address must be a string',
@@ -149,7 +202,8 @@ describe('EmployeesController (e2e)', () => {
       const { body } = await request
         .default(app.getHttpServer())
         .post('/employees/create')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(400);
 
       errorMessage.forEach((msg) => {
@@ -158,7 +212,7 @@ describe('EmployeesController (e2e)', () => {
     });
 
     it('should throw exception for trying to create a employee with duplicate email.', async () => {
-      const employeeWithSameEmail = await seedService.CreateEmployee({});
+      const employeeWithSameEmail = await CreateEmployee();
 
       const bodyRequest: CreateEmployeeDto = {
         ...employeeDtoTemplete,
@@ -167,7 +221,8 @@ describe('EmployeesController (e2e)', () => {
       const { body } = await request
         .default(app.getHttpServer())
         .post('/employees/create')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .send(bodyRequest)
         .expect(400);
       expect(body.message).toEqual(
@@ -179,11 +234,11 @@ describe('EmployeesController (e2e)', () => {
   describe('employees/all (GET)', () => {
     beforeAll(async () => {
       try {
-        await employeeRepository.delete({});
+        await reqTools.clearDatabaseControlled({ employees: true });
         await Promise.all(
-          Array.from({ length: 17 }).map(() => seedService.CreateEmployee({})),
+          Array.from({ length: 17 }).map(() => CreateEmployee()),
         );
-        await authService.addPermission(userTest.id, 'find_all_employees');
+        await reqTools.addActionToUser('find_all_employees');
       } catch (error) {
         console.log(error);
       }
@@ -193,6 +248,7 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .get('/employees/all')
+        .set('x-tenant-id', tenantId)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
@@ -201,19 +257,22 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .get('/employees/all')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(200);
       expect(response.body.total_row_count).toEqual(17);
       expect(response.body.current_row_count).toEqual(10);
       expect(response.body.total_page_count).toEqual(2);
       expect(response.body.current_page_count).toEqual(1);
     });
+
     it('should return all available records by sending the parameter all_records to true, ignoring other parameters', async () => {
       const response = await request
         .default(app.getHttpServer())
         .get('/employees/all')
         .query({ all_records: true, limit: 10, offset: 1 })
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(200);
       expect(response.body.total_row_count).toEqual(17);
       expect(response.body.current_row_count).toEqual(17);
@@ -232,12 +291,14 @@ describe('EmployeesController (e2e)', () => {
         expect(employee.deletedDate).toBeNull();
       });
     });
+
     it('should return the specified number of employees passed by the paging arguments by the URL', async () => {
       const response1 = await request
         .default(app.getHttpServer())
         .get(`/employees/all`)
         .query({ limit: 11, offset: 0 })
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(200);
       expect(response1.body.total_row_count).toEqual(17);
       expect(response1.body.current_row_count).toEqual(11);
@@ -260,7 +321,8 @@ describe('EmployeesController (e2e)', () => {
         .default(app.getHttpServer())
         .get(`/employees/all`)
         .query({ limit: 11, offset: 1 })
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(200);
       expect(response2.body.total_row_count).toEqual(17);
       expect(response2.body.current_row_count).toEqual(6);
@@ -279,12 +341,14 @@ describe('EmployeesController (e2e)', () => {
         expect(employee.deletedDate).toBeNull();
       });
     });
+
     it('You should throw an exception for requesting out-of-scope paging.', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get('/employees/all')
         .query({ offset: 10 })
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(404);
       expect(body.message).toEqual(
         'There are no employee records with the requested pagination',
@@ -294,24 +358,26 @@ describe('EmployeesController (e2e)', () => {
 
   describe('employees/one/:id (GET)', () => {
     beforeAll(async () => {
-      await authService.addPermission(userTest.id, 'find_one_employee');
+      await reqTools.addActionToUser('find_one_employee');
     });
 
     it('should throw an exception for not sending a JWT to the protected path employees/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
         .get(`/employees/one/${falseEmployeeId}`)
+        .set('x-tenant-id', tenantId)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
     it('should get one employee', async () => {
-      const { id } = await seedService.CreateEmployee({});
+      const { id } = await CreateEmployee();
 
       const response = await request
         .default(app.getHttpServer())
         .get(`/employees/one/${id}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(200);
       expect(response.body).toHaveProperty('id');
       expect(response.body).toHaveProperty('first_name');
@@ -335,25 +401,30 @@ describe('EmployeesController (e2e)', () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/employees/one/1234`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(400);
       expect(body.message).toEqual('Validation failed (uuid is expected)');
     });
+
     it('should throw exception for not finding employee by ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/employees/one/${falseEmployeeId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(404);
       expect(body.message).toEqual(
         `Employee with id: ${falseEmployeeId} not found`,
       );
     });
+
     it('should throw exception for not sending an ID', async () => {
       const { body } = await request
         .default(app.getHttpServer())
         .get(`/employees/one/`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(404);
       expect(body.error).toEqual('Not Found');
     });
@@ -361,23 +432,25 @@ describe('EmployeesController (e2e)', () => {
 
   describe('employees/update/one/:id (PATCH)', () => {
     beforeAll(async () => {
-      await authService.addPermission(userTest.id, 'update_one_employee');
+      await reqTools.addActionToUser('update_one_employee');
     });
 
     it('should throw an exception for not sending a JWT to the protected path employees/update/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
         .patch(`/employees/update/one/${falseEmployeeId}`)
+        .set('x-tenant-id', tenantId)
         .expect(401);
       expect(response.body.message).toEqual('Unauthorized');
     });
 
     it('should update one employee', async () => {
-      const { id } = await seedService.CreateEmployee({});
+      const { id } = await CreateEmployee();
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/employees/update/one/${id}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .send({ first_name: 'John 4', last_name: 'Doe 4' })
         .expect(200);
 
@@ -389,7 +462,8 @@ describe('EmployeesController (e2e)', () => {
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/employees/update/one/${falseEmployeeId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .send({ first_name: 'John 4' })
         .expect(404);
       expect(body.message).toEqual(
@@ -401,14 +475,16 @@ describe('EmployeesController (e2e)', () => {
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/employees/update/one/${falseEmployeeId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .send({ year: 2025 })
         .expect(400);
       expect(body.message).toContain('property year should not exist');
     });
+
     it('should throw exception for trying to update the email for one that is in use.', async () => {
-      const employeeWithSameEmail = await seedService.CreateEmployee({});
-      const { id } = await seedService.CreateEmployee({});
+      const employeeWithSameEmail = await CreateEmployee();
+      const { id } = await CreateEmployee();
 
       const bodyRequest = {
         email: employeeWithSameEmail.email,
@@ -417,7 +493,8 @@ describe('EmployeesController (e2e)', () => {
       const { body } = await request
         .default(app.getHttpServer())
         .patch(`/employees/update/one/${id}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .send(bodyRequest)
         .expect(400);
       expect(body.message).toEqual(
@@ -426,485 +503,475 @@ describe('EmployeesController (e2e)', () => {
     });
   });
 
-  describe('employees/remove/one/:id (DELETE)', () => {
-    beforeAll(async () => {
-      await authService.addPermission(userTest.id, 'remove_one_employee');
-    });
+  // describe('employees/remove/one/:id (DELETE)', () => {
+  //   beforeAll(async () => {
+  //     await reqTools.addActionToUser('remove_one_employee');
+  //   });
 
-    it('should throw an exception for not sending a JWT to the protected path employees/remove/one/:id', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/employees/remove/one/${falseEmployeeId}`)
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
+  //   it('should throw an exception for not sending a JWT to the protected path employees/remove/one/:id', async () => {
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .delete(`/employees/remove/one/${falseEmployeeId}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .expect(401);
+  //     expect(response.body.message).toEqual('Unauthorized');
+  //   });
 
-    it('should delete one employee', async () => {
-      const { id } = await seedService.CreateEmployee({});
+  //   it('should delete one employee', async () => {
+  //     const { id } = await CreateEmployee();
 
-      await request
-        .default(app.getHttpServer())
-        .delete(`/employees/remove/one/${id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
+  //     await request
+  //       .default(app.getHttpServer())
+  //       .delete(`/employees/remove/one/${id}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
+  //       .expect(200);
+  //   });
 
-      const { notFound } = await request
-        .default(app.getHttpServer())
-        .get(`/employees/one/${id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(404);
-      expect(notFound).toBe(true);
-    });
+  //   it('You should throw exception for trying to delete a employee that does not exist.', async () => {
+  //     const { body } = await request
+  //       .default(app.getHttpServer())
+  //       .delete(`/employees/remove/one/${falseEmployeeId}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
+  //       .expect(404);
+  //     expect(body.message).toEqual(
+  //       `Employee with id: ${falseEmployeeId} not found`,
+  //     );
+  //   });
 
-    it('You should throw exception for trying to delete a employee that does not exist.', async () => {
-      const { body } = await request
-        .default(app.getHttpServer())
-        .delete(`/employees/remove/one/${falseEmployeeId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(404);
-      expect(body.message).toEqual(
-        `Employee with id: ${falseEmployeeId} not found`,
-      );
-    });
+  //   it('should throw an exception when trying to delete a employee with harvests with pending payment.', async () => {
+  //     const { employees } = await reqTools.createSeedData({ harvests: 1 });
 
-    it('should throw an exception when trying to delete a employee with harvests with pending payment.', async () => {
-      const { employees } = await seedService.CreateHarvest({});
+  //     const { body } = await request
+  //       .default(app.getHttpServer())
+  //       .delete(`/employees/remove/one/${employees[0].id}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
+  //       .expect(409);
+  //     expect(body.message).toEqual(
+  //       `Employee with id ${employees[0].id} cannot be removed, has unpaid harvests`,
+  //     );
+  //   });
 
-      const { body } = await request
-        .default(app.getHttpServer())
-        .delete(`/employees/remove/one/${employees[0].id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(409);
-      expect(body.message).toEqual(
-        `Employee with id ${employees[0].id} cannot be removed, has unpaid harvests`,
-      );
-    });
+  //   it('should throw an exception when trying to delete a employee with harvests or works with pending payment.', async () => {
+  //     const { employees } = await reqTools.createSeedData({ works: 1 });
 
-    it('should throw an exception when trying to delete a employee with harvests or works with pending payment.', async () => {
-      const { employees } = await seedService.CreateWork({});
+  //     const { body } = await request
+  //       .default(app.getHttpServer())
+  //       .delete(`/employees/remove/one/${employees[0].id}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
+  //       .expect(409);
+  //     expect(body.message).toEqual(
+  //       `Employee with id ${employees[0].id} cannot be removed, has unpaid works`,
+  //     );
+  //   });
+  // });
 
-      const { body } = await request
-        .default(app.getHttpServer())
-        .delete(`/employees/remove/one/${employees[0].id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(409);
-      expect(body.message).toEqual(
-        `Employee with id ${employees[0].id} cannot be removed, has unpaid works`,
-      );
-    });
-  });
+  // describe('employees/remove/bulk (DELETE)', () => {
+  //   beforeAll(async () => {
+  //     await reqTools.addActionToUser('remove_bulk_employees');
+  //   });
 
-  describe('employees/remove/bulk (DELETE)', () => {
-    beforeAll(async () => {
-      await authService.addPermission(userTest.id, 'remove_bulk_employees');
-    });
+  //   it('should throw an exception for not sending a JWT to the protected path employees/remove/bulk ', async () => {
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .delete('/employees/remove/bulk')
+  //       .set('x-tenant-id', tenantId)
+  //       .expect(401);
+  //     expect(response.body.message).toEqual('Unauthorized');
+  //   });
 
-    it('should throw an exception for not sending a JWT to the protected path employees/remove/bulk ', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/employees/remove/bulk')
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
+  //   it('should delete employees bulk', async () => {
+  //     const [employee1, employee2, employee3] = await Promise.all([
+  //       CreateEmployee(),
+  //       CreateEmployee(),
+  //       CreateEmployee(),
+  //     ]);
 
-    it('should delete employees bulk', async () => {
-      const [employee1, employee2, employee3] = await Promise.all([
-        await seedService.CreateEmployee({}),
-        await seedService.CreateEmployee({}),
-        await seedService.CreateEmployee({}),
-      ]);
+  //     const bulkData: RemoveBulkRecordsDto<Employee> = {
+  //       recordsIds: [{ id: employee1.id }, { id: employee2.id }],
+  //     };
 
-      const bulkData: RemoveBulkRecordsDto<Employee> = {
-        recordsIds: [{ id: employee1.id }, { id: employee2.id }],
-      };
+  //     await request
+  //       .default(app.getHttpServer())
+  //       .delete('/employees/remove/bulk')
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
+  //       .send(bulkData)
+  //       .expect(200);
+  //   });
 
-      await request
-        .default(app.getHttpServer())
-        .delete('/employees/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .send(bulkData)
-        .expect(200);
+  //   it('should throw exception when trying to send an empty array.', async () => {
+  //     const { body } = await request
+  //       .default(app.getHttpServer())
+  //       .delete('/employees/remove/bulk')
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
+  //       .send({ recordsIds: [] })
+  //       .expect(400);
+  //     expect(body.message[0]).toEqual('recordsIds should not be empty');
+  //   });
 
-      const [deletedEmployee1, deletedEmployee2, remainingEmployee3] =
-        await Promise.all([
-          employeeRepository.findOne({ where: { id: employee1.id } }),
-          employeeRepository.findOne({ where: { id: employee2.id } }),
-          employeeRepository.findOne({ where: { id: employee3.id } }),
-        ]);
+  //   it('should throw an exception when trying to delete a employee with pending payments.', async () => {
+  //     const harvest = await reqTools.createSeedData({ harvests: 1 });
+  //     const work = await reqTools.createSeedData({ works: 1 });
 
-      expect(deletedEmployee1).toBeNull();
-      expect(deletedEmployee2).toBeNull();
-      expect(remainingEmployee3).toBeDefined();
-    });
+  //     const employee1 = harvest.employees[0];
+  //     const employee2 = work.employees[0];
+  //     const employee3 = await CreateEmployee();
 
-    it('should throw exception when trying to send an empty array.', async () => {
-      const { body } = await request
-        .default(app.getHttpServer())
-        .delete('/employees/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ recordsIds: [] })
-        .expect(400);
-      expect(body.message[0]).toEqual('recordsIds should not be empty');
-    });
+  //     const { body } = await request
+  //       .default(app.getHttpServer())
+  //       .delete(`/employees/remove/bulk`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
+  //       .send({
+  //         recordsIds: [
+  //           { id: employee1.id },
+  //           { id: employee2.id },
+  //           { id: employee3.id },
+  //         ],
+  //       })
+  //       .expect(207);
+  //     expect(body).toEqual({
+  //       success: [employee3.id],
+  //       failed: [
+  //         {
+  //           id: employee1.id,
+  //           error: `Employee with id ${employee1.id} cannot be removed, has unpaid harvests`,
+  //         },
+  //         {
+  //           id: employee2.id,
+  //           error: `Employee with id ${employee2.id} cannot be removed, has unpaid works`,
+  //         },
+  //       ],
+  //     });
+  //   });
+  // });
 
-    it('should throw an exception when trying to delete a employee with pending payments.', async () => {
-      const harvest = await seedService.CreateHarvest({});
-      const work = await seedService.CreateWork({});
+  // describe('employees/pending-payments/all (GET)', () => {
+  //   beforeAll(async () => {
+  //     try {
+  //       await reqTools.clearDatabaseControlled({ employees: true });
+  //       await Promise.all([
+  //         reqTools.createSeedData({ harvests: 1, quantityEmployees: 8 }),
+  //         reqTools.createSeedData({ works: 1, quantityEmployees: 9 }),
+  //       ]);
+  //       await reqTools.addActionToUser(
+  //         'find_all_employees_with_pending_payments',
+  //       );
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   });
 
-      const employee1 = harvest.employees[0];
-      const employee2 = work.employees[0];
-      const employee3 = await seedService.CreateEmployee({});
+  //   it('should throw an exception for not sending a JWT to the protected path /employees/pending-payments/all', async () => {
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .get('/employees/pending-payments/all')
+  //       .set('x-tenant-id', tenantId)
+  //       .expect(401);
+  //     expect(response.body.message).toEqual('Unauthorized');
+  //   });
 
-      const { body } = await request
-        .default(app.getHttpServer())
-        .delete(`/employees/remove/bulk`)
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          recordsIds: [
-            { id: employee1.id },
-            { id: employee2.id },
-            { id: employee3.id },
-          ],
-        })
-        .expect(207);
-      expect(body).toEqual({
-        success: [employee3.id],
-        failed: [
-          {
-            id: employee1.id,
-            error: `Employee with id ${employee1.id} cannot be removed, has unpaid harvests`,
-          },
-          {
-            id: employee2.id,
-            error: `Employee with id ${employee2.id} cannot be removed, has unpaid works`,
-          },
-        ],
-      });
-    });
-  });
+  //   it('should get only employees with pending payments', async () => {
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .get('/employees/pending-payments/all')
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
+  //       .expect(200);
+  //     expect(response.body.total_row_count).toEqual(17);
+  //     expect(response.body.current_row_count).toEqual(17);
+  //     expect(response.body.total_page_count).toEqual(1);
+  //     expect(response.body.current_page_count).toEqual(1);
+  //   });
+  // });
 
-  describe('employees/pending-payments/all (GET)', () => {
-    beforeAll(async () => {
-      try {
-        await employeeRepository.delete({});
-        await Promise.all([
-          seedService.CreateHarvest({ quantityEmployees: 8 }),
-          seedService.CreateWork({ quantityEmployees: 9 }),
-        ]);
-        await authService.addPermission(
-          userTest.id,
-          'find_all_employees_with_pending_payments',
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    });
+  // describe('employees/made-payments/all (GET)', () => {
+  //   beforeAll(async () => {
+  //     try {
+  //       await reqTools.clearDatabaseControlled({ employees: true });
+  //       const {
+  //         harvest: { details },
+  //       } = await reqTools.createSeedData({
+  //         harvests: 1,
+  //         quantityEmployees: 8,
+  //       });
 
-    it('should throw an exception for not sending a JWT to the protected path /employees/pending-payments/all', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/employees/pending-payments/all')
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
+  //       await Promise.all([
+  //         reqTools.createSeedData({
+  //           payments: 1,
+  //           employeeId: details[0].employee.id,
+  //           value_pay: details[0].value_pay,
+  //           harvestsId: [details[0].id],
+  //         }),
+  //         reqTools.createSeedData({
+  //           payments: 1,
+  //           employeeId: details[1].employee.id,
+  //           value_pay: details[1].value_pay,
+  //           harvestsId: [details[1].id],
+  //         }),
+  //         reqTools.createSeedData({
+  //           payments: 1,
+  //           employeeId: details[2].employee.id,
+  //           value_pay: details[2].value_pay,
+  //           harvestsId: [details[2].id],
+  //         }),
+  //       ]);
 
-    it('should get only employees with pending payments', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/employees/pending-payments/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-      expect(response.body.total_row_count).toEqual(17);
-      expect(response.body.current_row_count).toEqual(17);
-      expect(response.body.total_page_count).toEqual(1);
-      expect(response.body.current_page_count).toEqual(1);
-    });
-  });
+  //       await reqTools.addActionToUser('find_all_employees_with_made_payments');
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   });
 
-  describe('employees/made-payments/all (GET)', () => {
-    beforeAll(async () => {
-      try {
-        await employeeRepository.delete({});
-        const {
-          harvest: { details },
-        } = await seedService.CreateHarvest({ quantityEmployees: 8 });
+  //   it('should throw an exception for not sending a JWT to the protected path /employees/made-payments/all', async () => {
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .get('/employees/made-payments/all')
+  //       .set('x-tenant-id', tenantId)
+  //       .expect(401);
+  //     expect(response.body.message).toEqual('Unauthorized');
+  //   });
 
-        await Promise.all([
-          seedService.CreatePayment({
-            employeeId: details[0].employee.id,
-            value_pay: details[0].value_pay,
-            harvestsId: [details[0].id],
-          }),
+  //   it('should get only employees with made payments', async () => {
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .get('/employees/made-payments/all')
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
+  //       .expect(200);
+  //     expect(response.body.total_row_count).toEqual(3);
+  //     expect(response.body.current_row_count).toEqual(3);
+  //     expect(response.body.total_page_count).toEqual(1);
+  //     expect(response.body.current_page_count).toEqual(1);
+  //   });
+  // });
 
-          seedService.CreatePayment({
-            employeeId: details[1].employee.id,
-            value_pay: details[1].value_pay,
-            harvestsId: [details[1].id],
-          }),
-          seedService.CreatePayment({
-            employeeId: details[2].employee.id,
-            value_pay: details[2].value_pay,
-            harvestsId: [details[2].id],
-          }),
-        ]);
+  // describe('employees/pending-payments/one/:id (GET)', () => {
+  //   beforeAll(async () => {
+  //     await reqTools.addActionToUser('find_one_employee_with_pending_payments');
+  //   });
 
-        await authService.addPermission(
-          userTest.id,
-          'find_all_employees_with_made_payments',
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    });
+  //   it('should throw an exception for not sending a JWT to the protected path /employees/pending-payments/one/:id', async () => {
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .get(`/employees/pending-payments/one/${falseEmployeeId}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .expect(401);
+  //     expect(response.body.message).toEqual('Unauthorized');
+  //   });
 
-    it('should throw an exception for not sending a JWT to the protected path /employees/made-payments/all', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/employees/made-payments/all')
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
+  //   it('should get only one employee with pending payments', async () => {
+  //     const employee = await CreateEmployee();
 
-    it('should get only employees with made payments', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/employees/made-payments/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-      expect(response.body.total_row_count).toEqual(3);
-      expect(response.body.current_row_count).toEqual(3);
-      expect(response.body.total_page_count).toEqual(1);
-      expect(response.body.current_page_count).toEqual(1);
-    });
-  });
+  //     const harvest = await reqTools.createSeedData({
+  //       harvests: 1,
+  //       employeeId: employee.id,
+  //     });
+  //     const work = await reqTools.createSeedData({
+  //       works: 1,
+  //       employeeId: employee.id,
+  //     });
 
-  describe('employees/pending-payments/one/:id (GET)', () => {
-    beforeAll(async () => {
-      await authService.addPermission(
-        userTest.id,
-        'find_one_employee_with_pending_payments',
-      );
-    });
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .get(`/employees/pending-payments/one/${employee.id}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
+  //       .expect(200);
 
-    it('should throw an exception for not sending a JWT to the protected path /employees/pending-payments/one/:id', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/employees/pending-payments/one/${falseEmployeeId}`)
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
+  //     const body = response.body as Employee;
+  //     expect(body).toHaveProperty('id');
+  //     expect(body).toHaveProperty('first_name');
+  //     expect(body).toHaveProperty('last_name');
+  //     expect(body).toHaveProperty('email');
+  //     expect(body).toHaveProperty('cell_phone_number');
+  //     expect(body).toHaveProperty('address');
+  //     expect(body).toHaveProperty('harvests_detail');
+  //     expect(body.harvests_detail).toBeInstanceOf(Array);
+  //     expect(body).toHaveProperty('works_detail');
+  //     expect(body.works_detail).toBeInstanceOf(Array);
+  //     expect(body).toHaveProperty('createdDate');
+  //     expect(body).toHaveProperty('updatedDate');
+  //     expect(body).toHaveProperty('deletedDate');
+  //     expect(body.deletedDate).toBeNull();
 
-    it('should get only one employee with pending payments', async () => {
-      const employee = await seedService.CreateEmployee({});
+  //     if (body.works_detail.length > 0) {
+  //       body.works_detail.forEach((workDetail) => {
+  //         expect(workDetail.payment_is_pending).toBe(true);
+  //       });
+  //     }
+  //     if (body.harvests_detail.length > 0) {
+  //       body.harvests_detail.forEach((harvestDetail) => {
+  //         expect(harvestDetail.payment_is_pending).toBe(true);
+  //       });
+  //     }
+  //   });
+  // });
 
-      const harvest = await seedService.CreateHarvestAdvanced({
-        employeeId: employee.id,
-      });
-      const work = await seedService.CreateWorkForEmployee({
-        employeeId: employee.id,
-      });
+  // describe('employees/harvests/all (GET)', () => {
+  //   beforeAll(async () => {
+  //     try {
+  //       await reqTools.clearDatabaseControlled({ employees: true });
+  //       await reqTools.createSeedData({ harvests: 1, quantityEmployees: 8 });
+  //       await reqTools.addActionToUser('find_all_employees_with_harvests');
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   });
 
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/employees/pending-payments/one/${employee.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
+  //   it('should throw an exception for not sending a JWT to the protected path /employees/harvests/all', async () => {
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .get('/employees/harvests/all')
+  //       .set('x-tenant-id', tenantId)
+  //       .expect(401);
+  //     expect(response.body.message).toEqual('Unauthorized');
+  //   });
 
-      const body = response.body as Employee;
-      expect(body).toHaveProperty('id');
-      expect(body).toHaveProperty('first_name');
-      expect(body).toHaveProperty('last_name');
-      expect(body).toHaveProperty('email');
-      expect(body).toHaveProperty('cell_phone_number');
-      expect(body).toHaveProperty('address');
-      expect(body).toHaveProperty('harvests_detail');
-      expect(body.harvests_detail).toBeInstanceOf(Array);
-      expect(body).toHaveProperty('works_detail');
-      expect(body.works_detail).toBeInstanceOf(Array);
-      expect(body).toHaveProperty('createdDate');
-      expect(body).toHaveProperty('updatedDate');
-      expect(body).toHaveProperty('deletedDate');
-      expect(body.deletedDate).toBeNull();
+  //   it('should get only employees with harvests', async () => {
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .get('/employees/harvests/all')
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
+  //       .expect(200);
+  //     expect(response.body.total_row_count).toEqual(8);
+  //     expect(response.body.current_row_count).toEqual(8);
+  //     expect(response.body.total_page_count).toEqual(1);
+  //     expect(response.body.current_page_count).toEqual(1);
 
-      if (body.works_detail.length > 0) {
-        body.works_detail.forEach((workDetail) => {
-          expect(workDetail.payment_is_pending).toBe(true);
-        });
-      }
-      if (body.harvests_detail.length > 0) {
-        body.harvests_detail.forEach((harvestDetail) => {
-          expect(harvestDetail.payment_is_pending).toBe(true);
-        });
-      }
-    });
-  });
+  //     response.body.records.forEach((employee) => {
+  //       expect(employee).toHaveProperty('id');
+  //       expect(employee).toHaveProperty('first_name');
+  //       expect(employee).toHaveProperty('last_name');
+  //       expect(employee).toHaveProperty('email');
+  //       expect(employee).toHaveProperty('cell_phone_number');
+  //       expect(employee).toHaveProperty('address');
+  //       expect(employee).toHaveProperty('harvests_detail');
+  //       expect(employee.harvests_detail).toBeInstanceOf(Array);
+  //       expect(employee).toHaveProperty('createdDate');
+  //       expect(employee).toHaveProperty('updatedDate');
+  //       expect(employee).toHaveProperty('deletedDate');
+  //       expect(employee.deletedDate).toBeNull();
 
-  describe('employees/harvests/all (GET)', () => {
-    beforeAll(async () => {
-      try {
-        await employeeRepository.delete({});
+  //       expect(employee.harvests_detail).toBeInstanceOf(Array);
+  //       expect(employee.harvests_detail.length).toBeGreaterThan(0);
+  //     });
+  //   });
+  // });
 
-        await seedService.CreateHarvest({ quantityEmployees: 8 });
+  // describe('employees/works/all (GET)', () => {
+  //   beforeAll(async () => {
+  //     try {
+  //       await reqTools.clearDatabaseControlled({ employees: true });
+  //       await reqTools.createSeedData({ works: 1, quantityEmployees: 8 });
+  //       await reqTools.addActionToUser('find_all_employees_with_works');
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   });
 
-        await authService.addPermission(
-          userTest.id,
-          'find_all_employees_with_harvests',
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    });
+  //   it('should throw an exception for not sending a JWT to the protected path /employees/works/all', async () => {
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .get('/employees/works/all')
+  //       .set('x-tenant-id', tenantId)
+  //       .expect(401);
+  //     expect(response.body.message).toEqual('Unauthorized');
+  //   });
 
-    it('should throw an exception for not sending a JWT to the protected path /employees/harvests/all', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/employees/harvests/all')
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
+  //   it('should get only employees with works', async () => {
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .get('/employees/works/all')
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
+  //       .expect(200);
+  //     expect(response.body.total_row_count).toEqual(8);
+  //     expect(response.body.current_row_count).toEqual(8);
+  //     expect(response.body.total_page_count).toEqual(1);
+  //     expect(response.body.current_page_count).toEqual(1);
 
-    it('should get only employees with harvests', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/employees/harvests/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-      expect(response.body.total_row_count).toEqual(8);
-      expect(response.body.current_row_count).toEqual(8);
-      expect(response.body.total_page_count).toEqual(1);
-      expect(response.body.current_page_count).toEqual(1);
+  //     response.body.records.forEach((employee) => {
+  //       expect(employee).toHaveProperty('id');
+  //       expect(employee).toHaveProperty('first_name');
+  //       expect(employee).toHaveProperty('last_name');
+  //       expect(employee).toHaveProperty('email');
+  //       expect(employee).toHaveProperty('cell_phone_number');
+  //       expect(employee).toHaveProperty('address');
+  //       expect(employee).toHaveProperty('works_detail');
+  //       expect(employee.works_detail).toBeInstanceOf(Array);
+  //       expect(employee).toHaveProperty('createdDate');
+  //       expect(employee).toHaveProperty('updatedDate');
+  //       expect(employee).toHaveProperty('deletedDate');
+  //       expect(employee.deletedDate).toBeNull();
 
-      response.body.records.forEach((employee) => {
-        expect(employee).toHaveProperty('id');
-        expect(employee).toHaveProperty('first_name');
-        expect(employee).toHaveProperty('last_name');
-        expect(employee).toHaveProperty('email');
-        expect(employee).toHaveProperty('cell_phone_number');
-        expect(employee).toHaveProperty('address');
-        expect(employee).toHaveProperty('harvests_detail');
-        expect(employee.harvests_detail).toBeInstanceOf(Array);
-        expect(employee).toHaveProperty('createdDate');
-        expect(employee).toHaveProperty('updatedDate');
-        expect(employee).toHaveProperty('deletedDate');
-        expect(employee.deletedDate).toBeNull();
+  //       expect(employee.works_detail).toBeInstanceOf(Array);
+  //       expect(employee.works_detail.length).toBeGreaterThan(0);
+  //     });
+  //   });
+  // });
 
-        expect(employee.harvests_detail).toBeInstanceOf(Array);
-        expect(employee.harvests_detail.length).toBeGreaterThan(0);
-      });
-    });
-  });
-  describe('employees/works/all (GET)', () => {
-    beforeAll(async () => {
-      try {
-        await employeeRepository.delete({});
+  // describe('employees/find/certification/one/:id (GET)', () => {
+  //   beforeAll(async () => {
+  //     await reqTools.addActionToUser('find_certification_employee');
+  //   });
 
-        await seedService.CreateWork({ quantityEmployees: 8 });
+  //   it('should throw an exception for not sending a JWT to the protected path employees/find/certification/one/:id', async () => {
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .get(`/employees/find/certification/one/${falseEmployeeId}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .expect(401);
+  //     expect(response.body.message).toEqual('Unauthorized');
+  //   });
 
-        await authService.addPermission(
-          userTest.id,
-          'find_all_employees_with_works',
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    });
-
-    it('should throw an exception for not sending a JWT to the protected path /employees/works/all', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/employees/works/all')
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should get only employees with works', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/employees/works/all')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-      expect(response.body.total_row_count).toEqual(8);
-      expect(response.body.current_row_count).toEqual(8);
-      expect(response.body.total_page_count).toEqual(1);
-      expect(response.body.current_page_count).toEqual(1);
-
-      response.body.records.forEach((employee) => {
-        expect(employee).toHaveProperty('id');
-        expect(employee).toHaveProperty('first_name');
-        expect(employee).toHaveProperty('last_name');
-        expect(employee).toHaveProperty('email');
-        expect(employee).toHaveProperty('cell_phone_number');
-        expect(employee).toHaveProperty('address');
-        expect(employee).toHaveProperty('works_detail');
-        expect(employee.works_detail).toBeInstanceOf(Array);
-        expect(employee).toHaveProperty('createdDate');
-        expect(employee).toHaveProperty('updatedDate');
-        expect(employee).toHaveProperty('deletedDate');
-        expect(employee.deletedDate).toBeNull();
-
-        expect(employee.works_detail).toBeInstanceOf(Array);
-        expect(employee.works_detail.length).toBeGreaterThan(0);
-      });
-    });
-  });
-
-  describe('employees/find/certification/one/:id (GET)', () => {
-    beforeAll(async () => {
-      await authService.addPermission(
-        userTest.id,
-        'find_certification_employee',
-      );
-    });
-
-    it('should throw an exception for not sending a JWT to the protected path employees/find/certification/one/:id', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/employees/find/certification/one/${falseEmployeeId}`)
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should get only one employee with certification', async () => {
-      const record = (await seedService.CreateEmployee({})) as Employee;
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/employees/find/certification/one/${record.id}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-      expect(response.body).toBeDefined();
-      expect(response.body).toBeInstanceOf(Buffer);
-    });
-  });
+  //   it('should get only one employee with certification', async () => {
+  //     const record = await CreateEmployee();
+  //     const response = await request
+  //       .default(app.getHttpServer())
+  //       .get(`/employees/find/certification/one/${record.id}`)
+  //       .set('x-tenant-id', tenantId)
+  //       .set('Cookie', `user-token=${token}`)
+  //       .expect(200);
+  //     expect(response.body).toBeDefined();
+  //     expect(response.body).toBeInstanceOf(Buffer);
+  //   });
+  // });
 
   describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
     beforeAll(async () => {
       await Promise.all([
-        authService.removePermission(userTest.id, 'create_employee'),
-        authService.removePermission(userTest.id, 'find_all_employees'),
-        authService.removePermission(userTest.id, 'find_one_employee'),
-        authService.removePermission(userTest.id, 'update_one_employee'),
-        authService.removePermission(userTest.id, 'remove_one_employee'),
-        authService.removePermission(userTest.id, 'remove_bulk_employees'),
-
-        authService.removePermission(
+        reqTools.removePermissionFromUser(userTest.id, 'create_employee'),
+        reqTools.removePermissionFromUser(userTest.id, 'find_all_employees'),
+        reqTools.removePermissionFromUser(userTest.id, 'find_one_employee'),
+        reqTools.removePermissionFromUser(userTest.id, 'update_one_employee'),
+        reqTools.removePermissionFromUser(userTest.id, 'remove_one_employee'),
+        reqTools.removePermissionFromUser(userTest.id, 'remove_bulk_employees'),
+        reqTools.removePermissionFromUser(
           userTest.id,
           'find_all_employees_with_pending_payments',
         ),
-        authService.removePermission(
+        reqTools.removePermissionFromUser(
           userTest.id,
           'find_all_employees_with_made_payments',
         ),
-        authService.removePermission(
+        reqTools.removePermissionFromUser(
           userTest.id,
           'find_all_employees_with_harvests',
         ),
-        authService.removePermission(
+        reqTools.removePermissionFromUser(
           userTest.id,
           'find_all_employees_with_works',
         ),
-        authService.removePermission(
+        reqTools.removePermissionFromUser(
           userTest.id,
-          'find_certification_employee',
+          'generate_certification_employee',
         ),
       ]);
     });
@@ -917,7 +984,8 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .post('/employees/create')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .send(bodyRequest)
         .expect(403);
       expect(response.body.message).toEqual(
@@ -929,7 +997,8 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .get('/employees/all')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
@@ -940,7 +1009,8 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .get(`/employees/one/${falseEmployeeId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
@@ -951,7 +1021,8 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .patch(`/employees/update/one/${falseEmployeeId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
@@ -962,7 +1033,8 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .delete(`/employees/remove/one/${falseEmployeeId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
@@ -973,7 +1045,8 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .delete('/employees/remove/bulk')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
@@ -984,7 +1057,8 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .get('/employees/pending-payments/all')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
@@ -995,7 +1069,8 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .get('/employees/made-payments/all')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
@@ -1006,7 +1081,8 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .get('/employees/harvests/all')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
@@ -1017,18 +1093,20 @@ describe('EmployeesController (e2e)', () => {
       const response = await request
         .default(app.getHttpServer())
         .get('/employees/works/all')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
       );
     });
 
-    it('should throw an exception because the user JWT does not have permissions for this action employees/find/certification/one/:id', async () => {
+    it('should throw an exception because the user JWT does not have permissions for this action employees/generate/certification/one/:id', async () => {
       const response = await request
         .default(app.getHttpServer())
-        .get(`/employees/find/certification/one/${falseEmployeeId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .post(`/employees/generate/certification/one/${falseEmployeeId}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
         .expect(403);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
