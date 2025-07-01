@@ -258,29 +258,21 @@ export class SeedService {
       }
     }
 
-    // if (suppliers > 0 && typeof this.insertNewSuppliers === 'function') {
-    //   history.insertedSuppliers = [];
-    //   for (let i = 0; i < suppliers; i++) {
-    //     const supplier = await this.insertNewSuppliers();
-    //     if (Array.isArray(supplier)) {
-    //       history.insertedSuppliers.push(...supplier);
-    //     } else {
-    //       history.insertedSuppliers.push(supplier);
-    //     }
-    //   }
-    // }
+    if (suppliers > 0) {
+      history.insertedSuppliers = [];
+      for (let i = 0; i < suppliers; i++) {
+        const supplier = await this.CreateSupplier({});
+        history.insertedSuppliers.push(supplier);
+      }
+    }
 
-    // if (supplies > 0 && typeof this.insertNewSupplies === 'function') {
-    //   history.insertedSupplies = [];
-    //   for (let i = 0; i < supplies; i++) {
-    //     const supply = await this.insertNewSupplies();
-    //     if (Array.isArray(supply)) {
-    //       history.insertedSupplies.push(...supply);
-    //     } else {
-    //       history.insertedSupplies.push(supply);
-    //     }
-    //   }
-    // }
+    if (supplies > 0) {
+      history.insertedSupplies = [];
+      for (let i = 0; i < supplies; i++) {
+        const supply = await this.CreateSupply({});
+        history.insertedSupplies.push(supply);
+      }
+    }
 
     if (employees > 0) {
       history.insertedEmployees = [];
@@ -290,75 +282,51 @@ export class SeedService {
       }
     }
 
-    // if (crops > 0 && typeof this.insertNewCrops === 'function') {
-    //   history.insertedCrops = [];
-    //   for (let i = 0; i < crops; i++) {
-    //     const crop = await this.insertNewCrops();
-    //     if (Array.isArray(crop)) {
-    //       history.insertedCrops.push(...crop);
-    //     } else {
-    //       history.insertedCrops.push(crop);
-    //     }
-    //   }
-    // }
+    if (crops > 0) {
+      history.insertedCrops = [];
+      for (let i = 0; i < crops; i++) {
+        const crop = await this.CreateCrop({});
+        history.insertedCrops.push(crop);
+      }
+    }
 
-    // if (harvests > 0 && typeof this.insertNewHarvests === 'function') {
-    //   history.insertedHarvests = [];
-    //   for (let i = 0; i < harvests; i++) {
-    //     const harvest = await this.insertNewHarvests();
-    //     if (Array.isArray(harvest)) {
-    //       history.insertedHarvests.push(...harvest);
-    //     } else {
-    //       history.insertedHarvests.push(harvest);
-    //     }
-    //   }
-    // }
+    if (harvests > 0) {
+      history.insertedHarvests = [];
+      for (let i = 0; i < harvests; i++) {
+        const harvest = await this.CreateHarvest({});
+        history.insertedHarvests.push(harvest);
+      }
+    }
 
-    // if (works > 0 && typeof this.insertNewWorks === 'function') {
-    //   history.insertedWorks = [];
-    //   for (let i = 0; i < works; i++) {
-    //     const work = await this.insertNewWorks();
-    //     if (Array.isArray(work)) {
-    //       history.insertedWorks.push(...work);
-    //     } else {
-    //       history.insertedWorks.push(work);
-    //     }
-    //   }
-    // }
+    if (works > 0) {
+      history.insertedWorks = [];
+      for (let i = 0; i < works; i++) {
+        const work = await this.CreateWork({});
+        history.insertedWorks.push(work);
+      }
+    }
 
-    // if (sales > 0 && typeof this.insertNewSales === 'function') {
+    // if (sales > 0) {
     //   history.insertedSales = [];
     //   for (let i = 0; i < sales; i++) {
-    //     const sale = await this.insertNewSales();
-    //     if (Array.isArray(sale)) {
-    //       history.insertedSales.push(...sale);
-    //     } else {
-    //       history.insertedSales.push(sale);
-    //     }
+    //     const sale = await this.CreateSale({});
+    //     history.insertedSales.push(sale);
     //   }
     // }
 
-    // if (shoppings > 0 && typeof this.insertNewShoppingSupplies === 'function') {
+    // if (shoppings > 0) {
     //   history.insertedShoppingSupplies = [];
     //   for (let i = 0; i < shoppings; i++) {
-    //     const shopping = await this.insertNewShoppingSupplies();
-    //     if (Array.isArray(shopping)) {
-    //       history.insertedShoppingSupplies.push(...shopping);
-    //     } else {
-    //       history.insertedShoppingSupplies.push(shopping);
-    //     }
+    //     const shopping = await this.CreateShoppingSupply({});
+    //     history.insertedShoppingSupplies.push(shopping);
     //   }
     // }
 
-    // if (consumptions > 0 && typeof this.insertNewConsumptionSupplies === 'function') {
+    // if (consumptions > 0) {
     //   history.insertedConsumptionSupplies = [];
     //   for (let i = 0; i < consumptions; i++) {
-    //     const consumption = await this.insertNewConsumptionSupplies();
-    //     if (Array.isArray(consumption)) {
-    //       history.insertedConsumptionSupplies.push(...consumption);
-    //     } else {
-    //       history.insertedConsumptionSupplies.push(consumption);
-    //     }
+    //     const consumption = await this.CreateConsumptionSupply({});
+    //     history.insertedConsumptionSupplies.push(consumption);
     //   }
     // }
 
