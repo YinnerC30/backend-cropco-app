@@ -183,6 +183,11 @@ export class SeedService {
    * @param options - Object specifying the quantity for each entity to create.
    * @returns An object with a message and the history of inserted records.
    */
+  /**
+   * Executes a controlled seed, allowing to specify the exact number of records to create for each entity.
+   * @param options - Object specifying the quantity for each entity to create.
+   * @returns An object with a message and the history of inserted records.
+   */
   async runSeedControlled(
     options: SeedControlledDto,
   ): Promise<SeedControlledResponse> {
@@ -199,6 +204,7 @@ export class SeedService {
       shoppings = { quantity: 0, variant: 'extended' },
       consumptions = { quantity: 0, variant: 'extended' },
       payments = { variant: 'normal' },
+      harvestsProcessed = { quantity: 0 }, // Añadido harvest processed
     } = options;
 
     const history: {
@@ -209,6 +215,7 @@ export class SeedService {
       insertedEmployees?: Promise<Employee>[];
       insertedCrops?: Promise<Crop>[];
       insertedHarvests?: unknown[];
+      insertedHarvestsProcessed?: HarvestProcessed[]; // Añadido harvest processed
       insertedWorks?: unknown[];
       insertedSales?: unknown[];
       insertedShoppingSupplies?: unknown[];
@@ -283,6 +290,24 @@ export class SeedService {
           });
         }
         history.insertedHarvests.push(harvest);
+      }
+    }
+
+    // Añadido: creación de harvest processed
+    if (harvestsProcessed.quantity > 0) {
+      history.insertedHarvestsProcessed = [];
+      for (let i = 0; i < harvestsProcessed.quantity; i++) {
+        // Se asume que harvestsProcessed puede tener cropId, harvestId y amount, si no, se crean por defecto
+        let cropId = harvestsProcessed.cropId;
+        let harvestId = harvestsProcessed.harvestId;
+        let amount = harvestsProcessed.amount || 50;
+
+        const harvestProcessed = await this.CreateHarvestProcessed({
+          cropId,
+          harvestId,
+          amount,
+        });
+        history.insertedHarvestsProcessed.push(harvestProcessed);
       }
     }
 
@@ -839,7 +864,7 @@ export class SeedService {
     harvestId: string;
     amount: number;
     date?: string;
-  }): Promise<any> {
+  }): Promise<HarvestProcessed> {
     const data: HarvestProcessedDto = {
       date: date,
       crop: { id: cropId },

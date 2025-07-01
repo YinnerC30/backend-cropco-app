@@ -10,6 +10,8 @@ import {
   ValidateNested,
   IsArray,
   IsUUID,
+  IsNumber,
+  IsPositive,
 } from 'class-validator';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { MethodOfPayment } from 'src/payments/entities/payment.entity';
@@ -346,6 +348,30 @@ export class ConsumptionOptionsDto {
   amountForItem?: number;
 }
 
+export class HarvestProcessedOptionsDto {
+  /**
+   * Número de cosechas a crear.
+   */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  quantity?: number;
+
+  @IsOptional()
+  @IsUUID(4)
+  cropId?: string;
+
+  @IsOptional()
+  @IsUUID(4)
+  harvestId?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  amount?: number;
+}
+
 export class SeedControlledDto {
   /**
    * Número de usuarios a crear.
@@ -408,6 +434,11 @@ export class SeedControlledDto {
   @ValidateNested()
   @Type(() => HarvestOptionsDto)
   harvests?: HarvestOptionsDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => HarvestProcessedOptionsDto)
+  harvestsProcessed?: HarvestProcessedOptionsDto;
 
   /**
    * Opciones para la creación de trabajos.
