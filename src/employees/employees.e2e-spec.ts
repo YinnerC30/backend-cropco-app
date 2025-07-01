@@ -503,224 +503,246 @@ describe('EmployeesController (e2e)', () => {
     });
   });
 
-  // describe('employees/remove/one/:id (DELETE)', () => {
-  //   beforeAll(async () => {
-  //     await reqTools.addActionToUser('remove_one_employee');
-  //   });
+  describe('employees/remove/one/:id (DELETE)', () => {
+    beforeAll(async () => {
+      await reqTools.addActionToUser('remove_one_employee');
+    });
 
-  //   it('should throw an exception for not sending a JWT to the protected path employees/remove/one/:id', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/employees/remove/one/${falseEmployeeId}`)
-  //       .set('x-tenant-id', tenantId)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+    it('should throw an exception for not sending a JWT to the protected path employees/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/employees/remove/one/${falseEmployeeId}`)
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('should delete one employee', async () => {
-  //     const { id } = await CreateEmployee();
+    it('should delete one employee', async () => {
+      const { id } = await CreateEmployee();
 
-  //     await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/employees/remove/one/${id}`)
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
-  //   });
+      await request
+        .default(app.getHttpServer())
+        .delete(`/employees/remove/one/${id}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
+    });
 
-  //   it('You should throw exception for trying to delete a employee that does not exist.', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/employees/remove/one/${falseEmployeeId}`)
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(404);
-  //     expect(body.message).toEqual(
-  //       `Employee with id: ${falseEmployeeId} not found`,
-  //     );
-  //   });
+    it('You should throw exception for trying to delete a employee that does not exist.', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/employees/remove/one/${falseEmployeeId}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(404);
+      expect(body.message).toEqual(
+        `Employee with id: ${falseEmployeeId} not found`,
+      );
+    });
 
-  //   it('should throw an exception when trying to delete a employee with harvests with pending payment.', async () => {
-  //     const { employees } = await reqTools.createSeedData({ harvests: 1 });
+    it('should throw an exception when trying to delete a employee with harvests with pending payment.', async () => {
+      const result = await reqTools.createSeedData({
+        harvests: { quantity: 1 },
+      });
+      console.log('🚀 ~ it ~ result:', result);
 
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/employees/remove/one/${employees[0].id}`)
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(409);
-  //     expect(body.message).toEqual(
-  //       `Employee with id ${employees[0].id} cannot be removed, has unpaid harvests`,
-  //     );
-  //   });
+      const { employees } = result.history.insertedHarvests[0];
 
-  //   it('should throw an exception when trying to delete a employee with harvests or works with pending payment.', async () => {
-  //     const { employees } = await reqTools.createSeedData({ works: 1 });
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/employees/remove/one/${employees[0].id}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(409);
+      expect(body.message).toEqual(
+        `Employee with id ${employees[0].id} cannot be removed, has unpaid harvests`,
+      );
+    });
 
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/employees/remove/one/${employees[0].id}`)
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(409);
-  //     expect(body.message).toEqual(
-  //       `Employee with id ${employees[0].id} cannot be removed, has unpaid works`,
-  //     );
-  //   });
-  // });
+    it('should throw an exception when trying to delete a employee with harvests or works with pending payment.', async () => {
+      const {
+        history: { insertedWorks },
+      } = await reqTools.createSeedData({
+        works: { quantity: 1 },
+      });
 
-  // describe('employees/remove/bulk (DELETE)', () => {
-  //   beforeAll(async () => {
-  //     await reqTools.addActionToUser('remove_bulk_employees');
-  //   });
+      const { employees } = insertedWorks[0];
 
-  //   it('should throw an exception for not sending a JWT to the protected path employees/remove/bulk ', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .delete('/employees/remove/bulk')
-  //       .set('x-tenant-id', tenantId)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/employees/remove/one/${employees[0].id}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(409);
+      expect(body.message).toEqual(
+        `Employee with id ${employees[0].id} cannot be removed, has unpaid works`,
+      );
+    });
+  });
 
-  //   it('should delete employees bulk', async () => {
-  //     const [employee1, employee2, employee3] = await Promise.all([
-  //       CreateEmployee(),
-  //       CreateEmployee(),
-  //       CreateEmployee(),
-  //     ]);
+  describe('employees/remove/bulk (DELETE)', () => {
+    beforeAll(async () => {
+      await reqTools.addActionToUser('remove_bulk_employees');
+    });
 
-  //     const bulkData: RemoveBulkRecordsDto<Employee> = {
-  //       recordsIds: [{ id: employee1.id }, { id: employee2.id }],
-  //     };
+    it('should throw an exception for not sending a JWT to the protected path employees/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/employees/remove/bulk')
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //     await request
-  //       .default(app.getHttpServer())
-  //       .delete('/employees/remove/bulk')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .send(bulkData)
-  //       .expect(200);
-  //   });
+    it('should delete employees bulk', async () => {
+      const [employee1, employee2, employee3] = await Promise.all([
+        CreateEmployee(),
+        CreateEmployee(),
+        CreateEmployee(),
+      ]);
 
-  //   it('should throw exception when trying to send an empty array.', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .delete('/employees/remove/bulk')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .send({ recordsIds: [] })
-  //       .expect(400);
-  //     expect(body.message[0]).toEqual('recordsIds should not be empty');
-  //   });
+      const bulkData: RemoveBulkRecordsDto<Employee> = {
+        recordsIds: [{ id: employee1.id }, { id: employee2.id }],
+      };
 
-  //   it('should throw an exception when trying to delete a employee with pending payments.', async () => {
-  //     const harvest = await reqTools.createSeedData({ harvests: 1 });
-  //     const work = await reqTools.createSeedData({ works: 1 });
+      await request
+        .default(app.getHttpServer())
+        .delete('/employees/remove/bulk')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .send(bulkData)
+        .expect(200);
+    });
 
-  //     const employee1 = harvest.employees[0];
-  //     const employee2 = work.employees[0];
-  //     const employee3 = await CreateEmployee();
+    it('should throw exception when trying to send an empty array.', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete('/employees/remove/bulk')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .send({ recordsIds: [] })
+        .expect(400);
+      expect(body.message[0]).toEqual('recordsIds should not be empty');
+    });
 
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .delete(`/employees/remove/bulk`)
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .send({
-  //         recordsIds: [
-  //           { id: employee1.id },
-  //           { id: employee2.id },
-  //           { id: employee3.id },
-  //         ],
-  //       })
-  //       .expect(207);
-  //     expect(body).toEqual({
-  //       success: [employee3.id],
-  //       failed: [
-  //         {
-  //           id: employee1.id,
-  //           error: `Employee with id ${employee1.id} cannot be removed, has unpaid harvests`,
-  //         },
-  //         {
-  //           id: employee2.id,
-  //           error: `Employee with id ${employee2.id} cannot be removed, has unpaid works`,
-  //         },
-  //       ],
-  //     });
-  //   });
-  // });
+    it('should throw an exception when trying to delete a employee with pending payments.', async () => {
+      const harvests = await reqTools.createSeedData({
+        harvests: { quantity: 1 },
+      });
+      const works = await reqTools.createSeedData({ works: { quantity: 1 } });
 
-  // describe('employees/pending-payments/all (GET)', () => {
-  //   beforeAll(async () => {
-  //     try {
-  //       await reqTools.clearDatabaseControlled({ employees: true });
-  //       await Promise.all([
-  //         reqTools.createSeedData({ harvests: 1, quantityEmployees: 8 }),
-  //         reqTools.createSeedData({ works: 1, quantityEmployees: 9 }),
-  //       ]);
-  //       await reqTools.addActionToUser(
-  //         'find_all_employees_with_pending_payments',
-  //       );
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-  //   });
+      const employee1 = harvests.history.insertedHarvests[0].employees[0];
+      const employee2 = works.history.insertedWorks[0].employees[0];
+      const employee3 = await CreateEmployee();
 
-  //   it('should throw an exception for not sending a JWT to the protected path /employees/pending-payments/all', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/employees/pending-payments/all')
-  //       .set('x-tenant-id', tenantId)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+      const { body } = await request
+        .default(app.getHttpServer())
+        .delete(`/employees/remove/bulk`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .send({
+          recordsIds: [
+            { id: employee1.id },
+            { id: employee2.id },
+            { id: employee3.id },
+          ],
+        })
+        .expect(207);
+      expect(body).toEqual({
+        success: [employee3.id],
+        failed: [
+          {
+            id: employee1.id,
+            error: `Employee with id ${employee1.id} cannot be removed, has unpaid harvests`,
+          },
+          {
+            id: employee2.id,
+            error: `Employee with id ${employee2.id} cannot be removed, has unpaid works`,
+          },
+        ],
+      });
+    });
+  });
 
-  //   it('should get only employees with pending payments', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/employees/pending-payments/all')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
-  //     expect(response.body.total_row_count).toEqual(17);
-  //     expect(response.body.current_row_count).toEqual(17);
-  //     expect(response.body.total_page_count).toEqual(1);
-  //     expect(response.body.current_page_count).toEqual(1);
-  //   });
-  // });
+  describe('employees/pending-payments/all (GET)', () => {
+    beforeAll(async () => {
+      try {
+        await reqTools.clearDatabaseControlled({ employees: true });
+        await Promise.all([
+          reqTools.createSeedData({
+            harvests: { quantity: 1, quantityEmployees: 8 },
+          }),
+          reqTools.createSeedData({
+            works: { quantity: 1, quantityEmployees: 9 },
+          }),
+        ]);
+        await reqTools.addActionToUser(
+          'find_all_employees_with_pending_payments',
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /employees/pending-payments/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/pending-payments/all')
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should get only employees with pending payments', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/pending-payments/all')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(17);
+      expect(response.body.current_row_count).toEqual(17);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
+    });
+  });
 
   // describe('employees/made-payments/all (GET)', () => {
   //   beforeAll(async () => {
   //     try {
   //       await reqTools.clearDatabaseControlled({ employees: true });
   //       const {
-  //         harvest: { details },
+  //         history: {
+  //           insertedHarvests: [
+  //             {
+  //               harvest: { details },
+  //             },
+  //           ],
+  //         },
   //       } = await reqTools.createSeedData({
-  //         harvests: 1,
-  //         quantityEmployees: 8,
+  //         harvests: { quantity: 1, quantityEmployees: 8 },
   //       });
 
-  //       await Promise.all([
-  //         reqTools.createSeedData({
-  //           payments: 1,
-  //           employeeId: details[0].employee.id,
-  //           value_pay: details[0].value_pay,
-  //           harvestsId: [details[0].id],
-  //         }),
-  //         reqTools.createSeedData({
-  //           payments: 1,
-  //           employeeId: details[1].employee.id,
-  //           value_pay: details[1].value_pay,
-  //           harvestsId: [details[1].id],
-  //         }),
-  //         reqTools.createSeedData({
-  //           payments: 1,
-  //           employeeId: details[2].employee.id,
-  //           value_pay: details[2].value_pay,
-  //           harvestsId: [details[2].id],
-  //         }),
-  //       ]);
+  //       // await Promise.all([
+  //       //   reqTools.createSeedData({
+  //       //     payments: {1,
+  //       //     employeeId: details[0].employee.id,
+  //       //     value_pay: details[0].value_pay,
+  //       //     harvestsId: [details[0].id],}
+  //       //   }),
+  //       //   reqTools.createSeedData({
+  //       //     payments: 1,
+  //       //     employeeId: details[1].employee.id,
+  //       //     value_pay: details[1].value_pay,
+  //       //     harvestsId: [details[1].id],
+  //       //   }),
+  //       //   reqTools.createSeedData({
+  //       //     payments: 1,
+  //       //     employeeId: details[2].employee.id,
+  //       //     value_pay: details[2].value_pay,
+  //       //     harvestsId: [details[2].id],
+  //       //   }),
+  //       // ]);
 
   //       await reqTools.addActionToUser('find_all_employees_with_made_payments');
   //     } catch (error) {

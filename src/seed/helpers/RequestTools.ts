@@ -10,6 +10,7 @@ import { TenantConnectionService } from 'src/tenants/services/tenant-connection.
 import { DataSource } from 'typeorm';
 import { CreateTenantDto } from 'src/tenants/dto/create-tenant.dto';
 import { Administrator } from 'src/administrators/entities/administrator.entity';
+import { SeedControlledResponse } from '../interfaces/SeedControlledResponse';
 
 /**
  * Utility class for making HTTP requests related to user and permission management in tests.
@@ -188,7 +189,7 @@ export class RequestTools {
       .default(this.getApp().getHttpServer())
       .get('/seed/controlled')
       .set('x-tenant-id', this.getTenantId())
-      .query({ users: 1 });
+      .send({ users: 1 });
     this.user = body.history.insertedUsers[0];
     return this.user;
   }
@@ -198,12 +199,12 @@ export class RequestTools {
    * Throws an error if a user already exists.
    * @returns The created user.
    */
-  public async createSeedData(seedDto: SeedControlledDto): Promise<any> {
+  public async createSeedData(seedDto: SeedControlledDto): Promise<SeedControlledResponse> {
     const { body } = await request
       .default(this.getApp().getHttpServer())
       .get('/seed/controlled')
       .set('x-tenant-id', this.getTenantId())
-      .query(seedDto);
+      .send(seedDto);
     return body;
   }
 

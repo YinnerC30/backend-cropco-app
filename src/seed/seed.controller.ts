@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { SeedService } from './seed.service';
 import { SeedDto, SeedControlledDto } from './dto/seed.dto';
 import { DevelopmentGuard } from './guards/development.guard';
@@ -19,7 +19,7 @@ export class SeedController {
    * @returns Un mensaje y el historial de registros insertados.
    */
   @Get('controlled')
-  executeSeedControlled(@Query() seedDto: SeedControlledDto) {
+  executeSeedControlled(@Body() seedDto: SeedControlledDto) {
     return this.seedService.runSeedControlled(seedDto);
   }
 

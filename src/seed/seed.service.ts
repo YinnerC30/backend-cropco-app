@@ -55,6 +55,8 @@ import { InformationGenerator } from './helpers/InformationGenerator';
 import { EntityConvertedToDto } from './interfaces/EntityConvertedToDto';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import { SeedControlledDto } from './dto/seed.dto';
+import { SeedControlledResponse } from './interfaces/SeedControlledResponse';
 
 @Injectable()
 export class SeedService {
@@ -181,84 +183,9 @@ export class SeedService {
    * @param options - Object specifying the quantity for each entity to create.
    * @returns An object with a message and the history of inserted records.
    */
-  async runSeedControlled(options: {
-    users?: number;
-    clients?: number;
-    suppliers?: number;
-    supplies?: number;
-    employees?: number;
-    crops?: number;
-    harvests?: {
-      quantity?: number;
-      variant?: 'normal' | 'advanced';
-      // Parámetros para variant 'normal'
-      quantityEmployees?: number;
-      amount?: number;
-      valuePay?: number;
-      // Parámetros para variant 'advanced'
-      employeeId?: string;
-      cropId?: string;
-    };
-    works?: {
-      quantity?: number;
-      variant?: 'normal' | 'forEmployee';
-      // Parámetros para variant 'normal'
-      quantityEmployees?: number;
-      valuePay?: number;
-      // Parámetros para variant 'forEmployee'
-      employeeId?: string;
-    };
-    sales?: {
-      quantity?: number;
-      variant?: 'normal' | 'generic';
-      // Parámetros para variant 'normal'
-      clientId?: string;
-      cropId?: string;
-      isReceivable?: boolean;
-      quantityPerSale?: number;
-      // Parámetros para variant 'generic'
-      isReceivableGeneric?: boolean;
-      quantityPerSaleGeneric?: number;
-    };
-    shoppings?: {
-      quantity?: number;
-      variant?: 'normal' | 'extended';
-      // Parámetros para variant 'normal'
-      supplyId?: string;
-      amount?: number;
-      valuePay?: number;
-      // Parámetros para variant 'extended'
-      quantitySupplies?: number;
-      amountForItem?: number;
-      valuePayExtended?: number;
-    };
-    consumptions?: {
-      quantity?: number;
-      variant?: 'normal' | 'extended';
-      // Parámetros para variant 'normal'
-      supplyId?: string;
-      cropId?: string;
-      amount?: number;
-      // Parámetros para variant 'extended'
-      quantitySupplies?: number;
-      amountForItem?: number;
-    };
-  }): Promise<{
-    message: string;
-    history: {
-      insertedUsers?: unknown[];
-      insertedClients?: unknown[];
-      insertedSuppliers?: unknown[];
-      insertedSupplies?: unknown[];
-      insertedEmployees?: unknown[];
-      insertedCrops?: unknown[];
-      insertedHarvests?: unknown[];
-      insertedWorks?: unknown[];
-      insertedSales?: unknown[];
-      insertedShoppingSupplies?: unknown[];
-      insertedConsumptionSupplies?: unknown[];
-    };
-  }> {
+  async runSeedControlled(
+    options: SeedControlledDto,
+  ): Promise<SeedControlledResponse> {
     const {
       users = 0,
       clients = 0,
@@ -274,12 +201,12 @@ export class SeedService {
     } = options;
 
     const history: {
-      insertedUsers?: unknown[];
-      insertedClients?: unknown[];
-      insertedSuppliers?: unknown[];
-      insertedSupplies?: unknown[];
-      insertedEmployees?: unknown[];
-      insertedCrops?: unknown[];
+      insertedUsers?: Promise<User>[];
+      insertedClients?: Promise<Client>[];
+      insertedSuppliers?: Promise<Supplier>[];
+      insertedSupplies?: Promise<Supply>[];
+      insertedEmployees?: Promise<Employee>[];
+      insertedCrops?: Promise<Crop>[];
       insertedHarvests?: unknown[];
       insertedWorks?: unknown[];
       insertedSales?: unknown[];
@@ -291,7 +218,7 @@ export class SeedService {
       history.insertedUsers = [];
       for (let i = 0; i < users; i++) {
         const user = await this.CreateUser({});
-        history.insertedUsers.push(user);
+        history.insertedUsers.push(user as any);
       }
     }
 
@@ -299,7 +226,7 @@ export class SeedService {
       history.insertedClients = [];
       for (let i = 0; i < clients; i++) {
         const client = await this.CreateClient({});
-        history.insertedClients.push(client);
+        history.insertedClients.push(client as any);
       }
     }
 
@@ -307,7 +234,7 @@ export class SeedService {
       history.insertedSuppliers = [];
       for (let i = 0; i < suppliers; i++) {
         const supplier = await this.CreateSupplier({});
-        history.insertedSuppliers.push(supplier);
+        history.insertedSuppliers.push(supplier as any);
       }
     }
 
@@ -315,7 +242,7 @@ export class SeedService {
       history.insertedSupplies = [];
       for (let i = 0; i < supplies; i++) {
         const supply = await this.CreateSupply({});
-        history.insertedSupplies.push(supply);
+        history.insertedSupplies.push(supply as any);
       }
     }
 
@@ -323,7 +250,7 @@ export class SeedService {
       history.insertedEmployees = [];
       for (let i = 0; i < employees; i++) {
         const employee = await this.CreateEmployee({});
-        history.insertedEmployees.push(employee);
+        history.insertedEmployees.push(employee as any);
       }
     }
 
@@ -331,7 +258,7 @@ export class SeedService {
       history.insertedCrops = [];
       for (let i = 0; i < crops; i++) {
         const crop = await this.CreateCrop({});
-        history.insertedCrops.push(crop);
+        history.insertedCrops.push(crop as any);
       }
     }
 
@@ -448,7 +375,7 @@ export class SeedService {
 
     return {
       message: 'Controlled seed executed successfully',
-      history,
+      history: history as any,
     };
   }
 
@@ -861,6 +788,7 @@ export class SeedService {
           employee: { id: employee.id },
           amount: amount,
           value_pay: valuePay,
+          unit_of_measure: 'GRAMOS',
         } as HarvestDetailsDto;
       }),
       amount: amount * quantityEmployees,
