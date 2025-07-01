@@ -1,6 +1,7 @@
 import { Client } from 'src/clients/entities/client.entity';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
+import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
 import { Sale } from 'src/sales/entities/sale.entity';
 import { SuppliesShopping } from 'src/shopping/entities';
@@ -23,6 +24,7 @@ export interface SeedControlledResponse {
       crop: Crop;
       harvest: Harvest;
     }[];
+    insertedHarvestsProcessed?: HarvestProcessed[];
     insertedWorks?: {
       employees: Employee[];
       crop: Crop;
