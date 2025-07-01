@@ -146,7 +146,7 @@ describe('UsersController e2e', () => {
     await app.init();
 
     reqTools.setApp(app);
-    await reqTools.initializeTenant('testtenantend');
+    await reqTools.initializeTenant('otravaina');
     tenantId = reqTools.getTenantIdPublic();
 
     await reqTools.clearDatabaseControlled({ users: true });
@@ -843,4 +843,5 @@ describe('UsersController e2e', () => {
       );
     });
   });
+
 });

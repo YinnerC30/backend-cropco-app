@@ -8,6 +8,7 @@ import { Tenant } from 'src/tenants/entities/tenant.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { TenantConnectionService } from 'src/tenants/services/tenant-connection.service';
 import { DataSource } from 'typeorm';
+import { CreateTenantDto } from 'src/tenants/dto/create-tenant.dto';
 
 /**
  * Utility class for making HTTP requests related to user and permission management in tests.
@@ -57,12 +58,41 @@ export class RequestTools {
    * @param subdomain - The subdomain of the tenant.
    */
   public async initializeTenant(subdomain: string): Promise<void> {
+    // Buscar si existe el tenant
+
+    const token =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUwM2Q4YzdjLTU4YzYtNDMzMC04NDBiLTI4OTEwN2UxMzA2NCIsImlhdCI6MTc1MTMyNzMzOCwiZXhwIjoxNzUxMzQ4OTM4fQ.p1w_ZUYuGEXTp5OF2tIYW21DwDhJ2rqBiXM4qFrNMgw';
+
     const tenant = await this.tenantRepository.findOne({
-      where: { subdomain },
+      where: { subdomain: 'tenanttesting' },
     });
     if (!tenant) {
-      throw new Error(`Tenant with subdomain: ${subdomain} not found.`);
+      console.log('Intento crear');
+      const bodyRequest: CreateTenantDto = {
+        subdomain: 'tenanttesting',
+        company_name: 'tenant to testing',
+        email: 'tenanttotesting@mail.com',
+        cell_phone_number: '3122342134',
+      };
+
+      const responseTenantCreation = await request
+        .default(this.getApp().getHttpServer())
+        .post('/tenants/create')
+        .set('Cookie', `administrator-token=${token}`)
+        .send(bodyRequest);
+      const responseTenantDBCreation = await request
+        .default(this.getApp().getHttpServer())
+        .post(`/tenants/create/database/${responseTenantCreation.body.id}`)
+        .set('Cookie', `administrator-token=${token}`);
+      const responseTenantDBConfig = await request
+        .default(this.getApp().getHttpServer())
+        .put(`/tenants/config-db/one/${responseTenantCreation.body.id}`)
+        .set('Cookie', `administrator-token=${token}`);
+      console.log('response de creación', responseTenantCreation.body.id);
+      this.tenantId = responseTenantCreation.body.id;
+      return;
     }
+
     this.tenantId = tenant.id;
   }
 
