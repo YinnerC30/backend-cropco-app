@@ -375,15 +375,10 @@ export class SeedService {
       }
     }
 
-    console.log({ payments });
     if (payments.quantity > 0) {
-      // console.log('entro al payment..');
       history.insertedPayments = [];
       for (let i = 0; i < payments.quantity; i++) {
-        // let payment;
-        // console.log(payments);
         try {
-          console.log('jajdsjdjdjdjdjdjdjdj');
           const payment = await this.CreatePayment({
             employeeId: payments.employeeId,
             methodOfPayment: payments.methodOfPayment || ('EFECTIVO' as any),
@@ -396,7 +391,6 @@ export class SeedService {
               : [],
           });
 
-          console.log('🚀 ~ SeedService ~ payment:', payment);
           history.insertedPayments.push(payment);
         } catch (error) {
           console.log(error);
@@ -1206,6 +1200,8 @@ export class SeedService {
           supplier: { id: supplier.id },
           amount: amountForItem,
           value_pay: valuePay,
+          unit_of_measure:
+            supply.unit_of_measure === 'GRAMOS' ? 'GRAMOS' : 'MILILITROS',
         } as ShoppingSuppliesDetailsDto;
       }),
     };
