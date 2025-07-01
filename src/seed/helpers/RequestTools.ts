@@ -9,6 +9,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { TenantConnectionService } from 'src/tenants/services/tenant-connection.service';
 import { DataSource } from 'typeorm';
 import { CreateTenantDto } from 'src/tenants/dto/create-tenant.dto';
+import { Administrator } from 'src/administrators/entities/administrator.entity';
 
 /**
  * Utility class for making HTTP requests related to user and permission management in tests.
@@ -17,6 +18,7 @@ export class RequestTools {
   private moduleFixture: TestingModule;
   private tenantRepository: Repository<Tenant>;
   private tenantConnectionService: TenantConnectionService;
+  private administratorRepository: Repository<Administrator>;
   private app: INestApplication | null = null;
   private tenantId: string | null = null;
   private user: User | null = null;
@@ -30,6 +32,10 @@ export class RequestTools {
     this.tenantRepository = this.moduleFixture.get<Repository<Tenant>>(
       getRepositoryToken(Tenant),
     );
+    this.administratorRepository = this.moduleFixture.get<
+      Repository<Administrator>
+    >(getRepositoryToken(Administrator));
+
     this.tenantConnectionService =
       this.moduleFixture.get<TenantConnectionService>(TenantConnectionService);
   }
@@ -54,14 +60,66 @@ export class RequestTools {
   }
 
   /**
+   * Creates a default administrator user in the database.
+   * @returns Promise<void>
+   */
+  public async createDefaultAdministrator(): Promise<Administrator> {
+    const administratorData = {
+      first_name: 'User',
+      last_name: 'To Testing',
+      email: 'usertotesting@mail.com',
+      cell_phone_number: '3243347549',
+      id: '503d8c7c-58c6-4330-840b-289107e13064',
+      password: '$2b$10$Ko.8QGXNmo7eUP6z4CyZYObxLrau1B7m3uZshGNSe9bshyinUXigC',
+      role: 'admin',
+      is_active: true,
+      createdAt: new Date('2025-06-29 02:06:44.711968'),
+      updatedAt: new Date('2025-06-29 02:06:44.711968'),
+      deletedAt: null,
+    };
+
+    const existingAdministrator = await this.administratorRepository.findOne({
+      where: { id: administratorData.id },
+    });
+    if (!existingAdministrator) {
+      const user = await this.administratorRepository.save(administratorData);
+      return user;
+    }
+    return existingAdministrator;
+  }
+
+  /**
    * Initializes the tenantId by searching for the tenant by subdomain.
    * @param subdomain - The subdomain of the tenant.
    */
   public async initializeTenant(): Promise<void> {
-    // Buscar si existe el tenant
+    const user = await this.createDefaultAdministrator();
 
-    const token =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjUwM2Q4YzdjLTU4YzYtNDMzMC04NDBiLTI4OTEwN2UxMzA2NCIsImlhdCI6MTc1MTMyNzMzOCwiZXhwIjoxNzUxMzQ4OTM4fQ.p1w_ZUYuGEXTp5OF2tIYW21DwDhJ2rqBiXM4qFrNMgw';
+    const loginResponse = await request
+      .default(this.getApp().getHttpServer())
+      .post('/auth/management/login')
+      .send({
+        email: user.email,
+        password: '123456',
+      });
+
+    console.log(loginResponse.body, loginResponse.status);
+
+    if (loginResponse.status !== 201) {
+      throw new Error(
+        `Failed to login administrator: ${loginResponse.body.message}`,
+      );
+    }
+
+    // Buscar si existe el tenant
+    const setCookieHeader = loginResponse.headers['set-cookie'];
+    const token = Array.isArray(setCookieHeader)
+      ? setCookieHeader
+          .find((cookie: string) => cookie.startsWith('administrator-token='))
+          ?.split(';')[0]
+          ?.split('=')[1]
+      : undefined;
+    console.log('🚀 ~ RequestTools ~ initializeTenant ~ token:', token);
 
     const tenant = await this.tenantRepository.findOne({
       where: { subdomain: 'tenanttesting' },
