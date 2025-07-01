@@ -8,7 +8,13 @@ import {
   IsString,
   IsEnum,
   ValidateNested,
+  IsArray,
+  IsUUID,
 } from 'class-validator';
+import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
+import { MethodOfPayment } from 'src/payments/entities/payment.entity';
+import { WorkDetails } from 'src/work/entities/work-details.entity';
+import { DeepPartial } from 'typeorm';
 
 export class SeedDto {
   @IsOptional()
@@ -252,6 +258,48 @@ export class ShoppingOptionsDto {
   valuePayExtended?: number;
 }
 
+export class PaymentOptionsDto {
+  /**
+   * Número de pagos a crear.
+   */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  quantity?: number;
+
+  /**
+   * Variante del método de creación de compras.
+   */
+  @IsOptional()
+  @IsEnum(['normal', 'extended'])
+  variant?: 'normal' | 'extended';
+
+  // Parámetros para variant 'normal'
+  @IsOptional()
+  @IsString()
+  employeeId?: string;
+
+  @IsOptional()
+  methodOfPayment?: MethodOfPayment;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  valuePay?: number;
+
+  @IsOptional()
+  @IsArray()
+  // @IsUUID('4', { each: true })
+  harvestsId?: string[];
+
+  @IsOptional()
+  @IsArray()
+  // @IsUUID('4', { each: true })
+  worksId?: string[];
+}
+
 export class ConsumptionOptionsDto {
   /**
    * Número de consumos a crear.
@@ -392,4 +440,9 @@ export class SeedControlledDto {
   @ValidateNested()
   @Type(() => ConsumptionOptionsDto)
   consumptions?: ConsumptionOptionsDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PaymentOptionsDto)
+  payments?: PaymentOptionsDto;
 }

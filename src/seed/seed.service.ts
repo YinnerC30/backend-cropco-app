@@ -198,6 +198,7 @@ export class SeedService {
       sales = { quantity: 0, variant: 'generic' },
       shoppings = { quantity: 0, variant: 'extended' },
       consumptions = { quantity: 0, variant: 'extended' },
+      payments = { variant: 'normal' },
     } = options;
 
     const history: {
@@ -212,6 +213,7 @@ export class SeedService {
       insertedSales?: unknown[];
       insertedShoppingSupplies?: unknown[];
       insertedConsumptionSupplies?: unknown[];
+      insertedPayments?: unknown[];
     } = {};
 
     if (users > 0) {
@@ -370,6 +372,31 @@ export class SeedService {
           });
         }
         history.insertedConsumptionSupplies.push(consumption);
+      }
+    }
+
+    if (payments.quantity > 0) {
+      // console.log('entro al payment..');
+      history.insertedPayments = [];
+      for (let i = 0; i < payments.quantity; i++) {
+        let payment;
+        // console.log(payments);
+        try {
+          if (payments.variant === 'normal') {
+            payment = await this.CreatePayment({
+              employeeId: payments.employeeId,
+              methodOfPayment: payments.methodOfPayment || ('EFECTIVO' as any),
+              value_pay: payments.valuePay,
+              harvestsId: [...payments.harvestsId],
+              worksId: [...payments.worksId],
+            });
+            console.log('jajdsjdjdjdjdjdjdjdj')
+            console.log('🚀 ~ SeedService ~ payment:', payment);
+            history.insertedPayments.push(payment);
+          }
+        } catch (error) {
+          console.log(error);
+        }
       }
     }
 
@@ -1189,12 +1216,13 @@ export class SeedService {
     value_pay,
   }: {
     datePayment?: string;
-    employeeId?: string;
+    employeeId: string;
     methodOfPayment?: MethodOfPayment;
-    worksId?: string[];
-    harvestsId?: string[];
+    worksId: string[];
+    harvestsId: string[];
     value_pay: number;
   }) {
+    console.log('Entro acá');
     const data: PaymentDto = plainToClass(PaymentDto, {
       date: datePayment,
       employee: { id: employeeId },
@@ -1205,6 +1233,7 @@ export class SeedService {
         works: [...(worksId as DeepPartial<WorkDetails>[])],
       },
     });
+    // console.log('🚀 ~ SeedService ~ data:', data);
 
     return await this.paymentsService.create(data);
   }

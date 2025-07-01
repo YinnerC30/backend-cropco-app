@@ -28,6 +28,7 @@ import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeesModule } from './employees.module';
 import { Employee } from './entities/employee.entity';
 import cookieParser from 'cookie-parser';
+import { EmployeeCertificationDto } from './dto/employee-certification.dto';
 
 // Módulo de prueba que configura el middleware
 @Module({
@@ -723,26 +724,40 @@ describe('EmployeesController (e2e)', () => {
   //         harvests: { quantity: 1, quantityEmployees: 8 },
   //       });
 
-  //       // await Promise.all([
+  //       // console.log('🚀 ~ beforeAll ~ details:', details);
+  //       const resultadoPago = await reqTools.createSeedData({
+  //         payments: {
+  //           quantity: 1,
+  //           employeeId: details[0].employee.id,
+  //           valuePay: details[0].value_pay,
+  //           harvestsId: [details[0].id],
+  //         },
+  //       });
+  //       console.log(
+  //         '🚀 ~ beforeAll ~ resultadoPago:',
+  //         JSON.stringify(resultadoPago),
+  //       );
+
+  //       // const result = await Promise.all([
+
   //       //   reqTools.createSeedData({
-  //       //     payments: {1,
-  //       //     employeeId: details[0].employee.id,
-  //       //     value_pay: details[0].value_pay,
-  //       //     harvestsId: [details[0].id],}
+  //       //     payments: {
+  //       //       quantity: 1,
+  //       //       employeeId: details[1].employee.id,
+  //       //       valuePay: details[1].value_pay,
+  //       //       harvestsId: [details[1].id],
+  //       //     },
   //       //   }),
   //       //   reqTools.createSeedData({
-  //       //     payments: 1,
-  //       //     employeeId: details[1].employee.id,
-  //       //     value_pay: details[1].value_pay,
-  //       //     harvestsId: [details[1].id],
-  //       //   }),
-  //       //   reqTools.createSeedData({
-  //       //     payments: 1,
-  //       //     employeeId: details[2].employee.id,
-  //       //     value_pay: details[2].value_pay,
-  //       //     harvestsId: [details[2].id],
+  //       //     payments: {
+  //       //       quantity: 1,
+  //       //       employeeId: details[2].employee.id,
+  //       //       valuePay: details[2].value_pay,
+  //       //       harvestsId: [details[2].id],
+  //       //     },
   //       //   }),
   //       // ]);
+  //       // console.log('🚀 ~ beforeAll ~ result:', JSON.stringify(result));
 
   //       await reqTools.addActionToUser('find_all_employees_with_made_payments');
   //     } catch (error) {
@@ -773,198 +788,209 @@ describe('EmployeesController (e2e)', () => {
   //   });
   // });
 
-  // describe('employees/pending-payments/one/:id (GET)', () => {
-  //   beforeAll(async () => {
-  //     await reqTools.addActionToUser('find_one_employee_with_pending_payments');
-  //   });
+  describe('employees/pending-payments/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await reqTools.addActionToUser('find_one_employee_with_pending_payments');
+    });
 
-  //   it('should throw an exception for not sending a JWT to the protected path /employees/pending-payments/one/:id', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get(`/employees/pending-payments/one/${falseEmployeeId}`)
-  //       .set('x-tenant-id', tenantId)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+    it('should throw an exception for not sending a JWT to the protected path /employees/pending-payments/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/pending-payments/one/${falseEmployeeId}`)
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('should get only one employee with pending payments', async () => {
-  //     const employee = await CreateEmployee();
+    it('should get only one employee with pending payments', async () => {
+      const employee = await CreateEmployee();
 
-  //     const harvest = await reqTools.createSeedData({
-  //       harvests: 1,
-  //       employeeId: employee.id,
-  //     });
-  //     const work = await reqTools.createSeedData({
-  //       works: 1,
-  //       employeeId: employee.id,
-  //     });
+      const harvest = await reqTools.createSeedData({
+        harvests: { quantity: 1, employeeId: employee.id, variant: 'advanced' },
+      });
+      const work = await reqTools.createSeedData({
+        works: { quantity: 1, employeeId: employee.id, variant: 'forEmployee' },
+      });
 
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get(`/employees/pending-payments/one/${employee.id}`)
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/employees/pending-payments/one/${employee.id}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
 
-  //     const body = response.body as Employee;
-  //     expect(body).toHaveProperty('id');
-  //     expect(body).toHaveProperty('first_name');
-  //     expect(body).toHaveProperty('last_name');
-  //     expect(body).toHaveProperty('email');
-  //     expect(body).toHaveProperty('cell_phone_number');
-  //     expect(body).toHaveProperty('address');
-  //     expect(body).toHaveProperty('harvests_detail');
-  //     expect(body.harvests_detail).toBeInstanceOf(Array);
-  //     expect(body).toHaveProperty('works_detail');
-  //     expect(body.works_detail).toBeInstanceOf(Array);
-  //     expect(body).toHaveProperty('createdDate');
-  //     expect(body).toHaveProperty('updatedDate');
-  //     expect(body).toHaveProperty('deletedDate');
-  //     expect(body.deletedDate).toBeNull();
+      const body = response.body as Employee;
+      expect(body).toHaveProperty('id');
+      expect(body).toHaveProperty('first_name');
+      expect(body).toHaveProperty('last_name');
+      expect(body).toHaveProperty('email');
+      expect(body).toHaveProperty('cell_phone_number');
+      expect(body).toHaveProperty('address');
+      expect(body).toHaveProperty('harvests_detail');
+      expect(body.harvests_detail).toBeInstanceOf(Array);
+      expect(body).toHaveProperty('works_detail');
+      expect(body.works_detail).toBeInstanceOf(Array);
+      expect(body).toHaveProperty('createdDate');
+      expect(body).toHaveProperty('updatedDate');
+      expect(body).toHaveProperty('deletedDate');
+      expect(body.deletedDate).toBeNull();
 
-  //     if (body.works_detail.length > 0) {
-  //       body.works_detail.forEach((workDetail) => {
-  //         expect(workDetail.payment_is_pending).toBe(true);
-  //       });
-  //     }
-  //     if (body.harvests_detail.length > 0) {
-  //       body.harvests_detail.forEach((harvestDetail) => {
-  //         expect(harvestDetail.payment_is_pending).toBe(true);
-  //       });
-  //     }
-  //   });
-  // });
+      if (body.works_detail.length > 0) {
+        body.works_detail.forEach((workDetail) => {
+          expect(workDetail.payment_is_pending).toBe(true);
+        });
+      }
+      if (body.harvests_detail.length > 0) {
+        body.harvests_detail.forEach((harvestDetail) => {
+          expect(harvestDetail.payment_is_pending).toBe(true);
+        });
+      }
+    });
+  });
 
-  // describe('employees/harvests/all (GET)', () => {
-  //   beforeAll(async () => {
-  //     try {
-  //       await reqTools.clearDatabaseControlled({ employees: true });
-  //       await reqTools.createSeedData({ harvests: 1, quantityEmployees: 8 });
-  //       await reqTools.addActionToUser('find_all_employees_with_harvests');
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-  //   });
+  describe('employees/harvests/all (GET)', () => {
+    beforeAll(async () => {
+      try {
+        await reqTools.clearDatabaseControlled({ employees: true });
+        await reqTools.createSeedData({
+          harvests: { quantity: 1, quantityEmployees: 8 },
+        });
+        await reqTools.addActionToUser('find_all_employees_with_harvests');
+      } catch (error) {
+        console.log(error);
+      }
+    });
 
-  //   it('should throw an exception for not sending a JWT to the protected path /employees/harvests/all', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/employees/harvests/all')
-  //       .set('x-tenant-id', tenantId)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+    it('should throw an exception for not sending a JWT to the protected path /employees/harvests/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/harvests/all')
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('should get only employees with harvests', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/employees/harvests/all')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
-  //     expect(response.body.total_row_count).toEqual(8);
-  //     expect(response.body.current_row_count).toEqual(8);
-  //     expect(response.body.total_page_count).toEqual(1);
-  //     expect(response.body.current_page_count).toEqual(1);
+    it('should get only employees with harvests', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/harvests/all')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(8);
+      expect(response.body.current_row_count).toEqual(8);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
 
-  //     response.body.records.forEach((employee) => {
-  //       expect(employee).toHaveProperty('id');
-  //       expect(employee).toHaveProperty('first_name');
-  //       expect(employee).toHaveProperty('last_name');
-  //       expect(employee).toHaveProperty('email');
-  //       expect(employee).toHaveProperty('cell_phone_number');
-  //       expect(employee).toHaveProperty('address');
-  //       expect(employee).toHaveProperty('harvests_detail');
-  //       expect(employee.harvests_detail).toBeInstanceOf(Array);
-  //       expect(employee).toHaveProperty('createdDate');
-  //       expect(employee).toHaveProperty('updatedDate');
-  //       expect(employee).toHaveProperty('deletedDate');
-  //       expect(employee.deletedDate).toBeNull();
+      response.body.records.forEach((employee) => {
+        expect(employee).toHaveProperty('id');
+        expect(employee).toHaveProperty('first_name');
+        expect(employee).toHaveProperty('last_name');
+        expect(employee).toHaveProperty('email');
+        expect(employee).toHaveProperty('cell_phone_number');
+        expect(employee).toHaveProperty('address');
+        expect(employee).toHaveProperty('harvests_detail');
+        expect(employee.harvests_detail).toBeInstanceOf(Array);
+        expect(employee).toHaveProperty('createdDate');
+        expect(employee).toHaveProperty('updatedDate');
+        expect(employee).toHaveProperty('deletedDate');
+        expect(employee.deletedDate).toBeNull();
 
-  //       expect(employee.harvests_detail).toBeInstanceOf(Array);
-  //       expect(employee.harvests_detail.length).toBeGreaterThan(0);
-  //     });
-  //   });
-  // });
+        expect(employee.harvests_detail).toBeInstanceOf(Array);
+        expect(employee.harvests_detail.length).toBeGreaterThan(0);
+      });
+    });
+  });
 
-  // describe('employees/works/all (GET)', () => {
-  //   beforeAll(async () => {
-  //     try {
-  //       await reqTools.clearDatabaseControlled({ employees: true });
-  //       await reqTools.createSeedData({ works: 1, quantityEmployees: 8 });
-  //       await reqTools.addActionToUser('find_all_employees_with_works');
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-  //   });
+  describe('employees/works/all (GET)', () => {
+    beforeAll(async () => {
+      try {
+        await reqTools.clearDatabaseControlled({ employees: true });
+        await reqTools.createSeedData({
+          works: { quantity: 1, quantityEmployees: 8 },
+        });
+        await reqTools.addActionToUser('find_all_employees_with_works');
+      } catch (error) {
+        console.log(error);
+      }
+    });
 
-  //   it('should throw an exception for not sending a JWT to the protected path /employees/works/all', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/employees/works/all')
-  //       .set('x-tenant-id', tenantId)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+    it('should throw an exception for not sending a JWT to the protected path /employees/works/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/works/all')
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('should get only employees with works', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/employees/works/all')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
-  //     expect(response.body.total_row_count).toEqual(8);
-  //     expect(response.body.current_row_count).toEqual(8);
-  //     expect(response.body.total_page_count).toEqual(1);
-  //     expect(response.body.current_page_count).toEqual(1);
+    it('should get only employees with works', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/works/all')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(8);
+      expect(response.body.current_row_count).toEqual(8);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
 
-  //     response.body.records.forEach((employee) => {
-  //       expect(employee).toHaveProperty('id');
-  //       expect(employee).toHaveProperty('first_name');
-  //       expect(employee).toHaveProperty('last_name');
-  //       expect(employee).toHaveProperty('email');
-  //       expect(employee).toHaveProperty('cell_phone_number');
-  //       expect(employee).toHaveProperty('address');
-  //       expect(employee).toHaveProperty('works_detail');
-  //       expect(employee.works_detail).toBeInstanceOf(Array);
-  //       expect(employee).toHaveProperty('createdDate');
-  //       expect(employee).toHaveProperty('updatedDate');
-  //       expect(employee).toHaveProperty('deletedDate');
-  //       expect(employee.deletedDate).toBeNull();
+      response.body.records.forEach((employee) => {
+        expect(employee).toHaveProperty('id');
+        expect(employee).toHaveProperty('first_name');
+        expect(employee).toHaveProperty('last_name');
+        expect(employee).toHaveProperty('email');
+        expect(employee).toHaveProperty('cell_phone_number');
+        expect(employee).toHaveProperty('address');
+        expect(employee).toHaveProperty('works_detail');
+        expect(employee.works_detail).toBeInstanceOf(Array);
+        expect(employee).toHaveProperty('createdDate');
+        expect(employee).toHaveProperty('updatedDate');
+        expect(employee).toHaveProperty('deletedDate');
+        expect(employee.deletedDate).toBeNull();
 
-  //       expect(employee.works_detail).toBeInstanceOf(Array);
-  //       expect(employee.works_detail.length).toBeGreaterThan(0);
-  //     });
-  //   });
-  // });
+        expect(employee.works_detail).toBeInstanceOf(Array);
+        expect(employee.works_detail.length).toBeGreaterThan(0);
+      });
+    });
+  });
 
-  // describe('employees/find/certification/one/:id (GET)', () => {
-  //   beforeAll(async () => {
-  //     await reqTools.addActionToUser('find_certification_employee');
-  //   });
+  describe('employees/generate/certification/one/:id (GET)', () => {
+    beforeAll(async () => {
+      await reqTools.addActionToUser('generate_certification_employee');
+    });
 
-  //   it('should throw an exception for not sending a JWT to the protected path employees/find/certification/one/:id', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get(`/employees/find/certification/one/${falseEmployeeId}`)
-  //       .set('x-tenant-id', tenantId)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
+    it('should throw an exception for not sending a JWT to the protected path employees/generate/certification/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .post(`/employees/generate/certification/one/${falseEmployeeId}`)
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //   it('should get only one employee with certification', async () => {
-  //     const record = await CreateEmployee();
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get(`/employees/find/certification/one/${record.id}`)
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
-  //     expect(response.body).toBeDefined();
-  //     expect(response.body).toBeInstanceOf(Buffer);
-  //   });
-  // });
+    it('should get only one employee with certification', async () => {
+      const record = await CreateEmployee();
+      const bodyRequest: EmployeeCertificationDto = {
+        generator_name: 'Juan Perez',
+        generator_position: 'RRHH',
+        company_name: 'Cropco',
+        start_date: new Date(),
+        employee_position: 'Jornalero',
+        weekly_working_hours: 48,
+      };
+      const response = await request
+        .default(app.getHttpServer())
+        .post(`/employees/generate/certification/one/${record.id}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .send(bodyRequest)
+        .expect(201);
+      expect(response.body).toBeDefined();
+      expect(response.body).toBeInstanceOf(Buffer);
+    });
+  });
 
   describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
     beforeAll(async () => {

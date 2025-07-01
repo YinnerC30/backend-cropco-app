@@ -199,7 +199,9 @@ export class RequestTools {
    * Throws an error if a user already exists.
    * @returns The created user.
    */
-  public async createSeedData(seedDto: SeedControlledDto): Promise<SeedControlledResponse> {
+  public async createSeedData(
+    seedDto: SeedControlledDto,
+  ): Promise<SeedControlledResponse> {
     const { body } = await request
       .default(this.getApp().getHttpServer())
       .get('/seed/controlled')
@@ -342,13 +344,13 @@ export class RequestTools {
     userId: string,
     actionName: string,
   ): Promise<void> {
-    console.log(userId, actionName)
+    console.log(userId, actionName);
     const result = await request
       .default(this.getApp().getHttpServer())
       .post(`/auth/remove-permission/${userId}/${actionName}`)
       .set('x-tenant-id', this.getTenantId())
       .expect(201);
-      console.log(result.body, result.status)
+    console.log(result.body, result.status);
   }
 
   /**
