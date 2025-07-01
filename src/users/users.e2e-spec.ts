@@ -127,8 +127,6 @@ describe('UsersController e2e', () => {
       imports: [TestAppModule],
     }).compile();
 
-    reqTools = new RequestTools({ moduleFixture });
-
     authService = moduleFixture.get<AuthService>(AuthService);
 
     app = moduleFixture.createNestApplication();
@@ -145,8 +143,9 @@ describe('UsersController e2e', () => {
 
     await app.init();
 
+    reqTools = new RequestTools({ moduleFixture });
     reqTools.setApp(app);
-    await reqTools.initializeTenant('otravaina');
+    await reqTools.initializeTenant();
     tenantId = reqTools.getTenantIdPublic();
 
     await reqTools.clearDatabaseControlled({ users: true });
@@ -843,5 +842,4 @@ describe('UsersController e2e', () => {
       );
     });
   });
-
 });

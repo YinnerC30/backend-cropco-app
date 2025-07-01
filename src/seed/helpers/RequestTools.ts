@@ -57,7 +57,7 @@ export class RequestTools {
    * Initializes the tenantId by searching for the tenant by subdomain.
    * @param subdomain - The subdomain of the tenant.
    */
-  public async initializeTenant(subdomain: string): Promise<void> {
+  public async initializeTenant(): Promise<void> {
     // Buscar si existe el tenant
 
     const token =
