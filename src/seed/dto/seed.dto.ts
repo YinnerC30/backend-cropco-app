@@ -5,6 +5,9 @@ import {
   IsOptional,
   IsInt,
   Min,
+  IsString,
+  IsEnum,
+  ValidateNested,
 } from 'class-validator';
 
 export class SeedDto {
@@ -65,6 +68,236 @@ export class SeedDto {
   adminUser?: boolean;
 }
 
+export class HarvestOptionsDto {
+  /**
+   * Número de cosechas a crear.
+   */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  quantity?: number;
+
+  /**
+   * Variante del método de creación de cosechas.
+   */
+  @IsOptional()
+  @IsEnum(['normal', 'advanced'])
+  variant?: 'normal' | 'advanced';
+
+  // Parámetros para variant 'normal'
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  quantityEmployees?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  amount?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  valuePay?: number;
+
+  // Parámetros para variant 'advanced'
+  @IsOptional()
+  @IsString()
+  employeeId?: string;
+
+  @IsOptional()
+  @IsString()
+  cropId?: string;
+}
+
+export class WorkOptionsDto {
+  /**
+   * Número de trabajos a crear.
+   */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  quantity?: number;
+
+  /**
+   * Variante del método de creación de trabajos.
+   */
+  @IsOptional()
+  @IsEnum(['normal', 'forEmployee'])
+  variant?: 'normal' | 'forEmployee';
+
+  // Parámetros para variant 'normal'
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  quantityEmployees?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  valuePay?: number;
+
+  // Parámetros para variant 'forEmployee'
+  @IsOptional()
+  @IsString()
+  employeeId?: string;
+}
+
+export class SaleOptionsDto {
+  /**
+   * Número de ventas a crear.
+   */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  quantity?: number;
+
+  /**
+   * Variante del método de creación de ventas.
+   */
+  @IsOptional()
+  @IsEnum(['normal', 'generic'])
+  variant?: 'normal' | 'generic';
+
+  // Parámetros para variant 'normal'
+  @IsOptional()
+  @IsString()
+  clientId?: string;
+
+  @IsOptional()
+  @IsString()
+  cropId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isReceivable?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  quantityPerSale?: number;
+
+  // Parámetros para variant 'generic'
+  @IsOptional()
+  @IsBoolean()
+  isReceivableGeneric?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  quantityPerSaleGeneric?: number;
+}
+
+export class ShoppingOptionsDto {
+  /**
+   * Número de compras a crear.
+   */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  quantity?: number;
+
+  /**
+   * Variante del método de creación de compras.
+   */
+  @IsOptional()
+  @IsEnum(['normal', 'extended'])
+  variant?: 'normal' | 'extended';
+
+  // Parámetros para variant 'normal'
+  @IsOptional()
+  @IsString()
+  supplyId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  amount?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  valuePay?: number;
+
+  // Parámetros para variant 'extended'
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  quantitySupplies?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  amountForItem?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  valuePayExtended?: number;
+}
+
+export class ConsumptionOptionsDto {
+  /**
+   * Número de consumos a crear.
+   */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  quantity?: number;
+
+  /**
+   * Variante del método de creación de consumos.
+   */
+  @IsOptional()
+  @IsEnum(['normal', 'extended'])
+  variant?: 'normal' | 'extended';
+
+  // Parámetros para variant 'normal'
+  @IsOptional()
+  @IsString()
+  supplyId?: string;
+
+  @IsOptional()
+  @IsString()
+  cropId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  amount?: number;
+
+  // Parámetros para variant 'extended'
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  quantitySupplies?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  amountForItem?: number;
+}
+
 export class SeedControlledDto {
   /**
    * Número de usuarios a crear.
@@ -121,47 +354,42 @@ export class SeedControlledDto {
   crops?: number;
 
   /**
-   * Número de cosechas a crear.
+   * Opciones para la creación de cosechas.
    */
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  harvests?: number;
+  @ValidateNested()
+  @Type(() => HarvestOptionsDto)
+  harvests?: HarvestOptionsDto;
 
   /**
-   * Número de trabajos a crear.
+   * Opciones para la creación de trabajos.
    */
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  works?: number;
+  @ValidateNested()
+  @Type(() => WorkOptionsDto)
+  works?: WorkOptionsDto;
 
   /**
-   * Número de ventas a crear.
+   * Opciones para la creación de ventas.
    */
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  sales?: number;
+  @ValidateNested()
+  @Type(() => SaleOptionsDto)
+  sales?: SaleOptionsDto;
 
   /**
-   * Número de compras a crear.
+   * Opciones para la creación de compras.
    */
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  shoppings?: number;
+  @ValidateNested()
+  @Type(() => ShoppingOptionsDto)
+  shoppings?: ShoppingOptionsDto;
 
   /**
-   * Número de consumos a crear.
+   * Opciones para la creación de consumos.
    */
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  consumptions?: number;
+  @ValidateNested()
+  @Type(() => ConsumptionOptionsDto)
+  consumptions?: ConsumptionOptionsDto;
 }

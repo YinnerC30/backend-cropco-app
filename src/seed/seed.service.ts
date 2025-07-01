@@ -181,11 +181,6 @@ export class SeedService {
    * @param options - Object specifying the quantity for each entity to create.
    * @returns An object with a message and the history of inserted records.
    */
-  /**
-   * Executes a controlled seed, allowing to specify the exact number of records to create for each entity.
-   * @param options - Object specifying the quantity for each entity to create.
-   * @returns An object with a message and the history of inserted records.
-   */
   async runSeedControlled(options: {
     users?: number;
     clients?: number;
@@ -193,11 +188,61 @@ export class SeedService {
     supplies?: number;
     employees?: number;
     crops?: number;
-    harvests?: number;
-    works?: number;
-    sales?: number;
-    shoppings?: number;
-    consumptions?: number;
+    harvests?: {
+      quantity?: number;
+      variant?: 'normal' | 'advanced';
+      // Parámetros para variant 'normal'
+      quantityEmployees?: number;
+      amount?: number;
+      valuePay?: number;
+      // Parámetros para variant 'advanced'
+      employeeId?: string;
+      cropId?: string;
+    };
+    works?: {
+      quantity?: number;
+      variant?: 'normal' | 'forEmployee';
+      // Parámetros para variant 'normal'
+      quantityEmployees?: number;
+      valuePay?: number;
+      // Parámetros para variant 'forEmployee'
+      employeeId?: string;
+    };
+    sales?: {
+      quantity?: number;
+      variant?: 'normal' | 'generic';
+      // Parámetros para variant 'normal'
+      clientId?: string;
+      cropId?: string;
+      isReceivable?: boolean;
+      quantityPerSale?: number;
+      // Parámetros para variant 'generic'
+      isReceivableGeneric?: boolean;
+      quantityPerSaleGeneric?: number;
+    };
+    shoppings?: {
+      quantity?: number;
+      variant?: 'normal' | 'extended';
+      // Parámetros para variant 'normal'
+      supplyId?: string;
+      amount?: number;
+      valuePay?: number;
+      // Parámetros para variant 'extended'
+      quantitySupplies?: number;
+      amountForItem?: number;
+      valuePayExtended?: number;
+    };
+    consumptions?: {
+      quantity?: number;
+      variant?: 'normal' | 'extended';
+      // Parámetros para variant 'normal'
+      supplyId?: string;
+      cropId?: string;
+      amount?: number;
+      // Parámetros para variant 'extended'
+      quantitySupplies?: number;
+      amountForItem?: number;
+    };
   }): Promise<{
     message: string;
     history: {
@@ -221,11 +266,11 @@ export class SeedService {
       supplies = 0,
       employees = 0,
       crops = 0,
-      harvests = 0,
-      works = 0,
-      sales = 0,
-      shoppings = 0,
-      consumptions = 0,
+      harvests = { quantity: 0, variant: 'normal' },
+      works = { quantity: 0, variant: 'normal' },
+      sales = { quantity: 0, variant: 'generic' },
+      shoppings = { quantity: 0, variant: 'extended' },
+      consumptions = { quantity: 0, variant: 'extended' },
     } = options;
 
     const history: {
@@ -290,45 +335,116 @@ export class SeedService {
       }
     }
 
-    if (harvests > 0) {
+    if (harvests.quantity > 0) {
       history.insertedHarvests = [];
-      for (let i = 0; i < harvests; i++) {
-        const harvest = await this.CreateHarvest({});
+      for (let i = 0; i < harvests.quantity; i++) {
+        let harvest;
+        if (harvests.variant === 'advanced') {
+          harvest = await this.CreateHarvestAdvanced({
+            employeeId: harvests.employeeId,
+            cropId: harvests.cropId,
+            valuePay: harvests.valuePay,
+            amount: harvests.amount,
+          });
+        } else {
+          harvest = await this.CreateHarvest({
+            quantityEmployees: harvests.quantityEmployees,
+            amount: harvests.amount,
+            valuePay: harvests.valuePay,
+          });
+        }
         history.insertedHarvests.push(harvest);
       }
     }
 
-    if (works > 0) {
+    if (works.quantity > 0) {
       history.insertedWorks = [];
-      for (let i = 0; i < works; i++) {
-        const work = await this.CreateWork({});
+      for (let i = 0; i < works.quantity; i++) {
+        let work;
+        if (works.variant === 'forEmployee') {
+          if (!works.employeeId) {
+            const employee = await this.CreateEmployee({});
+            works.employeeId = employee.id;
+          }
+          work = await this.CreateWorkForEmployee({
+            employeeId: works.employeeId,
+            valuePay: works.valuePay,
+          });
+        } else {
+          work = await this.CreateWork({
+            quantityEmployees: works.quantityEmployees,
+            valuePay: works.valuePay,
+          });
+        }
         history.insertedWorks.push(work);
       }
     }
 
-    // if (sales > 0) {
-    //   history.insertedSales = [];
-    //   for (let i = 0; i < sales; i++) {
-    //     const sale = await this.CreateSale({});
-    //     history.insertedSales.push(sale);
-    //   }
-    // }
+    if (sales.quantity > 0) {
+      history.insertedSales = [];
+      for (let i = 0; i < sales.quantity; i++) {
+        let sale;
+        if (sales.variant === 'normal') {
+          if (!sales.cropId) {
+            const crop = await this.CreateCrop({});
+            sales.cropId = crop.id;
+          }
+          sale = await this.CreateSale({
+            clientId: sales.clientId,
+            cropId: sales.cropId,
+            isReceivable: sales.isReceivable,
+            quantity: sales.quantityPerSale,
+          });
+        } else {
+          sale = await this.CreateSaleGeneric({
+            isReceivable: sales.isReceivableGeneric,
+            quantity: sales.quantityPerSaleGeneric,
+          });
+        }
+        history.insertedSales.push(sale);
+      }
+    }
 
-    // if (shoppings > 0) {
-    //   history.insertedShoppingSupplies = [];
-    //   for (let i = 0; i < shoppings; i++) {
-    //     const shopping = await this.CreateShoppingSupply({});
-    //     history.insertedShoppingSupplies.push(shopping);
-    //   }
-    // }
+    if (shoppings.quantity > 0) {
+      history.insertedShoppingSupplies = [];
+      for (let i = 0; i < shoppings.quantity; i++) {
+        let shopping;
+        if (shoppings.variant === 'normal') {
+          shopping = await this.CreateShopping({
+            supplyId: shoppings.supplyId,
+            amount: shoppings.amount,
+            valuePay: shoppings.valuePay,
+          });
+        } else {
+          shopping = await this.CreateShoppingExtended({
+            quantitySupplies: shoppings.quantitySupplies,
+            amountForItem: shoppings.amountForItem,
+            valuePay: shoppings.valuePayExtended,
+          });
+        }
+        history.insertedShoppingSupplies.push(shopping);
+      }
+    }
 
-    // if (consumptions > 0) {
-    //   history.insertedConsumptionSupplies = [];
-    //   for (let i = 0; i < consumptions; i++) {
-    //     const consumption = await this.CreateConsumptionSupply({});
-    //     history.insertedConsumptionSupplies.push(consumption);
-    //   }
-    // }
+    if (consumptions.quantity > 0) {
+      history.insertedConsumptionSupplies = [];
+      for (let i = 0; i < consumptions.quantity; i++) {
+        let consumption;
+        if (consumptions.variant === 'normal') {
+          consumption = await this.CreateConsumption({
+            supplyId: consumptions.supplyId,
+            cropId: consumptions.cropId,
+            amount: consumptions.amount,
+          });
+        } else {
+          consumption = await this.CreateConsumptionExtended({
+            quantitySupplies: consumptions.quantitySupplies,
+            amountForItem: consumptions.amountForItem,
+          });
+        }
+        history.insertedConsumptionSupplies.push(consumption);
+      }
+    }
 
     return {
       message: 'Controlled seed executed successfully',
