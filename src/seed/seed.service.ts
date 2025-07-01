@@ -375,25 +375,25 @@ export class SeedService {
       }
     }
 
+    console.log({ payments });
     if (payments.quantity > 0) {
       // console.log('entro al payment..');
       history.insertedPayments = [];
       for (let i = 0; i < payments.quantity; i++) {
-        let payment;
+        // let payment;
         // console.log(payments);
         try {
-          if (payments.variant === 'normal') {
-            payment = await this.CreatePayment({
-              employeeId: payments.employeeId,
-              methodOfPayment: payments.methodOfPayment || ('EFECTIVO' as any),
-              value_pay: payments.valuePay,
-              harvestsId: [...payments.harvestsId],
-              worksId: [...payments.worksId],
-            });
-            console.log('jajdsjdjdjdjdjdjdjdj')
-            console.log('🚀 ~ SeedService ~ payment:', payment);
-            history.insertedPayments.push(payment);
-          }
+          console.log('jajdsjdjdjdjdjdjdjdj');
+          const payment = await this.CreatePayment({
+            employeeId: payments.employeeId,
+            methodOfPayment: payments.methodOfPayment || ('EFECTIVO' as any),
+            value_pay: payments.valuePay,
+            harvestsId: Array.isArray(payments.harvestsId) ? [...payments.harvestsId] : [],
+            worksId: Array.isArray(payments.worksId) ? [...payments.worksId] : [],
+          });
+
+          console.log('🚀 ~ SeedService ~ payment:', payment);
+          history.insertedPayments.push(payment);
         } catch (error) {
           console.log(error);
         }

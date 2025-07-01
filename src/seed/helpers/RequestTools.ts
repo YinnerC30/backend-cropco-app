@@ -123,7 +123,6 @@ export class RequestTools {
       where: { subdomain: 'tenanttesting' },
     });
     if (!tenant) {
-      console.log('Intento crear');
       const bodyRequest: CreateTenantDto = {
         subdomain: 'tenanttesting',
         company_name: 'tenant to testing',
@@ -144,7 +143,6 @@ export class RequestTools {
         .default(this.getApp().getHttpServer())
         .put(`/tenants/config-db/one/${responseTenantCreation.body.id}`)
         .set('Cookie', `administrator-token=${token}`);
-      console.log('response de creación', responseTenantCreation.body.id);
       this.tenantId = responseTenantCreation.body.id;
       return;
     }
@@ -344,13 +342,11 @@ export class RequestTools {
     userId: string,
     actionName: string,
   ): Promise<void> {
-    console.log(userId, actionName);
     const result = await request
       .default(this.getApp().getHttpServer())
       .post(`/auth/remove-permission/${userId}/${actionName}`)
       .set('x-tenant-id', this.getTenantId())
       .expect(201);
-    console.log(result.body, result.status);
   }
 
   /**
@@ -361,7 +357,6 @@ export class RequestTools {
     const tenantId = this.getTenantId();
     const connection =
       await this.tenantConnectionService.getTenantConnection(tenantId);
-    console.log('Se obtuvo el datasource');
     return connection;
   }
 

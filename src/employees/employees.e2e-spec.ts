@@ -545,7 +545,6 @@ describe('EmployeesController (e2e)', () => {
       const result = await reqTools.createSeedData({
         harvests: { quantity: 1 },
       });
-      console.log('🚀 ~ it ~ result:', result);
 
       const { employees } = result.history.insertedHarvests[0];
 
@@ -708,85 +707,77 @@ describe('EmployeesController (e2e)', () => {
     });
   });
 
-  // describe('employees/made-payments/all (GET)', () => {
-  //   beforeAll(async () => {
-  //     try {
-  //       await reqTools.clearDatabaseControlled({ employees: true });
-  //       const {
-  //         history: {
-  //           insertedHarvests: [
-  //             {
-  //               harvest: { details },
-  //             },
-  //           ],
-  //         },
-  //       } = await reqTools.createSeedData({
-  //         harvests: { quantity: 1, quantityEmployees: 8 },
-  //       });
+  describe('employees/made-payments/all (GET)', () => {
+    beforeAll(async () => {
+      try {
+        await reqTools.clearDatabaseControlled({ employees: true });
+        const {
+          history: {
+            insertedHarvests: [
+              {
+                harvest: { details },
+              },
+            ],
+          },
+        } = await reqTools.createSeedData({
+          harvests: { quantity: 1, quantityEmployees: 8 },
+        });
 
-  //       // console.log('🚀 ~ beforeAll ~ details:', details);
-  //       const resultadoPago = await reqTools.createSeedData({
-  //         payments: {
-  //           quantity: 1,
-  //           employeeId: details[0].employee.id,
-  //           valuePay: details[0].value_pay,
-  //           harvestsId: [details[0].id],
-  //         },
-  //       });
-  //       console.log(
-  //         '🚀 ~ beforeAll ~ resultadoPago:',
-  //         JSON.stringify(resultadoPago),
-  //       );
+        await Promise.all([
+          reqTools.createSeedData({
+            payments: {
+              quantity: 1,
+              employeeId: details[0].employee.id,
+              valuePay: details[0].value_pay,
+              harvestsId: [details[0].id],
+            },
+          }),
+          reqTools.createSeedData({
+            payments: {
+              quantity: 1,
+              employeeId: details[1].employee.id,
+              valuePay: details[1].value_pay,
+              harvestsId: [details[1].id],
+            },
+          }),
+          reqTools.createSeedData({
+            payments: {
+              quantity: 1,
+              employeeId: details[2].employee.id,
+              valuePay: details[2].value_pay,
+              harvestsId: [details[2].id],
+            },
+          }),
+        ]);
 
-  //       // const result = await Promise.all([
+        await reqTools.addActionToUser('find_all_employees_with_made_payments');
+      } catch (error) {
+        console.log(error);
+      }
+    });
 
-  //       //   reqTools.createSeedData({
-  //       //     payments: {
-  //       //       quantity: 1,
-  //       //       employeeId: details[1].employee.id,
-  //       //       valuePay: details[1].value_pay,
-  //       //       harvestsId: [details[1].id],
-  //       //     },
-  //       //   }),
-  //       //   reqTools.createSeedData({
-  //       //     payments: {
-  //       //       quantity: 1,
-  //       //       employeeId: details[2].employee.id,
-  //       //       valuePay: details[2].value_pay,
-  //       //       harvestsId: [details[2].id],
-  //       //     },
-  //       //   }),
-  //       // ]);
-  //       // console.log('🚀 ~ beforeAll ~ result:', JSON.stringify(result));
+    it('should throw an exception for not sending a JWT to the protected path /employees/made-payments/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/made-payments/all')
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
 
-  //       await reqTools.addActionToUser('find_all_employees_with_made_payments');
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-  //   });
-
-  //   it('should throw an exception for not sending a JWT to the protected path /employees/made-payments/all', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/employees/made-payments/all')
-  //       .set('x-tenant-id', tenantId)
-  //       .expect(401);
-  //     expect(response.body.message).toEqual('Unauthorized');
-  //   });
-
-  //   it('should get only employees with made payments', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/employees/made-payments/all')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
-  //     expect(response.body.total_row_count).toEqual(3);
-  //     expect(response.body.current_row_count).toEqual(3);
-  //     expect(response.body.total_page_count).toEqual(1);
-  //     expect(response.body.current_page_count).toEqual(1);
-  //   });
-  // });
+    it('should get only employees with made payments', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/employees/made-payments/all')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
+      expect(response.body.total_row_count).toEqual(3);
+      expect(response.body.current_row_count).toEqual(3);
+      expect(response.body.total_page_count).toEqual(1);
+      expect(response.body.current_page_count).toEqual(1);
+    });
+  });
 
   describe('employees/pending-payments/one/:id (GET)', () => {
     beforeAll(async () => {
