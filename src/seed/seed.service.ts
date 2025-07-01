@@ -1107,6 +1107,8 @@ export class SeedService {
     if (!supplyId) {
       supply = (await this.CreateSupply({})) as Supply;
       await this.CreateShopping({ supplyId: supply.id, amount: 10_000 });
+    } else {
+      supply = await this.suppliesService.findOne(supplyId);
     }
     if (!cropId) {
       crop = (await this.CreateCrop({})) as Crop;
@@ -1119,6 +1121,8 @@ export class SeedService {
           supply: { id: supplyId || supply.id },
           crop: { id: cropId || crop.id },
           amount,
+          unit_of_measure:
+            supply.unit_of_measure == 'GRAMOS' ? 'GRAMOS' : 'MILILITROS',
         } as ConsumptionSuppliesDetailsDto,
       ],
     };
@@ -1191,6 +1195,8 @@ export class SeedService {
           supplier: { id: supplier.id },
           amount,
           value_pay: valuePay,
+          unit_of_measure:
+            supply.unit_of_measure == 'GRAMOS' ? 'GRAMOS' : 'MILILITROS',
         } as ShoppingSuppliesDetailsDto,
       ],
     };

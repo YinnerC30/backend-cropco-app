@@ -14,17 +14,17 @@ export class CreateSupplyDto {
   @IsIn([
     // Unidades de masa
     'GRAMOS',
-    'KILOGRAMOS',
-    'LIBRAS',
-    'ONZAS',
-    'TONELADAS',
+    // 'KILOGRAMOS',
+    // 'LIBRAS',
+    // 'ONZAS',
+    // 'TONELADAS',
     // Unidades de volumen
     'MILILITROS',
-    'LITROS',
-    'GALONES',
-    'ONZAS_FLUIDAS',
-    'CUCHARADAS',
-    'CUCHARADAS_SOPERAS',
+    // 'LITROS',
+    // 'GALONES',
+    // 'ONZAS_FLUIDAS',
+    // 'CUCHARADAS',
+    // 'CUCHARADAS_SOPERAS',
   ])
   unit_of_measure: UnitType;
 
