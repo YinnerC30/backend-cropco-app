@@ -2,6 +2,7 @@ import { Client } from 'src/clients/entities/client.entity';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
+import { Sale } from 'src/sales/entities/sale.entity';
 import { Supplier } from 'src/suppliers/entities/supplier.entity';
 import { Supply } from 'src/supplies/entities';
 import { User } from 'src/users/entities/user.entity';
@@ -26,7 +27,11 @@ export interface SeedControlledResponse {
       crop: Crop;
       work: Work;
     }[];
-    insertedSales?: unknown[];
+    insertedSales?: {
+      sale: Sale;
+      client: Client;
+      crop: Crop;
+    }[];
     insertedShoppingSupplies?: unknown[];
     insertedConsumptionSupplies?: unknown[];
   };

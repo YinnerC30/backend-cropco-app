@@ -388,8 +388,12 @@ export class SeedService {
             employeeId: payments.employeeId,
             methodOfPayment: payments.methodOfPayment || ('EFECTIVO' as any),
             value_pay: payments.valuePay,
-            harvestsId: Array.isArray(payments.harvestsId) ? [...payments.harvestsId] : [],
-            worksId: Array.isArray(payments.worksId) ? [...payments.worksId] : [],
+            harvestsId: Array.isArray(payments.harvestsId)
+              ? [...payments.harvestsId]
+              : [],
+            worksId: Array.isArray(payments.worksId)
+              ? [...payments.worksId]
+              : [],
           });
 
           console.log('🚀 ~ SeedService ~ payment:', payment);
@@ -842,18 +846,18 @@ export class SeedService {
     amount: number;
     date?: string;
   }): Promise<any> {
-    return true;
-    // const data: HarvestProcessedDto = {
-    //   date: date,
-    //   crop: { id: cropId },
-    //   harvest: { id: harvestId },
-    //   amount,
-    // };
+    const data: HarvestProcessedDto = {
+      date: date,
+      crop: { id: cropId },
+      harvest: { id: harvestId },
+      amount,
+      unit_of_measure: 'GRAMOS',
+    };
 
-    // const harvestProcessed =
-    //   await this.harvestsService.createHarvestProcessed(data);
+    const harvestProcessed =
+      await this.harvestsService.createHarvestProcessed(data);
 
-    // return harvestProcessed;
+    return harvestProcessed;
   }
 
   async CreateWork({
@@ -1015,6 +1019,7 @@ export class SeedService {
     date?: string;
   }): Promise<{ sale: Sale; client: Client; crop: Crop }> {
     const client: Client = (await this.CreateClient({})) as Client;
+    console.log('🚀 ~ SeedService ~ client:', client);
 
     const { crop, harvest } = await this.CreateHarvest({});
     await this.CreateHarvestProcessed({
@@ -1029,6 +1034,7 @@ export class SeedService {
       value_pay: 840_000,
       details: [
         {
+          unit_of_measure: 'GRAMOS',
           amount: quantity,
           value_pay: 840_000,
           crop: { id: crop.id },
@@ -1037,6 +1043,7 @@ export class SeedService {
         } as SaleDetailsDto,
       ],
     };
+    console.log('🚀 ~ SeedService ~ data:', data);
 
     const sale = await this.salesService.create(data);
     return { client, sale, crop };
