@@ -979,7 +979,7 @@ export class HarvestService extends BaseTenantService {
         .leftJoin('details.employee', 'employee')
         .select([
           'CAST(EXTRACT(MONTH FROM harvest.date) AS INTEGER) as month',
-          'SUM(convert_to_grams(details.unit_of_measure::TEXT, details.amount::NUMERIC)) AS amount',
+          'CAST(SUM(convert_to_grams(details.unit_of_measure::TEXT, details.amount::NUMERIC)) AS INTEGER) AS amount',
           'CAST(SUM(DISTINCT harvest.value_pay) AS INTEGER) as value_pay',
         ])
         .where('EXTRACT(YEAR FROM harvest.date) = :year', { year })

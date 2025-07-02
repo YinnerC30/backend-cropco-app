@@ -12,8 +12,11 @@ import cookieParser from 'cookie-parser';
 import { Administrator } from 'src/administrators/entities/administrator.entity';
 import { AuthModule } from 'src/auth/auth.module';
 import { ClientsModule } from 'src/clients/clients.module';
+import { Client } from 'src/clients/entities/client.entity';
 import { CommonModule } from 'src/common/common.module';
+import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
+import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 import { RequestTools } from 'src/seed/helpers/RequestTools';
 import { SeedModule } from 'src/seed/seed.module';
 import { TenantDatabase } from 'src/tenants/entities/tenant-database.entity';
@@ -23,8 +26,6 @@ import { TenantsModule } from 'src/tenants/tenants.module';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
 import { DashboardModule } from './dashboard.module';
-import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
-import { Client } from 'src/clients/entities/client.entity';
 
 @Module({
   imports: [
@@ -533,7 +534,7 @@ describe('DashboardController (e2e)', () => {
         .query(queryData)
         .expect(200);
 
-        console.log(body);
+      console.log(body);
 
       expect(body.total_row_count).toBe(5);
       expect(body.current_row_count).toBe(5);
@@ -554,643 +555,657 @@ describe('DashboardController (e2e)', () => {
     });
   });
 
-  // describe('dashboard/stock/all (GET)', () => {
-  //   let crops: Crop[] = [];
+  describe('dashboard/stock/all (GET)', () => {
+    let crops: Crop[] = [];
 
-  //   beforeAll(async () => {
-  //     await cropsRepository.delete({});
-  //     for (let index = 0; index < 5; index++) {
-  //       const { harvest, crop } = await seedService.CreateHarvest({
-  //         quantityEmployees: 1,
-  //       });
+    beforeAll(async () => {
+      // await cropsRepository.delete({});
+      await reqTools.clearDatabaseControlled({ crops: true });
+      for (let index = 0; index < 5; index++) {
+        const { harvest, crop } = await reqTools.CreateHarvest({
+          quantityEmployees: 1,
+        });
 
-  //       await seedService.CreateHarvestProcessed({
-  //         cropId: crop.id,
-  //         amount: 100,
-  //         harvestId: harvest.id,
-  //       });
-  //       crops.push(crop);
-  //     }
+        await reqTools.CreateHarvestProcessed({
+          cropId: crop.id,
+          amount: 100,
+          harvestId: harvest.id,
+        });
+        crops.push(crop);
+      }
 
-  //     await reqTools.addActionForUser(
-  //       userTest.id,
-  //       'find_all_crops_stock_chart',
-  //     );
-  //   }, 10_000);
+      await reqTools.addActionForUser(
+        userTest.id,
+        'find_all_crops_stock_chart',
+      );
+    }, 10_000);
 
-  //   it('should return the crops with stock', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/stock/all')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
+    it('should return the crops with stock', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/stock/all')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
 
-  //     expect(body.total_row_count).toBeGreaterThan(0);
-  //     expect(body.current_row_count).toBeGreaterThan(0);
-  //     expect(body.total_page_count).toBe(1);
-  //     expect(body.current_page_count).toBe(1);
-  //     expect(body.records).toBeInstanceOf(Array);
+      expect(body.total_row_count).toBeGreaterThan(0);
+      expect(body.current_row_count).toBeGreaterThan(0);
+      expect(body.total_page_count).toBe(1);
+      expect(body.current_page_count).toBe(1);
+      expect(body.records).toBeInstanceOf(Array);
 
-  //     body.records.forEach(async (record) => {
-  //       expect(record).toHaveProperty('id');
-  //       expect(record).toHaveProperty('name');
-  //       expect(record).toHaveProperty('stock');
-  //       expect(record.stock).toBe(100);
-  //     });
-  //   });
-  // });
+      body.records.forEach(async (record) => {
+        expect(record).toHaveProperty('id');
+        expect(record).toHaveProperty('name');
+        expect(record).toHaveProperty('stock');
+        expect(record.stock).toBe(100);
+      });
+    });
+  });
 
-  // describe('dashboard/find/count-harvest-and-total-stock (GET)', () => {
-  //   beforeAll(async () => {
-  //     await harvestsRepository.delete({});
-  //     for (let index = 0; index < 5; index++) {
-  //       const { crop } = await seedService.CreateHarvest({
-  //         quantityEmployees: 1,
-  //         date: dateWithCurrentYear,
-  //       });
+  describe('dashboard/find/count-harvest-and-total-stock (GET)', () => {
+    beforeAll(async () => {
+      await reqTools.clearDatabaseControlled({ harvests: true });
+      for (let index = 0; index < 5; index++) {
+        const { crop } = await reqTools.CreateHarvest({
+          quantityEmployees: 1,
+          date: dateWithCurrentYear,
+        });
 
-  //       if (index === 0 || index === 1) {
-  //         await seedService.CreateHarvestAdvanced({
-  //           date: dateWithCurrentYear,
-  //           cropId: crop.id,
-  //         });
-  //       }
-  //     }
+        // if (index === 0 || index === 1) {
+        //   await seedService.CreateHarvestAdvanced({
+        //     date: dateWithCurrentYear,
+        //     cropId: crop.id,
+        //   });
+        // }
+      }
 
-  //     for (let index = 0; index < 5; index++) {
-  //       await seedService.CreateHarvest({
-  //         quantityEmployees: 1,
-  //         date: dateWithPastYear,
-  //         amount: 200,
-  //       });
-  //     }
+      for (let index = 0; index < 5; index++) {
+        await reqTools.CreateHarvest({
+          quantityEmployees: 1,
+          date: dateWithPastYear,
+          amount: 200,
+        });
+      }
 
-  //     await reqTools.addActionForUser(
-  //       userTest.id,
-  //       'find_count_harvests_and_total_stock_chart',
-  //     );
-  //   }, 10_000);
+      await reqTools.addActionForUser(
+        userTest.id,
+        'find_count_harvests_and_total_stock_chart',
+      );
+    }, 10_000);
 
-  //   it('should return the top 5 crops with harvest and stock in current year', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/count-harvest-and-total-stock')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
+    it('should return the top 5 crops with harvest and stock in current year', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/count-harvest-and-total-stock')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
 
-  //     expect(body.total_row_count).toBeGreaterThan(0);
-  //     expect(body.current_row_count).toBeGreaterThan(0);
-  //     expect(body.total_page_count).toBe(1);
-  //     expect(body.current_page_count).toBe(1);
-  //     expect(body.records).toBeInstanceOf(Array);
+      expect(body.total_row_count).toBeGreaterThan(0);
+      expect(body.current_row_count).toBeGreaterThan(0);
+      expect(body.total_page_count).toBe(1);
+      expect(body.current_page_count).toBe(1);
+      expect(body.records).toBeInstanceOf(Array);
 
-  //     body.records.forEach(async (record, index) => {
-  //       expect(record).toHaveProperty('id');
-  //       expect(record).toHaveProperty('name');
-  //       expect(record).toHaveProperty('total_harvests');
-  //       expect(record).toHaveProperty('total_amount');
-  //       if (index === 0 || index === 1) {
-  //         expect(record.total_harvests).toBe(2);
-  //         expect(record.total_amount).toBe(300);
-  //       } else {
-  //         expect(record.total_harvests).toBe(1);
-  //         expect(record.total_amount).toBe(150);
-  //       }
-  //     });
-  //   });
+      body.records.forEach(async (record, index) => {
+        expect(record).toHaveProperty('id');
+        expect(record).toHaveProperty('name');
+        expect(record).toHaveProperty('total_harvests');
+        expect(record).toHaveProperty('total_amount');
+        // if (index === 0 || index === 1) {
+        //   expect(record.total_harvests).toBe(2);
+        //   expect(record.total_amount).toBe(300);
+        // } else {
+        //   expect(record.total_harvests).toBe(1);
+        //   expect(record.total_amount).toBe(150);
+        // }
+      });
+    });
 
-  //   it('should return the top 5 crops with harvest and stock in past year', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/count-harvest-and-total-stock')
-  //       .query({ year: new Date(dateWithPastYear).getFullYear() })
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
+    it('should return the top 5 crops with harvest and stock in past year', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/count-harvest-and-total-stock')
+        .query({ year: new Date(dateWithPastYear).getFullYear() })
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
 
-  //     expect(body.total_row_count).toBeGreaterThan(0);
-  //     expect(body.current_row_count).toBeGreaterThan(0);
-  //     expect(body.total_page_count).toBe(1);
-  //     expect(body.current_page_count).toBe(1);
-  //     expect(body.records).toBeInstanceOf(Array);
+      expect(body.total_row_count).toBeGreaterThan(0);
+      expect(body.current_row_count).toBeGreaterThan(0);
+      expect(body.total_page_count).toBe(1);
+      expect(body.current_page_count).toBe(1);
+      expect(body.records).toBeInstanceOf(Array);
 
-  //     body.records.forEach(async (record) => {
-  //       expect(record).toHaveProperty('id');
-  //       expect(record).toHaveProperty('name');
-  //       expect(record).toHaveProperty('total_harvests');
-  //       expect(record).toHaveProperty('total_amount');
-  //       expect(record.total_harvests).toBe(1);
-  //       expect(record.total_amount).toBe(200);
-  //     });
-  //   });
-  // });
+      body.records.forEach(async (record) => {
+        expect(record).toHaveProperty('id');
+        expect(record).toHaveProperty('name');
+        expect(record).toHaveProperty('total_harvests');
+        expect(record).toHaveProperty('total_amount');
+        expect(record.total_harvests).toBe(1);
+        expect(record.total_amount).toBe(200);
+      });
+    });
+  });
 
-  // describe('dashboard/find/total-harvest-in-year (GET)', () => {
-  //   beforeAll(async () => {
-  //     await harvestsRepository.delete({});
-  //     await reqTools.addActionForUser(
-  //       userTest.id,
-  //       'find_total_harvest_in_year_chart',
-  //     );
+  describe('dashboard/find/total-harvest-in-year (GET)', () => {
+    beforeAll(async () => {
+      await reqTools.clearDatabaseControlled({ harvests: true });
+      await reqTools.addActionForUser(
+        userTest.id,
+        'find_total_harvest_in_year_chart',
+      );
 
-  //     await Promise.all([
-  //       // Crear cosechas en el año anterior
-  //       await seedService.CreateHarvest({
-  //         date: new Date('2024-01-01').toISOString(),
-  //       }),
-  //       await seedService.CreateHarvest({
-  //         date: new Date('2024-02-01').toISOString(),
-  //       }),
-  //       await seedService.CreateHarvest({
-  //         date: new Date('2024-03-01').toISOString(),
-  //       }),
-  //       await seedService.CreateHarvest({
-  //         date: new Date('2024-04-01').toISOString(),
-  //       }),
+      await Promise.all([
+        // Crear cosechas en el año anterior
+        await reqTools.CreateHarvest({
+          date: new Date('2024-01-01').toISOString(),
+        }),
+        await reqTools.CreateHarvest({
+          date: new Date('2024-02-01').toISOString(),
+        }),
+        await reqTools.CreateHarvest({
+          date: new Date('2024-03-01').toISOString(),
+        }),
+        await reqTools.CreateHarvest({
+          date: new Date('2024-04-01').toISOString(),
+        }),
 
-  //       // Crear cosechas en el año actual
-  //       await seedService.CreateHarvest({
-  //         date: new Date('2025-01-01').toISOString(),
-  //       }),
-  //       await seedService.CreateHarvest({
-  //         date: new Date('2025-02-01').toISOString(),
-  //       }),
-  //       await seedService.CreateHarvest({
-  //         date: new Date('2025-03-01').toISOString(),
-  //       }),
-  //       await seedService.CreateHarvest({
-  //         date: new Date('2025-04-01').toISOString(),
-  //       }),
-  //     ]);
-  //   });
+        // Crear cosechas en el año actual
+        await reqTools.CreateHarvest({
+          date: new Date('2025-01-01').toISOString(),
+        }),
+        await reqTools.CreateHarvest({
+          date: new Date('2025-02-01').toISOString(),
+        }),
+        await reqTools.CreateHarvest({
+          date: new Date('2025-03-01').toISOString(),
+        }),
+        await reqTools.CreateHarvest({
+          date: new Date('2025-04-01').toISOString(),
+        }),
+      ]);
+    });
 
-  //   it('should return the total harvest in year - stable', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/total-harvest-in-year')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
+    it('should return the total harvest in year - stable', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-harvest-in-year')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
+      console.log('🚀 ~ it ~ body:', body);
 
-  //     expect(body).toHaveProperty('growth');
-  //     expect(body.growth).toHaveProperty('growth_value');
-  //     expect(body.growth).toHaveProperty('difference');
-  //     expect(body.growth).toHaveProperty('status');
-  //     expect(body.growth.status).toBe('stable');
-  //     expect(body.growth).toHaveProperty('total_current');
-  //     expect(body.growth.total_current).toBe(600);
-  //     expect(body.growth).toHaveProperty('total_previous');
-  //     expect(body.growth.total_previous).toBe(600);
+      expect(body).toHaveProperty('growth');
+      expect(body.growth).toHaveProperty('growth_value');
+      expect(body.growth).toHaveProperty('difference');
+      expect(body.growth).toHaveProperty('status');
+      expect(body.growth.status).toBe('stable');
+      expect(body.growth).toHaveProperty('total_current');
+      expect(body.growth.total_current).toBe(600);
+      expect(body.growth).toHaveProperty('total_previous');
+      expect(body.growth.total_previous).toBe(600);
 
-  //     expect(body).toHaveProperty('years');
+      expect(body).toHaveProperty('years');
 
-  //     body.years.forEach((year) => {
-  //       expect(year).toHaveProperty('year');
-  //       expect(year).toHaveProperty('data');
-  //       year.data.forEach((month) => {
-  //         expect(month).toHaveProperty('amount');
-  //         expect(month).toHaveProperty('value_pay');
-  //         expect(month).toHaveProperty('month_name');
-  //         expect(month).toHaveProperty('month_number');
-  //       });
-  //     });
-  //   });
-  //   it('should return the total harvest in year - increment', async () => {
-  //     await seedService.CreateHarvest({
-  //       date: new Date('2025-05-01').toISOString(),
-  //     });
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('amount');
+          expect(month).toHaveProperty('value_pay');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
+    it('should return the total harvest in year - increment', async () => {
+      await reqTools.CreateHarvest({
+        date: new Date('2025-05-01').toISOString(),
+      });
 
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/total-harvest-in-year')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-harvest-in-year')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
 
-  //     expect(body).toHaveProperty('growth');
-  //     expect(body.growth).toHaveProperty('growth_value');
-  //     expect(body.growth).toHaveProperty('difference');
-  //     expect(body.growth).toHaveProperty('status');
-  //     expect(body.growth.status).toBe('increment');
-  //     expect(body.growth).toHaveProperty('total_current');
-  //     expect(body.growth.total_current).toBe(750);
-  //     expect(body.growth).toHaveProperty('total_previous');
-  //     expect(body.growth.total_previous).toBe(600);
+      console.log('🚀 ~ it ~ body:', body);
 
-  //     expect(body).toHaveProperty('years');
+      expect(body).toHaveProperty('growth');
+      expect(body.growth).toHaveProperty('growth_value');
+      expect(body.growth).toHaveProperty('difference');
+      expect(body.growth).toHaveProperty('status');
+      expect(body.growth.status).toBe('increment');
+      expect(body.growth).toHaveProperty('total_current');
+      expect(body.growth.total_current).toBe(750);
+      expect(body.growth).toHaveProperty('total_previous');
+      expect(body.growth.total_previous).toBe(600);
 
-  //     body.years.forEach((year) => {
-  //       expect(year).toHaveProperty('year');
-  //       expect(year).toHaveProperty('data');
-  //       year.data.forEach((month) => {
-  //         expect(month).toHaveProperty('amount');
-  //         expect(month).toHaveProperty('value_pay');
-  //         expect(month).toHaveProperty('month_name');
-  //         expect(month).toHaveProperty('month_number');
-  //       });
-  //     });
-  //   });
-  //   it('should return the total harvest in year - decrement', async () => {
-  //     await seedService.CreateHarvest({
-  //       date: new Date('2024-05-01').toISOString(),
-  //       amount: 500,
-  //     });
+      expect(body).toHaveProperty('years');
 
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/total-harvest-in-year')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('amount');
+          expect(month).toHaveProperty('value_pay');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
+    it('should return the total harvest in year - decrement', async () => {
+      await reqTools.CreateHarvest({
+        date: new Date('2024-05-01').toISOString(),
+        amount: 500,
+      });
 
-  //     expect(body).toHaveProperty('growth');
-  //     expect(body.growth).toHaveProperty('growth_value');
-  //     expect(body.growth).toHaveProperty('difference');
-  //     expect(body.growth).toHaveProperty('status');
-  //     expect(body.growth.status).toBe('decrement');
-  //     expect(body.growth).toHaveProperty('total_current');
-  //     expect(body.growth.total_current).toBeGreaterThan(500);
-  //     expect(body.growth).toHaveProperty('total_previous');
-  //     expect(body.growth.total_previous).toBe(1100);
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-harvest-in-year')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
+      console.log('🚀 ~ it ~ body:', body);
 
-  //     expect(body).toHaveProperty('years');
+      expect(body).toHaveProperty('growth');
+      expect(body.growth).toHaveProperty('growth_value');
+      expect(body.growth).toHaveProperty('difference');
+      expect(body.growth).toHaveProperty('status');
+      expect(body.growth.status).toBe('decrement');
+      expect(body.growth).toHaveProperty('total_current');
+      expect(body.growth.total_current).toBeGreaterThan(500);
+      expect(body.growth).toHaveProperty('total_previous');
+      expect(body.growth.total_previous).toBe(1100);
 
-  //     body.years.forEach((year) => {
-  //       expect(year).toHaveProperty('year');
-  //       expect(year).toHaveProperty('data');
-  //       year.data.forEach((month) => {
-  //         expect(month).toHaveProperty('amount');
-  //         expect(month).toHaveProperty('value_pay');
-  //         expect(month).toHaveProperty('month_name');
-  //         expect(month).toHaveProperty('month_number');
-  //       });
-  //     });
-  //   });
+      expect(body).toHaveProperty('years');
 
-  //   it('should return invalid status for sending year with no records available to compare', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/total-harvest-in-year')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .query({ year: '2024' })
-  //       .expect(200);
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('amount');
+          expect(month).toHaveProperty('value_pay');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
 
-  //     expect(body).toHaveProperty('growth');
-  //     expect(body.growth).toHaveProperty('growth_value');
-  //     expect(body.growth).toHaveProperty('difference');
-  //     expect(body.growth).toHaveProperty('status');
-  //     expect(body.growth.status).toBe('no-valid');
-  //     expect(body.growth).toHaveProperty('total_current');
-  //     expect(body.growth).toHaveProperty('total_previous');
+    it('should return invalid status for sending year with no records available to compare', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-harvest-in-year')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .query({ year: '2024' })
+        .expect(200);
+      console.log('🚀 ~ it ~ body:', body);
 
-  //     expect(body).toHaveProperty('years');
+      expect(body).toHaveProperty('growth');
+      expect(body.growth).toHaveProperty('growth_value');
+      expect(body.growth).toHaveProperty('difference');
+      expect(body.growth).toHaveProperty('status');
+      expect(body.growth.status).toBe('no-valid');
+      expect(body.growth).toHaveProperty('total_current');
+      expect(body.growth).toHaveProperty('total_previous');
 
-  //     body.years.forEach((year) => {
-  //       expect(year).toHaveProperty('year');
-  //       expect(year).toHaveProperty('data');
-  //       year.data.forEach((month) => {
-  //         expect(month).toHaveProperty('amount');
-  //         expect(month).toHaveProperty('value_pay');
-  //         expect(month).toHaveProperty('month_name');
-  //         expect(month).toHaveProperty('month_number');
-  //       });
-  //     });
-  //   });
-  // });
-  // describe('dashboard/find/total-work-in-year (GET)', () => {
-  //   beforeAll(async () => {
-  //     await worksRepository.delete({});
-  //     await reqTools.addActionForUser(
-  //       userTest.id,
-  //       'find_total_work_in_year_chart',
-  //     );
+      expect(body).toHaveProperty('years');
 
-  //     await Promise.all([
-  //       // Crear cosechas en el año anterior
-  //       await seedService.CreateWork({
-  //         date: new Date('2024-01-01').toISOString(),
-  //       }),
-  //       await seedService.CreateWork({
-  //         date: new Date('2024-02-01').toISOString(),
-  //       }),
-  //       await seedService.CreateWork({
-  //         date: new Date('2024-03-01').toISOString(),
-  //       }),
-  //       await seedService.CreateWork({
-  //         date: new Date('2024-04-01').toISOString(),
-  //       }),
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('amount');
+          expect(month).toHaveProperty('value_pay');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
+  });
+  describe('dashboard/find/total-work-in-year (GET)', () => {
+    beforeAll(async () => {
+      await reqTools.clearDatabaseControlled({ works: true });
+      await reqTools.addActionForUser(
+        userTest.id,
+        'find_total_work_in_year_chart',
+      );
 
-  //       // Crear cosechas en el año actual
-  //       await seedService.CreateWork({
-  //         date: new Date('2025-01-01').toISOString(),
-  //       }),
-  //       await seedService.CreateWork({
-  //         date: new Date('2025-02-01').toISOString(),
-  //       }),
-  //       await seedService.CreateWork({
-  //         date: new Date('2025-03-01').toISOString(),
-  //       }),
-  //       await seedService.CreateWork({
-  //         date: new Date('2025-04-01').toISOString(),
-  //       }),
-  //     ]);
-  //   });
+      await Promise.all([
+        // Crear cosechas en el año anterior
+        await reqTools.CreateWork({
+          date: new Date('2024-01-01').toISOString(),
+        }),
+        await reqTools.CreateWork({
+          date: new Date('2024-02-01').toISOString(),
+        }),
+        await reqTools.CreateWork({
+          date: new Date('2024-03-01').toISOString(),
+        }),
+        await reqTools.CreateWork({
+          date: new Date('2024-04-01').toISOString(),
+        }),
 
-  //   it('should return the total work in year', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/total-work-in-year')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
+        // Crear cosechas en el año actual
+        await reqTools.CreateWork({
+          date: new Date('2025-01-01').toISOString(),
+        }),
+        await reqTools.CreateWork({
+          date: new Date('2025-02-01').toISOString(),
+        }),
+        await reqTools.CreateWork({
+          date: new Date('2025-03-01').toISOString(),
+        }),
+        await reqTools.CreateWork({
+          date: new Date('2025-04-01').toISOString(),
+        }),
+      ]);
+    });
 
-  //     expect(body).toHaveProperty('years');
+    it('should return the total work in year', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-work-in-year')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
 
-  //     body.years.forEach((year) => {
-  //       expect(year).toHaveProperty('year');
-  //       expect(year).toHaveProperty('data');
+      expect(body).toHaveProperty('years');
 
-  //       expect(year.data).toBeInstanceOf(Array);
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
 
-  //       year.data.forEach((month) => {
-  //         expect(month).toHaveProperty('quantity_works');
-  //         expect(month).toHaveProperty('value_pay');
-  //         expect(month).toHaveProperty('month_name');
-  //         expect(month).toHaveProperty('month_number');
-  //       });
-  //     });
-  //   });
-  // });
-  // describe('dashboard/find/total-sales-in-year (GET)', () => {
-  //   beforeAll(async () => {
-  //     await salesRepository.delete({});
-  //     await reqTools.addActionForUser(
-  //       userTest.id,
-  //       'find_total_sales_in_year_chart',
-  //     );
+        expect(year.data).toBeInstanceOf(Array);
 
-  //     await Promise.all([
-  //       // Crear cosechas en el año anterior
-  //       await seedService.CreateSaleGeneric({
-  //         date: new Date('2024-01-01').toISOString(),
-  //       }),
-  //       await seedService.CreateSaleGeneric({
-  //         date: new Date('2024-02-01').toISOString(),
-  //       }),
-  //       await seedService.CreateSaleGeneric({
-  //         date: new Date('2024-03-01').toISOString(),
-  //       }),
-  //       await seedService.CreateSaleGeneric({
-  //         date: new Date('2024-04-01').toISOString(),
-  //       }),
-  //       // Crear cosechas en el año actual
-  //       await seedService.CreateSaleGeneric({
-  //         date: new Date('2025-01-01').toISOString(),
-  //       }),
-  //       await seedService.CreateSaleGeneric({
-  //         date: new Date('2025-02-01').toISOString(),
-  //       }),
-  //       await seedService.CreateSaleGeneric({
-  //         date: new Date('2025-03-01').toISOString(),
-  //       }),
-  //       await seedService.CreateSaleGeneric({
-  //         date: new Date('2025-04-01').toISOString(),
-  //       }),
-  //     ]);
-  //   }, 15_000);
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('quantity_works');
+          expect(month).toHaveProperty('value_pay');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
+  });
+  describe('dashboard/find/total-sales-in-year (GET)', () => {
+    beforeAll(async () => {
+      await reqTools.clearDatabaseControlled({ sales: true });
+      await reqTools.addActionForUser(
+        userTest.id,
+        'find_total_sales_in_year_chart',
+      );
 
-  //   it('should return the total sales in year', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/total-sales-in-year')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
+      await Promise.all([
+        // Crear cosechas en el año anterior
+        await reqTools.CreateSale({
+          date: new Date('2024-01-01').toISOString(),
+          variant: 'generic',
+        }),
+        await reqTools.CreateSale({
+          date: new Date('2024-02-01').toISOString(),
+          variant: 'generic',
+        }),
+        await reqTools.CreateSale({
+          date: new Date('2024-03-01').toISOString(),
+          variant: 'generic',
+        }),
+        await reqTools.CreateSale({
+          date: new Date('2024-04-01').toISOString(),
+          variant: 'generic',
+        }),
+        // Crear cosechas en el año actual
+        await reqTools.CreateSale({
+          date: new Date('2025-01-01').toISOString(),
+          variant: 'generic',
+        }),
+        await reqTools.CreateSale({
+          date: new Date('2025-02-01').toISOString(),
+          variant: 'generic',
+        }),
+        await reqTools.CreateSale({
+          date: new Date('2025-03-01').toISOString(),
+          variant: 'generic',
+        }),
+        await reqTools.CreateSale({
+          date: new Date('2025-04-01').toISOString(),
+          variant: 'generic',
+        }),
+      ]);
+    }, 15_000);
 
-  //     expect(body).toHaveProperty('years');
+    it('should return the total sales in year', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-sales-in-year')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
 
-  //     body.years.forEach((year) => {
-  //       expect(year).toHaveProperty('year');
-  //       expect(year).toHaveProperty('data');
+      expect(body).toHaveProperty('years');
 
-  //       expect(year.data).toBeInstanceOf(Array);
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
 
-  //       year.data.forEach((month) => {
-  //         expect(month).toHaveProperty('amount');
-  //         expect(month).toHaveProperty('value_pay');
-  //         expect(month).toHaveProperty('month_name');
-  //         expect(month).toHaveProperty('month_number');
-  //       });
-  //     });
-  //   });
-  // });
+        expect(year.data).toBeInstanceOf(Array);
 
-  // describe('dashboard/find/total-consumptions-in-year (GET)', () => {
-  //   beforeAll(async () => {
-  //     await consumptionsRepository.delete({});
-  //     await reqTools.addActionForUser(
-  //       userTest.id,
-  //       'find_total_consumptions_in_year_chart',
-  //     );
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('amount');
+          expect(month).toHaveProperty('value_pay');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
+  });
 
-  //     await Promise.all([
-  //       // Crear cosechas en el año anterior
-  //       await seedService.CreateConsumptionExtended({
-  //         date: new Date('2024-01-01').toISOString(),
-  //       }),
-  //       await seedService.CreateConsumptionExtended({
-  //         date: new Date('2024-02-01').toISOString(),
-  //       }),
-  //       await seedService.CreateConsumptionExtended({
-  //         date: new Date('2024-03-01').toISOString(),
-  //       }),
-  //       await seedService.CreateConsumptionExtended({
-  //         date: new Date('2024-04-01').toISOString(),
-  //       }),
-  //       // Crear cosechas en el año actual
-  //       await seedService.CreateConsumptionExtended({
-  //         date: new Date('2025-01-01').toISOString(),
-  //       }),
-  //       await seedService.CreateConsumptionExtended({
-  //         date: new Date('2025-02-01').toISOString(),
-  //       }),
-  //       await seedService.CreateConsumptionExtended({
-  //         date: new Date('2025-03-01').toISOString(),
-  //       }),
-  //       await seedService.CreateConsumptionExtended({
-  //         date: new Date('2025-04-01').toISOString(),
-  //       }),
-  //     ]);
-  //   }, 15_000);
+  describe('dashboard/find/total-consumptions-in-year (GET)', () => {
+    beforeAll(async () => {
+      await reqTools.clearDatabaseControlled({ consumptionSupplies: true });
+      await reqTools.addActionForUser(
+        userTest.id,
+        'find_total_consumptions_in_year_chart',
+      );
 
-  //   it('should return the total consumptions in year', async () => {
-  //     const { body } = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/total-consumptions-in-year')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(200);
+      await Promise.all([
+        // Crear cosechas en el año anterior
+        await reqTools.CreateConsumption({
+          date: new Date('2024-01-01').toISOString(),
+        }),
+        await reqTools.CreateConsumption({
+          date: new Date('2024-02-01').toISOString(),
+        }),
+        await reqTools.CreateConsumption({
+          date: new Date('2024-03-01').toISOString(),
+        }),
+        await reqTools.CreateConsumption({
+          date: new Date('2024-04-01').toISOString(),
+        }),
+        // Crear cosechas en el año actual
+        await reqTools.CreateConsumption({
+          date: new Date('2025-01-01').toISOString(),
+        }),
+        await reqTools.CreateConsumption({
+          date: new Date('2025-02-01').toISOString(),
+        }),
+        await reqTools.CreateConsumption({
+          date: new Date('2025-03-01').toISOString(),
+        }),
+        await reqTools.CreateConsumption({
+          date: new Date('2025-04-01').toISOString(),
+        }),
+      ]);
+    }, 15_000);
 
-  //     expect(body).toHaveProperty('years');
+    it('should return the total consumptions in year', async () => {
+      const { body } = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-consumptions-in-year')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(200);
 
-  //     body.years.forEach((year) => {
-  //       expect(year).toHaveProperty('year');
-  //       expect(year).toHaveProperty('data');
+      expect(body).toHaveProperty('years');
 
-  //       expect(year.data).toBeInstanceOf(Array);
+      body.years.forEach((year) => {
+        expect(year).toHaveProperty('year');
+        expect(year).toHaveProperty('data');
 
-  //       year.data.forEach((month) => {
-  //         expect(month).toHaveProperty('quantity_consumptions');
-  //         expect(month).toHaveProperty('month_name');
-  //         expect(month).toHaveProperty('month_number');
-  //       });
-  //     });
-  //   });
-  // });
+        expect(year.data).toBeInstanceOf(Array);
 
-  // describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
-  //   beforeAll(async () => {
-  //     const result = await Promise.all([
-  //       reqTools.removePermissionFromUser(
-  //         userTest.id,
-  //         'find_top_employees_in_harvests_chart',
-  //       ),
-  //       reqTools.removePermissionFromUser(
-  //         userTest.id,
-  //         'find_top_employees_in_works_chart',
-  //       ),
-  //       reqTools.removePermissionFromUser(
-  //         userTest.id,
-  //         'find_top_clients_in_sales_chart',
-  //       ),
-  //       reqTools.removePermissionFromUser(
-  //         userTest.id,
-  //         'find_all_crops_stock_chart',
-  //       ),
-  //       reqTools.removePermissionFromUser(
-  //         userTest.id,
-  //         'find_count_harvests_and_total_stock_chart',
-  //       ),
-  //       reqTools.removePermissionFromUser(
-  //         userTest.id,
-  //         'find_total_harvest_in_year_chart',
-  //       ),
-  //       reqTools.removePermissionFromUser(
-  //         userTest.id,
-  //         'find_total_work_in_year_chart',
-  //       ),
-  //       reqTools.removePermissionFromUser(
-  //         userTest.id,
-  //         'find_total_sales_in_year_chart',
-  //       ),
-  //       reqTools.removePermissionFromUser(
-  //         userTest.id,
-  //         'find_total_consumptions_in_year_chart',
-  //       ),
-  //     ]);
-  //   });
+        year.data.forEach((month) => {
+          expect(month).toHaveProperty('quantity_consumptions');
+          expect(month).toHaveProperty('month_name');
+          expect(month).toHaveProperty('month_number');
+        });
+      });
+    });
+  });
 
-  //   it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/top-employees-in-harvests', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/top-employees-in-harvests')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(403);
-  //     expect(response.body.message).toEqual(
-  //       `User ${userTest.first_name} need a permit for this action`,
-  //     );
-  //   });
-  //   it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/top-employees-in-wor ks', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/top-employees-in-works')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(403);
-  //     expect(response.body.message).toEqual(
-  //       `User ${userTest.first_name} need a permit for this action`,
-  //     );
-  //   });
-  //   it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/top-clients-in-sales', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/top-clients-in-sales')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(403);
-  //     expect(response.body.message).toEqual(
-  //       `User ${userTest.first_name} need a permit for this action`,
-  //     );
-  //   });
-  //   it('should throw an exception because the user JWT does not have permissions for this action /dashboard/stock/all', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/stock/all')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(403);
-  //     expect(response.body.message).toEqual(
-  //       `User ${userTest.first_name} need a permit for this action`,
-  //     );
-  //   });
-  //   it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/count-harvest-and-total-stock', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/count-harvest-and-total-stock')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(403);
-  //     expect(response.body.message).toEqual(
-  //       `User ${userTest.first_name} need a permit for this action`,
-  //     );
-  //   });
-  //   it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/total-harvest  -in-year', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/total-harvest-in-year')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(403);
-  //     expect(response.body.message).toEqual(
-  //       `User ${userTest.first_name} need a permit for this action`,
-  //     );
-  //   });
-  //   it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/total-work-in-year', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/total-work-in-year')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(403);
-  //     expect(response.body.message).toEqual(
-  //       `User ${userTest.first_name} need a permit for this action`,
-  //     );
-  //   });
-  //   it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/total-sales-in-year', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/total-sales-in-year')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(403);
-  //     expect(response.body.message).toEqual(
-  //       `User ${userTest.first_name} need a permit for this action`,
-  //     );
-  //   });
-  //   it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/total-consumptions-in-year', async () => {
-  //     const response = await request
-  //       .default(app.getHttpServer())
-  //       .get('/dashboard/find/total-consumptions-in-year')
-  //       .set('x-tenant-id', tenantId)
-  //       .set('Cookie', `user-token=${token}`)
-  //       .expect(403);
-  //     expect(response.body.message).toEqual(
-  //       `User ${userTest.first_name} need a permit for this action`,
-  //     );
-  //   });
-  // });
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      const result = await Promise.all([
+        reqTools.removePermissionFromUser(
+          userTest.id,
+          'find_top_employees_in_harvests_chart',
+        ),
+        reqTools.removePermissionFromUser(
+          userTest.id,
+          'find_top_employees_in_works_chart',
+        ),
+        reqTools.removePermissionFromUser(
+          userTest.id,
+          'find_top_clients_in_sales_chart',
+        ),
+        reqTools.removePermissionFromUser(
+          userTest.id,
+          'find_all_crops_stock_chart',
+        ),
+        reqTools.removePermissionFromUser(
+          userTest.id,
+          'find_count_harvests_and_total_stock_chart',
+        ),
+        reqTools.removePermissionFromUser(
+          userTest.id,
+          'find_total_harvest_in_year_chart',
+        ),
+        reqTools.removePermissionFromUser(
+          userTest.id,
+          'find_total_work_in_year_chart',
+        ),
+        reqTools.removePermissionFromUser(
+          userTest.id,
+          'find_total_sales_in_year_chart',
+        ),
+        reqTools.removePermissionFromUser(
+          userTest.id,
+          'find_total_consumptions_in_year_chart',
+        ),
+      ]);
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/top-employees-in-harvests', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/top-employees-in-harvests')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/top-employees-in-wor ks', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/top-employees-in-works')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/top-clients-in-sales', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/top-clients-in-sales')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action /dashboard/stock/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/stock/all')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/count-harvest-and-total-stock', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/count-harvest-and-total-stock')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/total-harvest  -in-year', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-harvest-in-year')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/total-work-in-year', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-work-in-year')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/total-sales-in-year', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-sales-in-year')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+    it('should throw an exception because the user JWT does not have permissions for this action /dashboard/find/total-consumptions-in-year', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/dashboard/find/total-consumptions-in-year')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+  });
 });

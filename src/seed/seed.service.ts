@@ -400,6 +400,7 @@ export class SeedService {
           });
         } else {
           consumption = await this.CreateConsumptionExtended({
+            date: consumptions.date,
             quantitySupplies: consumptions.quantitySupplies,
             amountForItem: consumptions.amountForItem,
           });
@@ -1105,6 +1106,7 @@ export class SeedService {
   }
 
   async CreateConsumption({
+    date = InformationGenerator.generateRandomDate({}),
     supplyId,
     cropId,
     amount = 2000,
@@ -1112,6 +1114,7 @@ export class SeedService {
     supplyId?: string;
     cropId?: string;
     amount?: number;
+    date?: string
   }): Promise<{
     consumption: SuppliesConsumption;
     crop: Crop;

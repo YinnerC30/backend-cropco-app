@@ -320,6 +320,10 @@ export class PaymentOptionsDto {
 }
 
 export class ConsumptionOptionsDto {
+
+  @IsOptional()
+  @IsDateString()
+  date?: string;
   /**
    * Número de consumos a crear.
    */
