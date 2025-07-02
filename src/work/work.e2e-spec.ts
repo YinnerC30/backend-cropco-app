@@ -208,7 +208,6 @@ describe('WorksController (e2e)', () => {
         .set('Cookie', `user-token=${token}`)
         .expect(400);
 
-
       errorMessage.forEach((msg) => {
         expect(body.message).toContain(msg);
       });

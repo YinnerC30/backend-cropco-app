@@ -2,7 +2,10 @@ import { INestApplication } from '@nestjs/common';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
 import {
+  HarvestOptionsDto,
+  HarvestProcessedOptionsDto,
   PaymentOptionsDto,
+  SaleOptionsDto,
   SeedControlledDto,
   WorkOptionsDto,
 } from '../dto/seed.dto';
@@ -398,6 +401,21 @@ export class RequestTools {
     return employeeMapper;
   }
 
+  public async CreateClient() {
+    const client = (await this.createSeedData({ clients: 1 })).history
+      .insertedClients[0];
+
+    const clientMapper = {
+      id: client.id,
+      first_name: client.first_name,
+      last_name: client.last_name,
+      email: client.email,
+      cell_phone_number: client.cell_phone_number,
+      address: client.address,
+    };
+    return clientMapper;
+  }
+
   public async CreateCrop() {
     const crop = (await this.createSeedData({ crops: 1 })).history
       .insertedCrops[0];
@@ -422,7 +440,21 @@ export class RequestTools {
     return result.history.insertedWorks[0];
   }
 
-  async CreatePayment(opt: PaymentOptionsDto) {
+  async CreateHarvest(opt?: HarvestOptionsDto) {
+    const result = await this.createSeedData({
+      harvests: { quantity: 1, ...opt },
+    });
+    return result.history.insertedHarvests[0];
+  }
+
+  async CreateHarvestProcessed(opt?: HarvestProcessedOptionsDto) {
+    const result = await this.createSeedData({
+      harvestsProcessed: { quantity: 1, ...opt },
+    });
+    return result.history.insertedHarvestsProcessed[0];
+  }
+
+  async CreatePayment(opt?: PaymentOptionsDto) {
     const result = await this.createSeedData({
       payments: {
         quantity: 1,
@@ -430,5 +462,15 @@ export class RequestTools {
       },
     });
     return result.history.insertedPayments[0];
+  }
+
+  async CreateSale(opt?: SaleOptionsDto) {
+    const result = await this.createSeedData({
+      sales: {
+        quantity: 1,
+        ...opt,
+      },
+    });
+    return result.history.insertedSales[0];
   }
 }

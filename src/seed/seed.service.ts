@@ -1021,6 +1021,7 @@ export class SeedService {
           crop: { id: cropId },
           client: { id: clientId || client.id },
           is_receivable: isReceivable,
+          unit_of_measure: 'GRAMOS',
         } as SaleDetailsDto,
       ],
     };
