@@ -1,7 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
-import { SeedControlledDto } from '../dto/seed.dto';
+import {
+  PaymentOptionsDto,
+  SeedControlledDto,
+  WorkOptionsDto,
+} from '../dto/seed.dto';
 import { TestingModule } from '@nestjs/testing';
 import { Repository } from 'typeorm';
 import { Tenant } from 'src/tenants/entities/tenant.entity';
@@ -376,5 +380,55 @@ export class RequestTools {
    */
   public getTenantIdPublic(): string {
     return this.getTenantId();
+  }
+
+  // Creatión records
+  public async CreateEmployee() {
+    const employee = (await this.createSeedData({ employees: 1 })).history
+      .insertedEmployees[0];
+
+    const employeeMapper = {
+      id: employee.id,
+      first_name: employee.first_name,
+      last_name: employee.last_name,
+      email: employee.email,
+      cell_phone_number: employee.cell_phone_number,
+      address: employee.address,
+    };
+    return employeeMapper;
+  }
+
+  public async CreateCrop() {
+    const crop = (await this.createSeedData({ crops: 1 })).history
+      .insertedCrops[0];
+
+    const cropMapper = {
+      id: crop.id,
+      name: crop.name,
+      description: crop.description,
+      number_hectares: crop.number_hectares,
+      units: crop.units,
+      location: crop.location,
+      date_of_creation: crop.date_of_creation,
+      date_of_termination: crop.date_of_termination,
+    };
+    return cropMapper;
+  }
+
+  async CreateWork(opt?: WorkOptionsDto) {
+    const result = await this.createSeedData({
+      works: { quantity: 1, ...opt },
+    });
+    return result.history.insertedWorks[0];
+  }
+
+  async CreatePayment(opt: PaymentOptionsDto) {
+    const result = await this.createSeedData({
+      payments: {
+        quantity: 1,
+        ...opt,
+      },
+    });
+    return result.history.insertedPayments[0];
   }
 }

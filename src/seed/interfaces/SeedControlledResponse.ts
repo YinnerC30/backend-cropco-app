@@ -41,5 +41,6 @@ export interface SeedControlledResponse {
       supply: Supply;
     }[];
     insertedConsumptionSupplies?: unknown[];
+    insertedPayments?: unknown[]
   };
 }
