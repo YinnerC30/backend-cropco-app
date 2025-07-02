@@ -391,8 +391,6 @@ export class SeedService {
       for (let i = 0; i < consumptions.quantity; i++) {
         let consumption;
         if (consumptions.variant === 'normal') {
-          console.log('entro en normal');
-          console.log('props', { ...consumptions });
           consumption = await this.CreateConsumption({
             supplyId: consumptions.supplyId,
             cropId: consumptions.cropId,
@@ -1055,8 +1053,6 @@ export class SeedService {
     date?: string;
   }): Promise<{ sale: Sale; client: Client; crop: Crop }> {
     const client: Client = (await this.CreateClient({})) as Client;
-    console.log('🚀 ~ SeedService ~ client:', client);
-
     const { crop, harvest } = await this.CreateHarvest({});
     await this.CreateHarvestProcessed({
       cropId: crop.id,
@@ -1079,8 +1075,6 @@ export class SeedService {
         } as SaleDetailsDto,
       ],
     };
-    console.log('🚀 ~ SeedService ~ data:', data);
-
     const sale = await this.salesService.create(data);
     return { client, sale, crop };
   }
@@ -1163,8 +1157,6 @@ export class SeedService {
     supplies: Supply[];
   }> {
     const crop: Crop = (await this.CreateCrop({})) as Crop;
-    console.log('🚀 ~ SeedService ~ crop:', crop);
-
     const supplies = (await Promise.all(
       Array.from({ length: quantitySupplies }).map(async () => {
         const supply = await this.CreateSupply({});
@@ -1174,9 +1166,6 @@ export class SeedService {
         return supply;
       }),
     )) as Supply[];
-
-    console.log('🚀 ~ SeedService ~ supplies:', supplies);
-
     const data: ConsumptionSuppliesDto = {
       date: date,
       details: supplies.map((supply) => {
@@ -1296,8 +1285,6 @@ export class SeedService {
         works: [...(worksId as DeepPartial<WorkDetails>[])],
       },
     });
-    // console.log('🚀 ~ SeedService ~ data:', data);
-
     return await this.paymentsService.create(data);
   }
 }

@@ -355,7 +355,7 @@ describe('DashboardController (e2e)', () => {
       expect(body.current_page_count).toBe(1);
       expect(body.records).toBeInstanceOf(Array);
 
-      console.log(body);
+      
 
       body.records.forEach(async (record) => {
         expect(record).toHaveProperty('id');
@@ -388,7 +388,7 @@ describe('DashboardController (e2e)', () => {
       expect(body.current_page_count).toBe(1);
       expect(body.records).toBeInstanceOf(Array);
 
-      console.log(body);
+      
 
       body.records.forEach(async (record) => {
         expect(record).toHaveProperty('id');
@@ -501,7 +501,7 @@ describe('DashboardController (e2e)', () => {
         .query(queryData)
         .expect(200);
 
-      console.log(body);
+      
 
       expect(body.total_row_count).toBe(2);
       expect(body.current_row_count).toBe(2);
@@ -534,7 +534,7 @@ describe('DashboardController (e2e)', () => {
         .query(queryData)
         .expect(200);
 
-      console.log(body);
+      
 
       expect(body.total_row_count).toBe(5);
       expect(body.current_row_count).toBe(5);
@@ -735,8 +735,6 @@ describe('DashboardController (e2e)', () => {
         .set('x-tenant-id', tenantId)
         .set('Cookie', `user-token=${token}`)
         .expect(200);
-      console.log('🚀 ~ it ~ body:', body);
-
       expect(body).toHaveProperty('growth');
       expect(body.growth).toHaveProperty('growth_value');
       expect(body.growth).toHaveProperty('difference');
@@ -771,9 +769,6 @@ describe('DashboardController (e2e)', () => {
         .set('x-tenant-id', tenantId)
         .set('Cookie', `user-token=${token}`)
         .expect(200);
-
-      console.log('🚀 ~ it ~ body:', body);
-
       expect(body).toHaveProperty('growth');
       expect(body.growth).toHaveProperty('growth_value');
       expect(body.growth).toHaveProperty('difference');
@@ -809,8 +804,6 @@ describe('DashboardController (e2e)', () => {
         .set('x-tenant-id', tenantId)
         .set('Cookie', `user-token=${token}`)
         .expect(200);
-      console.log('🚀 ~ it ~ body:', body);
-
       expect(body).toHaveProperty('growth');
       expect(body.growth).toHaveProperty('growth_value');
       expect(body.growth).toHaveProperty('difference');
@@ -843,8 +836,6 @@ describe('DashboardController (e2e)', () => {
         .set('Cookie', `user-token=${token}`)
         .query({ year: '2024' })
         .expect(200);
-      console.log('🚀 ~ it ~ body:', body);
-
       expect(body).toHaveProperty('growth');
       expect(body.growth).toHaveProperty('growth_value');
       expect(body.growth).toHaveProperty('difference');

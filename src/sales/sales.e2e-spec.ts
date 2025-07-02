@@ -1290,7 +1290,6 @@ describe('SalesController (e2e)', () => {
             .set('Cookie', `user-token=${token}`)
             .send(data2),
         ]);
-        console.log(JSON.stringify(result, null,2));
       });
 
       it('should return the specified number of sales passed by the query (GREATER_THAN value_pay , amount)', async () => {

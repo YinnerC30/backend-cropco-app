@@ -210,7 +210,6 @@ describe('ConsumptionController (e2e)', () => {
         .send(data)
         .expect(201);
 
-      console.log(response.body);
 
       expect(response.body).toMatchObject(data);
     });

@@ -735,7 +735,6 @@ describe('UsersController e2e', () => {
         .set('Cookie', `user-token=${token}`);
       // .expect(403);
 
-      console.log(response.body, response.status);
       expect(response.body.message).toEqual(
         `User ${userTest.first_name} need a permit for this action`,
       );

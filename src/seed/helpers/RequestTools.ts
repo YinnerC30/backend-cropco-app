@@ -512,7 +512,6 @@ export class RequestTools {
         ...opt,
       },
     });
-    console.log('🚀 ~ RequestTools ~ CreateConsumption ~ result:', result);
     return result.history.insertedConsumptionSupplies[0];
   }
 

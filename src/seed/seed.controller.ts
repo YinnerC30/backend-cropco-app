@@ -20,11 +20,6 @@ export class SeedController {
    */
   @Get('controlled')
   executeSeedControlled(@Body() seedDto: SeedControlledDto) {
-    console.log(
-      '🚀 ~ SeedController ~ executeSeedControlled ~ seedDto:',
-      seedDto,
-    );
-
     return this.seedService.runSeedControlled(seedDto);
   }
 
