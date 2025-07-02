@@ -143,86 +143,6 @@ describe('ShoppingController (e2e)', () => {
     await app.close();
   });
 
-  describe('shopping/create (POST)', () => {
-    beforeAll(async () => {
-      await reqTools.addActionToUser('create_supply_shopping');
-    });
-
-    it('should throw an exception for not sending a JWT to the protected path /shopping/create', async () => {
-      const bodyRequest: ShoppingSuppliesDto = {
-        ...shoppingDtoTemplete,
-      };
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/shopping/create')
-        .send(bodyRequest)
-        .set('x-tenant-id', tenantId)
-        .expect(401);
-      expect(response.body.message).toEqual('Unauthorized');
-    });
-
-    it('should create a new shopping', async () => {
-      const supply1: Supply = (await reqTools.CreateSupply()) as Supply;
-      const supply2: Supply = (await reqTools.CreateSupply()) as Supply;
-      const supplier1: Supplier = (await reqTools.CreateSupplier()) as Supplier;
-      const supplier2: Supplier = (await reqTools.CreateSupplier()) as Supplier;
-
-      const data: ShoppingSuppliesDto = {
-        date: InformationGenerator.generateRandomDate({}),
-        value_pay: 110_000,
-        details: [
-          {
-            supplier: { id: supplier1.id },
-            supply: { id: supply1.id },
-            amount: 10_000,
-            value_pay: 60_000,
-            unit_of_measure:
-              supply1.unit_of_measure == 'GRAMOS' ? 'GRAMOS' : 'MILILITROS',
-          } as SuppliesShoppingDetails,
-          {
-            supplier: { id: supplier2.id },
-            supply: { id: supply2.id },
-            amount: 3_000,
-            value_pay: 50_000,
-            unit_of_measure:
-              supply2.unit_of_measure == 'GRAMOS' ? 'GRAMOS' : 'MILILITROS',
-          } as SuppliesShoppingDetails,
-        ],
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/shopping/create')
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .send(data);
-
-      expect(response.body).toMatchObject(data);
-    });
-
-    it('should throw exception when fields are missing in the body', async () => {
-      const errorMessage = [
-        'date must be a valid ISO 8601 date string',
-        'The value must be a multiple of 50',
-        "The sum of fields [value_pay] in 'details' must match the corresponding top-level values.",
-        'value_pay must be a positive number',
-        'value_pay must be a number conforming to the specified constraints',
-        'details should not be empty',
-      ];
-
-      const { body } = await request
-        .default(app.getHttpServer())
-        .post('/shopping/create')
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .expect(400);
-
-      errorMessage.forEach((msg) => {
-        expect(body.message).toContain(msg);
-      });
-    });
-  });
-
   describe('shopping/all (GET)', () => {
     let supply1: Supply;
     let supply2: Supply;
@@ -1191,6 +1111,88 @@ describe('ShoppingController (e2e)', () => {
       );
     });
   });
+
+  describe('shopping/create (POST)', () => {
+    beforeAll(async () => {
+      await reqTools.addActionToUser('create_supply_shopping');
+    });
+
+    it('should throw an exception for not sending a JWT to the protected path /shopping/create', async () => {
+      const bodyRequest: ShoppingSuppliesDto = {
+        ...shoppingDtoTemplete,
+      };
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/shopping/create')
+        .send(bodyRequest)
+        .set('x-tenant-id', tenantId)
+        .expect(401);
+      expect(response.body.message).toEqual('Unauthorized');
+    });
+
+    it('should create a new shopping', async () => {
+      const supply1: Supply = (await reqTools.CreateSupply()) as Supply;
+      const supply2: Supply = (await reqTools.CreateSupply()) as Supply;
+      const supplier1: Supplier = (await reqTools.CreateSupplier()) as Supplier;
+      const supplier2: Supplier = (await reqTools.CreateSupplier()) as Supplier;
+
+      const data: ShoppingSuppliesDto = {
+        date: InformationGenerator.generateRandomDate({}),
+        value_pay: 110_000,
+        details: [
+          {
+            supplier: { id: supplier1.id },
+            supply: { id: supply1.id },
+            amount: 10_000,
+            value_pay: 60_000,
+            unit_of_measure:
+              supply1.unit_of_measure == 'GRAMOS' ? 'GRAMOS' : 'MILILITROS',
+          } as SuppliesShoppingDetails,
+          {
+            supplier: { id: supplier2.id },
+            supply: { id: supply2.id },
+            amount: 3_000,
+            value_pay: 50_000,
+            unit_of_measure:
+              supply2.unit_of_measure == 'GRAMOS' ? 'GRAMOS' : 'MILILITROS',
+          } as SuppliesShoppingDetails,
+        ],
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/shopping/create')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .send(data);
+
+      expect(response.body).toMatchObject(data);
+    });
+
+    it('should throw exception when fields are missing in the body', async () => {
+      const errorMessage = [
+        'date must be a valid ISO 8601 date string',
+        'The value must be a multiple of 50',
+        "The sum of fields [value_pay] in 'details' must match the corresponding top-level values.",
+        'value_pay must be a positive number',
+        'value_pay must be a number conforming to the specified constraints',
+        'details should not be empty',
+      ];
+
+      const { body } = await request
+        .default(app.getHttpServer())
+        .post('/shopping/create')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(400);
+
+      errorMessage.forEach((msg) => {
+        expect(body.message).toContain(msg);
+      });
+    });
+  });
+
+  
 
   describe('shopping/one/:id (GET)', () => {
     beforeAll(async () => {
