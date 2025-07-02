@@ -7,6 +7,7 @@ import {
   PaymentOptionsDto,
   SaleOptionsDto,
   SeedControlledDto,
+  ShoppingOptionsDto,
   WorkOptionsDto,
 } from '../dto/seed.dto';
 import { TestingModule } from '@nestjs/testing';
@@ -415,6 +416,20 @@ export class RequestTools {
     };
     return clientMapper;
   }
+  public async CreateSupplier() {
+    const supplier = (await this.createSeedData({ suppliers: 1 })).history
+      .insertedSuppliers[0];
+
+    const supplierMapper = {
+      id: supplier.id,
+      first_name: supplier.first_name,
+      last_name: supplier.last_name,
+      email: supplier.email,
+      cell_phone_number: supplier.cell_phone_number,
+      address: supplier.address,
+    };
+    return supplierMapper;
+  }
 
   public async CreateCrop() {
     const crop = (await this.createSeedData({ crops: 1 })).history
@@ -431,6 +446,11 @@ export class RequestTools {
       date_of_termination: crop.date_of_termination,
     };
     return cropMapper;
+  }
+
+  public async CreateSupply() {
+    const result = await this.createSeedData({ supplies: 1 });
+    return result.history.insertedSupplies[0];
   }
 
   async CreateWork(opt?: WorkOptionsDto) {
@@ -472,5 +492,15 @@ export class RequestTools {
       },
     });
     return result.history.insertedSales[0];
+  }
+
+  async CreateShopping(opt?: ShoppingOptionsDto) {
+    const result = await this.createSeedData({
+      shoppings: {
+        quantity: 1,
+        ...opt,
+      },
+    });
+    return result.history.insertedShoppingSupplies[0];
   }
 }
