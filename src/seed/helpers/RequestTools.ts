@@ -512,7 +512,27 @@ export class RequestTools {
         ...opt,
       },
     });
-    console.log("🚀 ~ RequestTools ~ CreateConsumption ~ result:", result)
+    console.log('🚀 ~ RequestTools ~ CreateConsumption ~ result:', result);
     return result.history.insertedConsumptionSupplies[0];
+  }
+
+  async CreateUser({
+    mapperToDto = false,
+    // convertToAdmin = false,
+  }) {
+    const user = (await this.createSeedData({ users: 1 })).history
+      .insertedUsers[0];
+
+    if (!mapperToDto) return user;
+
+    return {
+      id: user.id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      password: user.password,
+      cell_phone_number: user.cell_phone_number,
+      actions: user.actions,
+    };
   }
 }

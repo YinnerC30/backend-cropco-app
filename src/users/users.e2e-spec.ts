@@ -659,7 +659,7 @@ describe('UsersController e2e', () => {
     });
 
     it('should change the password for one user', async () => {
-      const userChangePassword = await CreateUser({});
+      const userChangePassword: any = await CreateUser({});
       const localToken =
         await reqTools.generateTokenForUser(userChangePassword);
       await reqTools.addActionForUser(
