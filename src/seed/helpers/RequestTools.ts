@@ -235,6 +235,7 @@ export class RequestTools {
       crops?: boolean;
       employees?: boolean;
       sales?: boolean;
+      payments?: boolean;
     } = {},
   ): Promise<void> {
     await request

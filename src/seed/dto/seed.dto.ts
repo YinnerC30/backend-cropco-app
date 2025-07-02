@@ -12,6 +12,7 @@ import {
   IsUUID,
   IsNumber,
   IsPositive,
+  IsDateString,
 } from 'class-validator';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { MethodOfPayment } from 'src/payments/entities/payment.entity';
@@ -261,6 +262,10 @@ export class ShoppingOptionsDto {
 }
 
 export class PaymentOptionsDto {
+  @IsOptional()
+  @IsDateString()
+  date?: string;
+
   /**
    * Número de pagos a crear.
    */

@@ -4,6 +4,7 @@ import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity';
 import { Harvest } from 'src/harvest/entities/harvest.entity';
+import { Payment } from 'src/payments/entities/payment.entity';
 import { Sale } from 'src/sales/entities/sale.entity';
 import { SuppliesShopping } from 'src/shopping/entities';
 import { Supplier } from 'src/suppliers/entities/supplier.entity';
@@ -63,6 +64,6 @@ export interface SeedControlledResponse {
           supplies: Supply[];
         }
     >;
-    insertedPayments?: unknown[];
+    insertedPayments?: Payment[];
   };
 }

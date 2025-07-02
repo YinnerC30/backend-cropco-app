@@ -48,6 +48,7 @@ export class SeedController {
       crops?: boolean;
       employees?: boolean;
       sales?: boolean;
+      payments?: boolean;
     } = {},
   ) {
     return this.seedService.clearDatabaseControlled(clearOptions);

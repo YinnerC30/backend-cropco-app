@@ -125,11 +125,11 @@ export class PaymentsService extends BaseTenantService {
 
       await queryRunner.manager.save(Payment, payment);
       await queryRunner.commitTransaction();
-      
+
       this.logWithContext(
         `Payment created successfully with ID: ${payment.id} and total value: $${payment.value_pay}`,
       );
-      
+
       return payment;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -197,13 +197,18 @@ export class PaymentsService extends BaseTenantService {
         );
 
       filter_by_method_of_payment &&
-        queryBuilder.andWhere('payment.method_of_payment = :method_of_payment', {
-          method_of_payment,
-        });
+        queryBuilder.andWhere(
+          'payment.method_of_payment = :method_of_payment',
+          {
+            method_of_payment,
+          },
+        );
 
       const [payments, count] = await queryBuilder.getManyAndCount();
 
-      this.logWithContext(`Found ${payments.length} payment records out of ${count} total records`);
+      this.logWithContext(
+        `Found ${payments.length} payment records out of ${count} total records`,
+      );
 
       if (payments.length === 0 && count > 0) {
         throw new NotFoundException(
@@ -219,7 +224,10 @@ export class PaymentsService extends BaseTenantService {
         records: payments,
       };
     } catch (error) {
-      this.logWithContext('Failed to find payment records with filters', 'error');
+      this.logWithContext(
+        'Failed to find payment records with filters',
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -247,12 +255,12 @@ export class PaymentsService extends BaseTenantService {
           },
         },
       });
-      
+
       if (!payment) {
         this.logWithContext(`Payment with ID: ${id} not found`, 'warn');
         throw new NotFoundException(`Payment with id: ${id} not found`);
       }
-      
+
       this.logWithContext(`Payment found successfully with ID: ${id}`);
       return payment;
     } catch (error) {
@@ -270,7 +278,7 @@ export class PaymentsService extends BaseTenantService {
       const queryRunner = this.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      
+
       try {
         await queryRunner.manager.delete(Payment, { id });
 
@@ -332,7 +340,10 @@ export class PaymentsService extends BaseTenantService {
 
       return { success, failed };
     } catch (error) {
-      this.logWithContext('Failed to execute bulk removal of payment records', 'error');
+      this.logWithContext(
+        'Failed to execute bulk removal of payment records',
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -352,7 +363,25 @@ export class PaymentsService extends BaseTenantService {
       this.logWithContext(`Payment PDF exported successfully for ID: ${id}`);
       return pdfDoc;
     } catch (error) {
-      this.logWithContext(`Failed to export payment PDF for ID: ${id}`, 'error');
+      this.logWithContext(
+        `Failed to export payment PDF for ID: ${id}`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
+  }
+
+  async deleteAllPayments() {
+    this.logWithContext(
+      'Deleting ALL payments - this is a destructive operation',
+      'warn',
+    );
+
+    try {
+      await this.paymentRepository.delete({});
+      this.logWithContext('All payments deleted successfully');
+    } catch (error) {
+      this.logWithContext('Failed to delete all payments', 'error');
       this.handlerError.handle(error, this.logger);
     }
   }

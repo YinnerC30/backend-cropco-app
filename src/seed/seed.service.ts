@@ -40,7 +40,7 @@ import { CreateEmployeeDto } from 'src/employees/dto/create-employee.dto';
 import { HarvestDetailsDto } from 'src/harvest/dto/harvest-details.dto';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity';
-import { MethodOfPayment } from 'src/payments/entities/payment.entity';
+import { MethodOfPayment, Payment } from 'src/payments/entities/payment.entity';
 import { SaleDetailsDto } from 'src/sales/dto/sale-details.dto';
 import { Sale } from 'src/sales/entities/sale.entity';
 import { ShoppingSuppliesDetailsDto } from 'src/shopping/dto/shopping-supplies-details.dto';
@@ -407,6 +407,7 @@ export class SeedService {
       for (let i = 0; i < payments.quantity; i++) {
         try {
           const payment = await this.CreatePayment({
+            datePayment: payments.date,
             employeeId: payments.employeeId,
             methodOfPayment: payments.methodOfPayment || ('EFECTIVO' as any),
             value_pay: payments.valuePay,
@@ -444,6 +445,7 @@ export class SeedService {
       crops?: boolean;
       employees?: boolean;
       sales?: boolean;
+      payments?: boolean;
     } = {},
   ) {
     const {
@@ -458,6 +460,7 @@ export class SeedService {
       crops = false,
       employees = false,
       sales = false,
+      payments = false,
     } = clearOptions;
 
     const clearPromises: Promise<void>[] = [];
@@ -507,6 +510,10 @@ export class SeedService {
 
     if (sales) {
       clearPromises.push(this.salesService.deleteAllSales());
+    }
+
+    if (payments) {
+      clearPromises.push(this.paymentsService.deleteAllPayments());
     }
 
     await Promise.all(clearPromises);
@@ -1269,7 +1276,7 @@ export class SeedService {
     worksId: string[];
     harvestsId: string[];
     value_pay: number;
-  }) {
+  }): Promise<Payment> {
     console.log('Entro acá');
     const data: PaymentDto = plainToClass(PaymentDto, {
       date: datePayment,
