@@ -476,7 +476,7 @@ export class EmployeesService extends BaseTenantService {
         SELECT hd."employeeId" as id,
                emp.first_name,
                emp.last_name,
-               SUM(convert_to_grams(hd.unit_of_measure::TEXT, hd.amount::NUMERIC)) AS total_harvests_amount,
+               CAST(SUM(convert_to_grams(hd.unit_of_measure::TEXT, hd.amount::NUMERIC)) AS INTEGER) AS total_harvests_amount,
                CAST(SUM(hd.value_pay) AS INTEGER) AS total_value_pay
         FROM harvests_detail hd
         JOIN harvests h ON hd."harvestId" = h.id
@@ -519,7 +519,7 @@ export class EmployeesService extends BaseTenantService {
     try {
       const employees = await this.employeeRepository.query(
         `
-          SELECT wd."employeeId",
+          SELECT wd."employeeId" as id,
                  emp.first_name,
                  emp.last_name,
                  CAST(COUNT(wd.id) AS INTEGER)      AS total_works,

@@ -277,10 +277,10 @@ export class ClientsService extends BaseTenantService {
     try {
       const clients = await this.clientRepository.query(
         `
-        SELECT sd."clientId",
+        SELECT sd."clientId" AS id,
          cl.first_name,
          cl.last_name,
-         SUM(convert_to_grams(sd.unit_of_measure::TEXT, sd.amount::NUMERIC)) AS total_amount,
+         CAST(SUM(convert_to_grams(sd.unit_of_measure::TEXT, sd.amount::NUMERIC)) AS INTEGER) AS total_amount,
          CAST(SUM(sd.value_pay) AS INTEGER)                                  AS total_value_pay
          FROM sales_detail sd JOIN sales s ON sd."saleId" = s.id
                               JOIN clients cl ON sd."clientId" = cl.id

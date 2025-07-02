@@ -78,6 +78,10 @@ export class SeedDto {
 }
 
 export class HarvestOptionsDto {
+
+  @IsOptional()
+  @IsDateString()
+  date?: string;
   /**
    * Número de cosechas a crear.
    */
@@ -124,6 +128,10 @@ export class HarvestOptionsDto {
 }
 
 export class WorkOptionsDto {
+
+  @IsOptional()
+  @IsDateString()
+  date?: string;
   /**
    * Número de trabajos a crear.
    */
@@ -160,6 +168,10 @@ export class WorkOptionsDto {
 }
 
 export class SaleOptionsDto {
+
+  @IsOptional()
+  @IsDateString()
+  date?: string;
   /**
    * Número de ventas a crear.
    */

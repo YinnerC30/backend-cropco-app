@@ -277,6 +277,7 @@ export class SeedService {
         let harvest;
         if (harvests.variant === 'advanced') {
           harvest = await this.CreateHarvestAdvanced({
+            date: harvests.date,
             employeeId: harvests.employeeId,
             cropId: harvests.cropId,
             valuePay: harvests.valuePay,
@@ -284,6 +285,7 @@ export class SeedService {
           });
         } else {
           harvest = await this.CreateHarvest({
+            date: harvests.date,
             quantityEmployees: harvests.quantityEmployees,
             amount: harvests.amount,
             valuePay: harvests.valuePay,
@@ -321,11 +323,13 @@ export class SeedService {
             works.employeeId = employee.id;
           }
           work = await this.CreateWorkForEmployee({
+            date: works.date,
             employeeId: works.employeeId,
             valuePay: works.valuePay,
           });
         } else {
           work = await this.CreateWork({
+            date: works.date,
             quantityEmployees: works.quantityEmployees,
             valuePay: works.valuePay,
           });
@@ -344,6 +348,7 @@ export class SeedService {
             sales.cropId = crop.id;
           }
           sale = await this.CreateSale({
+            date: sales.date,
             clientId: sales.clientId,
             cropId: sales.cropId,
             isReceivable: sales.isReceivable,
@@ -351,6 +356,7 @@ export class SeedService {
           });
         } else {
           sale = await this.CreateSaleGeneric({
+            date: sales.date,
             isReceivable: sales.isReceivableGeneric,
             quantity: sales.quantityPerSaleGeneric,
           });
@@ -1277,7 +1283,6 @@ export class SeedService {
     harvestsId: string[];
     value_pay: number;
   }): Promise<Payment> {
-    console.log('Entro acá');
     const data: PaymentDto = plainToClass(PaymentDto, {
       date: datePayment,
       employee: { id: employeeId },
