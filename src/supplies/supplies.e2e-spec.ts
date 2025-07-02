@@ -532,11 +532,10 @@ describe('SuppliesController e2e', () => {
     });
 
     it('should throw an exception when trying to delete a supply with stock available', async () => {
-      const response = await reqTools.createSeedData({
-        shoppings: { variant: 'normal', quantity: 1 },
-      });
+      const result: any = await reqTools.CreateShopping();
+      console.log('🚀 ~ it ~ result:', result);
 
-      const supply = response.history.insertedShoppingSupplies[0].supply;
+      const [supply] = result.supplies;
 
       const { body } = await request
         .default(app.getHttpServer())
@@ -609,7 +608,7 @@ describe('SuppliesController e2e', () => {
     it('should throw an exception when trying to delete a supply with stock available.', async () => {
       const {
         history: { insertedShoppingSupplies },
-      } = await reqTools.createSeedData({
+      }: any = await reqTools.createSeedData({
         shoppings: { variant: 'normal', quantity: 2 },
       });
 
@@ -714,7 +713,7 @@ describe('SuppliesController e2e', () => {
     });
 
     it('should obtain all supplies that have consumptions', async () => {
-      const responseSupplies = await reqTools.createSeedData({
+      const responseSupplies: any = await reqTools.createSeedData({
         shoppings: { quantity: 2, variant: 'normal' },
       });
 
