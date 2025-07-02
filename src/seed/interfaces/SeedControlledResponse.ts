@@ -1,4 +1,5 @@
 import { Client } from 'src/clients/entities/client.entity';
+import { SuppliesConsumption } from 'src/consumptions/entities/supplies-consumption.entity';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity';
@@ -35,12 +36,33 @@ export interface SeedControlledResponse {
       client: Client;
       crop: Crop;
     }[];
-    insertedShoppingSupplies?: {
-      shopping: SuppliesShopping;
-      supplier: Supplier;
-      supply: Supply;
-    }[];
-    insertedConsumptionSupplies?: unknown[];
-    insertedPayments?: unknown[]
+    /**
+     * Can return an array of objects with either a single supply or multiple supplies.
+     */
+    insertedShoppingSupplies?: Array<
+      | {
+          shopping: SuppliesShopping;
+          supplier: Supplier;
+          supply: Supply;
+        }
+      | {
+          shopping: SuppliesShopping;
+          supplier: Supplier;
+          supplies: Supply[];
+        }
+    >;
+    insertedConsumptionSupplies?: Array<
+      | {
+          consumption: SuppliesConsumption;
+          crop: Crop;
+          supply: Supply;
+        }
+      | {
+          consumption: SuppliesConsumption;
+          crop: Crop;
+          supplies: Supply[];
+        }
+    >;
+    insertedPayments?: unknown[];
   };
 }

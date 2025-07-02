@@ -127,6 +127,7 @@ export class ShoppingService extends BaseTenantService {
   }
 
   async createShopping(createShoppingSuppliesDto: ShoppingSuppliesDto) {
+    console.log("🚀 ~ ShoppingService ~ createShopping ~ createShoppingSuppliesDto:", createShoppingSuppliesDto)
     this.logWithContext(
       `Creating new shopping with ${createShoppingSuppliesDto.details?.length || 0} details`,
     );

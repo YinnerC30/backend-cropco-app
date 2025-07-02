@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
 import {
+  ConsumptionOptionsDto,
   HarvestOptionsDto,
   HarvestProcessedOptionsDto,
   PaymentOptionsDto,
@@ -502,5 +503,15 @@ export class RequestTools {
       },
     });
     return result.history.insertedShoppingSupplies[0];
+  }
+  async CreateConsumption(opt?: ConsumptionOptionsDto) {
+    const result = await this.createSeedData({
+      consumptions: {
+        quantity: 1,
+        ...opt,
+      },
+    });
+    console.log("🚀 ~ RequestTools ~ CreateConsumption ~ result:", result)
+    return result.history.insertedConsumptionSupplies[0];
   }
 }

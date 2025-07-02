@@ -337,6 +337,7 @@ export class ConsumptionsService extends BaseTenantService {
     id: string,
     updateSuppliesConsumptionDto: ConsumptionSuppliesDto,
   ) {
+    console.log("🚀 ~ ConsumptionsService ~ updateSuppliesConsumptionDto:", updateSuppliesConsumptionDto)
     this.logWithContext(`Updating consumption with ID: ${id}`);
 
     try {

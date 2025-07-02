@@ -1299,7 +1299,7 @@ describe('ShoppingController (e2e)', () => {
     });
 
     it('should update one shopping', async () => {
-      const { shopping, supply } = await reqTools.CreateShopping({});
+      const { shopping } = await reqTools.CreateShopping({});
 
       const { id, createdDate, updatedDate, deletedDate, ...rest } = shopping;
 

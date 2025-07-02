@@ -385,6 +385,8 @@ export class SeedService {
       for (let i = 0; i < consumptions.quantity; i++) {
         let consumption;
         if (consumptions.variant === 'normal') {
+          console.log('entro en normal');
+          console.log('props', { ...consumptions });
           consumption = await this.CreateConsumption({
             supplyId: consumptions.supplyId,
             cropId: consumptions.cropId,
@@ -1145,6 +1147,7 @@ export class SeedService {
     supplies: Supply[];
   }> {
     const crop: Crop = (await this.CreateCrop({})) as Crop;
+    console.log('🚀 ~ SeedService ~ crop:', crop);
 
     const supplies = (await Promise.all(
       Array.from({ length: quantitySupplies }).map(async () => {
@@ -1156,6 +1159,8 @@ export class SeedService {
       }),
     )) as Supply[];
 
+    console.log('🚀 ~ SeedService ~ supplies:', supplies);
+
     const data: ConsumptionSuppliesDto = {
       date: date,
       details: supplies.map((supply) => {
@@ -1163,10 +1168,13 @@ export class SeedService {
           supply: { id: supply.id },
           crop: { id: crop.id },
           amount: amountForItem,
+          unit_of_measure:
+            supply.unit_of_measure == 'GRAMOS' ? 'GRAMOS' : 'MILILITROS',
         } as ConsumptionSuppliesDetailsDto;
       }),
     };
 
+    console.log(data);
     const consumption = await this.consumptionsService.createConsumption(data);
     return { crop, consumption, supplies };
   }
@@ -1184,8 +1192,13 @@ export class SeedService {
     supplier: Supplier;
     supply: Supply;
   }> {
+    let supply;
     const supplier = (await this.CreateSupplier({})) as Supplier;
-    const supply = (await this.CreateSupply({})) as Supply;
+    if (!supplyId) {
+      supply = (await this.CreateSupply({})) as Supply;
+    } else {
+      supply = await this.suppliesService.findOne(supplyId);
+    }
 
     const data: ShoppingSuppliesDto = {
       date: InformationGenerator.generateRandomDate({}),
