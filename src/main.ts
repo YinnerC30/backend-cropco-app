@@ -58,7 +58,15 @@ async function bootstrap() {
     },
     logger: WinstonModule.createLogger({
       transports: [
-        new winston.transports.Console(),
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.timestamp(),
+            winston.format.printf(({ timestamp, level, message, context }) => {
+              return `${timestamp} [${level}]${context ? ' [' + context + ']' : ''}: ${message}`;
+            }),
+          ),
+        }),
         new winston.transports.DailyRotateFile({
           filename: 'logs/app-%DATE%.log',
           datePattern: 'YYYY-MM-DD',
@@ -66,6 +74,12 @@ async function bootstrap() {
           zippedArchive: true,
           maxSize: '20m',
           maxFiles: '14d',
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.printf(({ timestamp, level, message, context }) => {
+              return `${timestamp} [${level}]${context ? ' [' + context + ']' : ''}: ${message}`;
+            }),
+          ),
         }),
         new winston.transports.DailyRotateFile({
           filename: 'logs/error-%DATE%.log',
@@ -74,14 +88,14 @@ async function bootstrap() {
           zippedArchive: true,
           maxSize: '20m',
           maxFiles: '30d',
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.printf(({ timestamp, level, message, context }) => {
+              return `${timestamp} [${level}]${context ? ' [' + context + ']' : ''}: ${message}`;
+            }),
+          ),
         }),
       ],
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.printf(({ timestamp, level, message, context }) => {
-          return `${timestamp} [${level}]${context ? ' [' + context + ']' : ''}: ${message}`;
-        }),
-      ),
     }),
   });
 
