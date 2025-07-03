@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
+import 'winston-daily-rotate-file';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -58,13 +59,21 @@ async function bootstrap() {
     logger: WinstonModule.createLogger({
       transports: [
         new winston.transports.Console(),
-        new winston.transports.File({
-          filename: 'logs/app.log',
+        new winston.transports.DailyRotateFile({
+          filename: 'logs/app-%DATE%.log',
+          datePattern: 'YYYY-MM-DD',
           level: 'info',
+          zippedArchive: true,
+          maxSize: '20m',
+          maxFiles: '14d',
         }),
-        new winston.transports.File({
-          filename: 'logs/error.log',
+        new winston.transports.DailyRotateFile({
+          filename: 'logs/error-%DATE%.log',
+          datePattern: 'YYYY-MM-DD',
           level: 'error',
+          zippedArchive: true,
+          maxSize: '20m',
+          maxFiles: '30d',
         }),
       ],
       format: winston.format.combine(
