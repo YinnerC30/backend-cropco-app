@@ -277,6 +277,10 @@ export class TenantsService extends BaseAdministratorService {
           tenantPassword,
         ]);
 
+        await this.dataSource.query(
+          `GRANT ${tenantUsername} TO backend_cropco_user;`,
+        );
+
         // Asignar propiedad de la base de datos al usuario del tenant
         await this.dataSource.query(
           `ALTER DATABASE "${tenantDb.database_name}" OWNER TO "${tenantUsername}"`,
