@@ -55,9 +55,6 @@ async function bootstrap() {
     },
   });
 
-  // Configurar cookie-parser como middleware global
-
-  // somewhere in your initialization file
   app.use(cookieParser());
 
   app.useGlobalPipes(
@@ -68,9 +65,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-
-  // Agregar interceptor global para loggear cookies
-  // app.useGlobalInterceptors(new CookiesLoggerInterceptor());
 
   await app.listen(3000);
 }
