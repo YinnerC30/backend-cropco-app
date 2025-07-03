@@ -1,89 +1,21 @@
-import {
-  INestApplication,
-  MiddlewareConsumer,
-  Module,
-  RequestMethod,
-  ValidationPipe,
-} from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from 'src/auth/auth.module';
-import { CommonModule } from 'src/common/common.module';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
-import { SeedModule } from 'src/seed/seed.module';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
-import { DeepPartial, Repository } from 'typeorm';
+import { DeepPartial } from 'typeorm';
 import { MethodOfPayment, Payment } from './entities/payment.entity';
 
 import cookieParser from 'cookie-parser';
-import { Administrator } from 'src/administrators/entities/administrator.entity';
-import { ClientsModule } from 'src/clients/clients.module';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 import { RequestTools } from 'src/seed/helpers/RequestTools';
-import { TenantDatabase } from 'src/tenants/entities/tenant-database.entity';
-import { Tenant } from 'src/tenants/entities/tenant.entity';
-import { TenantMiddleware } from 'src/tenants/middleware/tenant.middleware';
-import { TenantsModule } from 'src/tenants/tenants.module';
+import { TestAppModule } from 'src/testing/testing-e2e.module';
 import { WorkDetails } from 'src/work/entities/work-details.entity';
 import { PaymentDto } from './dto/payment.dto';
-import { PaymentsHarvest } from './entities/payment-harvest.entity';
-import { PaymentsWork } from './entities/payment-work.entity';
-
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      envFilePath: '.env.test',
-      isGlobal: true,
-    }),
-    TenantsModule,
-    ClientsModule,
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        return {
-          type: 'postgres',
-          host: configService.get<string>('DB_HOST'),
-          port: configService.get<number>('DB_PORT'),
-          username: configService.get<string>('DB_USERNAME'),
-          password: configService.get<string>('DB_PASSWORD'),
-          database: 'cropco_management',
-          entities: [Tenant, TenantDatabase, Administrator],
-          synchronize: true,
-          ssl: false,
-        };
-      },
-    }),
-    CommonModule,
-    SeedModule,
-    AuthModule,
-  ],
-})
-export class TestAppModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TenantMiddleware)
-      .exclude(
-        { path: 'administrators/(.*)', method: RequestMethod.ALL },
-        { path: 'tenants/(.*)', method: RequestMethod.ALL },
-        {
-          path: '/auth/management/login',
-          method: RequestMethod.POST,
-        },
-        {
-          path: '/auth/management/check-status',
-          method: RequestMethod.GET,
-        },
-      )
-      .forRoutes('*');
-  }
-}
 
 describe('PaymentsController (e2e)', () => {
   let app: INestApplication;
@@ -230,8 +162,6 @@ describe('PaymentsController (e2e)', () => {
         .set('x-tenant-id', tenantId)
         .set('Cookie', `user-token=${token}`)
         .expect(400);
-
-      console.log(body);
 
       errorMessage.forEach((msg) => {
         expect(body.message).toContain(msg);
