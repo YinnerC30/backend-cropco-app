@@ -1,87 +1,17 @@
-import {
-  INestApplication,
-  MiddlewareConsumer,
-  Module,
-  RequestMethod,
-  ValidationPipe,
-} from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import cookieParser from 'cookie-parser';
-import { Administrator } from 'src/administrators/entities/administrator.entity';
-import { AuthModule } from 'src/auth/auth.module';
-import { ClientsModule } from 'src/clients/clients.module';
 import { Client } from 'src/clients/entities/client.entity';
-import { CommonModule } from 'src/common/common.module';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 import { RequestTools } from 'src/seed/helpers/RequestTools';
-import { SeedModule } from 'src/seed/seed.module';
-import { TenantDatabase } from 'src/tenants/entities/tenant-database.entity';
-import { Tenant } from 'src/tenants/entities/tenant.entity';
-import { TenantMiddleware } from 'src/tenants/middleware/tenant.middleware';
-import { TenantsModule } from 'src/tenants/tenants.module';
+import { TestAppModule } from 'src/testing/testing-e2e.module';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
-import { DashboardModule } from './dashboard.module';
-
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      envFilePath: '.env.test',
-      isGlobal: true,
-    }),
-    TenantsModule,
-    ClientsModule,
-    DashboardModule,
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        return {
-          type: 'postgres',
-          host: configService.get<string>('DB_HOST'),
-          port: configService.get<number>('DB_PORT'),
-          username: configService.get<string>('DB_USERNAME'),
-          password: configService.get<string>('DB_PASSWORD'),
-          database: 'cropco_management',
-          entities: [Tenant, TenantDatabase, Administrator],
-          synchronize: true,
-          ssl: false,
-        };
-      },
-    }),
-    CommonModule,
-    SeedModule,
-    AuthModule,
-  ],
-})
-export class TestAppModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TenantMiddleware)
-      .exclude(
-        { path: 'administrators/(.*)', method: RequestMethod.ALL },
-        { path: 'tenants/(.*)', method: RequestMethod.ALL },
-        {
-          path: '/auth/management/login',
-          method: RequestMethod.POST,
-        },
-        {
-          path: '/auth/management/check-status',
-          method: RequestMethod.GET,
-        },
-      )
-      .forRoutes('*');
-  }
-}
 
 describe('DashboardController (e2e)', () => {
   let app: INestApplication;
-  // let seedService: SeedService;
-  // let authService: AuthService;
 
   let userTest: User;
   let token: string;
@@ -96,8 +26,6 @@ describe('DashboardController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
     }).compile();
-
-    // authService = moduleFixture.get<AuthService>(AuthService);
 
     app = moduleFixture.createNestApplication();
 
@@ -355,8 +283,6 @@ describe('DashboardController (e2e)', () => {
       expect(body.current_page_count).toBe(1);
       expect(body.records).toBeInstanceOf(Array);
 
-      
-
       body.records.forEach(async (record) => {
         expect(record).toHaveProperty('id');
         expect(record).toHaveProperty('first_name');
@@ -387,8 +313,6 @@ describe('DashboardController (e2e)', () => {
       expect(body.total_page_count).toBe(1);
       expect(body.current_page_count).toBe(1);
       expect(body.records).toBeInstanceOf(Array);
-
-      
 
       body.records.forEach(async (record) => {
         expect(record).toHaveProperty('id');
@@ -501,8 +425,6 @@ describe('DashboardController (e2e)', () => {
         .query(queryData)
         .expect(200);
 
-      
-
       expect(body.total_row_count).toBe(2);
       expect(body.current_row_count).toBe(2);
       expect(body.current_row_count).toBeLessThan(6);
@@ -533,8 +455,6 @@ describe('DashboardController (e2e)', () => {
         .set('Cookie', `user-token=${token}`)
         .query(queryData)
         .expect(200);
-
-      
 
       expect(body.total_row_count).toBe(5);
       expect(body.current_row_count).toBe(5);
