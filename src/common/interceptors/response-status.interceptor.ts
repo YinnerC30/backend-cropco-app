@@ -14,12 +14,16 @@ export class ResponseStatusInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       map((result) => {
-        if (result.failed.length > 0 && result.success.length > 0) {
+        const failed = result.failed ?? [];
+        const success = result.success ?? [];
+        if (failed.length > 0 && success.length > 0) {
           response.status(207); // Multi-Status
-        } else if (result.failed.length > 0 && result.success.length === 0) {
+        } else if (failed.length > 0 && success.length === 0) {
           response.status(409); // Conflict
-        } else if (result.success.length > 0 && result.failed.length === 0) {
+        } else if (success.length > 0 && failed.length === 0) {
           response.status(200); // OK
+        } else {
+          response.status(200); // OK por defecto si no hay info
         }
         return result;
       }),

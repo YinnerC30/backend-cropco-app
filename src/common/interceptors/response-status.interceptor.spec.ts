@@ -25,34 +25,54 @@ describe('ResponseStatusInterceptor', () => {
   });
 
   it('debe devolver status 200 si no hay errores', (done) => {
-    const callHandler = createCallHandler({ data: 'ok', failed: [] });
-
+    const callHandler = createCallHandler({ data: 'ok', failed: [], success: [1] });
     interceptor.intercept(mockContext, callHandler).subscribe((result) => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(result).toEqual({ data: 'ok', failed: [] });
+      expect(result).toEqual({ data: 'ok', failed: [], success: [1] });
       done();
     });
   });
 
-  it('debe devolver status 207 si hay errores en failed', (done) => {
+  it('debe devolver status 207 si hay errores en failed y también hay success', (done) => {
     const callHandler = createCallHandler({
       data: 'parcial',
       failed: ['error1'],
+      success: [1],
     });
-
     interceptor.intercept(mockContext, callHandler).subscribe((result) => {
       expect(mockResponse.status).toHaveBeenCalledWith(207);
-      expect(result).toEqual({ data: 'parcial', failed: ['error1'] });
+      expect(result).toEqual({ data: 'parcial', failed: ['error1'], success: [1] });
       done();
     });
   });
 
-  it('debe devolver status 200 si failed es undefined', (done) => {
-    const callHandler = createCallHandler({ data: 'sin failed' });
+  it('debe devolver status 409 si hay errores en failed y success está vacío', (done) => {
+    const callHandler = createCallHandler({
+      data: 'conflicto',
+      failed: ['error1'],
+      success: [],
+    });
+    interceptor.intercept(mockContext, callHandler).subscribe((result) => {
+      expect(mockResponse.status).toHaveBeenCalledWith(409);
+      expect(result).toEqual({ data: 'conflicto', failed: ['error1'], success: [] });
+      done();
+    });
+  });
 
+  it('debe devolver status 200 si failed es undefined y success tiene datos', (done) => {
+    const callHandler = createCallHandler({ data: 'sin failed', success: [1] });
     interceptor.intercept(mockContext, callHandler).subscribe((result) => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(result).toEqual({ data: 'sin failed' });
+      expect(result).toEqual({ data: 'sin failed', success: [1] });
+      done();
+    });
+  });
+
+  it('debe devolver status 200 si success y failed son undefined', (done) => {
+    const callHandler = createCallHandler({ data: 'sin success ni failed' });
+    interceptor.intercept(mockContext, callHandler).subscribe((result) => {
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(result).toEqual({ data: 'sin success ni failed' });
       done();
     });
   });

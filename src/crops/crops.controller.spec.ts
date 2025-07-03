@@ -48,6 +48,7 @@ describe('CropsController', () => {
         location: '',
         date_of_creation: '',
         date_of_termination: '',
+        number_hectares: 12
       };
       const result = { id: '1', ...createCropDto } as Crop;
       jest.spyOn(service, 'create').mockResolvedValue(result);

@@ -13,6 +13,8 @@ describe('JwtStrategy', () => {
   let jwtStrategy: JwtStrategy;
   let userRepository: Repository<User>;
   let modulesRepository: Repository<Module>;
+  let mockTenantConnection: any;
+  let mockRequest: any;
 
   const mockUser = {
     id: '1',
@@ -63,6 +65,15 @@ describe('JwtStrategy', () => {
     modulesRepository = module.get<Repository<Module>>(
       getRepositoryToken(Module),
     );
+
+    mockTenantConnection = {
+      getRepository: (entity: any) => {
+        if (entity === User) return userRepository;
+        if (entity === Module) return modulesRepository;
+        return null;
+      },
+    };
+    mockRequest = { tenantConnection: mockTenantConnection };
   });
 
   describe('validate', () => {
@@ -71,7 +82,7 @@ describe('JwtStrategy', () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
       jest.spyOn(modulesRepository, 'find').mockResolvedValue(mockModules);
 
-      const result = await jwtStrategy.validate(payload);
+      const result = await jwtStrategy.validate(mockRequest, payload);
 
       expect(result).toEqual({ ...mockUser, modules: mockModules });
       expect(userRepository.findOne).toHaveBeenCalledWith({
@@ -84,7 +95,7 @@ describe('JwtStrategy', () => {
       const payload = { id: 'nonexistent-id' };
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(null);
 
-      await expect(jwtStrategy.validate(payload)).rejects.toThrow(
+      await expect(jwtStrategy.validate(mockRequest, payload)).rejects.toThrow(
         UnauthorizedException,
       );
       expect(userRepository.findOne).toHaveBeenCalledWith({
@@ -97,7 +108,7 @@ describe('JwtStrategy', () => {
       const inactiveUser = { ...mockUser, is_active: false };
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(inactiveUser);
 
-      await expect(jwtStrategy.validate(payload)).rejects.toThrow(
+      await expect(jwtStrategy.validate(mockRequest, payload)).rejects.toThrow(
         UnauthorizedException,
       );
       expect(userRepository.findOne).toHaveBeenCalledWith({
@@ -110,7 +121,7 @@ describe('JwtStrategy', () => {
       jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
       jest.spyOn(modulesRepository, 'find').mockResolvedValue([]);
 
-      const result = await jwtStrategy.validate(payload);
+      const result = await jwtStrategy.validate(mockRequest, payload);
 
       expect(result).toEqual({ ...mockUser, modules: [] });
     });

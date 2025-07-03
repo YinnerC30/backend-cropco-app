@@ -10,6 +10,7 @@ describe('HarvestDetailsDto', () => {
       harvest: { id: '123e4567-e89b-12d3-a456-426614174002' },
       amount: 100,
       value_pay: 500,
+      unit_of_measure: 'GRAMOS',
       // payment_is_pending: true,
     });
 
@@ -22,6 +23,7 @@ describe('HarvestDetailsDto', () => {
       employee: { id: '123e4567-e89b-12d3-a456-426614174001' },
       amount: 100,
       value_pay: 500,
+      unit_of_measure: 'GRAMOS',
     });
 
     const errors = await validate(dto);

@@ -21,10 +21,10 @@ export class ShoppingSuppliesDetailsDto {
   @IsUUID()
   id?: string;
 
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => String)
-  shopping?: DeepPartial<SuppliesShopping>;
+  // @IsOptional()
+  // @ValidateNested()
+  // @Type(() => String)
+  // shopping?: DeepPartial<SuppliesShopping>;
 
   @IsNotEmpty()
   @ValidateNested()

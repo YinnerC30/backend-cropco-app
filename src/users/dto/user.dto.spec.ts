@@ -66,7 +66,7 @@ describe('UserDto', () => {
       last_name: 'Doe',
       email: 'john.doe@example.com',
       password: 'securepassword',
-      cell_phone_number: '123456789012345',
+      cell_phone_number: '1234567890123458',
       actions: [],
     });
 

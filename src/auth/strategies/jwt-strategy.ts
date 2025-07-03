@@ -77,6 +77,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       return { ...user, modules: userPermits };
     } catch (error) {
       console.log('Hubo un error en la strategy de los usuarios normales');
+      throw error;
     }
   }
 }
