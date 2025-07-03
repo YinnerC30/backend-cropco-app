@@ -6,7 +6,7 @@ export const getPropertyFromTokenFactoryAdministrator = (
   ctx: ExecutionContext,
 ): string | null => {
   const request = ctx.switchToHttp().getRequest();
-  const token = request.headers['x-administration-token'];
+  const token = request.cookies['administrator-token'];
 
   if (!token) {
     return null;
