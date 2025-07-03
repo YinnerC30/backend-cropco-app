@@ -1,89 +1,23 @@
 import {
   INestApplication,
-  MiddlewareConsumer,
-  Module,
-  RequestMethod,
-  ValidationPipe,
+  ValidationPipe
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 
-import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { ConfigModule, ConfigService } from '@nestjs/config';
 
-import { AuthModule } from 'src/auth/auth.module';
-import { AuthService } from 'src/auth/auth.service';
-import { CommonModule } from 'src/common/common.module';
+import cookieParser from 'cookie-parser';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 import { RequestTools } from 'src/seed/helpers/RequestTools';
-import { SeedModule } from 'src/seed/seed.module';
-import { TenantDatabase } from 'src/tenants/entities/tenant-database.entity';
-import { Tenant } from 'src/tenants/entities/tenant.entity';
-import { TenantMiddleware } from 'src/tenants/middleware/tenant.middleware';
-import { TenantsModule } from 'src/tenants/tenants.module';
-import { Administrator } from 'src/administrators/entities/administrator.entity';
+import { TestAppModule } from 'src/testing/testing-e2e.module';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
-import { EmployeesModule } from './employees.module';
-import { Employee } from './entities/employee.entity';
-import cookieParser from 'cookie-parser';
 import { EmployeeCertificationDto } from './dto/employee-certification.dto';
-
-// Módulo de prueba que configura el middleware
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      envFilePath: '.env.test',
-      isGlobal: true,
-    }),
-    TenantsModule,
-    EmployeesModule,
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        return {
-          type: 'postgres',
-          host: configService.get<string>('DB_HOST'),
-          port: configService.get<number>('DB_PORT'),
-          username: configService.get<string>('DB_USERNAME'),
-          password: configService.get<string>('DB_PASSWORD'),
-          database: 'cropco_management',
-          entities: [Tenant, TenantDatabase, Administrator],
-          synchronize: true,
-          ssl: false,
-        };
-      },
-    }),
-    CommonModule,
-    SeedModule,
-    AuthModule,
-  ],
-})
-export class TestAppModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TenantMiddleware)
-      .exclude(
-        { path: 'administrators/(.*)', method: RequestMethod.ALL },
-        { path: 'tenants/(.*)', method: RequestMethod.ALL },
-        {
-          path: '/auth/management/login',
-          method: RequestMethod.POST,
-        },
-        {
-          path: '/auth/management/check-status',
-          method: RequestMethod.GET,
-        },
-      )
-      .forRoutes('*');
-  }
-}
+import { Employee } from './entities/employee.entity';
 
 describe('EmployeesController (e2e)', () => {
   let app: INestApplication;
-  let authService: AuthService;
   let userTest: any;
   let token: string;
   let reqTools: RequestTools;
@@ -118,8 +52,6 @@ describe('EmployeesController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
     }).compile();
-
-    authService = moduleFixture.get<AuthService>(AuthService);
 
     app = moduleFixture.createNestApplication();
 
