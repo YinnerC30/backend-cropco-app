@@ -1108,7 +1108,7 @@ export class SeedService {
     supplyId?: string;
     cropId?: string;
     amount?: number;
-    date?: string
+    date?: string;
   }): Promise<{
     consumption: SuppliesConsumption;
     crop: Crop;
@@ -1179,7 +1179,6 @@ export class SeedService {
       }),
     };
 
-    console.log(data);
     const consumption = await this.consumptionsService.createConsumption(data);
     return { crop, consumption, supplies };
   }

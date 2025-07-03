@@ -1,101 +1,27 @@
 import {
   INestApplication,
-  MiddlewareConsumer,
-  Module,
-  RequestMethod,
-  ValidationPipe,
+  ValidationPipe
 } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from 'src/auth/auth.module';
-import { CommonModule } from 'src/common/common.module';
 
-import { SeedModule } from 'src/seed/seed.module';
 import { User } from 'src/users/entities/user.entity';
 
 import cookieParser from 'cookie-parser';
-import { Administrator } from 'src/administrators/entities/administrator.entity';
-import { ClientsModule } from 'src/clients/clients.module';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
+import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 import { RequestTools } from 'src/seed/helpers/RequestTools';
 import { Supply } from 'src/supplies/entities';
-import { TenantDatabase } from 'src/tenants/entities/tenant-database.entity';
-import { Tenant } from 'src/tenants/entities/tenant.entity';
-import { TenantMiddleware } from 'src/tenants/middleware/tenant.middleware';
-import { TenantsModule } from 'src/tenants/tenants.module';
+import { TestAppModule } from 'src/testing/testing-e2e.module';
 import * as request from 'supertest';
 import { ConsumptionSuppliesDetailsDto } from './dto/consumption-supplies-details.dto';
 import { ConsumptionSuppliesDto } from './dto/consumption-supplies.dto';
 import { SuppliesConsumptionDetails } from './entities/supplies-consumption-details.entity';
 import { SuppliesConsumption } from './entities/supplies-consumption.entity';
-import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
-
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      envFilePath: '.env.test',
-      isGlobal: true,
-    }),
-    TenantsModule,
-    ClientsModule,
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        return {
-          type: 'postgres',
-          host: configService.get<string>('DB_HOST'),
-          port: configService.get<number>('DB_PORT'),
-          username: configService.get<string>('DB_USERNAME'),
-          password: configService.get<string>('DB_PASSWORD'),
-          database: 'cropco_management',
-          entities: [Tenant, TenantDatabase, Administrator],
-          synchronize: true,
-          ssl: false,
-        };
-      },
-    }),
-    CommonModule,
-    SeedModule,
-    AuthModule,
-  ],
-})
-export class TestAppModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TenantMiddleware)
-      .exclude(
-        { path: 'administrators/(.*)', method: RequestMethod.ALL },
-        { path: 'tenants/(.*)', method: RequestMethod.ALL },
-        {
-          path: '/auth/management/login',
-          method: RequestMethod.POST,
-        },
-        {
-          path: '/auth/management/check-status',
-          method: RequestMethod.GET,
-        },
-      )
-      .forRoutes('*');
-  }
-}
 
 describe('ConsumptionController (e2e)', () => {
   let app: INestApplication;
-
-  // let consumptionRepository: Repository<SuppliesConsumption>;
-  // let consumptionDetailsRepository: Repository<SuppliesConsumptionDetails>;
-
-  // let seedService: SeedService;
-  // let authService: AuthService;
-
-  // let consumptionService: ConsumptionsService;
-  // let consumptionController: ConsumptionsController;
-
-  // let suppliesController: SuppliesController;
 
   let userTest: User;
   let token: string;
@@ -209,7 +135,6 @@ describe('ConsumptionController (e2e)', () => {
         .set('Cookie', `user-token=${token}`)
         .send(data)
         .expect(201);
-
 
       expect(response.body).toMatchObject(data);
     });
