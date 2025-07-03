@@ -1,4 +1,9 @@
-import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
+import {
+  Global,
+  MiddlewareConsumer,
+  Module,
+  RequestMethod,
+} from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AdministratorsModule } from 'src/administrators/administrators.module';
@@ -26,6 +31,7 @@ import { TenantsModule } from 'src/tenants/tenants.module';
 import { UsersModule } from 'src/users/users.module';
 import { WorkModule } from 'src/work/work.module';
 
+@Global()
 @Module({
   imports: [
     ConfigModule.forRoot({
