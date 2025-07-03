@@ -34,6 +34,7 @@ export class RequestTools {
   private app: INestApplication | null = null;
   private tenantId: string | null = null;
   private user: User | null = null;
+  private adminToken: string;
 
   /**
    * Creates an instance of RequestTools.
@@ -194,6 +195,8 @@ export class RequestTools {
       return;
     }
 
+    this.adminToken = token;
+
     this.tenantId = tenant.id;
   }
 
@@ -234,6 +237,7 @@ export class RequestTools {
       .default(this.getApp().getHttpServer())
       .get('/seed/controlled')
       .set('x-tenant-id', this.getTenantId())
+      .set('Cookie', `administrator-token=${this.adminToken}`)
       .send({ users: 1 });
     this.user = body.history.insertedUsers[0];
     return this.user;
@@ -251,6 +255,7 @@ export class RequestTools {
       .default(this.getApp().getHttpServer())
       .get('/seed/controlled')
       .set('x-tenant-id', this.getTenantId())
+      .set('Cookie', `administrator-token=${this.adminToken}`)
       .send(seedDto);
     return body;
   }
@@ -280,6 +285,7 @@ export class RequestTools {
       .default(this.getApp().getHttpServer())
       .get('/seed/clear')
       .set('x-tenant-id', this.getTenantId())
+      .set('Cookie', `administrator-token=${this.adminToken}`)
       .query(clearOptions)
       .expect(200);
   }
@@ -294,6 +300,7 @@ export class RequestTools {
       .default(this.getApp().getHttpServer())
       .post(`/auth/delete-test-user/${user.id}`)
       .set('x-tenant-id', this.getTenantId())
+      .set('Cookie', `administrator-token=${this.adminToken}`)
       .expect(201);
   }
 
@@ -307,6 +314,7 @@ export class RequestTools {
       .default(this.getApp().getHttpServer())
       .post('/auth/login')
       .set('x-tenant-id', this.getTenantId())
+      .set('Cookie', `administrator-token=${this.adminToken}`)
       .send({
         email: user.email,
         password: '123456',
@@ -326,6 +334,7 @@ export class RequestTools {
       .default(this.getApp().getHttpServer())
       .post('/auth/login')
       .set('x-tenant-id', this.getTenantId())
+      .set('Cookie', `administrator-token=${this.adminToken}`)
       .send({
         email: user.email,
         password: '123456',
@@ -346,6 +355,7 @@ export class RequestTools {
       .default(this.getApp().getHttpServer())
       .post(`/auth/add-permission/${user.id}/${actionName}`)
       .set('x-tenant-id', this.getTenantId())
+      .set('Cookie', `administrator-token=${this.adminToken}`)
       .expect(201);
   }
 
@@ -362,6 +372,7 @@ export class RequestTools {
       .default(this.getApp().getHttpServer())
       .post(`/auth/remove-permissions-to-module/${userId}/${moduleName}`)
       .set('x-tenant-id', this.getTenantId())
+      .set('Cookie', `administrator-token=${this.adminToken}`)
       .expect(201);
   }
 
@@ -378,6 +389,7 @@ export class RequestTools {
       .default(this.getApp().getHttpServer())
       .post(`/auth/add-permission/${userId}/${actionName}`)
       .set('x-tenant-id', this.getTenantId())
+      .set('Cookie', `administrator-token=${this.adminToken}`)
       .expect(201);
   }
 
@@ -394,6 +406,7 @@ export class RequestTools {
       .default(this.getApp().getHttpServer())
       .post(`/auth/remove-permission/${userId}/${actionName}`)
       .set('x-tenant-id', this.getTenantId())
+      .set('Cookie', `administrator-token=${this.adminToken}`)
       .expect(201);
   }
 

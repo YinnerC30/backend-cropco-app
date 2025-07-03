@@ -2,8 +2,10 @@ import { Body, Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { SeedService } from './seed.service';
 import { SeedDto, SeedControlledDto } from './dto/seed.dto';
 import { DevelopmentGuard } from './guards/development.guard';
+import { AuthAdministration } from 'src/auth/decorators/auth-administrator.decorator';
 
 @Controller('seed')
+@AuthAdministration()
 @UseGuards(DevelopmentGuard)
 export class SeedController {
   constructor(private readonly seedService: SeedService) {}

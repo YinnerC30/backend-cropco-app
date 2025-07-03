@@ -232,6 +232,7 @@ export class AuthController {
    * @param userId User identifier
    * @param actionName Name of the action to add
    */
+  @AuthAdministration()
   @UseGuards(DevelopmentGuard)
   @Post('add-permission/:userId/:actionName')
   async addPermissionToUser(
@@ -247,6 +248,7 @@ export class AuthController {
    * @param userId User identifier
    * @param moduleName Name of the module
    */
+  @AuthAdministration()
   @UseGuards(DevelopmentGuard)
   @Post('remove-permissions-to-module/:userId/:moduleName')
   async removePermissionsToModule(
@@ -262,6 +264,7 @@ export class AuthController {
    * @param userId User identifier
    * @param actionName Name of the action to remove
    */
+  @AuthAdministration()
   @UseGuards(DevelopmentGuard)
   @Post('remove-permission/:userId/:actionName')
   async removePermissionFromUser(
@@ -276,6 +279,7 @@ export class AuthController {
    * Only for development and testing purposes.
    * @param userId User identifier
    */
+  @AuthAdministration()
   @UseGuards(DevelopmentGuard)
   @Post('delete-test-user/:userId')
   async deleteTestUser(@Param('userId') userId: string): Promise<void> {
