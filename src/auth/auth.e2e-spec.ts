@@ -1,83 +1,16 @@
 import {
   INestApplication,
-  MiddlewareConsumer,
-  Module,
-  RequestMethod,
-  ValidationPipe,
+  ValidationPipe
 } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from 'src/users/entities/user.entity';
-import * as request from 'supertest';
-import { AuthModule } from './auth.module';
-import { AuthService } from './auth.service';
-import { SeedService } from 'src/seed/seed.service';
-import { SeedModule } from 'src/seed/seed.module';
-import { Administrator } from 'src/administrators/entities/administrator.entity';
-import { ClientsModule } from 'src/clients/clients.module';
-import { CommonModule } from 'src/common/common.module';
-import { TenantDatabase } from 'src/tenants/entities/tenant-database.entity';
-import { Tenant } from 'src/tenants/entities/tenant.entity';
-import { TenantMiddleware } from 'src/tenants/middleware/tenant.middleware';
-import { TenantsModule } from 'src/tenants/tenants.module';
 import cookieParser from 'cookie-parser';
 import { RequestTools } from 'src/seed/helpers/RequestTools';
-
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      envFilePath: '.env.test',
-      isGlobal: true,
-    }),
-    TenantsModule,
-    ClientsModule,
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        return {
-          type: 'postgres',
-          host: configService.get<string>('DB_HOST'),
-          port: configService.get<number>('DB_PORT'),
-          username: configService.get<string>('DB_USERNAME'),
-          password: configService.get<string>('DB_PASSWORD'),
-          database: 'cropco_management',
-          entities: [Tenant, TenantDatabase, Administrator],
-          synchronize: true,
-          ssl: false,
-        };
-      },
-    }),
-    CommonModule,
-    SeedModule,
-    AuthModule,
-  ],
-})
-export class TestAppModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TenantMiddleware)
-      .exclude(
-        { path: 'administrators/(.*)', method: RequestMethod.ALL },
-        { path: 'tenants/(.*)', method: RequestMethod.ALL },
-        {
-          path: '/auth/management/login',
-          method: RequestMethod.POST,
-        },
-        {
-          path: '/auth/management/check-status',
-          method: RequestMethod.GET,
-        },
-      )
-      .forRoutes('*');
-  }
-}
+import { TestAppModule } from 'src/testing/testing-e2e.module';
+import { User } from 'src/users/entities/user.entity';
+import * as request from 'supertest';
 
 describe('Auth Service (e2e)', () => {
   let app: INestApplication;
-  let authService: AuthService;
-  let seedService: SeedService;
   let userTest: User;
   let token: string;
   const tokenExpired =
@@ -89,8 +22,6 @@ describe('Auth Service (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
     }).compile();
-
-    authService = moduleFixture.get<AuthService>(AuthService);
 
     app = moduleFixture.createNestApplication();
 
