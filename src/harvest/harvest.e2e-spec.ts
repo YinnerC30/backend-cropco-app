@@ -1,104 +1,27 @@
-import {
-  INestApplication,
-  MiddlewareConsumer,
-  Module,
-  RequestMethod,
-  ValidationPipe,
-} from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from 'src/auth/auth.module';
 import { AuthService } from 'src/auth/auth.service';
-import { CommonModule } from 'src/common/common.module';
 import { TypeFilterDate } from 'src/common/enums/TypeFilterDate';
 import { TypeFilterNumber } from 'src/common/enums/TypeFilterNumber';
-import { SeedModule } from 'src/seed/seed.module';
-import { SeedService } from 'src/seed/seed.service';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
-import { Repository } from 'typeorm';
 import { HarvestDetailsDto } from './dto/harvest-details.dto';
 import { HarvestDto } from './dto/harvest.dto';
 import { Harvest } from './entities/harvest.entity';
-import { HarvestController } from './harvest.controller';
 
 import cookieParser from 'cookie-parser';
-import { Administrator } from 'src/administrators/entities/administrator.entity';
-import { ClientsModule } from 'src/clients/clients.module';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { Employee } from 'src/employees/entities/employee.entity';
 import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
 import { RequestTools } from 'src/seed/helpers/RequestTools';
-import { TenantDatabase } from 'src/tenants/entities/tenant-database.entity';
-import { Tenant } from 'src/tenants/entities/tenant.entity';
-import { TenantMiddleware } from 'src/tenants/middleware/tenant.middleware';
-import { TenantsModule } from 'src/tenants/tenants.module';
+import { TestAppModule } from 'src/testing/testing-e2e.module';
 import { HarvestProcessedDto } from './dto/harvest-processed.dto';
 import { QueryParamsHarvest } from './dto/query-params-harvest.dto';
-import { HarvestDetails } from './entities/harvest-details.entity';
-import { HarvestProcessed } from './entities/harvest-processed.entity';
-
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      envFilePath: '.env.test',
-      isGlobal: true,
-    }),
-    TenantsModule,
-    ClientsModule,
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        return {
-          type: 'postgres',
-          host: configService.get<string>('DB_HOST'),
-          port: configService.get<number>('DB_PORT'),
-          username: configService.get<string>('DB_USERNAME'),
-          password: configService.get<string>('DB_PASSWORD'),
-          database: 'cropco_management',
-          entities: [Tenant, TenantDatabase, Administrator],
-          synchronize: true,
-          ssl: false,
-        };
-      },
-    }),
-    CommonModule,
-    SeedModule,
-    AuthModule,
-  ],
-})
-export class TestAppModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TenantMiddleware)
-      .exclude(
-        { path: 'administrators/(.*)', method: RequestMethod.ALL },
-        { path: 'tenants/(.*)', method: RequestMethod.ALL },
-        {
-          path: '/auth/management/login',
-          method: RequestMethod.POST,
-        },
-        {
-          path: '/auth/management/check-status',
-          method: RequestMethod.GET,
-        },
-      )
-      .forRoutes('*');
-  }
-}
 
 describe('HarvestsController (e2e)', () => {
   let app: INestApplication;
-  let harvestRepository: Repository<Harvest>;
-  let harvestDetailsRepository: Repository<HarvestDetails>;
-  let harvestProcessedRepository: Repository<HarvestProcessed>;
-  let seedService: SeedService;
-  let authService: AuthService;
 
-  let harvestController: HarvestController;
   let userTest: User;
   let token: string;
   let reqTools: RequestTools;
@@ -138,8 +61,6 @@ describe('HarvestsController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
     }).compile();
-
-    authService = moduleFixture.get<AuthService>(AuthService);
 
     app = moduleFixture.createNestApplication();
 
