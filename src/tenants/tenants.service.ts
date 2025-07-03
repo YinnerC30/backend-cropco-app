@@ -432,18 +432,6 @@ export class TenantsService extends BaseAdministratorService {
         `Failed to create tenant database for tenant ID: ${tenantId}`,
         'error',
       );
-      // Intentar eliminar la base de datos si existe
-      // try {
-      //   await this.dataSource.query(`DROP DATABASE IF EXISTS ${databaseName}`);
-      //   this.logWithContext(
-      //     `Database ${databaseName} dropped due to error in tenant creation for tenant ID: ${tenantId}`,
-      //   );
-      // } catch (dropError) {
-      //   this.logWithContext(
-      //     `Failed to drop database ${databaseName} after error: ${dropError.message}`,
-      //     'warn',
-      //   );
-      // }
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -623,19 +611,6 @@ export class TenantsService extends BaseAdministratorService {
     );
 
     try {
-      // const tenantDatabase = await this.getOneTenantDatabase(tenantId);
-
-      console.log({
-        type: 'postgres',
-        host: process.env.DB_HOST,
-        port: parseInt(process.env.DB_PORT),
-        username: tenantUsername, // Usuario específico del tenant
-        password: tenantPassword, // Contraseña específica del tenant
-        database: tenantDB.database_name,
-        entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
-        synchronize: true,
-      });
-
       // Usar las credenciales específicas del tenant para configurar la base de datos
       const dataSource = new DataSource({
         type: 'postgres',
