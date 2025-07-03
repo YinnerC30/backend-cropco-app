@@ -20,6 +20,8 @@ import { DataSource } from 'typeorm';
 import { CreateTenantDto } from 'src/tenants/dto/create-tenant.dto';
 import { Administrator } from 'src/administrators/entities/administrator.entity';
 import { SeedControlledResponse } from '../interfaces/SeedControlledResponse';
+import { CreateAdministradorDto } from 'src/administrators/dto/create-administrator.dto';
+import { InformationGenerator } from './InformationGenerator';
 
 /**
  * Utility class for making HTTP requests related to user and permission management in tests.
@@ -96,6 +98,42 @@ export class RequestTools {
       return user;
     }
     return existingAdministrator;
+  }
+
+  async CreateAdminTest() {
+    const data: CreateAdministradorDto = {
+      first_name: 'Admin',
+      last_name: 'Test',
+      email: InformationGenerator.generateEmail(),
+      password: '$2b$10$Ko.8QGXNmo7eUP6z4CyZYObxLrau1B7m3uZshGNSe9bshyinUXigC',
+      cell_phone_number: '3122345435',
+      role: 'admin',
+    };
+
+    const user = await this.administratorRepository.save(data);
+
+    return user;
+  }
+
+  async GenerateTokenAdmin(userAdmin: Administrator) {
+    const loginResponse = await request
+      .default(this.getApp().getHttpServer())
+      .post('/auth/management/login')
+      .send({
+        email: userAdmin.email,
+        password: '123456',
+      });
+
+    // Buscar si existe el tenant
+    const setCookieHeader = loginResponse.headers['set-cookie'];
+
+    const token = Array.isArray(setCookieHeader)
+      ? setCookieHeader
+          .find((cookie: string) => cookie.startsWith('administrator-token='))
+          ?.split(';')[0]
+          ?.split('=')[1]
+      : undefined;
+    return token;
   }
 
   /**

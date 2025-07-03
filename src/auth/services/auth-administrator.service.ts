@@ -63,9 +63,7 @@ export class AuthAdministratorService extends BaseAdministratorService {
           `Login failed - administrator not found for email: ${loginUserDto.email}`,
           'warn',
         );
-        throw new NotFoundException(
-          `Tenant user with email ${loginUserDto.email} not found`,
-        );
+        throw new UnauthorizedException('Credentials are not valid (email)');
       }
 
       if (!user.is_active) {
