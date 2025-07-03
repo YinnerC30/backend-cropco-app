@@ -35,6 +35,7 @@ import { TenantMiddleware } from './tenants/middleware/tenant.middleware';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
+        const statusProject = configService.get<string>('STATUS_PROJECT');
         const isDevelopmentMode: boolean =
           configService.get<string>('STATUS_PROJECT') === 'development';
         return {
@@ -46,7 +47,7 @@ import { TenantMiddleware } from './tenants/middleware/tenant.middleware';
           database: configService.get<string>('DB_NAME'),
           entities: [Tenant, TenantDatabase, Administrator],
           synchronize: isDevelopmentMode,
-          ssl: false,
+          ssl: statusProject == 'production',
           logging: isDevelopmentMode,
         };
       },
