@@ -1,93 +1,18 @@
-import {
-  INestApplication,
-  MiddlewareConsumer,
-  Module,
-  RequestMethod,
-  ValidationPipe,
-} from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 
-import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
-
-import { ConfigModule, ConfigService } from '@nestjs/config';
-
-import { AuthModule } from 'src/auth/auth.module';
-import { AuthService } from 'src/auth/auth.service';
-import { CommonModule } from 'src/common/common.module';
+import cookieParser from 'cookie-parser';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { SalesModule } from 'src/sales/sales.module';
 import { InformationGenerator } from 'src/seed/helpers/InformationGenerator';
-import { SeedModule } from 'src/seed/seed.module';
-import { SeedService } from 'src/seed/seed.service';
+import { RequestTools } from 'src/seed/helpers/RequestTools';
+import { TestAppModule } from 'src/testing/testing-e2e.module';
 import { User } from 'src/users/entities/user.entity';
-import { Repository } from 'typeorm';
-import { ClientsModule } from './clients.module';
 import { CreateClientDto } from './dto/create-client.dto';
 import { Client } from './entities/client.entity';
-import { Administrator } from 'src/administrators/entities/administrator.entity';
-import { TenantDatabase } from 'src/tenants/entities/tenant-database.entity';
-import { Tenant } from 'src/tenants/entities/tenant.entity';
-import { TenantMiddleware } from 'src/tenants/middleware/tenant.middleware';
-import { TenantsModule } from 'src/tenants/tenants.module';
-import cookieParser from 'cookie-parser';
-import { RequestTools } from 'src/seed/helpers/RequestTools';
-
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      envFilePath: '.env.test',
-      isGlobal: true,
-    }),
-    TenantsModule,
-    ClientsModule,
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        return {
-          type: 'postgres',
-          host: configService.get<string>('DB_HOST'),
-          port: configService.get<number>('DB_PORT'),
-          username: configService.get<string>('DB_USERNAME'),
-          password: configService.get<string>('DB_PASSWORD'),
-          database: 'cropco_management',
-          entities: [Tenant, TenantDatabase, Administrator],
-          synchronize: true,
-          ssl: false,
-        };
-      },
-    }),
-    CommonModule,
-    SeedModule,
-    AuthModule,
-  ],
-})
-export class TestAppModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TenantMiddleware)
-      .exclude(
-        { path: 'administrators/(.*)', method: RequestMethod.ALL },
-        { path: 'tenants/(.*)', method: RequestMethod.ALL },
-        {
-          path: '/auth/management/login',
-          method: RequestMethod.POST,
-        },
-        {
-          path: '/auth/management/check-status',
-          method: RequestMethod.GET,
-        },
-      )
-      .forRoutes('*');
-  }
-}
 
 describe('ClientsController (e2e)', () => {
   let app: INestApplication;
-  let clientRepository: Repository<Client>;
-  let seedService: SeedService;
-  let authService: AuthService;
   let userTest: User;
   let token: string;
   let reqTools: RequestTools;
@@ -122,8 +47,6 @@ describe('ClientsController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
     }).compile();
-
-    authService = moduleFixture.get<AuthService>(AuthService);
 
     app = moduleFixture.createNestApplication();
 
