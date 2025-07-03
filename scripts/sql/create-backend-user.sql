@@ -5,7 +5,8 @@
 CREATE ROLE backend_cropco_user WITH LOGIN PASSWORD 'cR0pc0_B4ck3nd_S3cur3!2024';
 
 -- 2. Otorgar solo permisos necesarios
-ALTER ROLE backend_cropco_user CREATEDB;  -- Para crear bases de datos de tenants
+-- ALTER ROLE backend_cropco_user CREATEDB;  -- Para crear bases de datos de tenants
+ALTER ROLE backend_cropco_user CREATEROLE CREATEDB;
 
 -- 3. Crear rol base para tenants
 CREATE ROLE tenant_base_role;
@@ -13,6 +14,28 @@ CREATE ROLE tenant_base_role;
 -- 4. Otorgar permisos básicos al rol base
 GRANT CONNECT ON DATABASE postgres TO tenant_base_role;
 GRANT USAGE ON SCHEMA public TO tenant_base_role;
+
+-- Otorgar privilegios completos sobre la base de datos cropco_management al rol backend_cropco_user
+GRANT ALL PRIVILEGES ON DATABASE cropco_management TO backend_cropco_user;
+
+-- Conectarse a la base de datos cropco_management para otorgar permisos sobre esquemas y objetos
+\c cropco_management
+
+-- Otorgar todos los privilegios sobre el esquema public
+GRANT ALL ON SCHEMA public TO backend_cropco_user;
+
+-- Otorgar todos los privilegios sobre todas las tablas existentes y futuras en el esquema public
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO backend_cropco_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO backend_cropco_user;
+
+-- Otorgar todos los privilegios sobre todas las secuencias existentes y futuras en el esquema public
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO backend_cropco_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO backend_cropco_user;
+
+-- Otorgar todos los privilegios sobre todas las funciones existentes y futuras en el esquema public
+GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO backend_cropco_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON FUNCTIONS TO backend_cropco_user;
+
 
 -- 5. Función para crear usuario de tenant
 CREATE OR REPLACE FUNCTION create_tenant_user(tenant_name TEXT, tenant_password TEXT)

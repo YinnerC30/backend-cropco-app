@@ -378,9 +378,6 @@ export class TenantsService extends BaseAdministratorService {
       const tenantUsername = `tenant_${databaseName.replace('cropco_tenant_', '')}_user`;
       const tenantPassword = this.encryptionService.generateSecurePassword();
 
-      // Crear la base de datos
-      await this.dataSource.query(`CREATE DATABASE ${databaseName}`);
-
       this.logWithContext(
         `Database ${databaseName} created successfully for tenant ID: ${tenantId}`,
       );
@@ -391,9 +388,13 @@ export class TenantsService extends BaseAdministratorService {
         tenantPassword,
       ]);
 
-      // Asignar propiedad de la base de datos al usuario del tenant
       await this.dataSource.query(
-        `ALTER DATABASE "${databaseName}" OWNER TO "${tenantUsername}"`,
+        `GRANT ${tenantUsername} TO backend_cropco_user;`,
+      );
+
+      // Crear la base de datos
+      await this.dataSource.query(
+        `CREATE DATABASE ${databaseName} OWNER = ${tenantUsername}`,
       );
 
       // Asignar permisos de conexión a la base de datos
