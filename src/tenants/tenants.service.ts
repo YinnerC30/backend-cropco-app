@@ -619,7 +619,13 @@ export class TenantsService extends BaseAdministratorService {
         username: tenantUsername, // Usuario específico del tenant
         password: tenantPassword, // Contraseña específica del tenant
         database: tenantDB.database_name,
-        entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
+        // entities: [__dirname + '/../**/!(*tenant*).entity{.ts,.js}'],
+        entities: [
+          __dirname + '/../**/!(*tenant*|*administrator*).entity{.ts,.js}',
+        ],
+        // entities: [
+        //   __dirname + '/../**/!(*tenant|administrator).entity{.ts,.js}',
+        // ],
         synchronize: true,
       });
 
