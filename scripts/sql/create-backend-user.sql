@@ -37,30 +37,31 @@ GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO backend_cropco_user;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON FUNCTIONS TO backend_cropco_user;
 
 
--- 5. Función para crear usuario de tenant
+-- 5. Función para crear o actualizar usuario de tenant
 CREATE OR REPLACE FUNCTION create_tenant_user(tenant_name TEXT, tenant_password TEXT)
 RETURNS TEXT AS $$
 DECLARE
     tenant_user_name TEXT;
 BEGIN
     tenant_user_name := 'tenant_' || tenant_name || '_user';
-    
-    -- Verificar si el usuario ya existe
+
+    -- Si el usuario ya existe, actualizar la contraseña
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = tenant_user_name) THEN
-        RAISE NOTICE 'Usuario % ya existe, saltando creación', tenant_user_name;
-        RETURN tenant_user_name;
+        EXECUTE format('ALTER ROLE %I WITH PASSWORD %L', tenant_user_name, tenant_password);
+        RAISE NOTICE 'Usuario % ya existe, contraseña actualizada', tenant_user_name;
+    ELSE
+        -- Crear usuario específico para el tenant
+        EXECUTE format('CREATE ROLE %I WITH LOGIN PASSWORD %L', tenant_user_name, tenant_password);
+        RAISE NOTICE 'Usuario % creado', tenant_user_name;
     END IF;
-    
-    -- Crear usuario específico para el tenant
-    EXECUTE format('CREATE ROLE %I WITH LOGIN PASSWORD %L', tenant_user_name, tenant_password);
-    
+
     -- Heredar permisos base
     EXECUTE format('GRANT tenant_base_role TO %I', tenant_user_name);
-    
+
     -- Otorgar permisos específicos para la base de datos del tenant
     EXECUTE format('GRANT CREATE ON SCHEMA public TO %I', tenant_user_name);
     EXECUTE format('GRANT USAGE ON SCHEMA public TO %I', tenant_user_name);
-    
+
     RETURN tenant_user_name;
 END;
 $$ LANGUAGE plpgsql;
