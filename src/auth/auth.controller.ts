@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 
 import { PathsController } from 'src/common/interfaces/PathsController';
@@ -21,6 +22,7 @@ import { GetTokenTenantManagement } from './decorators/get-token-tenant-manageme
 import { Response } from 'express';
 import { User } from 'src/users/entities/user.entity';
 import { Module } from './entities/module.entity';
+import { DevelopmentGuard } from 'src/seed/guards/development.guard';
 
 export const pathsAuthController: PathsController = {
   login: {
@@ -230,6 +232,7 @@ export class AuthController {
    * @param userId User identifier
    * @param actionName Name of the action to add
    */
+  @UseGuards(DevelopmentGuard)
   @Post('add-permission/:userId/:actionName')
   async addPermissionToUser(
     @Param('userId') userId: string,
@@ -244,6 +247,7 @@ export class AuthController {
    * @param userId User identifier
    * @param moduleName Name of the module
    */
+  @UseGuards(DevelopmentGuard)
   @Post('remove-permissions-to-module/:userId/:moduleName')
   async removePermissionsToModule(
     @Param('userId') userId: string,
@@ -258,6 +262,7 @@ export class AuthController {
    * @param userId User identifier
    * @param actionName Name of the action to remove
    */
+  @UseGuards(DevelopmentGuard)
   @Post('remove-permission/:userId/:actionName')
   async removePermissionFromUser(
     @Param('userId') userId: string,
@@ -271,6 +276,7 @@ export class AuthController {
    * Only for development and testing purposes.
    * @param userId User identifier
    */
+  @UseGuards(DevelopmentGuard)
   @Post('delete-test-user/:userId')
   async deleteTestUser(@Param('userId') userId: string): Promise<void> {
     return this.authService.deleteUserToTests(userId);

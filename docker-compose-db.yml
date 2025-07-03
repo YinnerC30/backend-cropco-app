@@ -9,6 +9,8 @@ services:
       POSTGRES_PASSWORD: temp_admin_password_change_immediately
       # Configuración de seguridad
       POSTGRES_INITDB_ARGS: '--auth-host=md5'
+      # Permitir hasta 250 conexiones
+      POSTGRES_MAX_CONNECTIONS: 250
     ports:
       - '5432:5432'
     healthcheck:

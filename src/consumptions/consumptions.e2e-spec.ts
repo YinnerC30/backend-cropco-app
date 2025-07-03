@@ -1,7 +1,4 @@
-import {
-  INestApplication,
-  ValidationPipe
-} from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { User } from 'src/users/entities/user.entity';
@@ -993,8 +990,6 @@ describe('ConsumptionController (e2e)', () => {
       ).consumption;
       const { id, createdDate, updatedDate, deletedDate, ...rest } = record;
 
-      console.log('details', record.details);
-
       const bodyRequest: ConsumptionSuppliesDto = {
         ...rest,
         details: record.details.map((detail) => ({
@@ -1011,10 +1006,8 @@ describe('ConsumptionController (e2e)', () => {
         .patch(`/consumptions/update/one/${record.id}`)
         .set('x-tenant-id', tenantId)
         .set('Cookie', `user-token=${token}`)
-        .send(bodyRequest);
-      // .expect(200);
-
-      console.log('body update consumption', body);
+        .send(bodyRequest)
+        .expect(200);
 
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('date');
