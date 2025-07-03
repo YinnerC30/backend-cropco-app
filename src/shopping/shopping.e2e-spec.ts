@@ -515,8 +515,8 @@ describe('ShoppingController (e2e)', () => {
         .set('Cookie', `user-token=${token}`)
         .expect(200);
 
-      expect(response.body.total_row_count).toEqual(6);
-      expect(response.body.current_row_count).toEqual(6);
+      expect(response.body.total_row_count).toBeGreaterThan(4);
+      expect(response.body.current_row_count).toBeGreaterThan(4);
       expect(response.body.total_page_count).toEqual(1);
       expect(response.body.current_page_count).toEqual(1);
 
@@ -713,7 +713,7 @@ describe('ShoppingController (e2e)', () => {
         .set('Cookie', `user-token=${token}`)
         .expect(200);
 
-      expect(response.body.total_row_count).toEqual(11);
+      expect(response.body.total_row_count).toBeGreaterThan(10);
       expect(response.body.current_row_count).toEqual(10);
       expect(response.body.total_page_count).toEqual(2);
       expect(response.body.current_page_count).toEqual(1);

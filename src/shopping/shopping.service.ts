@@ -40,8 +40,11 @@ export class ShoppingService extends BaseTenantService {
   ) {
     super(request);
     this.setLogger(this.logger);
-    this.suppliesShoppingRepository = this.getTenantRepository(SuppliesShopping);
-    this.suppliesShoppingDetailsRepository = this.getTenantRepository(SuppliesShoppingDetails);
+    this.suppliesShoppingRepository =
+      this.getTenantRepository(SuppliesShopping);
+    this.suppliesShoppingDetailsRepository = this.getTenantRepository(
+      SuppliesShoppingDetails,
+    );
     this.dataSource = this.tenantConnection;
   }
 
@@ -59,11 +62,11 @@ export class ShoppingService extends BaseTenantService {
         data,
       );
       await queryRunner.manager.save(SuppliesShoppingDetails, recordToSave);
-      
+
       this.logWithContext(
         `Shopping detail created successfully with ID: ${recordToSave.id}`,
       );
-      
+
       return recordToSave;
     } catch (error) {
       this.logWithContext(
@@ -89,11 +92,11 @@ export class ShoppingService extends BaseTenantService {
         condition,
         data,
       );
-      
+
       this.logWithContext(
         `Shopping details updated successfully, affected rows: ${result.affected}`,
       );
-      
+
       return result;
     } catch (error) {
       this.logWithContext(
@@ -110,12 +113,15 @@ export class ShoppingService extends BaseTenantService {
     );
 
     try {
-      const result = await queryRunner.manager.delete(SuppliesShoppingDetails, condition);
-      
+      const result = await queryRunner.manager.delete(
+        SuppliesShoppingDetails,
+        condition,
+      );
+
       this.logWithContext(
         `Shopping details removed successfully, affected rows: ${result.affected}`,
       );
-      
+
       return result;
     } catch (error) {
       this.logWithContext(
@@ -182,11 +188,11 @@ export class ShoppingService extends BaseTenantService {
       await queryRunner.manager.save(shopping);
 
       await queryRunner.commitTransaction();
-      
+
       this.logWithContext(
         `Shopping created successfully with ID: ${shopping.id}`,
       );
-      
+
       return shopping;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -276,7 +282,9 @@ export class ShoppingService extends BaseTenantService {
 
       const [shopping, count] = await queryBuilder.getManyAndCount();
 
-      this.logWithContext(`Found ${shopping.length} shopping records out of ${count} total records`);
+      this.logWithContext(
+        `Found ${shopping.length} shopping records out of ${count} total records`,
+      );
 
       if (shopping.length === 0 && count > 0) {
         throw new NotFoundException(
@@ -292,7 +300,10 @@ export class ShoppingService extends BaseTenantService {
         records: shopping,
       };
     } catch (error) {
-      this.logWithContext('Failed to find shopping records with filters', 'error');
+      this.logWithContext(
+        'Failed to find shopping records with filters',
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -311,12 +322,14 @@ export class ShoppingService extends BaseTenantService {
           },
         },
       });
-      
+
       if (!supplyShopping) {
         this.logWithContext(`Shopping with ID: ${id} not found`, 'warn');
-        throw new NotFoundException(`Supplies Shopping with id: ${id} not found`);
+        throw new NotFoundException(
+          `Supplies Shopping with id: ${id} not found`,
+        );
       }
-      
+
       this.logWithContext(`Shopping found successfully with ID: ${id}`);
       return supplyShopping;
     } catch (error) {
@@ -396,7 +409,9 @@ export class ShoppingService extends BaseTenantService {
 
           // Verificar que la unidad de medida sea válida
           if (
-            !this.unitConversionService.isValidUnit(dataRecordNew.unit_of_measure)
+            !this.unitConversionService.isValidUnit(
+              dataRecordNew.unit_of_measure,
+            )
           ) {
             throw new BadRequestException(
               `Unidad de medida inválida: ${dataRecordNew.unit_of_measure}`,
@@ -462,7 +477,9 @@ export class ShoppingService extends BaseTenantService {
 
           // Verificar que la unidad de medida sea válida
           if (
-            !this.unitConversionService.isValidUnit(newRecordData.unit_of_measure)
+            !this.unitConversionService.isValidUnit(
+              newRecordData.unit_of_measure,
+            )
           ) {
             throw new BadRequestException(
               `Unidad de medida inválida: ${newRecordData.unit_of_measure}`,
@@ -488,7 +505,7 @@ export class ShoppingService extends BaseTenantService {
           await this.createShoppingDetails(queryRunner, {
             shopping: id as any,
             ...newRecordData,
-          });
+          } as SuppliesShoppingDetails);
 
           await this.suppliesService.updateStock(queryRunner, {
             supplyId: newRecordData.supply.id,
@@ -502,9 +519,9 @@ export class ShoppingService extends BaseTenantService {
         await queryRunner.manager.update(SuppliesShopping, { id }, rest);
 
         await queryRunner.commitTransaction();
-        
+
         this.logWithContext(`Shopping updated successfully with ID: ${id}`);
-        
+
         return await this.findOneShopping(id);
       } catch (error) {
         await queryRunner.rollbackTransaction();
@@ -585,7 +602,10 @@ export class ShoppingService extends BaseTenantService {
 
       return { success, failed };
     } catch (error) {
-      this.logWithContext('Failed to execute bulk removal of shopping records', 'error');
+      this.logWithContext(
+        'Failed to execute bulk removal of shopping records',
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -620,7 +640,10 @@ export class ShoppingService extends BaseTenantService {
       this.logWithContext(`Shopping PDF exported successfully for ID: ${id}`);
       return pdfDoc;
     } catch (error) {
-      this.logWithContext(`Failed to export shopping PDF for ID: ${id}`, 'error');
+      this.logWithContext(
+        `Failed to export shopping PDF for ID: ${id}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }

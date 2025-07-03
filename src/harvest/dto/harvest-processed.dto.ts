@@ -28,10 +28,10 @@ export class HarvestProcessedDto {
   @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;
 
-  // @IsDefined()
-  // @ValidateNested()
-  // @Type(() => ValidateUUID)
-  // harvest: DeepPartial<Harvest>;
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => ValidateUUID)
+  harvest: DeepPartial<Harvest>;
 
   @IsString()
   @IsNotEmpty()

@@ -7,7 +7,7 @@ describe('HarvestProcessedDto', () => {
     const dto = plainToClass(HarvestProcessedDto, {
       date: '2024-07-11',
       crop: { id: '123e4567-e89b-12d3-a456-426614174000' },
-      // harvest: { id: '123e4567-e89b-12d3-a456-426614174001' },
+      harvest: { id: '123e4567-e89b-12d3-a456-426614174001' },
       unit_of_measure: 'GRAMOS',
       amount: 100,
     });
@@ -20,7 +20,7 @@ describe('HarvestProcessedDto', () => {
     const dto = plainToClass(HarvestProcessedDto, {
       date: 'invalid-date',
       crop: { id: '123e4567-e89b-12d3-a456-426614174000' },
-      // harvest: { id: '123e4567-e89b-12d3-a456-426614174001' },
+      harvest: { id: '123e4567-e89b-12d3-a456-426614174001' },
       unit_of_measure: 'GRAMOS',
       amount: 100,
     });
@@ -34,7 +34,7 @@ describe('HarvestProcessedDto', () => {
     const dto = plainToClass(HarvestProcessedDto, {
       date: '2024-07-11',
       crop: { id: '123e4567-e89b-12d3-a456-426614174000' },
-      // harvest: { id: '123e4567-e89b-12d3-a456-426614174001' },
+      harvest: { id: '123e4567-e89b-12d3-a456-426614174001' },
       amount: -100,
     });
 
