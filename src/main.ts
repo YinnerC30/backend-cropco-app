@@ -2,6 +2,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
+import { WinstonModule } from 'nest-winston';
+import * as winston from 'winston';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -53,6 +55,25 @@ async function bootstrap() {
       ],
       credentials: true,
     },
+    logger: WinstonModule.createLogger({
+      transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({
+          filename: 'logs/app.log',
+          level: 'info',
+        }),
+        new winston.transports.File({
+          filename: 'logs/error.log',
+          level: 'error',
+        }),
+      ],
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.printf(({ timestamp, level, message, context }) => {
+          return `${timestamp} [${level}]${context ? ' [' + context + ']' : ''}: ${message}`;
+        }),
+      ),
+    }),
   });
 
   app.use(cookieParser());
