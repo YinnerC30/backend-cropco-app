@@ -20,7 +20,7 @@ export class WorkDto {
   date: string;
 
   @IsString()
-  @Length(10, 500)
+  @Length(15, 500)
   description: string;
 
   @IsNumber()
