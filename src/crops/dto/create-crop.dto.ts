@@ -2,6 +2,7 @@ import {
   IsDateString,
   IsNumber,
   IsOptional,
+  IsPositive,
   IsString,
   Length,
   Min,
@@ -18,7 +19,7 @@ export class CreateCropDto {
   description: string;
 
   @IsNumber()
-  @Min(0)
+  @IsPositive()
   number_hectares: number;
 
   @IsNumber()
@@ -36,4 +37,3 @@ export class CreateCropDto {
   @IsDateString()
   date_of_termination: string;
 }
-
