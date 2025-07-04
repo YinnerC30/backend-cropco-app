@@ -28,7 +28,7 @@ export class CreateClientDto {
   cell_phone_number: string;
 
   @IsString()
-  @MinLength(6)
+  @MinLength(15)
   @MaxLength(200)
   address: string;
 }
