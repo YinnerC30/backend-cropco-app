@@ -21,7 +21,7 @@ export class CreateSupplierDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(2)
+  @MinLength(4)
   @MaxLength(100)
   company_name?: string;
 
@@ -36,7 +36,7 @@ export class CreateSupplierDto {
   cell_phone_number: string;
 
   @IsString()
-  @MinLength(6)
+  @MinLength(15)
   @MaxLength(200)
   address: string;
 }
