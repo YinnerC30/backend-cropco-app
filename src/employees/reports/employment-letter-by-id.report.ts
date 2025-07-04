@@ -11,6 +11,7 @@ interface ReportValues {
   employeeHours: number;
   employeeWorkSchedule: string;
   employerCompany: string;
+  employeeId: string | number;
 }
 
 const styles: StyleDictionary = {
@@ -49,6 +50,7 @@ export const getEmploymentLetterByIdReport = (
     employeeHours,
     employeeWorkSchedule,
     employerCompany,
+    employeeId,
   } = values;
 
   const docDefinition: TDocumentDefinitions = {
@@ -67,7 +69,7 @@ export const getEmploymentLetterByIdReport = (
       },
       {
         text: `Yo, ${employerName}, en mi calidad de ${employerPosition} de ${employerCompany}, por medio de la presente certifico que ${employeeName} ha sido empleado en nuestra empresa desde el ${DateFormatter.getSpanishDate(employeeStartDate as unknown as string)}. \n\n
-        Durante su empleo, el Sr./Sra. ${employeeName} ha desempeñado el cargo de ${employeePosition}, demostrando responsabilidad, compromiso y habilidades profesionales en sus labores.\n\n
+        Durante su empleo, el Sr./Sra. ${employeeName}, identificado con el número de identificación ${employeeId}, ha desempeñado el cargo de ${employeePosition}, demostrando responsabilidad, compromiso y habilidades profesionales en sus labores.\n\n
         La jornada laboral del Sr./ Sra. ${employeeName} es de ${employeeHours} horas semanales, con un horario de ${employeeWorkSchedule}, cumpliendo con las políticas y procedimientos establecidos por la empresa.\n\n
         Esta constancia se expide a solicitud del interesado para los fines que considere conveniente. \n\n`,
         style: 'body',

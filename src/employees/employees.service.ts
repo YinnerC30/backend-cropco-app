@@ -60,6 +60,7 @@ export class EmployeesService extends BaseTenantService {
         employeeHours: employeeCertificationDto.weekly_working_hours,
         employeeWorkSchedule: 'Lunes a Viernes',
         employerCompany: employeeCertificationDto.company_name,
+        employeeId: employeeCertificationDto.id_number,
       });
 
       const doc = this.printerService.createPdf({ docDefinition });

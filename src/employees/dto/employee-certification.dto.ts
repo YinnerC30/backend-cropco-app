@@ -7,6 +7,7 @@ import {
   Max,
   MaxLength,
   Min,
+  MinLength,
 } from 'class-validator';
 
 export class EmployeeCertificationDto {
@@ -51,4 +52,9 @@ export class EmployeeCertificationDto {
   @Min(1)
   @Max(168)
   weekly_working_hours: number;
+
+  @IsNumberString()
+  @MinLength(5)
+  @MaxLength(20)
+  id_number: number;
 }
