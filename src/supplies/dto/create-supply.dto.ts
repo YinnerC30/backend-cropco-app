@@ -1,4 +1,4 @@
-import { IsIn, IsString, Length, MaxLength } from 'class-validator';
+import { IsIn, IsString, Length } from 'class-validator';
 import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
 
 export class CreateSupplyDto {
@@ -14,17 +14,8 @@ export class CreateSupplyDto {
   @IsIn([
     // Unidades de masa
     'GRAMOS',
-    // 'KILOGRAMOS',
-    // 'LIBRAS',
-    // 'ONZAS',
-    // 'TONELADAS',
     // Unidades de volumen
     'MILILITROS',
-    // 'LITROS',
-    // 'GALONES',
-    // 'ONZAS_FLUIDAS',
-    // 'CUCHARADAS',
-    // 'CUCHARADAS_SOPERAS',
   ])
   unit_of_measure: UnitType;
 

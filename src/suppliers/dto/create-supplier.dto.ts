@@ -10,16 +10,18 @@ import {
 
 export class CreateSupplierDto {
   @IsString()
-  @MinLength(1)
+  @MinLength(2)
   @MaxLength(100)
   first_name: string;
 
   @IsString()
+  @MinLength(2)
   @MaxLength(100)
   last_name: string;
 
   @IsOptional()
   @IsString()
+  @MinLength(2)
   @MaxLength(100)
   company_name?: string;
 
@@ -34,6 +36,7 @@ export class CreateSupplierDto {
   cell_phone_number: string;
 
   @IsString()
+  @MinLength(6)
   @MaxLength(200)
   address: string;
 }

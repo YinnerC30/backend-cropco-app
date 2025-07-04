@@ -1,12 +1,19 @@
-import { IsEmail, IsNumberString, IsString, MaxLength, MinLength } from 'class-validator';
-import { IsColombianPhone } from 'src/common/decorators/is-colombian-phone.decorator';
+import {
+  IsEmail,
+  IsNumberString,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class CreateClientDto {
   @IsString()
+  @MinLength(2)
   @MaxLength(100)
   first_name: string;
 
   @IsString()
+  @MinLength(2)
   @MaxLength(100)
   last_name: string;
 
@@ -21,6 +28,7 @@ export class CreateClientDto {
   cell_phone_number: string;
 
   @IsString()
+  @MinLength(6)
   @MaxLength(200)
   address: string;
 }

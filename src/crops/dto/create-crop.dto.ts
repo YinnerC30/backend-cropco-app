@@ -14,7 +14,7 @@ export class CreateCropDto {
 
   @IsOptional()
   @IsString()
-  @Length(0, 500)
+  @Length(15, 500)
   description: string;
 
   @IsNumber()
