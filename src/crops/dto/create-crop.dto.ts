@@ -27,7 +27,7 @@ export class CreateCropDto {
   units: number;
 
   @IsString()
-  @Length(4, 150)
+  @Length(15, 150)
   location: string;
 
   @IsDateString()
