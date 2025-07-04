@@ -251,11 +251,11 @@ describe('CropsController e2e', () => {
       const errorMessage = [
         'name must be longer than or equal to 4 characters',
         'name must be a string',
-        'number_hectares must not be less than 0',
+        'number_hectares must be a positive number',
         'number_hectares must be a number conforming to the specified constraints',
         'units must not be less than 1',
         'units must be a number conforming to the specified constraints',
-        'location must be longer than or equal to 4 characters',
+        'location must be longer than or equal to 15 characters',
         'location must be a string',
         'date_of_creation must be a valid ISO 8601 date string',
       ];
@@ -405,7 +405,7 @@ describe('CropsController e2e', () => {
         .patch(`/crops/update/one/${falseCropId}`)
         .set('x-tenant-id', tenantId)
         .set('Cookie', `user-token=${token}`)
-        .send({ location: 'New location' })
+        .send({ location: 'New location random with errors' })
         .expect(404);
       expect(body.message).toEqual(`Crop with id: ${falseCropId} not found`);
     });

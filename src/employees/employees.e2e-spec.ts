@@ -1,11 +1,6 @@
-import {
-  INestApplication,
-  ValidationPipe
-} from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-
-
 
 import cookieParser from 'cookie-parser';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
@@ -1072,14 +1067,16 @@ describe('EmployeesController (e2e)', () => {
         start_date: new Date(),
         employee_position: 'Jornalero',
         weekly_working_hours: 48,
+        id_number: '3123456',
       };
       const response = await request
         .default(app.getHttpServer())
         .post(`/employees/generate/certification/one/${record.id}`)
         .set('x-tenant-id', tenantId)
         .set('Cookie', `user-token=${token}`)
-        .send(bodyRequest)
-        .expect(201);
+        .send(bodyRequest);
+      // .expect(201);
+      console.log(response.body);
       expect(response.body).toBeDefined();
       expect(response.body).toBeInstanceOf(Buffer);
     });

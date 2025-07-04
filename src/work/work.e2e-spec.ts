@@ -126,7 +126,7 @@ describe('WorksController (e2e)', () => {
     it('should throw exception when fields are missing in the body', async () => {
       const errorMessage = [
         'date must be a valid ISO 8601 date string',
-        'description must be longer than or equal to 10 characters',
+        'description must be longer than or equal to 15 characters',
         'description must be a string',
         "The sum of fields [value_pay] in 'details' must match the corresponding top-level values.",
         'value_pay must be a positive number',

@@ -56,5 +56,5 @@ export class EmployeeCertificationDto {
   @IsNumberString()
   @MinLength(5)
   @MaxLength(20)
-  id_number: number;
+  id_number: string;
 }
