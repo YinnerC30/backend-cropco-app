@@ -18,7 +18,7 @@ import { GetToken } from './decorators/get-token.headers.decorator';
 import { LoginUserDto } from './dto/login-user.dto';
 import { AuthAdministratorService } from './services/auth-administrator.service';
 import { AuthAdministration } from './decorators/auth-administrator.decorator';
-import { GetTokenTenantManagement } from './decorators/get-token-tenant-management.headers.decorator';
+import { GetTokenAdministration } from './decorators/get-token-administrator.headers.decorator';
 import { Response } from 'express';
 import { User } from 'src/users/entities/user.entity';
 import { Module } from './entities/module.entity';
@@ -169,7 +169,7 @@ export class AuthController {
 
   @AuthAdministration()
   @Get(checkAuthStatusManagement.path)
-  checkAuthStatusManagement(@GetTokenTenantManagement() token: string) {
+  checkAuthStatusManagement(@GetTokenAdministration() token: string) {
     return this.authTenantService.checkAuthStatus(token);
   }
 
@@ -209,7 +209,7 @@ export class AuthController {
   @Post(logoutAdministrator.path)
   @HttpCode(200)
   async logoutAdministrator(
-    @GetTokenTenantManagement() token: string,
+    @GetTokenAdministration() token: string,
     @Res({ passthrough: true }) response: Response,
   ) {
     // Invalidar el token en el servidor (opcional, depende de tu estrategia)

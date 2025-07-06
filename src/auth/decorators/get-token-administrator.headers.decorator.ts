@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 
-export const getTokenFactoryTenantManagement = (
+export const getTokenFactoryAdministration = (
   _: unknown,
   ctx: ExecutionContext,
 ): string | null => {
@@ -16,6 +16,6 @@ export const getTokenFactoryTenantManagement = (
   return token;
 };
 
-export const GetTokenTenantManagement = createParamDecorator(
-  getTokenFactoryTenantManagement,
+export const GetTokenAdministration = createParamDecorator(
+  getTokenFactoryAdministration,
 );
