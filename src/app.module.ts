@@ -84,6 +84,10 @@ export class AppModule {
           method: RequestMethod.POST,
         },
         {
+          path: '/auth/management/logout',
+          method: RequestMethod.POST,
+        },
+        {
           path: '/auth/management/check-status',
           method: RequestMethod.GET,
         },
