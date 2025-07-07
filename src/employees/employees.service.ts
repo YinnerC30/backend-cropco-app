@@ -241,8 +241,16 @@ export class EmployeesService extends BaseTenantService {
       const employee = await this.employeeRepository
         .createQueryBuilder('employee')
         .withDeleted()
-        .leftJoinAndSelect('employee.harvests_detail', 'harvests_detail')
-        .leftJoinAndSelect('employee.works_detail', 'works_detail')
+        .leftJoinAndSelect(
+          'employee.harvests_detail',
+          'harvests_detail',
+          'harvests_detail.payment_is_pending = :pending',
+        )
+        .leftJoinAndSelect(
+          'employee.works_detail',
+          'works_detail',
+          'works_detail.payment_is_pending = :pending',
+        )
         .leftJoinAndSelect('harvests_detail.harvest', 'harvest')
         .leftJoinAndSelect('works_detail.work', 'work')
         .where('employee.id = :id', { id })
