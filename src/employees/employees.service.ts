@@ -238,23 +238,19 @@ export class EmployeesService extends BaseTenantService {
     this.logWithContext(`Finding employee with pending payments for ID: ${id}`);
 
     try {
-      const employee = await this.employeeRepository.findOne({
-        withDeleted: true,
-        where: [
-          {
-            id,
-            harvests_detail: { payment_is_pending: true },
-          },
-          {
-            id,
-            works_detail: { payment_is_pending: true },
-          },
-        ],
-        relations: {
-          harvests_detail: { harvest: true },
-          works_detail: { work: true },
-        },
-      });
+      const employee = await this.employeeRepository
+        .createQueryBuilder('employee')
+        .withDeleted()
+        .leftJoinAndSelect('employee.harvests_detail', 'harvests_detail')
+        .leftJoinAndSelect('employee.works_detail', 'works_detail')
+        .leftJoinAndSelect('harvests_detail.harvest', 'harvest')
+        .leftJoinAndSelect('works_detail.work', 'work')
+        .where('employee.id = :id', { id })
+        .andWhere(
+          '(harvests_detail.payment_is_pending = :pending OR works_detail.payment_is_pending = :pending)',
+          { pending: true },
+        )
+        .getOne();
 
       if (!employee) {
         this.logWithContext(
