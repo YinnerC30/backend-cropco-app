@@ -49,14 +49,14 @@ export const endpointRateLimits: Record<string, ThrottlerOptions> = {
   '/auth/login': rateLimitConfig.auth,
   '/auth/management/login': rateLimitConfig.auth,
   '/auth/renew-token': rateLimitConfig.auth,
-  
+
   // Admin endpoints
   '/administrators': rateLimitConfig.admin,
   '/tenants': rateLimitConfig.admin,
-  
+
   // Seed endpoints (solo desarrollo)
   '/seed': rateLimitConfig.seed,
-  
+
   // Endpoints críticos
   '/auth/check-status': rateLimitConfig.critical,
   '/auth/management/check-status': rateLimitConfig.critical,
@@ -80,4 +80,4 @@ export function getRateLimitForEndpoint(path: string): ThrottlerOptions {
 
   // Retornar configuración por defecto
   return rateLimitConfig.default;
-} 
+}
