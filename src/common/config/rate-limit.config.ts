@@ -39,6 +39,10 @@ export const rateLimitConfig: Record<string, ThrottlerOptions> = {
     ttl: 60000, // 1 minuto
     limit: 10, // 10 requests por minuto
   },
+  testing: {
+    ttl: 60_000 * 30,
+    limit: 1000,
+  }
 };
 
 /**

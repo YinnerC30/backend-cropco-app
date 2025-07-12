@@ -5,6 +5,7 @@ import {
   RequestMethod,
 } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AdministratorsModule } from 'src/administrators/administrators.module';
 
@@ -12,6 +13,7 @@ import { Administrator } from 'src/administrators/entities/administrator.entity'
 import { AuthModule } from 'src/auth/auth.module';
 import { ClientsModule } from 'src/clients/clients.module';
 import { CommonModule } from 'src/common/common.module';
+import { rateLimitConfig } from 'src/common/config/rate-limit.config';
 import { ConsumptionsModule } from 'src/consumptions/consumptions.module';
 import { CropsModule } from 'src/crops/crops.module';
 import { DashboardModule } from 'src/dashboard/dashboard.module';
@@ -55,6 +57,12 @@ import { WorkModule } from 'src/work/work.module';
         };
       },
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: rateLimitConfig.testing.ttl,
+        limit: rateLimitConfig.testing.limit,
+      },
+    ]),
     TenantsModule,
     AuthModule,
     ClientsModule,
