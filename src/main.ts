@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import 'winston-daily-rotate-file';
+import { RateLimitGuard } from './common/guards/rate-limit.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -100,6 +101,9 @@ async function bootstrap() {
   });
 
   app.use(cookieParser());
+
+  // Agregar el guard global de rate limiting
+  app.useGlobalGuards(app.get(RateLimitGuard));
 
   app.useGlobalPipes(
     new ValidationPipe({

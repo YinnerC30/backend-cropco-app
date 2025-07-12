@@ -9,7 +9,9 @@ import {
   Post,
   Res,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 
 import { PathsController } from 'src/common/interfaces/PathsController';
 import { AuthService } from './auth.service';
@@ -107,6 +109,7 @@ export class AuthController {
   ) {}
 
   @Post(login.path)
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async login(
     @Body() loginUserDto: LoginUserDto,
     @Res({ passthrough: true }) response: Response,
@@ -127,6 +130,7 @@ export class AuthController {
   }
 
   @Post(loginManagement.path)
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async loginManagement(
     @Body() loginUserDto: LoginUserDto,
     @Res({ passthrough: true }) response: Response,

@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { ClientsModule } from './clients/clients.module';
 import { CommonModule } from './common/common.module';
@@ -25,6 +26,7 @@ import { WorkModule } from './work/work.module';
 import { AdministratorsModule } from './administrators/administrators.module';
 import { Administrator } from './administrators/entities/administrator.entity';
 import { TenantMiddleware } from './tenants/middleware/tenant.middleware';
+import { rateLimitConfig } from './common/config/rate-limit.config';
 
 @Module({
   imports: [
@@ -47,10 +49,17 @@ import { TenantMiddleware } from './tenants/middleware/tenant.middleware';
           entities: [Tenant, TenantDatabase, Administrator],
           synchronize: isDevelopmentMode,
           ssl: false,
-          logging: isDevelopmentMode,
+          // logging: isDevelopmentMode,
         };
       },
     }),
+    // Configuración de Rate Limiting
+    ThrottlerModule.forRoot([
+      {
+        ttl: rateLimitConfig.default.ttl,
+        limit: rateLimitConfig.default.limit,
+      },
+    ]),
     TenantsModule,
     AuthModule,
     ClientsModule,

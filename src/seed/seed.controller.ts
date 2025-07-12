@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { SeedService } from './seed.service';
 import { SeedDto, SeedControlledDto } from './dto/seed.dto';
 import { DevelopmentGuard } from './guards/development.guard';
@@ -11,6 +12,7 @@ export class SeedController {
   constructor(private readonly seedService: SeedService) {}
 
   @Get()
+  @Throttle({ default: { ttl: 300000, limit: 3 } })
   executeSeed(@Query() seedDto: SeedDto) {
     return this.seedService.runSeedSelective(seedDto);
   }
@@ -21,6 +23,7 @@ export class SeedController {
    * @returns Un mensaje y el historial de registros insertados.
    */
   @Get('controlled')
+  @Throttle({ default: { ttl: 300000, limit: 3 } })
   executeSeedControlled(@Body() seedDto: SeedControlledDto) {
     return this.seedService.runSeedControlled(seedDto);
   }
@@ -31,6 +34,7 @@ export class SeedController {
    * @returns Un mensaje confirmando la limpieza exitosa.
    */
   @Get('clear')
+  @Throttle({ default: { ttl: 300000, limit: 3 } })
   clearDatabaseControlled(
     @Query()
     clearOptions: {
