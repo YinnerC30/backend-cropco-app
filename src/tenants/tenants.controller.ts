@@ -98,7 +98,6 @@ const {
   removeUserToTenantDB,
 } = pathsTenantsController;
 
-// @AuthTenant()
 @Controller('tenants')
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}

@@ -156,12 +156,26 @@ export class TenantsService extends BaseAdministratorService {
     }
   }
 
-  async findOneBySubdomain(tenantSubdomain: string) {
+  /**
+   * Find a tenant by its subdomain, using TypeORM cache for performance.
+   * @param tenantSubdomain The subdomain of the tenant to find.
+   * @returns An object with the tenant's id and subdomain.
+   * @throws NotFoundException if the tenant does not exist.
+   * @throws ForbiddenException if the tenant is not active.
+   */
+  async findOneBySubdomain(
+    tenantSubdomain: string,
+  ): Promise<{ id: string; subdomain: string }> {
     this.logWithContext(`Finding tenant by subdomain: ${tenantSubdomain}`);
 
     try {
+      // Utiliza el cache de TypeORM para mejorar el rendimiento de esta consulta frecuente.
       const tenant = await this.tenantRepository.findOne({
         where: { subdomain: tenantSubdomain },
+        cache: {
+          id: `tenant_by_subdomain_${tenantSubdomain}`,
+          milliseconds: 5 * 60 * 1000, // 5 minutos
+        },
       });
 
       if (!tenant) {
