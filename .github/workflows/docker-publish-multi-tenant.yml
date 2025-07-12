@@ -3,7 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - development-tenant
+      - development-multi-tenant
 
 jobs:
   build-and-push:
