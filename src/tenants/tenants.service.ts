@@ -172,10 +172,6 @@ export class TenantsService extends BaseAdministratorService {
       // Utiliza el cache de TypeORM para mejorar el rendimiento de esta consulta frecuente.
       const tenant = await this.tenantRepository.findOne({
         where: { subdomain: tenantSubdomain },
-        cache: {
-          id: `tenant_by_subdomain_${tenantSubdomain}`,
-          milliseconds: 5 * 60 * 1000, // 5 minutos
-        },
       });
 
       if (!tenant) {
