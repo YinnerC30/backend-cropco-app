@@ -46,9 +46,7 @@ export class SuppliesService extends BaseTenantService {
   }
 
   async create(createSupply: CreateSupplyDto) {
-    this.logWithContext(
-      `Creating new supply with name: ${createSupply.name}`,
-    );
+    this.logWithContext(`Creating new supply with name: ${createSupply.name}`);
 
     try {
       const supply = this.supplyRepository.create(createSupply);
@@ -84,7 +82,9 @@ export class SuppliesService extends BaseTenantService {
       queryBuilder.leftJoinAndSelect('supplies.stock', 'stock');
 
       if (!!query && !all_records) {
-        queryBuilder.where('supplies.name ILIKE :query', { query: `${query}%` });
+        queryBuilder.where('supplies.name ILIKE :query', {
+          query: `${query}%`,
+        });
         queryBuilder.orWhere('supplies.brand ILIKE :query', {
           query: `${query}%`,
         });
@@ -208,8 +208,8 @@ export class SuppliesService extends BaseTenantService {
         where: { id },
         relations: {
           stock: true,
-          consumption_details: true,
-          shopping_details: true,
+          consumption_details: { consumption: true, supply: true, crop: true },
+          shopping_details: { shopping: true, supply: true, supplier: true },
         },
       });
 
