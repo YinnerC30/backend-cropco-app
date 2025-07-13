@@ -211,6 +211,18 @@ export class SuppliesService extends BaseTenantService {
           consumption_details: { consumption: true, supply: true, crop: true },
           shopping_details: { shopping: true, supply: true, supplier: true },
         },
+        order: {
+          consumption_details: {
+            consumption: {
+              date: 'desc',
+            },
+          },
+          shopping_details: {
+            shopping: {
+              date: 'DESC',
+            },
+          },
+        },
       });
 
       if (!supply) {

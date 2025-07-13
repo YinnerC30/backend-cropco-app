@@ -311,6 +311,27 @@ export class CropsService extends BaseTenantService {
             supply: true,
           },
         },
+        order: {
+          harvests: {
+            date: 'DESC',
+          },
+          works: {
+            date: 'DESC',
+          },
+          harvests_processed: {
+            date: 'DESC',
+          },
+          sales_detail: {
+            sale: {
+              date: 'DESC',
+            },
+          },
+          supplies_consumption_details: {
+            consumption: {
+              date: 'DESC',
+            },
+          },
+        },
       });
 
       if (!crop) {

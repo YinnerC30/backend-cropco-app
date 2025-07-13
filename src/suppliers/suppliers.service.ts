@@ -145,6 +145,13 @@ export class SuppliersService extends BaseTenantService {
             shopping: true,
           },
         },
+        order: {
+          supplies_shopping_details: {
+            shopping: {
+              date: 'DESC',
+            },
+          },
+        },
       });
 
       if (!supplier) {

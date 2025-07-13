@@ -348,6 +348,19 @@ export class EmployeesService extends BaseTenantService {
           payments: true,
           works_detail: { work: true },
         },
+        order: {
+          works_detail: {
+            work: { date: 'DESC' },
+          },
+          harvests_detail: {
+            harvest: {
+              date: 'DESC',
+            },
+          },
+          payments: {
+            date: 'DESC',
+          },
+        },
       });
 
       if (!employee) {
