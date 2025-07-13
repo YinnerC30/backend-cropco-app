@@ -300,9 +300,16 @@ export class CropsService extends BaseTenantService {
           harvests: true,
           works: true,
           harvests_stock: true,
-          harvests_processed: true,
-          sales_detail: true,
-          supplies_consumption_details: true,
+          harvests_processed: {
+            harvest: true,
+          },
+          sales_detail: {
+            sale: true,
+          },
+          supplies_consumption_details: {
+            consumption: true,
+            supply: true,
+          },
         },
       });
 
