@@ -142,7 +142,7 @@ export class ClientsService extends BaseTenantService {
     try {
       const client = await this.clientRepository.findOne({
         where: { id },
-        relations: { sales_detail: { crop: true } },
+        relations: { sales_detail: { crop: true, sale: true } },
       });
 
       if (!client) {
