@@ -1,10 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from 'src/auth/auth.service';
-import { SeedService } from 'src/seed/seed.service';
 import { User } from 'src/users/entities/user.entity';
 import * as request from 'supertest';
-import { Repository } from 'typeorm';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { Crop } from './entities/crop.entity';
 

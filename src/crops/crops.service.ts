@@ -271,28 +271,40 @@ export class CropsService extends BaseTenantService {
     this.logWithContext(`Finding crop by ID: ${id}`);
 
     try {
-      const crop = await this.cropRepository
-        .createQueryBuilder('crop')
-        .leftJoinAndSelect('crop.sales_detail', 'sales_detail')
-        .leftJoinAndSelect('crop.harvests_stock', 'harvestsStock')
-        .leftJoinAndSelect('crop.harvests', 'harvest', 'harvest.cropId = crop.id')
-        .leftJoinAndSelect(
-          'crop.supplies_consumption_details',
-          'supplies_consumption_details',
-        )
-        .select([
-          'crop',
-          'harvestsStock',
-          'SUM(harvest.amount) AS harvestsTotal',
-          'supplies_consumption_details',
-          'sales_detail',
-        ])
-        .where('crop.id = :id', { id })
-        .groupBy('crop.id')
-        .addGroupBy('sales_detail.id')
-        .addGroupBy('harvestsStock.id')
-        .addGroupBy('supplies_consumption_details.id')
-        .getOne();
+      // const crop = await this.cropRepository
+      //   .createQueryBuilder('crop')
+      //   .leftJoinAndSelect('crop.sales_detail', 'sales_detail')
+      //   .leftJoinAndSelect('crop.harvests_stock', 'harvestsStock')
+      //   .leftJoinAndSelect('crop.harvests', 'harvest', 'harvest.cropId = crop.id')
+      //   .leftJoinAndSelect(
+      //     'crop.supplies_consumption_details',
+      //     'supplies_consumption_details',
+      //   )
+      //   .select([
+      //     'crop',
+      //     'harvestsStock',
+      //     'SUM(harvest.amount) AS harvestsTotal',
+      //     'supplies_consumption_details',
+      //     'sales_detail',
+      //   ])
+      //   .where('crop.id = :id', { id })
+      //   .groupBy('crop.id')
+      //   .addGroupBy('sales_detail.id')
+      //   .addGroupBy('harvestsStock.id')
+      //   .addGroupBy('supplies_consumption_details.id')
+      //   .getOne();
+
+      const crop = await this.cropRepository.findOne({
+        where: { id },
+        relations: {
+          harvests: true,
+          works: true,
+          harvests_stock: true,
+          harvests_processed: true,
+          sales_detail: true,
+          supplies_consumption_details: true,
+        },
+      });
 
       if (!crop) {
         this.logWithContext(`Crop with ID: ${id} not found`, 'warn');
