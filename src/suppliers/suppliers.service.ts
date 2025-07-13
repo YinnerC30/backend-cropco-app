@@ -142,6 +142,7 @@ export class SuppliersService extends BaseTenantService {
         relations: {
           supplies_shopping_details: {
             supply: true,
+            shopping: true,
           },
         },
       });
