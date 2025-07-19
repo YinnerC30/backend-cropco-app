@@ -394,7 +394,10 @@ export class SuppliesService extends BaseTenantService {
 
       // Si se proporciona una unidad de entrada diferente, convertir la cantidad
       let finalAmount = amount;
-      if (inputUnit && inputUnit !== supply.unit_of_measure) {
+      const unitBase = this.unitConversionService.getUnitBase(
+        supply.unit_of_measure,
+      );
+      if (inputUnit && inputUnit !== unitBase) {
         if (!this.unitConversionService.isValidUnit(inputUnit)) {
           this.logWithContext(
             `Invalid input unit: ${inputUnit} for supply ID: ${supplyId}`,
@@ -402,10 +405,11 @@ export class SuppliesService extends BaseTenantService {
           );
           throw new Error(`Invalid input unit: ${inputUnit}`);
         }
+
         finalAmount = this.unitConversionService.convert(
           amount,
           inputUnit as any,
-          supply.unit_of_measure,
+          unitBase,
         );
         this.logWithContext(
           `Unit conversion applied: ${amount} ${inputUnit} = ${finalAmount} ${supply.unit_of_measure}`,

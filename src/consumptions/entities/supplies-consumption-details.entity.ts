@@ -59,7 +59,7 @@ export class SuppliesConsumptionDetails {
   unit_of_measure: UnitType;
 
   @Column({
-    type: 'int4',
+    type: 'float8',
   })
   amount: number;
 

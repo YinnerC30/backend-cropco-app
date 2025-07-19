@@ -43,25 +43,26 @@ export class UnitConversionService {
   };
 
   // Mapeo de unidades a su tipo (masa, volumen o longitud)
-  private readonly unitTypeMap: Record<UnitType, 'mass' | 'volume' | 'length'> = {
-    // Masa
-    GRAMOS: 'mass',
-    KILOGRAMOS: 'mass',
-    LIBRAS: 'mass',
-    ONZAS: 'mass',
-    TONELADAS: 'mass',
-    // Volumen
-    MILILITROS: 'volume',
-    LITROS: 'volume',
-    GALONES: 'volume',
-    // ONZAS_FLUIDAS: 'volume',
-    // CUCHARADAS: 'volume',
-    // CUCHARADAS_SOPERAS: 'volume',
-    // Longitud
-    MILIMETROS: 'length',
-    CENTIMETROS: 'length',
-    METROS: 'length',
-  };
+  private readonly unitTypeMap: Record<UnitType, 'mass' | 'volume' | 'length'> =
+    {
+      // Masa
+      GRAMOS: 'mass',
+      KILOGRAMOS: 'mass',
+      LIBRAS: 'mass',
+      ONZAS: 'mass',
+      TONELADAS: 'mass',
+      // Volumen
+      MILILITROS: 'volume',
+      LITROS: 'volume',
+      GALONES: 'volume',
+      // ONZAS_FLUIDAS: 'volume',
+      // CUCHARADAS: 'volume',
+      // CUCHARADAS_SOPERAS: 'volume',
+      // Longitud
+      MILIMETROS: 'length',
+      CENTIMETROS: 'length',
+      METROS: 'length',
+    };
 
   /**
    * Convierte una cantidad de una unidad a otra
@@ -86,7 +87,11 @@ export class UnitConversionService {
 
       // Convertir a la unidad base
       let baseAmount: number;
-      if (fromUnit === 'GRAMOS' || fromUnit === 'MILILITROS' || fromUnit === 'MILIMETROS') {
+      if (
+        fromUnit === 'GRAMOS' ||
+        fromUnit === 'MILILITROS' ||
+        fromUnit === 'MILIMETROS'
+      ) {
         baseAmount = amount;
       } else {
         baseAmount = amount * this.conversionFactors[fromUnit];
@@ -94,7 +99,11 @@ export class UnitConversionService {
 
       // Convertir de la unidad base a la unidad destino
       let finalAmount: number;
-      if (toUnit === 'GRAMOS' || toUnit === 'MILILITROS' || toUnit === 'MILIMETROS') {
+      if (
+        toUnit === 'GRAMOS' ||
+        toUnit === 'MILILITROS' ||
+        toUnit === 'MILIMETROS'
+      ) {
         finalAmount = baseAmount;
       } else {
         finalAmount = baseAmount / this.conversionFactors[toUnit];
@@ -141,5 +150,23 @@ export class UnitConversionService {
         (unit) => this.unitTypeMap[unit as UnitType] === 'length',
       ),
     };
+  }
+
+  getUnitBase(unit: UnitType) {
+    const grupUnit = this.unitTypeMap[unit];
+
+    switch (grupUnit) {
+      case 'mass':
+        return 'GRAMOS';
+
+      case 'volume':
+        return 'MILILITROS';
+
+      case 'length':
+        return 'MILIMETROS';
+
+      default:
+        return null;
+    }
   }
 }

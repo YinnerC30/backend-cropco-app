@@ -19,9 +19,10 @@ export class SuppliesShoppingDetails {
   id: string;
 
   @Column({
-    type: 'int4',
+    type: 'float8',
   })
   amount: number;
+
   @Column({
     type: 'int4',
   })
