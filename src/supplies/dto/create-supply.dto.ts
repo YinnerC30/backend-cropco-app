@@ -14,8 +14,18 @@ export class CreateSupplyDto {
   @IsIn([
     // Unidades de masa
     'GRAMOS',
+    'KILOGRAMOS',
+    'LIBRAS',
+    'ONZAS',
+    'TONELADAS',
     // Unidades de volumen
     'MILILITROS',
+    'LITROS',
+    'GALONES',
+    // Longitud
+    'MILIMETROS',
+    'CENTIMETROS',
+    'METROS',
   ])
   unit_of_measure: UnitType;
 

@@ -1,4 +1,3 @@
-
 import { DeepPartial } from 'typeorm';
 import {
   IsDefined,
@@ -22,7 +21,7 @@ export class ConsumptionSuppliesDetailsDto {
   @IsUUID(4)
   @IsOptional()
   id: string;
-  
+
   @ValidateNested()
   @Type(() => ValidateUUID)
   consumption: DeepPartial<SuppliesConsumption>;
@@ -40,19 +39,17 @@ export class ConsumptionSuppliesDetailsDto {
   @IsString()
   @IsNotEmpty()
   @IsIn([
-    // Unidades de masa
     'GRAMOS',
     'KILOGRAMOS',
     'LIBRAS',
     'ONZAS',
     'TONELADAS',
-    // Unidades de volumen
     'MILILITROS',
     'LITROS',
     'GALONES',
-    // 'ONZAS_FLUIDAS',
-    // 'CUCHARADAS',
-    // 'CUCHARADAS_SOPERAS',
+    'MILIMETROS',
+    'CENTIMETROS',
+    'METROS',
   ])
   unit_of_measure: UnitType;
 

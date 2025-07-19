@@ -63,10 +63,12 @@ export class SuppliesShoppingDetails {
       'MILILITROS',
       'LITROS',
       'GALONES',
-      'ONZAS_FLUIDAS',
-      'CUCHARADAS',
-      'CUCHARADAS_SOPERAS',
+      // Longitud
+      'MILIMETROS',
+      'CENTIMETROS',
+      'METROS',
     ],
+    
   })
   unit_of_measure: UnitType;
 
