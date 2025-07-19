@@ -81,8 +81,6 @@ export class TenantsService extends BaseAdministratorService {
       this.logWithContext(
         `Tenant created successfully with ID: ${tenant.id}, subdomain: ${tenant.subdomain}`,
       );
-
-      return tenant;
     } catch (error) {
       this.logWithContext(
         `Failed to create tenant with subdomain: ${createTenantDto.subdomain}`,
