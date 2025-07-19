@@ -466,10 +466,7 @@ export class TenantsService extends BaseAdministratorService {
       );
 
       // Asignar permisos en una transacción separada para la base de datos del tenant
-      await this.assignTenantUserPermissionsWithTransaction(
-        databaseName,
-        tenantUsername,
-      );
+      await this.assignTenantUserPermissions(databaseName, tenantUsername);
 
       // Guardar la configuración de la base de datos con credenciales encriptadas
       tenantDatabase = this.tenantDatabaseRepository.create({
@@ -782,10 +779,6 @@ export class TenantsService extends BaseAdministratorService {
     }
   }
 
-  /**
-   * Asigna todos los permisos necesarios a un usuario de tenant en su base de datos
-   * @deprecated Use assignTenantUserPermissionsWithTransaction instead for better error handling
-   */
   private async assignTenantUserPermissions(
     databaseName: string,
     tenantUsername: string,
@@ -807,83 +800,6 @@ export class TenantsService extends BaseAdministratorService {
     await tenantDataSource.initialize();
 
     try {
-      // Asignar permisos dentro de la base de datos del tenant
-      await tenantDataSource.query(
-        `GRANT USAGE ON SCHEMA public TO "${tenantUsername}"`,
-      );
-
-      // Permisos para consultas (SELECT)
-      await tenantDataSource.query(
-        `GRANT SELECT ON ALL TABLES IN SCHEMA public TO "${tenantUsername}"`,
-      );
-
-      // Permisos para actualizaciones (INSERT, UPDATE, DELETE)
-      await tenantDataSource.query(
-        `GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO "${tenantUsername}"`,
-      );
-
-      // Permisos para uso de funciones
-      await tenantDataSource.query(
-        `GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO "${tenantUsername}"`,
-      );
-
-      // Configurar permisos para tablas futuras
-      await tenantDataSource.query(
-        `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "${tenantUsername}"`,
-      );
-
-      // Configurar permisos para funciones futuras
-      await tenantDataSource.query(
-        `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO "${tenantUsername}"`,
-      );
-
-      // Asignar permisos para secuencias (necesario para INSERT con auto-increment)
-      await tenantDataSource.query(
-        `GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO "${tenantUsername}"`,
-      );
-
-      // Configurar permisos para secuencias futuras
-      await tenantDataSource.query(
-        `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO "${tenantUsername}"`,
-      );
-
-      this.logWithContext(
-        `Permissions assigned successfully to user ${tenantUsername} for database ${databaseName}`,
-      );
-    } catch (error) {
-      this.logWithContext(
-        `Error assigning permissions to user ${tenantUsername} for database ${databaseName}`,
-        'error',
-      );
-      throw error;
-    } finally {
-      await tenantDataSource.destroy();
-    }
-  }
-
-  /**
-   * Asigna permisos al usuario del tenant sin usar transacciones
-   */
-  private async assignTenantUserPermissionsWithTransaction(
-    databaseName: string,
-    tenantUsername: string,
-  ): Promise<void> {
-    this.logWithContext(
-      `Assigning permissions to user ${tenantUsername} for database ${databaseName}`,
-    );
-
-    const tenantDataSource = new DataSource({
-      type: 'postgres',
-      host: this.configService.get<string>('DB_HOST'),
-      port: this.configService.get<number>('DB_PORT'),
-      username: this.configService.get<string>('DB_USERNAME'),
-      password: this.configService.get<string>('DB_PASSWORD'),
-      database: databaseName,
-    });
-
-    try {
-      await tenantDataSource.initialize();
-
       // Asignar permisos dentro de la base de datos del tenant
       await tenantDataSource.query(
         `GRANT USAGE ON SCHEMA public TO "${tenantUsername}"`,
