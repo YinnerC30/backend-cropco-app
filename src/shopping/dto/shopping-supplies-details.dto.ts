@@ -1,20 +1,20 @@
 import { Type } from 'class-transformer';
 import {
   IsIn,
-  IsNumber,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsPositive,
   IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
-import { DeepPartial } from 'typeorm';
-import { Supply } from 'src/supplies/entities';
-import { Supplier } from 'src/suppliers/entities/supplier.entity';
-import { SuppliesShopping } from '../entities/supplies-shopping.entity';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
+import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
+import { AllUnitTypesDto } from 'src/common/utils/UnitTypesDto';
+import { Supplier } from 'src/suppliers/entities/supplier.entity';
+import { Supply } from 'src/supplies/entities';
+import { DeepPartial } from 'typeorm';
 
 export class ShoppingSuppliesDetailsDto {
   @IsOptional()
@@ -46,22 +46,7 @@ export class ShoppingSuppliesDetailsDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsIn([
-    // Unidades de masa
-    'GRAMOS',
-    'KILOGRAMOS',
-    'LIBRAS',
-    'ONZAS',
-    'TONELADAS',
-    // Unidades de volumen
-    'MILILITROS',
-    'LITROS',
-    'GALONES',
-    // Longitud
-    'MILIMETROS',
-    'CENTIMETROS',
-    'METROS',
-  ])
+  @IsIn(AllUnitTypesDto)
   unit_of_measure: UnitType;
 
   // @IsOptional()

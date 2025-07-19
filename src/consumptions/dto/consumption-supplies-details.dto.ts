@@ -1,21 +1,22 @@
-import { DeepPartial } from 'typeorm';
+import { Type } from 'class-transformer';
 import {
   IsDefined,
   IsIn,
-  IsNumber,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsPositive,
   IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { Crop } from 'src/crops/entities/crop.entity';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
-import { Type } from 'class-transformer';
-import { SuppliesConsumption } from '../entities/supplies-consumption.entity';
-import { Supply } from 'src/supplies/entities/supply.entity';
 import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
+import { AllUnitTypesDto } from 'src/common/utils/UnitTypesDto';
+import { Crop } from 'src/crops/entities/crop.entity';
+import { Supply } from 'src/supplies/entities/supply.entity';
+import { DeepPartial } from 'typeorm';
+import { SuppliesConsumption } from '../entities/supplies-consumption.entity';
 
 export class ConsumptionSuppliesDetailsDto {
   @IsUUID(4)
@@ -38,19 +39,7 @@ export class ConsumptionSuppliesDetailsDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsIn([
-    'GRAMOS',
-    'KILOGRAMOS',
-    'LIBRAS',
-    'ONZAS',
-    'TONELADAS',
-    'MILILITROS',
-    'LITROS',
-    'GALONES',
-    'MILIMETROS',
-    'CENTIMETROS',
-    'METROS',
-  ])
+  @IsIn(AllUnitTypesDto)
   unit_of_measure: UnitType;
 
   @IsNumber()

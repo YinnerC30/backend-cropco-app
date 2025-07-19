@@ -10,11 +10,10 @@ export type MassUnit =
   | 'TONELADAS';
 // Unidades de volumen
 export type VolumeUnit = 'MILILITROS' | 'LITROS' | 'GALONES';
-// | 'ONZAS_FLUIDAS'
-// | 'CUCHARADAS'
-// | 'CUCHARADAS_SOPERAS';
+
 // Unidades de longitud
 export type LengthUnit = 'MILIMETROS' | 'CENTIMETROS' | 'METROS';
+
 // Unión de todas las unidades
 export type UnitType = MassUnit | VolumeUnit | LengthUnit;
 
@@ -33,9 +32,9 @@ export class UnitConversionService {
     // Volumen (base: mililitros)
     LITROS: 1000, // 1 L = 1000 ml
     GALONES: 3785.41, // 1 gal = 3785.41 ml
-    ONZAS_FLUIDAS: 29.5735, // 1 fl oz = 29.5735 ml
-    CUCHARADAS: 5, // 1 cucharada = 5 ml
-    CUCHARADAS_SOPERAS: 15, // 1 cucharada sopera = 15 ml
+    // ONZAS_FLUIDAS: 29.5735, // 1 fl oz = 29.5735 ml
+    // CUCHARADAS: 5, // 1 cucharada = 5 ml
+    // CUCHARADAS_SOPERAS: 15, // 1 cucharada sopera = 15 ml
 
     // Longitud (base: milímetros)
     CENTIMETROS: 10, // 1 cm = 10 mm
@@ -51,6 +50,7 @@ export class UnitConversionService {
       LIBRAS: 'mass',
       ONZAS: 'mass',
       TONELADAS: 'mass',
+
       // Volumen
       MILILITROS: 'volume',
       LITROS: 'volume',
@@ -58,6 +58,7 @@ export class UnitConversionService {
       // ONZAS_FLUIDAS: 'volume',
       // CUCHARADAS: 'volume',
       // CUCHARADAS_SOPERAS: 'volume',
+
       // Longitud
       MILIMETROS: 'length',
       CENTIMETROS: 'length',

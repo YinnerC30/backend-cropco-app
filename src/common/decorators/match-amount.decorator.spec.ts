@@ -2,11 +2,12 @@ import { validate } from 'class-validator';
 import { MatchAmount } from './match-amount.decorator';
 import { IsNumber, IsPositive, IsString, IsIn, ValidateNested, ArrayNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
+import { MassUnitDto } from '../utils/UnitTypesDto';
 
 // Mock de HarvestDetailsDto para las pruebas
 class MockHarvestDetailsDto {
   @IsString()
-  @IsIn(['GRAMOS', 'KILOGRAMOS', 'LIBRAS', 'ONZAS', 'TONELADAS'])
+  @IsIn(MassUnitDto)
   unit_of_measure: string;
 
   @IsNumber()

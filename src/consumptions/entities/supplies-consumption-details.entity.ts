@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { SuppliesConsumption } from './supplies-consumption.entity';
 import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
+import { AllUnitTypesDto } from 'src/common/utils/UnitTypesDto';
 
 @Entity({ name: 'supplies_consumption_details' })
 export class SuppliesConsumptionDetails {
@@ -39,22 +40,7 @@ export class SuppliesConsumptionDetails {
 
   @Column({
     type: 'enum',
-    enum: [
-      // Unidades de masa
-      'GRAMOS',
-      'KILOGRAMOS',
-      'LIBRAS',
-      'ONZAS',
-      'TONELADAS',
-      // Unidades de volumen
-      'MILILITROS',
-      'LITROS',
-      'GALONES',
-      // Longitud
-      'MILIMETROS',
-      'CENTIMETROS',
-      'METROS',
-    ],
+    enum: AllUnitTypesDto,
   })
   unit_of_measure: UnitType;
 

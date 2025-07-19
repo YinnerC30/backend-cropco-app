@@ -1,4 +1,7 @@
+import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
+import { AllUnitTypesDto } from 'src/common/utils/UnitTypesDto';
 import { Supplier } from 'src/suppliers/entities/supplier.entity';
+import { Supply } from 'src/supplies/entities';
 import {
   Column,
   CreateDateColumn,
@@ -10,8 +13,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { SuppliesShopping } from './supplies-shopping.entity';
-import { Supply } from 'src/supplies/entities';
-import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
 
 @Entity({ name: 'supplies_shopping_details' })
 export class SuppliesShoppingDetails {
@@ -53,23 +54,7 @@ export class SuppliesShoppingDetails {
 
   @Column({
     type: 'enum',
-    enum: [
-      // Unidades de masa
-      'GRAMOS',
-      'KILOGRAMOS',
-      'LIBRAS',
-      'ONZAS',
-      'TONELADAS',
-      // Unidades de volumen
-      'MILILITROS',
-      'LITROS',
-      'GALONES',
-      // Longitud
-      'MILIMETROS',
-      'CENTIMETROS',
-      'METROS',
-    ],
-    
+    enum: AllUnitTypesDto,
   })
   unit_of_measure: UnitType;
 

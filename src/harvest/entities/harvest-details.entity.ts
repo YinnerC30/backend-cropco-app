@@ -17,6 +17,7 @@ import {
   MassUnit,
   UnitType,
 } from 'src/common/unit-conversion/unit-conversion.service';
+import { MassUnitDto } from 'src/common/utils/UnitTypesDto';
 
 @Entity({ name: 'harvests_detail' })
 export class HarvestDetails {
@@ -25,14 +26,7 @@ export class HarvestDetails {
 
   @Column({
     type: 'enum',
-    enum: [
-      // Unidades de masa
-      'GRAMOS',
-      'KILOGRAMOS',
-      'LIBRAS',
-      'ONZAS',
-      'TONELADAS',
-    ],
+    enum: MassUnitDto,
   })
   unit_of_measure: MassUnit;
 
