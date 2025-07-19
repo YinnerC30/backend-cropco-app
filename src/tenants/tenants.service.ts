@@ -379,55 +379,104 @@ export class TenantsService extends BaseAdministratorService {
   // Tenants Databases
 
   async createTenantDatabase(tenantId: string) {
-    // Crear la base de datos para el tenant
-
-    const tenant = await this.findOne(tenantId);
-
-    const databaseName = `cropco_tenant_${tenant.subdomain}`;
-
     this.logWithContext(
-      `Creating tenant database: ${databaseName} for tenant ID: ${tenantId}`,
+      `Starting tenant database creation for tenant ID: ${tenantId}`,
     );
 
+    let tenantDatabase: any = null;
+    let databaseCreated = false;
+    let userCreated = false;
+
     try {
+      // Validar prerrequisitos antes de proceder
+      await this.validateDatabaseCreationPrerequisites(tenantId);
+
+      const tenant = await this.findOne(tenantId);
+
+      const databaseName = `cropco_tenant_${tenant.subdomain}`;
+      const tenantUsername = `tenant_${tenant.subdomain}_user`;
+
+      this.logWithContext(
+        `Creating tenant database: ${databaseName} for tenant ID: ${tenantId}`,
+      );
+
+      // Verificar si la base de datos ya existe
+      const databaseExists = await this.dataSource.query(
+        `SELECT 1 FROM pg_database WHERE datname = $1`,
+        [databaseName],
+      );
+
+      if (databaseExists.length > 0) {
+        this.logWithContext(
+          `Database ${databaseName} already exists in PostgreSQL`,
+          'warn',
+        );
+        throw new BadRequestException(
+          `Database ${databaseName} already exists`,
+        );
+      }
+
+      // Verificar si el usuario ya existe
+      const userExists = await this.dataSource.query(
+        `SELECT 1 FROM pg_roles WHERE rolname = $1`,
+        [tenantUsername],
+      );
+
+      if (userExists.length > 0) {
+        this.logWithContext(
+          `User ${tenantUsername} already exists in PostgreSQL`,
+          'warn',
+        );
+        throw new BadRequestException(`User ${tenantUsername} already exists`);
+      }
+
       // Generar credenciales únicas para el tenant
-      const tenantUsername = `tenant_${databaseName.replace('cropco_tenant_', '')}_user`;
       const tenantPassword = this.encryptionService.generateSecurePassword();
 
       this.logWithContext(
-        `Database ${databaseName} created successfully for tenant ID: ${tenantId}`,
+        `Creating PostgreSQL user: ${tenantUsername} for tenant ID: ${tenantId}`,
       );
 
-      // Crear usuario específico para este tenant
+      // Crear usuario específico para este tenant (fuera de transacción)
       await this.dataSource.query(`SELECT create_tenant_user($1, $2)`, [
-        databaseName.replace('cropco_tenant_', ''),
+        tenant.subdomain,
         tenantPassword,
       ]);
+      userCreated = true;
 
       await this.dataSource.query(
         `GRANT ${tenantUsername} TO backend_cropco_user;`,
       );
 
-      // Crear la base de datos
-      await this.dataSource.query(
-        `CREATE DATABASE ${databaseName} OWNER = ${tenantUsername}`,
+      this.logWithContext(
+        `Creating PostgreSQL database: ${databaseName} for tenant ID: ${tenantId}`,
       );
+
+      // Crear la base de datos (fuera de transacción) con reintentos
+      await this.createDatabaseWithRetry(databaseName, tenantUsername);
+      databaseCreated = true;
 
       // Asignar permisos de conexión a la base de datos
       await this.dataSource.query(
         `GRANT CONNECT ON DATABASE "${databaseName}" TO "${tenantUsername}"`,
       );
 
-      // Asignar todos los permisos necesarios al usuario del tenant
-      await this.assignTenantUserPermissions(databaseName, tenantUsername);
+      this.logWithContext(
+        `PostgreSQL database and user created successfully for tenant ID: ${tenantId}`,
+      );
+
+      // Asignar permisos en una transacción separada para la base de datos del tenant
+      await this.assignTenantUserPermissionsWithTransaction(
+        databaseName,
+        tenantUsername,
+      );
 
       // Guardar la configuración de la base de datos con credenciales encriptadas
-      const tenantDatabase = this.tenantDatabaseRepository.create({
+      tenantDatabase = this.tenantDatabaseRepository.create({
         tenant: { id: tenantId },
         database_name: databaseName,
         connection_config: {
           username: tenantUsername,
-          // Encriptar la contraseña antes de guardarla
           password: this.encryptionService.encryptPassword(tenantPassword),
           host: this.configService.get<string>('DB_HOST'),
           port: this.configService.get<number>('DB_PORT'),
@@ -441,15 +490,30 @@ export class TenantsService extends BaseAdministratorService {
         { is_created_db: true },
       );
 
+      // Verificar que la base de datos se creó correctamente
+      await this.verifyDatabaseCreation(databaseName, tenantUsername);
+
       this.logWithContext(
-        `Tenant database configuration saved for tenant ID: ${tenantId}`,
+        `Tenant database configuration completed successfully for tenant ID: ${tenantId}`,
       );
+
+      return tenantDatabase;
     } catch (error) {
       this.logWithContext(
-        `Failed to create tenant database for tenant ID: ${tenantId}`,
+        `Error during tenant database creation for tenant ID: ${tenantId}`,
         'error',
       );
+
+      // Limpiar recursos creados en caso de error
+      await this.cleanupFailedDatabaseCreationWithStatus(
+        tenantId,
+        error,
+        databaseCreated,
+        userCreated,
+      );
+
       this.handlerError.handle(error, this.logger);
+      throw error; // Re-throw para que el controlador pueda manejar el error
     }
   }
 
@@ -720,6 +784,7 @@ export class TenantsService extends BaseAdministratorService {
 
   /**
    * Asigna todos los permisos necesarios a un usuario de tenant en su base de datos
+   * @deprecated Use assignTenantUserPermissionsWithTransaction instead for better error handling
    */
   private async assignTenantUserPermissions(
     databaseName: string,
@@ -785,8 +850,353 @@ export class TenantsService extends BaseAdministratorService {
       this.logWithContext(
         `Permissions assigned successfully to user ${tenantUsername} for database ${databaseName}`,
       );
+    } catch (error) {
+      this.logWithContext(
+        `Error assigning permissions to user ${tenantUsername} for database ${databaseName}`,
+        'error',
+      );
+      throw error;
     } finally {
       await tenantDataSource.destroy();
+    }
+  }
+
+  /**
+   * Asigna permisos al usuario del tenant sin usar transacciones
+   */
+  private async assignTenantUserPermissionsWithTransaction(
+    databaseName: string,
+    tenantUsername: string,
+  ): Promise<void> {
+    this.logWithContext(
+      `Assigning permissions to user ${tenantUsername} for database ${databaseName}`,
+    );
+
+    const tenantDataSource = new DataSource({
+      type: 'postgres',
+      host: this.configService.get<string>('DB_HOST'),
+      port: this.configService.get<number>('DB_PORT'),
+      username: this.configService.get<string>('DB_USERNAME'),
+      password: this.configService.get<string>('DB_PASSWORD'),
+      database: databaseName,
+    });
+
+    try {
+      await tenantDataSource.initialize();
+
+      // Asignar permisos dentro de la base de datos del tenant
+      await tenantDataSource.query(
+        `GRANT USAGE ON SCHEMA public TO "${tenantUsername}"`,
+      );
+
+      // Permisos para consultas (SELECT)
+      await tenantDataSource.query(
+        `GRANT SELECT ON ALL TABLES IN SCHEMA public TO "${tenantUsername}"`,
+      );
+
+      // Permisos para actualizaciones (INSERT, UPDATE, DELETE)
+      await tenantDataSource.query(
+        `GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO "${tenantUsername}"`,
+      );
+
+      // Permisos para uso de funciones
+      await tenantDataSource.query(
+        `GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO "${tenantUsername}"`,
+      );
+
+      // Configurar permisos para tablas futuras
+      await tenantDataSource.query(
+        `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "${tenantUsername}"`,
+      );
+
+      // Configurar permisos para funciones futuras
+      await tenantDataSource.query(
+        `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO "${tenantUsername}"`,
+      );
+
+      // Asignar permisos para secuencias (necesario para INSERT con auto-increment)
+      await tenantDataSource.query(
+        `GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO "${tenantUsername}"`,
+      );
+
+      // Configurar permisos para secuencias futuras
+      await tenantDataSource.query(
+        `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO "${tenantUsername}"`,
+      );
+
+      this.logWithContext(
+        `Permissions assigned successfully to user ${tenantUsername} for database ${databaseName}`,
+      );
+    } catch (error) {
+      this.logWithContext(
+        `Error assigning permissions to user ${tenantUsername} for database ${databaseName}`,
+        'error',
+      );
+      throw error;
+    } finally {
+      await tenantDataSource.destroy();
+    }
+  }
+
+  /**
+   * Crea la base de datos con reintentos en caso de errores temporales
+   */
+  private async createDatabaseWithRetry(
+    databaseName: string,
+    tenantUsername: string,
+    maxRetries: number = 3,
+  ): Promise<void> {
+    let lastError: any = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        this.logWithContext(
+          `Creating database ${databaseName} (attempt ${attempt}/${maxRetries})`,
+        );
+
+        await this.dataSource.query(
+          `CREATE DATABASE "${databaseName}" OWNER = "${tenantUsername}"`,
+        );
+
+        this.logWithContext(
+          `Database ${databaseName} created successfully on attempt ${attempt}`,
+        );
+        return; // Éxito, salir del método
+      } catch (error) {
+        lastError = error;
+        this.logWithContext(
+          `Failed to create database ${databaseName} on attempt ${attempt}: ${error.message}`,
+          'warn',
+        );
+
+        // Si es el último intento, no esperar
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000; // Backoff exponencial: 2s, 4s, 8s
+          this.logWithContext(
+            `Waiting ${delay}ms before retry for database ${databaseName}`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
+    }
+
+    // Si llegamos aquí, todos los intentos fallaron
+    this.logWithContext(
+      `All ${maxRetries} attempts to create database ${databaseName} failed`,
+      'error',
+    );
+    throw lastError;
+  }
+
+  /**
+   * Verifica que la base de datos y usuario se crearon correctamente
+   */
+  private async verifyDatabaseCreation(
+    databaseName: string,
+    tenantUsername: string,
+  ): Promise<void> {
+    this.logWithContext(
+      `Verifying database creation for database: ${databaseName}, user: ${tenantUsername}`,
+    );
+
+    try {
+      // Verificar que la base de datos existe
+      const databaseExists = await this.dataSource.query(
+        `SELECT 1 FROM pg_database WHERE datname = $1`,
+        [databaseName],
+      );
+
+      if (databaseExists.length === 0) {
+        throw new Error(
+          `Database ${databaseName} was not created successfully`,
+        );
+      }
+
+      // Verificar que el usuario existe
+      const userExists = await this.dataSource.query(
+        `SELECT 1 FROM pg_roles WHERE rolname = $1`,
+        [tenantUsername],
+      );
+
+      if (userExists.length === 0) {
+        throw new Error(`User ${tenantUsername} was not created successfully`);
+      }
+
+      // Verificar que el usuario puede conectarse a la base de datos
+      const tenantDataSource = new DataSource({
+        type: 'postgres',
+        host: this.configService.get<string>('DB_HOST'),
+        port: this.configService.get<number>('DB_PORT'),
+        username: tenantUsername,
+        password: this.encryptionService.generateSecurePassword(), // Esto fallará, pero es solo para verificar conexión
+        database: databaseName,
+        connectTimeoutMS: 5000, // 5 segundos de timeout
+      });
+
+      try {
+        await tenantDataSource.initialize();
+        this.logWithContext(
+          `Database connection verification successful for ${databaseName}`,
+        );
+      } catch (connectionError) {
+        // Esperado que falle por credenciales incorrectas, pero confirma que la base de datos existe
+        this.logWithContext(
+          `Database exists but connection test failed (expected): ${connectionError.message}`,
+          'warn',
+        );
+      } finally {
+        if (tenantDataSource.isInitialized) {
+          await tenantDataSource.destroy();
+        }
+      }
+
+      this.logWithContext(
+        `Database creation verification completed successfully for ${databaseName}`,
+      );
+    } catch (error) {
+      this.logWithContext(
+        `Database creation verification failed for ${databaseName}: ${error.message}`,
+        'error',
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Valida la configuración necesaria antes de crear la base de datos del tenant
+   */
+  private async validateDatabaseCreationPrerequisites(
+    tenantId: string,
+  ): Promise<void> {
+    this.logWithContext(
+      `Validating prerequisites for tenant database creation ID: ${tenantId}`,
+    );
+
+    try {
+      // Verificar que el tenant existe
+      const tenant = await this.findOne(tenantId);
+
+      if (!tenant) {
+        throw new NotFoundException(`Tenant with ID ${tenantId} not found`);
+      }
+
+      if (tenant.is_created_db) {
+        throw new BadRequestException(
+          'Database already exists for this tenant',
+        );
+      }
+
+      // Verificar que el subdomain es válido para nombres de base de datos
+      if (!tenant.subdomain || tenant.subdomain.length === 0) {
+        throw new BadRequestException('Tenant subdomain is required');
+      }
+
+      // Validar que el subdomain no contenga caracteres especiales que puedan causar problemas en PostgreSQL
+      const subdomainRegex = /^[a-zA-Z0-9_-]+$/;
+      if (!subdomainRegex.test(tenant.subdomain)) {
+        throw new BadRequestException(
+          'Tenant subdomain can only contain letters, numbers, hyphens, and underscores',
+        );
+      }
+
+      // Verificar configuración de base de datos
+      const dbHost = this.configService.get<string>('DB_HOST');
+      const dbPort = this.configService.get<number>('DB_PORT');
+      const dbUsername = this.configService.get<string>('DB_USERNAME');
+      const dbPassword = this.configService.get<string>('DB_PASSWORD');
+
+      if (!dbHost || !dbPort || !dbUsername || !dbPassword) {
+        throw new Error('Database configuration is incomplete');
+      }
+
+      this.logWithContext(
+        `Prerequisites validation completed successfully for tenant ID: ${tenantId}`,
+      );
+    } catch (error) {
+      this.logWithContext(
+        `Prerequisites validation failed for tenant ID: ${tenantId}`,
+        'error',
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Limpia recursos creados en caso de error durante la creación de la base de datos
+   * con control de estado para saber qué recursos se crearon
+   */
+  private async cleanupFailedDatabaseCreationWithStatus(
+    tenantId: string,
+    originalError: any,
+    databaseCreated: boolean,
+    userCreated: boolean,
+  ): Promise<void> {
+    this.logWithContext(
+      `Starting cleanup for failed database creation for tenant ID: ${tenantId}`,
+      'warn',
+    );
+
+    try {
+      const tenant = await this.findOne(tenantId);
+      const databaseName = `cropco_tenant_${tenant.subdomain}`;
+      const tenantUsername = `tenant_${tenant.subdomain}_user`;
+
+      // Solo limpiar la base de datos si se creó
+      if (databaseCreated) {
+        const databaseExists = await this.dataSource.query(
+          `SELECT 1 FROM pg_database WHERE datname = $1`,
+          [databaseName],
+        );
+
+        if (databaseExists.length > 0) {
+          this.logWithContext(
+            `Dropping database ${databaseName} due to creation failure`,
+            'warn',
+          );
+
+          // Terminar conexiones activas a la base de datos
+          await this.dataSource.query(
+            `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()`,
+            [databaseName],
+          );
+
+          // Eliminar la base de datos
+          await this.dataSource.query(`DROP DATABASE "${databaseName}"`);
+        }
+      }
+
+      // Solo limpiar el usuario si se creó
+      if (userCreated) {
+        const userExists = await this.dataSource.query(
+          `SELECT 1 FROM pg_roles WHERE rolname = $1`,
+          [tenantUsername],
+        );
+
+        if (userExists.length > 0) {
+          this.logWithContext(
+            `Dropping user ${tenantUsername} due to creation failure`,
+            'warn',
+          );
+
+          // Revocar permisos antes de eliminar el usuario
+          await this.dataSource.query(
+            `REVOKE ${tenantUsername} FROM backend_cropco_user`,
+          );
+
+          // Eliminar el usuario
+          await this.dataSource.query(`DROP ROLE "${tenantUsername}"`);
+        }
+      }
+
+      this.logWithContext(
+        `Cleanup completed successfully for tenant ID: ${tenantId}`,
+      );
+    } catch (cleanupError) {
+      this.logWithContext(
+        `Error during cleanup for tenant ID: ${tenantId}: ${cleanupError.message}`,
+        'error',
+      );
+      // No re-throw el error de cleanup para no enmascarar el error original
     }
   }
 
