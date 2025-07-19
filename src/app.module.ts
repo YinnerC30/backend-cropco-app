@@ -49,7 +49,6 @@ import { rateLimitConfig } from './common/config/rate-limit.config';
           entities: [Tenant, TenantDatabase, Administrator],
           synchronize: isDevelopmentMode,
           ssl: false,
-          // logging: isDevelopmentMode,
         };
       },
     }),

@@ -42,6 +42,7 @@ import { TenantConnectionService } from './services/tenant-connection.service';
 import { BaseAdministratorService } from 'src/auth/services/base-administrator.service';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class TenantsService extends BaseAdministratorService {
@@ -61,6 +62,7 @@ export class TenantsService extends BaseAdministratorService {
     private dataSource: DataSource,
 
     private readonly handlerError: HandlerErrorService,
+    private readonly configService: ConfigService,
     private readonly encryptionService: EncryptionService,
   ) {
     super(request);
@@ -315,8 +317,8 @@ export class TenantsService extends BaseAdministratorService {
               username: tenantUsername,
               // Encriptar la contraseña antes de guardarla
               password: this.encryptionService.encryptPassword(tenantPassword),
-              host: process.env.DB_HOST,
-              port: parseInt(process.env.DB_PORT),
+              host: this.configService.get<string>('DB_HOST'),
+              port: this.configService.get<number>('DB_PORT'),
             },
           },
         );
@@ -427,8 +429,8 @@ export class TenantsService extends BaseAdministratorService {
           username: tenantUsername,
           // Encriptar la contraseña antes de guardarla
           password: this.encryptionService.encryptPassword(tenantPassword),
-          host: process.env.DB_HOST,
-          port: parseInt(process.env.DB_PORT),
+          host: this.configService.get<string>('DB_HOST'),
+          port: this.configService.get<number>('DB_PORT'),
         },
       });
 
@@ -629,8 +631,8 @@ export class TenantsService extends BaseAdministratorService {
       // Usar las credenciales específicas del tenant para configurar la base de datos
       const dataSource = new DataSource({
         type: 'postgres',
-        host: process.env.DB_HOST,
-        port: parseInt(process.env.DB_PORT),
+        host: this.configService.get<string>('DB_HOST'),
+        port: this.configService.get<number>('DB_PORT'),
         username: tenantUsername, // Usuario específico del tenant
         password: tenantPassword, // Contraseña específica del tenant
         database: tenantDB.database_name,
@@ -730,10 +732,10 @@ export class TenantsService extends BaseAdministratorService {
     // Crear una conexión específica a la base de datos del tenant para asignar permisos
     const tenantDataSource = new DataSource({
       type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT),
-      username: process.env.DB_USERNAME || 'postgres', // Usar usuario admin para asignar permisos
-      password: process.env.DB_PASSWORD,
+      host: this.configService.get<string>('DB_HOST'),
+      port: this.configService.get<number>('DB_PORT'),
+      username: this.configService.get<string>('DB_USERNAME'),
+      password: this.configService.get<string>('DB_PASSWORD'),
       database: databaseName,
     });
 

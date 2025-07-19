@@ -1,8 +1,8 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { EncryptionService } from 'src/common/services/encryption.service';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { DataSource } from 'typeorm';
 import { TenantsService } from '../tenants.service';
-import { HandlerErrorService } from 'src/common/services/handler-error.service';
-import { EncryptionService } from 'src/common/services/encryption.service';
 
 @Injectable()
 export class TenantConnectionService {
@@ -36,8 +36,8 @@ export class TenantConnectionService {
 
         const dataSource = new DataSource({
           type: 'postgres',
-          host: connectionConfig.host || process.env.DB_HOST,
-          port: connectionConfig.port || parseInt(process.env.DB_PORT),
+          host: connectionConfig.host,
+          port: connectionConfig.port,
           username: connectionConfig.username, // Usuario específico del tenant
           password: decryptedPassword, // Contraseña específica del tenant
           database: tenantDatabase.database_name,
