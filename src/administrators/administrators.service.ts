@@ -87,6 +87,8 @@ export class AdministratorsService extends BaseAdministratorService {
           query: `${query}%`,
         });
 
+      queryBuilder.take(limit).skip(offset * limit);
+
       const [tenantAdmins, count] = await queryBuilder.getManyAndCount();
 
       this.logWithContext(
