@@ -471,7 +471,7 @@ export class TenantsService extends BaseAdministratorService {
         `Tenant database configuration completed successfully for tenant ID: ${tenantId}`,
       );
 
-      return tenantDatabase;
+      // return tenantDatabase;
     } catch (error) {
       this.logWithContext(
         `Error during tenant database creation for tenant ID: ${tenantId}`,
