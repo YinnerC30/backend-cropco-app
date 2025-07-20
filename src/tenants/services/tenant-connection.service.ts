@@ -41,7 +41,9 @@ export class TenantConnectionService {
           username: connectionConfig.username, // Usuario específico del tenant
           password: decryptedPassword, // Contraseña específica del tenant
           database: tenantDatabase.database_name,
-          entities: [__dirname + '/../../**/!(*tenant*).entity{.ts,.js}'],
+          entities: [
+            __dirname + '/../../**/!(*tenant*|*administrator*).entity{.ts,.js}',
+          ],
           synchronize: false,
         });
 
