@@ -79,6 +79,7 @@ export class ClientsService extends BaseTenantService {
         !all_records &&
         queryBuilder
           .where('clients.first_name ILIKE :query', { query: `${query}%` })
+          .orWhere('clients.last_name ILIKE :query', { query: `${query}%` })
           .orWhere('clients.email ILIKE :query', { query: `${query}%` });
 
       !all_records && queryBuilder.take(limit).skip(offset * limit);
