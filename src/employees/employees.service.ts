@@ -345,7 +345,7 @@ export class EmployeesService extends BaseTenantService {
         where: { id },
         relations: {
           harvests_detail: { harvest: true },
-          payments: true,
+          payments: { employee: true },
           works_detail: { work: true },
         },
         order: {
