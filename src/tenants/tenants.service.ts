@@ -360,7 +360,7 @@ export class TenantsService extends BaseAdministratorService {
       `Starting tenant database creation for tenant ID: ${tenantId}`,
     );
 
-    let tenantDatabase: any = null;
+    let tenantDatabase: any = {};
     let databaseCreated = false;
     let userCreated = false;
 
