@@ -149,7 +149,15 @@ export class TenantsService extends BaseAdministratorService {
         `Tenant found successfully with ID: ${id}, subdomain: ${tenant.subdomain}`,
       );
 
-      delete tenant.databases[0].connection_config;
+      if (
+        tenant.databases &&
+        Array.isArray(tenant.databases) &&
+        tenant.databases.length > 0 &&
+        tenant.databases[0] &&
+        typeof tenant.databases[0] === 'object'
+      ) {
+        delete tenant.databases[0].connection_config;
+      }
       return tenant;
     } catch (error) {
       this.logWithContext(`Failed to find tenant with ID: ${id}`, 'error');
