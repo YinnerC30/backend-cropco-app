@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Put,
@@ -110,13 +111,13 @@ export class TenantsController {
 
   @AuthAdministration()
   @Post(createDB.path)
-  createTenantDB(@Param('id') id: string) {
+  createTenantDB(@Param('id', ParseUUIDPipe) id: string) {
     return this.tenantsService.createTenantDatabase(id);
   }
 
   @AuthAdministration()
   @Put(configDataBaseTenant.path)
-  configTenantDB(@Param('id') id: string) {
+  configTenantDB(@Param('id', ParseUUIDPipe) id: string) {
     return this.tenantsService.configDataBaseTenant(id);
   }
 
@@ -128,7 +129,7 @@ export class TenantsController {
 
   @AuthAdministration()
   @Get(findOneTenant.path)
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.tenantsService.findOne(id);
   }
 
@@ -139,19 +140,22 @@ export class TenantsController {
 
   @AuthAdministration()
   @Put(updateTenant.path)
-  update(@Param('id') id: string, @Body() updateTenantDto: CreateTenantDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateTenantDto: CreateTenantDto,
+  ) {
     return this.tenantsService.update(id, updateTenantDto);
   }
 
   @AuthAdministration()
   @Patch(toggleStatusTenant.path)
-  toggleStatusTenant(@Param('id') id: string) {
+  toggleStatusTenant(@Param('id', ParseUUIDPipe) id: string) {
     return this.tenantsService.toggleStatusTenant(id);
   }
 
   @AuthAdministration()
   @Delete(removeTenant.path)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.tenantsService.remove(id);
   }
 
@@ -159,14 +163,14 @@ export class TenantsController {
 
   @AuthAdministration()
   @Get(getAllUsersToTenantDB.path)
-  getAllUsersToTenantDB(@Param('id') id: string) {
+  getAllUsersToTenantDB(@Param('id', ParseUUIDPipe) id: string) {
     return this.tenantsService.getAllUsersTenant(id);
   }
 
   @AuthAdministration()
   @Post(addUserToTenantDB.path)
   addUserAdminToTenantDB(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() createUserDto: UserTenantDto,
   ) {
     return this.tenantsService.addUserAdminTenantDB(id, createUserDto);

@@ -87,7 +87,7 @@ export class AdministratorsController {
   }
 
   @Get(findOneTenantsAdmin.path)
-  findOneAdmin(@Param('id') id: string) {
+  findOneAdmin(@Param('id', ParseUUIDPipe) id: string) {
     return this.administratorsService.findOneAdmin(id);
   }
 
@@ -98,14 +98,14 @@ export class AdministratorsController {
 
   @Patch(updateTenantsAdmin.path)
   updateAdmin(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() tenantAdministradorDto: UpdateAdministradorDto,
   ) {
     return this.administratorsService.updateAdmin(id, tenantAdministradorDto);
   }
 
   @Delete(removeTenantsAdmin.path)
-  removeAdmin(@Param('id') id: string) {
+  removeAdmin(@Param('id', ParseUUIDPipe) id: string) {
     return this.administratorsService.removeAdmin(id);
   }
 
