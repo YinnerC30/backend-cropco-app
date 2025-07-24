@@ -387,7 +387,7 @@ export class HarvestService extends BaseTenantService {
           return total + amountInGrams;
         }, 0);
 
-        const { details, crop, ...rest } = updateHarvestDto;
+        const { details, ...rest } = updateHarvestDto;
         await queryRunner.manager.update(
           Harvest,
           { id },
