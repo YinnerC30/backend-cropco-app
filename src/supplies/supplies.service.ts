@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -244,7 +245,20 @@ export class SuppliesService extends BaseTenantService {
     this.logWithContext(`Updating supply with ID: ${id}`);
 
     try {
-      await this.findOne(id);
+      const supply = await this.findOne(id);
+
+      const groupSupply = this.unitConversionService.getUnitType(
+        supply.unit_of_measure,
+      );
+      const currentGroupSupply = this.unitConversionService.getUnitType(
+        updateSupplyDto.unit_of_measure,
+      );
+      if (groupSupply !== currentGroupSupply) {
+        throw new BadRequestException(
+          `The unit of measure is not valid, the current unit of measure is ${supply.unit_of_measure} and the new unit of measure is ${updateSupplyDto.unit_of_measure}`,
+        );
+      }
+
       await this.supplyRepository.update(id, updateSupplyDto);
       const updatedSupply = await this.findOne(id);
 
