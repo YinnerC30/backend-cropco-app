@@ -406,6 +406,14 @@ export class ShoppingService extends BaseTenantService {
           const oldRecordData = oldDetails.find(
             (record: SuppliesShoppingDetails) => record.id === detailId,
           );
+
+          if (
+            oldRecordData.supplier.deletedDate !== null ||
+            oldRecordData.supply.deletedDate !== null
+          ) {
+            continue;
+          }
+
           const dataRecordNew = newDetails.find(
             (record) => record.id === detailId,
           );

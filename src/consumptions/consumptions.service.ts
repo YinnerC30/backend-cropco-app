@@ -385,6 +385,13 @@ export class ConsumptionsService extends BaseTenantService {
             (record: SuppliesConsumptionDetails) => record.id === detailId,
           );
 
+          if (
+            oldRecordData.crop.deletedDate !== null ||
+            oldRecordData.supply.deletedDate !== null
+          ) {
+            continue;
+          }
+
           if (oldRecordData.deletedDate !== null) {
             this.logWithContext(
               `Cannot delete consumption detail ${detailId} - linked to other records`,
@@ -411,6 +418,13 @@ export class ConsumptionsService extends BaseTenantService {
           const oldRecordData: SuppliesConsumptionDetails = oldDetails.find(
             (record: SuppliesConsumptionDetails) => record.id === detailId,
           );
+
+          if (
+            oldRecordData.crop.deletedDate !== null ||
+            oldRecordData.supply.deletedDate !== null
+          ) {
+            continue;
+          }
 
           if (oldRecordData.deletedDate !== null) {
             this.logWithContext(
