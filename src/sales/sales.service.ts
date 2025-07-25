@@ -185,6 +185,7 @@ export class SalesService extends BaseTenantService {
         queryBuilder.andWhere((qb) => {
           const subQuery = qb
             .subQuery()
+            .withDeleted()
             .select('sale.id')
             .from('sales', 'sale')
             .leftJoin('sale.details', 'details')
@@ -198,6 +199,7 @@ export class SalesService extends BaseTenantService {
         queryBuilder.andWhere((qb) => {
           const subQuery = qb
             .subQuery()
+            .withDeleted()
             .select('sale.id')
             .from('sales', 'sale')
             .leftJoin('sale.details', 'details')

@@ -139,6 +139,7 @@ export class SuppliesService extends BaseTenantService {
 
     try {
       const [supplies, count] = await this.supplyRepository.findAndCount({
+        withDeleted: true,
         where: {
           shopping_details: MoreThan(0),
         },
@@ -172,6 +173,7 @@ export class SuppliesService extends BaseTenantService {
 
     try {
       const [supplies, count] = await this.supplyRepository.findAndCount({
+        withDeleted: true,
         where: {
           consumption_details: MoreThan(0),
         },

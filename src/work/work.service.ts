@@ -128,6 +128,7 @@ export class WorkService extends BaseTenantService {
         queryBuilder.andWhere((qb) => {
           const subQuery = qb
             .subQuery()
+            .withDeleted()
             .select('work.id')
             .from('works', 'work')
             .leftJoin('work.details', 'details')
@@ -199,7 +200,7 @@ export class WorkService extends BaseTenantService {
       await queryRunner.startTransaction();
 
       try {
-        const { details, crop, ...rest } = updateWorkDto;
+        const { details, ...rest } = updateWorkDto;
 
         const oldDetails: WorkDetails[] = work.details;
         const newDetails: WorkDetailsDto[] = updateWorkDto.details ?? [];

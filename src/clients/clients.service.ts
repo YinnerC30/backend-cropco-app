@@ -117,6 +117,7 @@ export class ClientsService extends BaseTenantService {
 
     try {
       const clients = await this.clientRepository.find({
+        withDeleted: true,
         where: {
           sales_detail: MoreThan(0),
         },

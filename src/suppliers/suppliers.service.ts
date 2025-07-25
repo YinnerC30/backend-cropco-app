@@ -105,6 +105,7 @@ export class SuppliersService extends BaseTenantService {
 
     try {
       const [suppliers, count] = await this.supplierRepository.findAndCount({
+        withDeleted: true,
         where: {
           supplies_shopping_details: MoreThan(0),
         },

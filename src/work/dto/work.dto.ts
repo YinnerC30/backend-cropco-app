@@ -3,6 +3,7 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsDateString,
+  IsDefined,
   IsNumber,
   IsPositive,
   IsString,
@@ -31,6 +32,7 @@ export class WorkDto {
   })
   value_pay: number;
 
+  @IsDefined()
   @ValidateNested()
   @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;

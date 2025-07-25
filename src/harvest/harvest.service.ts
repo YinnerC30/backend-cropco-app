@@ -181,6 +181,7 @@ export class HarvestService extends BaseTenantService {
         queryBuilder.andWhere((qb) => {
           const subQuery = qb
             .subQuery()
+            .withDeleted()
             .select('harvest.id')
             .from('harvests', 'harvest')
             .leftJoin('harvest.details', 'details')

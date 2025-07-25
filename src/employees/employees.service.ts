@@ -285,6 +285,7 @@ export class EmployeesService extends BaseTenantService {
 
     try {
       const [employees, count] = await this.employeeRepository.findAndCount({
+        withDeleted: true,
         relations: {
           harvests_detail: true,
         },
@@ -313,6 +314,7 @@ export class EmployeesService extends BaseTenantService {
 
     try {
       const [employees, count] = await this.employeeRepository.findAndCount({
+        withDeleted: true,
         relations: {
           works_detail: true,
         },
