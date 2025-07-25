@@ -356,6 +356,14 @@ export class SalesService extends BaseTenantService {
           const oldRecordData = oldDetails.find(
             (record) => record.id === saleDetailId,
           );
+
+          if (
+            oldRecordData.crop.deletedDate !== null ||
+            oldRecordData.client.deletedDate !== null
+          ) {
+            continue;
+          }
+
           const dataRecordNew = newDetails.find(
             (record) => record.id === saleDetailId,
           );
