@@ -29,12 +29,12 @@ export class SuppliesConsumptionDetails {
   consumption: SuppliesConsumption;
 
   @ManyToOne(() => Supply, (supply) => supply.consumption_details, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   supply: Supply;
 
   @ManyToOne(() => Crop, (crop) => crop.supplies_consumption_details, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   crop: Crop;
 

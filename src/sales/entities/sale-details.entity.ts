@@ -41,12 +41,12 @@ export class SaleDetails {
   sale: Sale;
 
   @ManyToOne(() => Crop, (crop) => crop.sales_detail, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   crop: Crop;
 
   @ManyToOne(() => Client, (client) => client.sales_detail, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   client: Client;
 

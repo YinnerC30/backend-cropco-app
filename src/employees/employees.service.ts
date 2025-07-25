@@ -240,7 +240,6 @@ export class EmployeesService extends BaseTenantService {
     try {
       const employee = await this.employeeRepository
         .createQueryBuilder('employee')
-        .withDeleted()
         .leftJoinAndSelect(
           'employee.harvests_detail',
           'harvests_detail',

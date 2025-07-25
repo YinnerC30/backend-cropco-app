@@ -48,7 +48,7 @@ export class HarvestDetails {
 
   // Relación con Employee
   @ManyToOne(() => Employee, (employee) => employee.harvests_detail, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'employeeId' })
   employee: Employee;
@@ -57,7 +57,7 @@ export class HarvestDetails {
   @OneToOne(
     () => PaymentsHarvest,
     (payments_harvest) => payments_harvest.harvests_detail,
-    { cascade: true },
+    { cascade: ['insert'] },
   )
   payments_harvest: PaymentsHarvest;
 

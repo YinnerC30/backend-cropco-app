@@ -143,6 +143,7 @@ export class HarvestService extends BaseTenantService {
         .leftJoinAndSelect('harvest.crop', 'crop')
         .leftJoinAndSelect('harvest.details', 'details')
         .leftJoinAndSelect('details.employee', 'employee')
+        .andWhere('harvest.deletedDate IS NULL')
         .orderBy('harvest.date', 'DESC')
         .take(limit)
         .skip(offset * limit);
@@ -444,7 +445,7 @@ export class HarvestService extends BaseTenantService {
       await queryRunner.startTransaction();
 
       try {
-        await queryRunner.manager.remove(Harvest, harvest);
+        await queryRunner.manager.softRemove(Harvest, harvest);
         await queryRunner.commitTransaction();
 
         this.logWithContext(`Harvest with ID: ${id} removed successfully`);

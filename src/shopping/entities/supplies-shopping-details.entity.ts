@@ -41,13 +41,13 @@ export class SuppliesShoppingDetails {
   shopping: SuppliesShopping;
 
   @ManyToOne(() => Supply, (supply) => supply.shopping_details, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
-  // @JoinColumn()
+  @JoinColumn()
   supply: Supply;
 
   @ManyToOne(() => Supplier, (supplier) => supplier.supplies_shopping_details, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn()
   supplier: Supplier;

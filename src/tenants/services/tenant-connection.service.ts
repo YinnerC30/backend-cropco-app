@@ -44,7 +44,7 @@ export class TenantConnectionService {
           entities: [
             __dirname + '/../../**/!(*tenant*|*administrator*).entity{.ts,.js}',
           ],
-          synchronize: false,
+          synchronize: true,
         });
 
         await dataSource.initialize();

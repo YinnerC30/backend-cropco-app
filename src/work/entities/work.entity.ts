@@ -35,7 +35,7 @@ export class Work {
   // Internal relations
 
   @ManyToOne(() => Crop, (crop) => crop.works, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   crop: Crop;
 

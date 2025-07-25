@@ -1,10 +1,13 @@
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import {
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Payment } from './payment.entity';
 
@@ -22,9 +25,19 @@ export class PaymentsHarvest {
     () => HarvestDetails,
     (harvests_detail) => harvests_detail.payments_harvest,
     {
-      onDelete: 'CASCADE',
+      onDelete: 'RESTRICT',
+      onUpdate: 'RESTRICT',
     },
   )
   @JoinColumn()
   harvests_detail: HarvestDetails;
+
+  @CreateDateColumn()
+  createdDate: Date;
+
+  @UpdateDateColumn()
+  updatedDate: Date;
+
+  @DeleteDateColumn()
+  deletedDate: Date;
 }

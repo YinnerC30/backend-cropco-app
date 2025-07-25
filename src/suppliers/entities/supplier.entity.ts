@@ -24,7 +24,7 @@ export class Supplier extends PersonalInformation {
   @OneToMany(
     () => SuppliesShoppingDetails,
     (supplies_shopping_details) => supplies_shopping_details.supplier,
-    { cascade: true },
+    { cascade: ['insert', 'update'] },
   )
   supplies_shopping_details: SuppliesShoppingDetails[];
 

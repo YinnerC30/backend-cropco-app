@@ -109,7 +109,12 @@ export class AuthController {
   ) {}
 
   @Post(login.path)
-  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  @Throttle({
+    default: {
+      ttl: 60000,
+      limit: process.env.STATUS_PROJECT === 'development' ? 1000 : 10,
+    },
+  })
   async login(
     @Body() loginUserDto: LoginUserDto,
     @Res({ passthrough: true }) response: Response,
