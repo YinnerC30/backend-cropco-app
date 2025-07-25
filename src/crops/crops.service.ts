@@ -379,6 +379,15 @@ export class CropsService extends BaseTenantService {
         );
       }
 
+      if (crop.sales_detail.some((sd) => sd.is_receivable === true)) {
+        this.logWithContext(
+          `Cannot remove crop with ID: ${id} - has receivable sales details`,
+          'warn',
+        );
+        throw new ConflictException(
+          `Crop with id ${crop.id} has receivable sales details`,
+        );
+      }
       await this.cropRepository.softRemove(crop);
       this.logWithContext(`Crop with ID: ${id} removed successfully`);
     } catch (error) {
