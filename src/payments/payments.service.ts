@@ -8,7 +8,7 @@ import {
 import { handleDBExceptions } from 'src/common/helpers/handle-db-exceptions';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { WorkDetails } from 'src/work/entities/work-details.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { PaymentDto } from './dto/payment.dto';
 import { PaymentsHarvest } from './entities/payment-harvest.entity';
 import { PaymentsWork } from './entities/payment-work.entity';
@@ -173,6 +173,7 @@ export class PaymentsService extends BaseTenantService {
         .leftJoinAndSelect('payment.employee', 'employee')
         .leftJoinAndSelect('payment.payments_harvest', 'payments_harvest')
         .leftJoinAndSelect('payment.payments_work', 'payments_work')
+        .andWhere('payment.deletedDate IS NULL')
         .orderBy('payment.date', 'DESC')
         .take(limit)
         .skip(offset * limit);
@@ -240,6 +241,7 @@ export class PaymentsService extends BaseTenantService {
         withDeleted: true,
         where: {
           id,
+          deletedDate: IsNull(),
         },
         relations: {
           employee: true,
@@ -280,8 +282,6 @@ export class PaymentsService extends BaseTenantService {
       await queryRunner.startTransaction();
 
       try {
-        await queryRunner.manager.delete(Payment, { id });
-
         const { payments_harvest, payments_work } = payment;
 
         payments_harvest.forEach(async (record) => {
@@ -301,6 +301,8 @@ export class PaymentsService extends BaseTenantService {
             { payment_is_pending: true },
           );
         });
+
+        await queryRunner.manager.softRemove(Payment);
 
         await queryRunner.commitTransaction();
         this.logWithContext(`Payment with ID: ${id} removed successfully`);

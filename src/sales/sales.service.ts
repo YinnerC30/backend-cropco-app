@@ -16,7 +16,7 @@ import { BaseTenantService } from 'src/common/services/base-tenant.service';
 import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { HarvestService } from 'src/harvest/harvest.service';
 import { PrinterService } from 'src/printer/printer.service';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { QueryParamsSale } from './dto/query-params-sale.dto';
 import { QueryTotalSalesInYearDto } from './dto/query-total-sales-year';
 import { SaleDetailsDto } from './dto/sale-details.dto';
@@ -151,6 +151,7 @@ export class SalesService extends BaseTenantService {
         .leftJoinAndSelect('details.client', 'client')
         .leftJoinAndSelect('details.crop', 'crop')
         .orderBy('sale.date', 'DESC')
+        .andWhere('sale.deletedDate IS NULL')
         .take(limit)
         .skip(offset * limit);
 
@@ -248,6 +249,7 @@ export class SalesService extends BaseTenantService {
         withDeleted: true,
         where: {
           id,
+          deletedDate: IsNull(),
         },
         relations: {
           details: {
@@ -533,7 +535,7 @@ export class SalesService extends BaseTenantService {
           });
         }
 
-        await queryRunner.manager.remove(Sale, sale);
+        await queryRunner.manager.softRemove(Sale, sale);
         await queryRunner.commitTransaction();
 
         this.logWithContext(`Venta eliminada exitosamente - ID: ${id}`);

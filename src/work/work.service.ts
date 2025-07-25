@@ -13,7 +13,7 @@ import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { BaseTenantService } from 'src/common/services/base-tenant.service';
 import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { PrinterService } from 'src/printer/printer.service';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { WorkDetailsDto } from './dto/work-details.dto';
 import { WorkDto } from './dto/work.dto';
 
@@ -64,9 +64,7 @@ export class WorkService extends BaseTenantService {
       const savedWork = await queryRunner.manager.save(work);
       await queryRunner.commitTransaction();
 
-      this.logWithContext(
-        `Work created successfully with ID: ${savedWork.id}`,
-      );
+      this.logWithContext(`Work created successfully with ID: ${savedWork.id}`);
 
       return savedWork;
     } catch (error) {
@@ -106,6 +104,7 @@ export class WorkService extends BaseTenantService {
         .leftJoinAndSelect('work.crop', 'crop')
         .leftJoinAndSelect('work.details', 'details')
         .leftJoinAndSelect('details.employee', 'employee')
+        .andWhere('work.deletedDate IS NULL')
         .orderBy('work.date', 'DESC')
         .take(limit)
         .skip(offset * limit);
@@ -140,7 +139,9 @@ export class WorkService extends BaseTenantService {
 
       const [works, count] = await queryBuilder.getManyAndCount();
 
-      this.logWithContext(`Found ${works.length} works out of ${count} total works`);
+      this.logWithContext(
+        `Found ${works.length} works out of ${count} total works`,
+      );
 
       if (works.length === 0 && count > 0) {
         throw new NotFoundException(
@@ -167,7 +168,7 @@ export class WorkService extends BaseTenantService {
     try {
       const work = await this.workRepository.findOne({
         withDeleted: true,
-        where: { id },
+        where: { id, deletedDate: IsNull() },
         relations: {
           crop: true,
           details: { employee: true, payments_work: true },
@@ -327,7 +328,7 @@ export class WorkService extends BaseTenantService {
         );
       }
 
-      await this.workRepository.remove(work);
+      await this.workRepository.softRemove(work);
       this.logWithContext(`Work with ID: ${id} removed successfully`);
     } catch (error) {
       this.logWithContext(`Failed to remove work with ID: ${id}`, 'error');
@@ -428,29 +429,31 @@ export class WorkService extends BaseTenantService {
 
       const rawData = await queryBuilder.getRawMany();
 
-      const formatData = monthNamesES.map((monthName: string, index: number) => {
-        const monthNumber = index + 1;
-        const record = rawData.find((item) => {
-          return item.month === monthNumber;
-        });
+      const formatData = monthNamesES.map(
+        (monthName: string, index: number) => {
+          const monthNumber = index + 1;
+          const record = rawData.find((item) => {
+            return item.month === monthNumber;
+          });
 
-        if (!record) {
+          if (!record) {
+            return {
+              month_name: monthName,
+              month_number: monthNumber,
+              value_pay: 0,
+              quantity_works: 0,
+            };
+          }
+
+          delete record.month;
+
           return {
+            ...record,
             month_name: monthName,
             month_number: monthNumber,
-            value_pay: 0,
-            quantity_works: 0,
           };
-        }
-
-        delete record.month;
-
-        return {
-          ...record,
-          month_name: monthName,
-          month_number: monthNumber,
-        };
-      });
+        },
+      );
 
       this.logWithContext(
         `Work data retrieved successfully for year: ${year}, ${rawData.length} months with data`,

@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, IsNull, QueryRunner, Repository } from 'typeorm';
 import { HarvestDto } from './dto/harvest.dto';
 
 import { HarvestDetails } from './entities/harvest-details.entity';
@@ -226,6 +226,7 @@ export class HarvestService extends BaseTenantService {
         withDeleted: true,
         where: {
           id,
+          deletedDate: IsNull(),
         },
         relations: {
           details: { employee: true, payments_harvest: true },

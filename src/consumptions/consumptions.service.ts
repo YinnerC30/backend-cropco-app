@@ -16,7 +16,7 @@ import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { Supply } from 'src/supplies/entities/supply.entity';
 import { Condition } from 'src/supplies/interfaces/condition.interface';
 import { SuppliesService } from 'src/supplies/supplies.service';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, IsNull, QueryRunner, Repository } from 'typeorm';
 import { ConsumptionSuppliesDetailsDto } from './dto/consumption-supplies-details.dto';
 import { ConsumptionSuppliesDto } from './dto/consumption-supplies.dto';
 import { QueryParamsConsumption } from './dto/query-params-consumption.dto';
@@ -45,8 +45,11 @@ export class ConsumptionsService extends BaseTenantService {
     super(request);
     this.setLogger(this.logger);
     this.supplyRepository = this.getTenantRepository(Supply);
-    this.suppliesConsumptionRepository = this.getTenantRepository(SuppliesConsumption);
-    this.suppliesConsumptionDetailsRepository = this.getTenantRepository(SuppliesConsumptionDetails);
+    this.suppliesConsumptionRepository =
+      this.getTenantRepository(SuppliesConsumption);
+    this.suppliesConsumptionDetailsRepository = this.getTenantRepository(
+      SuppliesConsumptionDetails,
+    );
     this.dataSource = this.tenantConnection;
   }
 
@@ -112,11 +115,11 @@ export class ConsumptionsService extends BaseTenantService {
       }
 
       await queryRunner.commitTransaction();
-      
+
       this.logWithContext(
         `Consumption created successfully with ID: ${consumption.id}`,
       );
-      
+
       return consumption;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -154,6 +157,7 @@ export class ConsumptionsService extends BaseTenantService {
         .leftJoinAndSelect('supplies_consumption.details', 'details')
         .leftJoinAndSelect('details.supply', 'supply')
         .leftJoinAndSelect('details.crop', 'crop')
+        .andWhere('supplies_consumption.deletedDate IS NULL')
         .orderBy('supplies_consumption.date', 'DESC')
         .take(limit)
         .skip(offset * limit);
@@ -192,7 +196,9 @@ export class ConsumptionsService extends BaseTenantService {
 
       const [consumptions, count] = await queryBuilder.getManyAndCount();
 
-      this.logWithContext(`Found ${consumptions.length} consumption records out of ${count} total records`);
+      this.logWithContext(
+        `Found ${consumptions.length} consumption records out of ${count} total records`,
+      );
 
       if (consumptions.length === 0 && count > 0) {
         throw new NotFoundException(
@@ -208,7 +214,10 @@ export class ConsumptionsService extends BaseTenantService {
         records: consumptions,
       };
     } catch (error) {
-      this.logWithContext('Failed to find consumption records with filters', 'error');
+      this.logWithContext(
+        'Failed to find consumption records with filters',
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -217,24 +226,25 @@ export class ConsumptionsService extends BaseTenantService {
     this.logWithContext(`Finding consumption by ID: ${id}`);
 
     try {
-      const supplyConsumption = await this.suppliesConsumptionRepository.findOne({
-        withDeleted: true,
-        where: { id },
-        relations: {
-          details: {
-            crop: true,
-            supply: true,
+      const supplyConsumption =
+        await this.suppliesConsumptionRepository.findOne({
+          withDeleted: true,
+          where: { id, deletedDate: IsNull() },
+          relations: {
+            details: {
+              crop: true,
+              supply: true,
+            },
           },
-        },
-      });
-      
+        });
+
       if (!supplyConsumption) {
         this.logWithContext(`Consumption with ID: ${id} not found`, 'warn');
         throw new NotFoundException(
           `Supplies consumption with id: ${id} not found`,
         );
       }
-      
+
       this.logWithContext(`Consumption found successfully with ID: ${id}`);
       return supplyConsumption;
     } catch (error) {
@@ -260,11 +270,11 @@ export class ConsumptionsService extends BaseTenantService {
         SuppliesConsumptionDetails,
         recordToSave,
       );
-      
+
       this.logWithContext(
         `Consumption detail created successfully with ID: ${result.id}`,
       );
-      
+
       return result;
     } catch (error) {
       this.logWithContext(
@@ -290,11 +300,11 @@ export class ConsumptionsService extends BaseTenantService {
         condition,
         object,
       );
-      
+
       this.logWithContext(
         `Consumption details updated successfully, affected rows: ${result.affected}`,
       );
-      
+
       return result;
     } catch (error) {
       this.logWithContext(
@@ -318,11 +328,11 @@ export class ConsumptionsService extends BaseTenantService {
         SuppliesConsumptionDetails,
         condition,
       );
-      
+
       this.logWithContext(
         `Consumption details removed successfully, affected rows: ${result.affected}`,
       );
-      
+
       return result;
     } catch (error) {
       this.logWithContext(
@@ -340,7 +350,8 @@ export class ConsumptionsService extends BaseTenantService {
     this.logWithContext(`Updating consumption with ID: ${id}`);
 
     try {
-      const consumption: SuppliesConsumption = await this.findOneConsumption(id);
+      const consumption: SuppliesConsumption =
+        await this.findOneConsumption(id);
 
       const queryRunner = this.dataSource.createQueryRunner();
       await queryRunner.connect();
@@ -415,7 +426,9 @@ export class ConsumptionsService extends BaseTenantService {
 
           // Verificar que la unidad de medida sea válida
           if (
-            !this.unitConversionService.isValidUnit(newRecordData.unit_of_measure)
+            !this.unitConversionService.isValidUnit(
+              newRecordData.unit_of_measure,
+            )
           ) {
             throw new BadRequestException(
               `Unidad de medida inválida: ${newRecordData.unit_of_measure}`,
@@ -466,7 +479,9 @@ export class ConsumptionsService extends BaseTenantService {
 
           // Verificar que la unidad de medida sea válida
           if (
-            !this.unitConversionService.isValidUnit(newRecordData.unit_of_measure)
+            !this.unitConversionService.isValidUnit(
+              newRecordData.unit_of_measure,
+            )
           ) {
             throw new BadRequestException(
               `Unidad de medida inválida: ${newRecordData.unit_of_measure}`,
@@ -506,9 +521,9 @@ export class ConsumptionsService extends BaseTenantService {
         await queryRunner.manager.update(SuppliesConsumption, { id }, rest);
 
         await queryRunner.commitTransaction();
-        
+
         this.logWithContext(`Consumption updated successfully with ID: ${id}`);
-        
+
         return await this.findOneConsumption(id);
       } catch (error) {
         await queryRunner.rollbackTransaction();
@@ -517,7 +532,10 @@ export class ConsumptionsService extends BaseTenantService {
         await queryRunner.release();
       }
     } catch (error) {
-      this.logWithContext(`Failed to update consumption with ID: ${id}`, 'error');
+      this.logWithContext(
+        `Failed to update consumption with ID: ${id}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -548,7 +566,7 @@ export class ConsumptionsService extends BaseTenantService {
             inputUnit: record.unit_of_measure,
           });
         }
-        await queryRunner.manager.remove(consumptionSupply);
+        await queryRunner.manager.softRemove(consumptionSupply);
 
         await queryRunner.commitTransaction();
         this.logWithContext(`Consumption with ID: ${id} removed successfully`);
@@ -559,7 +577,10 @@ export class ConsumptionsService extends BaseTenantService {
         await queryRunner.release();
       }
     } catch (error) {
-      this.logWithContext(`Failed to remove consumption with ID: ${id}`, 'error');
+      this.logWithContext(
+        `Failed to remove consumption with ID: ${id}`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
@@ -605,12 +626,19 @@ export class ConsumptionsService extends BaseTenantService {
 
       return { success, failed };
     } catch (error) {
-      this.logWithContext('Failed to execute bulk removal of consumption records', 'error');
+      this.logWithContext(
+        'Failed to execute bulk removal of consumption records',
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     }
   }
 
-  private async getConsumptionData(year: number, cropId: string, supplyId: string) {
+  private async getConsumptionData(
+    year: number,
+    cropId: string,
+    supplyId: string,
+  ) {
     this.logWithContext(
       `Getting consumption data for year: ${year}, crop: ${cropId || 'any'}, supply: ${supplyId || 'any'}`,
     );
@@ -638,28 +666,30 @@ export class ConsumptionsService extends BaseTenantService {
 
       const rawData = await queryBuilder.getRawMany();
 
-      const formatData = monthNamesES.map((monthName: string, index: number) => {
-        const monthNumber = index + 1;
-        const record = rawData.find((item) => {
-          return item.month === monthNumber;
-        });
+      const formatData = monthNamesES.map(
+        (monthName: string, index: number) => {
+          const monthNumber = index + 1;
+          const record = rawData.find((item) => {
+            return item.month === monthNumber;
+          });
 
-        if (!record) {
+          if (!record) {
+            return {
+              month_name: monthName,
+              month_number: monthNumber,
+              quantity_consumptions: 0,
+            };
+          }
+
+          delete record.month;
+
           return {
+            ...record,
             month_name: monthName,
             month_number: monthNumber,
-            quantity_consumptions: 0,
           };
-        }
-
-        delete record.month;
-
-        return {
-          ...record,
-          month_name: monthName,
-          month_number: monthNumber,
-        };
-      });
+        },
+      );
 
       this.logWithContext(
         `Consumption data retrieved successfully for year: ${year}, ${rawData.length} months with data`,
@@ -667,7 +697,10 @@ export class ConsumptionsService extends BaseTenantService {
 
       return formatData;
     } catch (error) {
-      this.logWithContext(`Failed to get consumption data for year: ${year}`, 'error');
+      this.logWithContext(
+        `Failed to get consumption data for year: ${year}`,
+        'error',
+      );
       throw error;
     }
   }
@@ -684,7 +717,11 @@ export class ConsumptionsService extends BaseTenantService {
     try {
       const previousYear = year - 1;
 
-      const currentYearData = await this.getConsumptionData(year, cropId, supplyId);
+      const currentYearData = await this.getConsumptionData(
+        year,
+        cropId,
+        supplyId,
+      );
       const previousYearData = await this.getConsumptionData(
         previousYear,
         cropId,

@@ -14,7 +14,7 @@ import { BaseTenantService } from 'src/common/services/base-tenant.service';
 import { PrinterService } from 'src/printer/printer.service';
 import { Condition } from 'src/supplies/interfaces/condition.interface';
 import { SuppliesService } from 'src/supplies/supplies.service';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, IsNull, QueryRunner, Repository } from 'typeorm';
 import { QueryParamsShopping } from './dto/query-params-shopping.dto';
 import { ShoppingSuppliesDetailsDto } from './dto/shopping-supplies-details.dto';
 import { ShoppingSuppliesDto } from './dto/shopping-supplies.dto';
@@ -234,6 +234,7 @@ export class ShoppingService extends BaseTenantService {
         .leftJoinAndSelect('supplies_shopping.details', 'details')
         .leftJoinAndSelect('details.supply', 'supply')
         .leftJoinAndSelect('details.supplier', 'supplier')
+        .andWhere('supplies_shopping.deletedDate IS NULL')
         .orderBy('supplies_shopping.date', 'DESC')
         .take(limit)
         .skip(offset * limit);
@@ -314,7 +315,7 @@ export class ShoppingService extends BaseTenantService {
     try {
       const supplyShopping = await this.suppliesShoppingRepository.findOne({
         withDeleted: true,
-        where: { id },
+        where: { id, deletedDate: IsNull() },
         relations: {
           details: {
             supplier: true,
@@ -560,7 +561,7 @@ export class ShoppingService extends BaseTenantService {
           });
         }
 
-        await queryRunner.manager.remove(shoppingSupply);
+        await queryRunner.manager.softRemove(shoppingSupply);
 
         await queryRunner.commitTransaction();
         this.logWithContext(`Shopping with ID: ${id} removed successfully`);
