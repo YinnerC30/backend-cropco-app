@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -189,7 +190,7 @@ export class AuthController {
   }
 
   // TODO: Solo en modo de desarrollo
-  @Get(createModuleActions.path)
+  @Post(createModuleActions.path)
   createModuleWithActions() {
     return this.authService.createModulesWithActions();
   }
@@ -259,7 +260,23 @@ export class AuthController {
    */
   @AuthAdministration()
   @UseGuards(DevelopmentGuard)
-  @Post('remove-permissions-to-module/:userId/:moduleName')
+  @Post('add-permissions-to-module/:userId/:moduleName')
+  async addPermissionsToModule(
+    @Param('userId') userId: string,
+    @Param('moduleName') moduleName: string,
+  ): Promise<void> {
+    return this.authService.addPermissionsToModule(userId, moduleName);
+  }
+
+  /**
+   * Remove all permissions from a user for a specific module.
+   * Only for development purposes.
+   * @param userId User identifier
+   * @param moduleName Name of the module
+   */
+  @AuthAdministration()
+  @UseGuards(DevelopmentGuard)
+  @Delete('remove-permissions-to-module/:userId/:moduleName')
   async removePermissionsToModule(
     @Param('userId') userId: string,
     @Param('moduleName') moduleName: string,
@@ -275,7 +292,7 @@ export class AuthController {
    */
   @AuthAdministration()
   @UseGuards(DevelopmentGuard)
-  @Post('remove-permission/:userId/:actionName')
+  @Delete('remove-permission/:userId/:actionName')
   async removePermissionFromUser(
     @Param('userId') userId: string,
     @Param('actionName') actionName: string,
@@ -290,7 +307,7 @@ export class AuthController {
    */
   @AuthAdministration()
   @UseGuards(DevelopmentGuard)
-  @Post('delete-test-user/:userId')
+  @Delete('delete-test-user/:userId')
   async deleteTestUser(@Param('userId') userId: string): Promise<void> {
     return this.authService.deleteUserToTests(userId);
   }

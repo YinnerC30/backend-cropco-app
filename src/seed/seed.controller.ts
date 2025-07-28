@@ -31,7 +31,7 @@ export class SeedController {
    * @returns Un mensaje y el historial de registros insertados.
    */
   @Post('controlled')
-  @Throttle({ default: { ttl: 300000, limit: 3 } })
+  @Throttle({ default: { ttl: 300000, limit: 1000 } })
   executeSeedControlled(@Body() seedDto: SeedControlledDto) {
     return this.seedService.runSeedControlled(seedDto);
   }
@@ -42,7 +42,7 @@ export class SeedController {
    * @returns Un mensaje confirmando la limpieza exitosa.
    */
   @Delete('clear')
-  @Throttle({ default: { ttl: 300000, limit: 3 } })
+  @Throttle({ default: { ttl: 300000, limit: 1000 } })
   clearDatabaseControlled(
     @Body()
     clearOptions: {

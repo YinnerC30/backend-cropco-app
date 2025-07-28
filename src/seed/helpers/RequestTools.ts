@@ -300,7 +300,7 @@ export class RequestTools {
     const user = this.getUser();
     await request
       .default(this.getApp().getHttpServer())
-      .post(`/auth/delete-test-user/${user.id}`)
+      .delete(`/auth/delete-test-user/${user.id}`)
       .set('x-tenant-id', this.getTenantId())
       .set('Cookie', `administrator-token=${this.adminToken}`)
       .expect(201);
@@ -372,7 +372,7 @@ export class RequestTools {
   ): Promise<void> {
     await request
       .default(this.getApp().getHttpServer())
-      .post(`/auth/remove-permissions-to-module/${userId}/${moduleName}`)
+      .delete(`/auth/remove-permissions-to-module/${userId}/${moduleName}`)
       .set('x-tenant-id', this.getTenantId())
       .set('Cookie', `administrator-token=${this.adminToken}`)
       .expect(201);
@@ -406,7 +406,7 @@ export class RequestTools {
   ): Promise<void> {
     const result = await request
       .default(this.getApp().getHttpServer())
-      .post(`/auth/remove-permission/${userId}/${actionName}`)
+      .delete(`/auth/remove-permission/${userId}/${actionName}`)
       .set('x-tenant-id', this.getTenantId())
       .set('Cookie', `administrator-token=${this.adminToken}`)
       .expect(201);

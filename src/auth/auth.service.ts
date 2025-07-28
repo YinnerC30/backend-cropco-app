@@ -209,18 +209,17 @@ export class AuthService extends BaseTenantService {
       // Verificar que el token sea válido antes de invalidarlo
       const payload = this.jwtService.verify(token);
       this.logWithContext(`Logout successful for user ID: ${payload.id}`);
-      
+
       // Aquí podrías implementar una blacklist de tokens si es necesario
       // Por ejemplo, guardar el token en Redis con un tiempo de expiración
       // await this.redisService.setex(`blacklist:${token}`, 3600, '1');
-      
     } catch (error) {
       if (error instanceof TokenExpiredError) {
         this.logWithContext('Logout attempted with expired token', 'warn');
         // No es un error crítico, el token ya está expirado
         return;
       }
-      
+
       this.logWithContext('Logout failed - invalid token', 'error');
       this.handlerError.handle(error, this.logger);
     }
@@ -475,6 +474,61 @@ export class AuthService extends BaseTenantService {
     }
   }
 
+  async addPermissionsToModule(id: string, nameModule: string): Promise<void> {
+    this.logWithContext(
+      `Removing permissions from module ${nameModule} for user ID: ${id}`,
+    );
+
+    try {
+      const user = await this.userService.findOne(id);
+
+      const module = await this.modulesRepository.findOne({
+        where: { name: nameModule },
+      });
+
+      const actions = (await this.moduleActionsRepository.find({
+        select: {
+          id: true,
+        },
+        where: {
+          module: { id: module.id },
+        },
+      })) as UserActionDto[];
+
+      if (actions.length === 0) {
+        this.logWithContext(
+          `No actions found for module ${nameModule}`,
+          'warn',
+        );
+        return;
+      }
+
+      this.logWithContext(
+        `Removing ${actions.length} permissions from module ${nameModule} for user ${user.first_name} ${user.last_name}`,
+      );
+
+      await Promise.all([
+        ...actions.map(async (action) => {
+          const record = this.userActionsRepository.create({
+            user: { id },
+            action,
+          });
+          await this.userActionsRepository.save(record);
+        }),
+      ]);
+
+      this.logWithContext(
+        `Permissions successfully add from user ID: ${id} for module: ${nameModule}`,
+      );
+    } catch (error) {
+      this.logWithContext(
+        `Failed to add permissions from module ${nameModule} for user ID: ${id}`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
+  }
+
   async removePermissionsToModule(
     id: string,
     nameModule: string,
@@ -486,12 +540,16 @@ export class AuthService extends BaseTenantService {
     try {
       const user = await this.userService.findOne(id);
 
+      const module = await this.modulesRepository.findOne({
+        where: { name: nameModule },
+      });
+
       const actions = (await this.moduleActionsRepository.find({
         select: {
           id: true,
         },
         where: {
-          name: nameModule,
+          module: { id: module.id },
         },
       })) as UserActionDto[];
 
