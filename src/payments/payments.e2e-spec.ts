@@ -904,12 +904,14 @@ describe('PaymentsController (e2e)', () => {
         valuePay: resultHarvest.harvest.details[0].value_pay,
       });
 
-      await request
+      const response = await request
         .default(app.getHttpServer())
         .delete(`/payments/remove/one/${id}`)
         .set('x-tenant-id', tenantId)
         .set('Cookie', `user-token=${token}`)
         .expect(200);
+
+      // console.log(response.body);
 
       // const payment = await paymentRepository.findOne({ where: { id } });
       // expect(payment).toBeNull();

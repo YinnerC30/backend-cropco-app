@@ -247,16 +247,18 @@ export class SuppliesService extends BaseTenantService {
     try {
       const supply = await this.findOne(id);
 
-      const groupSupply = this.unitConversionService.getUnitType(
-        supply.unit_of_measure,
-      );
-      const currentGroupSupply = this.unitConversionService.getUnitType(
-        updateSupplyDto.unit_of_measure,
-      );
-      if (groupSupply !== currentGroupSupply) {
-        throw new BadRequestException(
-          `The unit of measure is not valid, the current unit of measure is ${supply.unit_of_measure} and the new unit of measure is ${updateSupplyDto.unit_of_measure}`,
+      if (updateSupplyDto.unit_of_measure !== undefined) {
+        const groupSupply = this.unitConversionService.getUnitType(
+          supply.unit_of_measure,
         );
+        const currentGroupSupply = this.unitConversionService.getUnitType(
+          updateSupplyDto.unit_of_measure,
+        );
+        if (groupSupply !== currentGroupSupply) {
+          throw new BadRequestException(
+            `The unit of measure is not valid, the current unit of measure is ${supply.unit_of_measure} and the new unit of measure is ${updateSupplyDto.unit_of_measure}`,
+          );
+        }
       }
 
       await this.supplyRepository.update(id, updateSupplyDto);

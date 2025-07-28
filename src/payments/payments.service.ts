@@ -302,7 +302,7 @@ export class PaymentsService extends BaseTenantService {
           );
         });
 
-        await queryRunner.manager.softRemove(Payment);
+        await queryRunner.manager.softRemove(payment);
 
         await queryRunner.commitTransaction();
         this.logWithContext(`Payment with ID: ${id} removed successfully`);

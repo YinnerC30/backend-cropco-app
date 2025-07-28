@@ -71,7 +71,7 @@ describe('CropsController e2e', () => {
       await reqTools.initializeTenant();
       tenantId = reqTools.getTenantIdPublic();
 
-      // await reqTools.clearDatabaseControlled({ crops: true });
+      await reqTools.clearDatabaseControlled({ crops: true });
 
       userTest = await reqTools.createTestUser();
       token = await reqTools.generateTokenUser();
@@ -88,7 +88,7 @@ describe('CropsController e2e', () => {
   describe('crops/all (GET)', () => {
     beforeAll(async () => {
       try {
-        // await reqTools.clearDatabaseControlled({ crops: true });
+        await reqTools.clearDatabaseControlled({ crops: true });
         await Promise.all(Array.from({ length: 17 }).map(() => CreateCrop()));
         await reqTools.addActionToUser('find_all_crops');
       } catch (error) {

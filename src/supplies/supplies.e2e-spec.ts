@@ -108,7 +108,7 @@ describe('SuppliesController e2e', () => {
         'name must be a string',
         'brand must be longer than or equal to 3 characters',
         'brand must be a string',
-        'unit_of_measure must be one of the following values: GRAMOS, MILILITROS',
+        'unit_of_measure must be one of the following values: GRAMOS, KILOGRAMOS, LIBRAS, ONZAS, TONELADAS, MILILITROS, LITROS, GALONES, MILIMETROS, CENTIMETROS, METROS',
         'unit_of_measure must be a string',
         'observation must be longer than or equal to 10 characters',
         'observation must be a string',
