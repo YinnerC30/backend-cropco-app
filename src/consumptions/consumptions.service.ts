@@ -608,7 +608,9 @@ export class ConsumptionsService extends BaseTenantService {
     );
 
     try {
-      await this.suppliesConsumptionRepository.delete({});
+      await this.suppliesConsumptionRepository.query(
+        'TRUNCATE TABLE supplies_consumption RESTART IDENTITY CASCADE',
+      );
       this.logWithContext('All consumption supplies deleted successfully');
     } catch (error) {
       this.logWithContext('Failed to delete all consumption supplies', 'error');

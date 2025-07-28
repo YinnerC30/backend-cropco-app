@@ -628,7 +628,9 @@ export class ShoppingService extends BaseTenantService {
     );
 
     try {
-      await this.suppliesShoppingRepository.delete({});
+      await this.suppliesShoppingRepository.query(
+        'TRUNCATE TABLE supplies_shopping RESTART IDENTITY CASCADE',
+      );
       this.logWithContext('All shopping supplies deleted successfully');
     } catch (error) {
       this.logWithContext('Failed to delete all shopping supplies', 'error');

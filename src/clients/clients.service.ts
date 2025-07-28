@@ -188,7 +188,9 @@ export class ClientsService extends BaseTenantService {
     );
 
     try {
-      await this.clientRepository.delete({});
+      await this.clientRepository.query(
+        'TRUNCATE TABLE clients RESTART IDENTITY CASCADE',
+      );
       this.logWithContext('All clients deleted successfully');
     } catch (error) {
       this.logWithContext('Failed to delete all clients', 'error');

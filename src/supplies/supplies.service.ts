@@ -301,7 +301,9 @@ export class SuppliesService extends BaseTenantService {
     );
 
     try {
-      await this.supplyRepository.delete({});
+      await this.supplyRepository.query(
+        'TRUNCATE TABLE supplies RESTART IDENTITY CASCADE',
+      );
       this.logWithContext('All supplies deleted successfully');
     } catch (error) {
       this.logWithContext('Failed to delete all supplies', 'error');
@@ -525,7 +527,9 @@ export class SuppliesService extends BaseTenantService {
     );
 
     try {
-      await this.suppliesStockRepository.delete({});
+      await this.suppliesStockRepository.query(
+        'TRUNCATE TABLE supplies_stock RESTART IDENTITY CASCADE',
+      );
       this.logWithContext('All supplies stock deleted successfully');
     } catch (error) {
       this.logWithContext('Failed to delete all supplies stock', 'error');

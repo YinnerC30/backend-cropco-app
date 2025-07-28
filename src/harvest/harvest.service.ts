@@ -470,7 +470,9 @@ export class HarvestService extends BaseTenantService {
     );
 
     try {
-      await this.harvestRepository.delete({});
+      await this.harvestRepository.query(
+        'TRUNCATE TABLE harvests RESTART IDENTITY CASCADE',
+      );
       this.logWithContext('All harvests deleted successfully');
     } catch (error) {
       this.logWithContext('Failed to delete all harvests', 'error');

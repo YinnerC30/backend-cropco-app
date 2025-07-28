@@ -205,7 +205,9 @@ export class SuppliersService extends BaseTenantService {
     );
 
     try {
-      await this.supplierRepository.delete({});
+      await this.supplierRepository.query(
+        'TRUNCATE TABLE suppliers RESTART IDENTITY CASCADE',
+      );
       this.logWithContext('All suppliers deleted successfully');
     } catch (error) {
       this.logWithContext('Failed to delete all suppliers', 'error');

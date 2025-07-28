@@ -76,11 +76,14 @@ export class TenantsService extends BaseAdministratorService {
 
     try {
       const tenant = this.tenantRepository.create(createTenantDto);
-      await this.tenantRepository.save(tenant);
+      const result = await this.tenantRepository.save(tenant);
 
       this.logWithContext(
         `Tenant created successfully with ID: ${tenant.id}, subdomain: ${tenant.subdomain}`,
       );
+      return {
+        id: result.id,
+      };
     } catch (error) {
       this.logWithContext(
         `Failed to create tenant with subdomain: ${createTenantDto.subdomain}`,

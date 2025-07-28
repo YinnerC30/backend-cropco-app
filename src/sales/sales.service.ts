@@ -578,7 +578,9 @@ export class SalesService extends BaseTenantService {
     );
 
     try {
-      const result = await this.saleRepository.delete({});
+      const result = await this.saleRepository.query(
+        'TRUNCATE TABLE sales RESTART IDENTITY CASCADE',
+      );
       this.logWithContext(
         `Eliminación masiva de ventas completada - Filas afectadas: ${result.affected}`,
         'warn',

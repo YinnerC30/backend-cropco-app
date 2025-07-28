@@ -380,7 +380,9 @@ export class PaymentsService extends BaseTenantService {
     );
 
     try {
-      await this.paymentRepository.delete({});
+      await this.paymentRepository.query(
+        'TRUNCATE TABLE payments RESTART IDENTITY CASCADE',
+      );
       this.logWithContext('All payments deleted successfully');
     } catch (error) {
       this.logWithContext('Failed to delete all payments', 'error');

@@ -474,7 +474,9 @@ export class EmployeesService extends BaseTenantService {
     );
 
     try {
-      await this.employeeRepository.delete({});
+      await this.employeeRepository.query(
+        'TRUNCATE TABLE employees RESTART IDENTITY CASCADE',
+      );
       this.logWithContext('All employees deleted successfully');
     } catch (error) {
       this.logWithContext('Failed to delete all employees', 'error');

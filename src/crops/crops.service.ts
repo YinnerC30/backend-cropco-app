@@ -403,7 +403,9 @@ export class CropsService extends BaseTenantService {
     );
 
     try {
-      await this.cropRepository.delete({});
+      await this.cropRepository.query(
+        'TRUNCATE TABLE crops RESTART IDENTITY CASCADE',
+      );
       this.logWithContext('All crops deleted successfully');
     } catch (error) {
       this.logWithContext('Failed to delete all crops', 'error');

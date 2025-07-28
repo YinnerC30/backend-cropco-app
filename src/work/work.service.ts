@@ -344,7 +344,9 @@ export class WorkService extends BaseTenantService {
     );
 
     try {
-      await this.workRepository.delete({});
+      await this.workRepository.query(
+        'TRUNCATE TABLE works RESTART IDENTITY CASCADE',
+      );
       this.logWithContext('All works deleted successfully');
     } catch (error) {
       this.logWithContext('Failed to delete all works', 'error');

@@ -183,10 +183,12 @@ export class RequestTools {
         .post('/tenants/create')
         .set('Cookie', `administrator-token=${token}`)
         .send(bodyRequest);
+
       const responseTenantDBCreation = await request
         .default(this.getApp().getHttpServer())
         .post(`/tenants/create/database/${responseTenantCreation.body.id}`)
         .set('Cookie', `administrator-token=${token}`);
+
       const responseTenantDBConfig = await request
         .default(this.getApp().getHttpServer())
         .put(`/tenants/config-db/one/${responseTenantCreation.body.id}`)
@@ -235,7 +237,7 @@ export class RequestTools {
     }
     const { body } = await request
       .default(this.getApp().getHttpServer())
-      .get('/seed/controlled')
+      .post('/seed/controlled')
       .set('x-tenant-id', this.getTenantId())
       .set('Cookie', `administrator-token=${this.adminToken}`)
       .send({ users: 1 });
@@ -253,7 +255,7 @@ export class RequestTools {
   ): Promise<SeedControlledResponse> {
     const { body } = await request
       .default(this.getApp().getHttpServer())
-      .get('/seed/controlled')
+      .post('/seed/controlled')
       .set('x-tenant-id', this.getTenantId())
       .set('Cookie', `administrator-token=${this.adminToken}`)
       .send(seedDto);
@@ -283,10 +285,10 @@ export class RequestTools {
   ): Promise<void> {
     await request
       .default(this.getApp().getHttpServer())
-      .get('/seed/clear')
+      .delete('/seed/clear')
       .set('x-tenant-id', this.getTenantId())
       .set('Cookie', `administrator-token=${this.adminToken}`)
-      .query(clearOptions)
+      .send(clearOptions)
       .expect(200);
   }
 

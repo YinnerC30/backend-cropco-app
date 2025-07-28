@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { SeedService } from './seed.service';
 import { SeedDto, SeedControlledDto } from './dto/seed.dto';
@@ -11,18 +19,18 @@ import { AuthAdministration } from 'src/auth/decorators/auth-administrator.decor
 export class SeedController {
   constructor(private readonly seedService: SeedService) {}
 
-  @Get()
-  @Throttle({ default: { ttl: 300000, limit: 3 } })
-  executeSeed(@Query() seedDto: SeedDto) {
-    return this.seedService.runSeedSelective(seedDto);
-  }
+  // @Get()
+  // @Throttle({ default: { ttl: 300000, limit: 3 } })
+  // executeSeed(@Query() seedDto: SeedDto) {
+  //   return this.seedService.runSeedSelective(seedDto);
+  // }
 
   /**
    * Permite ejecutar el seed controlado, especificando la cantidad de registros por entidad.
    * @param seedDto - Objeto con la cantidad de registros a crear por entidad.
    * @returns Un mensaje y el historial de registros insertados.
    */
-  @Get('controlled')
+  @Post('controlled')
   @Throttle({ default: { ttl: 300000, limit: 3 } })
   executeSeedControlled(@Body() seedDto: SeedControlledDto) {
     return this.seedService.runSeedControlled(seedDto);
@@ -33,10 +41,10 @@ export class SeedController {
    * @param clearOptions - Objeto con las opciones de limpieza por entidad.
    * @returns Un mensaje confirmando la limpieza exitosa.
    */
-  @Get('clear')
+  @Delete('clear')
   @Throttle({ default: { ttl: 300000, limit: 3 } })
   clearDatabaseControlled(
-    @Query()
+    @Body()
     clearOptions: {
       users?: boolean;
       clients?: boolean;
