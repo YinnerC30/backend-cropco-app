@@ -546,7 +546,7 @@ export class SuppliesService extends BaseTenantService {
         removeBulkSuppliesDto.recordsIds,
         (id: string) => this.remove(id),
         this.logger,
-        { entityName: 'supplies', parallel: false },
+        { entityName: 'supplies' },
       );
     } catch (error) {
       this.logWithContext(

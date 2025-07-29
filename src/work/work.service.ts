@@ -360,7 +360,7 @@ export class WorkService extends BaseTenantService {
         removeBulkWorksDto.recordsIds,
         (id: string) => this.remove(id),
         this.logger,
-        { entityName: 'works', parallel: false },
+        { entityName: 'works',  },
       );
     } catch (error) {
       this.logWithContext('Failed to execute bulk removal of works', 'error');

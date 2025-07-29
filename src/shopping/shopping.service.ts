@@ -596,7 +596,7 @@ export class ShoppingService extends BaseTenantService {
         removeBulkShoppingDto.recordsIds,
         (id: string) => this.removeShopping(id),
         this.logger,
-        { entityName: 'shopping records', parallel: false },
+        { entityName: 'shopping records',  },
       );
     } catch (error) {
       this.logWithContext(
