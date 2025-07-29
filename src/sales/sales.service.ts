@@ -26,6 +26,7 @@ import { Sale } from './entities/sale.entity';
 import { getSaleReport } from './reports/get-sale';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 import { UnitConversionService } from 'src/common/unit-conversion/unit-conversion.service';
+import { BulkRemovalHelper } from 'src/common/helpers/bulk-removal.helper';
 
 @Injectable()
 export class SalesService extends BaseTenantService {
@@ -595,32 +596,20 @@ export class SalesService extends BaseTenantService {
   }
 
   async removeBulk(removeBulkSalesDto: RemoveBulkRecordsDto<Sale>) {
-    this.logWithContext(
-      `Iniciando eliminación masiva de ventas - Registros: ${removeBulkSalesDto.recordsIds.length}`,
-    );
-
-    const success: string[] = [];
-    const failed: { id: string; error: string }[] = [];
-
-    for (const { id } of removeBulkSalesDto.recordsIds) {
-      try {
-        await this.remove(id);
-        success.push(id);
-        this.logWithContext(`Venta eliminada en lote exitosamente - ID: ${id}`);
-      } catch (error) {
-        failed.push({ id, error: error.message });
-        this.logWithContext(
-          `Error al eliminar venta en lote ID ${id}: ${error.message}`,
-          'error',
-        );
-      }
+    try {
+      return await BulkRemovalHelper.executeBulkRemoval(
+        removeBulkSalesDto.recordsIds,
+        (id: string) => this.remove(id),
+        this.logger,
+        { entityName: 'sales', parallel: false },
+      );
+    } catch (error) {
+      this.logWithContext(
+        'Failed to execute bulk removal of sales',
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
     }
-
-    this.logWithContext(
-      `Eliminación masiva de ventas completada - Exitosos: ${success.length}, Fallidos: ${failed.length}`,
-    );
-
-    return { success, failed };
   }
 
   async exportSaleToPDF(id: string, subdomain: string) {

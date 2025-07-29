@@ -19,6 +19,16 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": false,
     "esModuleInterop": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@common/*": ["./src/common/*"],
+      "@users/*": ["./src/users/*"],
+      "@employees/*": ["./src/employees/*"],
+      "@clients/*": ["./src/clients/*"],
+      "@seed/*": ["./src/seed/*"],
+      "@printer/*": ["./src/printer/*"],
+      "@auth/*": ["./src/auth/*"]
+    }
   },
   "include": [
     "src/**/*.ts"

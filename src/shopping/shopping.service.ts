@@ -23,6 +23,7 @@ import { getShoppingReport } from './reports/get-shopping';
 import { UnitConversionService } from 'src/common/unit-conversion/unit-conversion.service';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import { BulkRemovalHelper } from 'src/common/helpers/bulk-removal.helper';
 
 @Injectable()
 export class ShoppingService extends BaseTenantService {
@@ -590,28 +591,13 @@ export class ShoppingService extends BaseTenantService {
   async removeBulkShopping(
     removeBulkShoppingDto: RemoveBulkRecordsDto<SuppliesShopping>,
   ) {
-    this.logWithContext(
-      `Starting bulk removal of ${removeBulkShoppingDto.recordsIds.length} shopping records`,
-    );
-
     try {
-      const success: string[] = [];
-      const failed: { id: string; error: string }[] = [];
-
-      for (const { id } of removeBulkShoppingDto.recordsIds) {
-        try {
-          await this.removeShopping(id);
-          success.push(id);
-        } catch (error) {
-          failed.push({ id, error: error.message });
-        }
-      }
-
-      this.logWithContext(
-        `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+      return await BulkRemovalHelper.executeBulkRemoval(
+        removeBulkShoppingDto.recordsIds,
+        (id: string) => this.removeShopping(id),
+        this.logger,
+        { entityName: 'shopping records', parallel: false },
       );
-
-      return { success, failed };
     } catch (error) {
       this.logWithContext(
         'Failed to execute bulk removal of shopping records',

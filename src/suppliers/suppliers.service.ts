@@ -10,6 +10,7 @@ import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { BaseTenantService } from 'src/common/services/base-tenant.service';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import { BulkRemovalHelper } from 'src/common/helpers/bulk-removal.helper';
 
 @Injectable()
 export class SuppliersService extends BaseTenantService {
@@ -216,28 +217,13 @@ export class SuppliersService extends BaseTenantService {
   }
 
   async removeBulk(removeBulkSuppliersDto: RemoveBulkRecordsDto<Supplier>) {
-    this.logWithContext(
-      `Starting bulk removal of ${removeBulkSuppliersDto.recordsIds.length} suppliers`,
-    );
-
     try {
-      const success: string[] = [];
-      const failed: { id: string; error: string }[] = [];
-
-      for (const { id } of removeBulkSuppliersDto.recordsIds) {
-        try {
-          await this.remove(id);
-          success.push(id);
-        } catch (error) {
-          failed.push({ id, error: error.message });
-        }
-      }
-
-      this.logWithContext(
-        `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+      return await BulkRemovalHelper.executeBulkRemoval(
+        removeBulkSuppliersDto.recordsIds,
+        (id: string) => this.remove(id),
+        this.logger,
+        { entityName: 'suppliers', parallel: false },
       );
-
-      return { success, failed };
     } catch (error) {
       this.logWithContext(
         'Failed to execute bulk removal of suppliers',

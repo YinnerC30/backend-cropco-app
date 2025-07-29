@@ -28,6 +28,7 @@ import { InsufficientSupplyStockException } from './exceptions/insufficient-supp
 import { UnitConversionService } from 'src/common/unit-conversion/unit-conversion.service';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import { BulkRemovalHelper } from 'src/common/helpers/bulk-removal.helper';
 
 @Injectable()
 export class SuppliesService extends BaseTenantService {
@@ -540,28 +541,13 @@ export class SuppliesService extends BaseTenantService {
   }
 
   async removeBulk(removeBulkSuppliesDto: RemoveBulkRecordsDto<Supply>) {
-    this.logWithContext(
-      `Starting bulk removal of ${removeBulkSuppliesDto.recordsIds.length} supplies`,
-    );
-
     try {
-      const success: string[] = [];
-      const failed: { id: string; error: string }[] = [];
-
-      for (const { id } of removeBulkSuppliesDto.recordsIds) {
-        try {
-          await this.remove(id);
-          success.push(id);
-        } catch (error) {
-          failed.push({ id, error: error.message });
-        }
-      }
-
-      this.logWithContext(
-        `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+      return await BulkRemovalHelper.executeBulkRemoval(
+        removeBulkSuppliesDto.recordsIds,
+        (id: string) => this.remove(id),
+        this.logger,
+        { entityName: 'supplies', parallel: false },
       );
-
-      return { success, failed };
     } catch (error) {
       this.logWithContext(
         'Failed to execute bulk removal of supplies',

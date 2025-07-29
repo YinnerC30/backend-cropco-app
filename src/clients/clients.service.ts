@@ -1,3 +1,10 @@
+import { QueryForYearDto } from '@common/dto/query-for-year.dto';
+import { QueryParamsDto } from '@common/dto/query-params.dto';
+import { RemoveBulkRecordsDto } from '@common/dto/remove-bulk-records.dto';
+import { BulkRemovalHelper } from '@common/helpers/bulk-removal.helper';
+import { TemplateGetAllRecords } from '@common/interfaces/TemplateGetAllRecords';
+import { BaseTenantService } from '@common/services/base-tenant.service';
+import { HandlerErrorService } from '@common/services/handler-error.service';
 import {
   ConflictException,
   Inject,
@@ -5,21 +12,14 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
-import { QueryParamsDto } from 'src/common/dto/query-params.dto';
-import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
-import { HandlerErrorService } from 'src/common/services/handler-error.service';
-import { BaseTenantService } from 'src/common/services/base-tenant.service';
-import { PrinterService } from 'src/printer/printer.service';
+import { REQUEST } from '@nestjs/core';
+import { PrinterService } from '@printer/printer.service';
+import { Request } from 'express';
 import { MoreThan, Repository } from 'typeorm';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Client } from './entities/client.entity';
 import { getClientsReport } from './reports/get-all-clients.report';
-import { TemplateGetAllRecords } from 'src/common/interfaces/TemplateGetAllRecords';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
 
 @Injectable()
 export class ClientsService extends BaseTenantService {
@@ -250,30 +250,15 @@ export class ClientsService extends BaseTenantService {
   }
 
   async removeBulk(removeBulkClientsDto: RemoveBulkRecordsDto<Client>) {
-    this.logWithContext(
-      `Starting bulk removal of ${removeBulkClientsDto.recordsIds.length} clients`,
-    );
-
     try {
-      const success: string[] = [];
-      const failed: { id: string; error: string }[] = [];
-
-      for (const { id } of removeBulkClientsDto.recordsIds) {
-        try {
-          await this.remove(id);
-          success.push(id);
-        } catch (error) {
-          failed.push({ id, error: error.message });
-        }
-      }
-
-      this.logWithContext(
-        `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+      return await BulkRemovalHelper.executeBulkRemoval(
+        removeBulkClientsDto.recordsIds,
+        (id: string) => this.remove(id),
+        this.logger,
+        { entityName: 'clients' },
       );
-
-      return { success, failed };
     } catch (error) {
-      this.logWithContext('Failed to execute bulk removal of clients', 'error');
+      this.logWithContext(`Failed to execute bulk removal of clients`, 'error');
       this.handlerError.handle(error, this.logger);
     }
   }

@@ -911,8 +911,6 @@ describe('PaymentsController (e2e)', () => {
         .set('Cookie', `user-token=${token}`)
         .expect(200);
 
-      // console.log(response.body);
-
       // const payment = await paymentRepository.findOne({ where: { id } });
       // expect(payment).toBeNull();
     });

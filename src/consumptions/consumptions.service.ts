@@ -27,6 +27,7 @@ import { QueryTotalConsumptionsInYearDto } from './dto/query-total-consumptions-
 import { UnitConversionService } from 'src/common/unit-conversion/unit-conversion.service';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import { BulkRemovalHelper } from '@/common/helpers/bulk-removal.helper';
 
 @Injectable()
 export class ConsumptionsService extends BaseTenantService {
@@ -621,31 +622,16 @@ export class ConsumptionsService extends BaseTenantService {
   async removeBulkConsumption(
     removeBulkConsumptionDto: RemoveBulkRecordsDto<SuppliesConsumption>,
   ) {
-    this.logWithContext(
-      `Starting bulk removal of ${removeBulkConsumptionDto.recordsIds.length} consumption records`,
-    );
-
     try {
-      const success: string[] = [];
-      const failed: { id: string; error: string }[] = [];
-
-      for (const { id } of removeBulkConsumptionDto.recordsIds) {
-        try {
-          await this.removeConsumption(id);
-          success.push(id);
-        } catch (error) {
-          failed.push({ id, error: error.message });
-        }
-      }
-
-      this.logWithContext(
-        `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+      return await BulkRemovalHelper.executeBulkRemoval(
+        removeBulkConsumptionDto.recordsIds,
+        (id: string) => this.removeConsumption(id),
+        this.logger,
+        { entityName: 'consumptions' },
       );
-
-      return { success, failed };
     } catch (error) {
       this.logWithContext(
-        'Failed to execute bulk removal of consumption records',
+        `Failed to execute bulk removal of consumptions`,
         'error',
       );
       this.handlerError.handle(error, this.logger);

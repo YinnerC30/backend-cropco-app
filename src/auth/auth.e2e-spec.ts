@@ -57,8 +57,6 @@ describe('Auth Service (e2e)', () => {
     await app.close();
   });
 
-  console.log({ adminToken, adminUser });
-
   describe('/auth/login (POST)', () => {
     it('should throw an exception for not sending the data', async () => {
       const { body } = await request

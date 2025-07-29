@@ -24,6 +24,7 @@ import { BaseTenantService } from 'src/common/services/base-tenant.service';
 import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import { BulkRemovalHelper } from '@/common/helpers/bulk-removal.helper';
 
 @Injectable()
 export class PaymentsService extends BaseTenantService {
@@ -319,31 +320,16 @@ export class PaymentsService extends BaseTenantService {
   }
 
   async removeBulk(removeBulkPaymentsDto: RemoveBulkRecordsDto<Payment>) {
-    this.logWithContext(
-      `Starting bulk removal of ${removeBulkPaymentsDto.recordsIds.length} payment records`,
-    );
-
     try {
-      const success: string[] = [];
-      const failed: { id: string; error: string }[] = [];
-
-      for (const { id } of removeBulkPaymentsDto.recordsIds) {
-        try {
-          await this.remove(id);
-          success.push(id);
-        } catch (error) {
-          failed.push({ id, error: error.message });
-        }
-      }
-
-      this.logWithContext(
-        `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+      return await BulkRemovalHelper.executeBulkRemoval(
+        removeBulkPaymentsDto.recordsIds,
+        (id: string) => this.remove(id),
+        this.logger,
+        { entityName: 'payments' },
       );
-
-      return { success, failed };
     } catch (error) {
       this.logWithContext(
-        'Failed to execute bulk removal of payment records',
+        `Failed to execute bulk removal of payments`,
         'error',
       );
       this.handlerError.handle(error, this.logger);

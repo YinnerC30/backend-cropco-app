@@ -303,7 +303,7 @@ export class RequestTools {
       .delete(`/auth/delete-test-user/${user.id}`)
       .set('x-tenant-id', this.getTenantId())
       .set('Cookie', `administrator-token=${this.adminToken}`)
-      .expect(201);
+      .expect(200);
   }
 
   /**
@@ -375,7 +375,7 @@ export class RequestTools {
       .delete(`/auth/remove-permissions-to-module/${userId}/${moduleName}`)
       .set('x-tenant-id', this.getTenantId())
       .set('Cookie', `administrator-token=${this.adminToken}`)
-      .expect(201);
+      .expect(200);
   }
 
   /**
@@ -409,7 +409,7 @@ export class RequestTools {
       .delete(`/auth/remove-permission/${userId}/${actionName}`)
       .set('x-tenant-id', this.getTenantId())
       .set('Cookie', `administrator-token=${this.adminToken}`)
-      .expect(201);
+      .expect(200);
   }
 
   /**

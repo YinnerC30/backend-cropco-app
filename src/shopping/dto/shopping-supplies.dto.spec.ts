@@ -23,7 +23,6 @@ describe('CreateShoppingSuppliesDto', () => {
   it('should validate with correct data', async () => {
     const dto = plainToClass(ShoppingSuppliesDto, dtoTemplate);
     const errors = await validate(dto);
-    console.log("🚀 ~ it ~ errors:", JSON.stringify(errors,null,2))
 
     expect(errors.length).toBe(0);
   });

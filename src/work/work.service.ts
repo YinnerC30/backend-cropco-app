@@ -6,25 +6,25 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organize-ids-to-update-entity';
-import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { BaseTenantService } from 'src/common/services/base-tenant.service';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { PrinterService } from 'src/printer/printer.service';
 import { DataSource, IsNull, Repository } from 'typeorm';
 import { WorkDetailsDto } from './dto/work-details.dto';
 import { WorkDto } from './dto/work.dto';
 
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+import { BulkRemovalHelper } from '@common/helpers/bulk-removal.helper';
+import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
+import { QueryTotalWorksInYearDto } from './dto/query-params-total-works-year';
 import { QueryParamsWork } from './dto/query-params-work.dto';
 import { WorkDetails } from './entities/work-details.entity';
 import { Work } from './entities/work.entity';
 import { getWorkReport } from './reports/get-work';
-import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
-import { QueryTotalWorksInYearDto } from './dto/query-params-total-works-year';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
 
 @Injectable()
 export class WorkService extends BaseTenantService {
@@ -355,28 +355,13 @@ export class WorkService extends BaseTenantService {
   }
 
   async removeBulk(removeBulkWorksDto: RemoveBulkRecordsDto<Work>) {
-    this.logWithContext(
-      `Starting bulk removal of ${removeBulkWorksDto.recordsIds.length} works`,
-    );
-
     try {
-      const success: string[] = [];
-      const failed: { id: string; error: string }[] = [];
-
-      for (const { id } of removeBulkWorksDto.recordsIds) {
-        try {
-          await this.remove(id);
-          success.push(id);
-        } catch (error) {
-          failed.push({ id, error: error.message });
-        }
-      }
-
-      this.logWithContext(
-        `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+      return await BulkRemovalHelper.executeBulkRemoval(
+        removeBulkWorksDto.recordsIds,
+        (id: string) => this.remove(id),
+        this.logger,
+        { entityName: 'works', parallel: false },
       );
-
-      return { success, failed };
     } catch (error) {
       this.logWithContext('Failed to execute bulk removal of works', 'error');
       this.handlerError.handle(error, this.logger);

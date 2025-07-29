@@ -85,6 +85,136 @@ describe('UsersController e2e', () => {
     await app.close();
   });
 
+  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
+    beforeAll(async () => {
+      await Promise.all([
+        reqTools.removePermissionFromUser(userTest.id, 'toggle_status_user'),
+        reqTools.removePermissionFromUser(userTest.id, 'change_password_user'),
+        reqTools.removePermissionFromUser(userTest.id, 'reset_password_user'),
+        reqTools.removePermissionFromUser(userTest.id, 'remove_bulk_users'),
+        reqTools.removePermissionFromUser(userTest.id, 'remove_one_user'),
+        reqTools.removePermissionFromUser(userTest.id, 'update_one_user'),
+        reqTools.removePermissionFromUser(userTest.id, 'find_one_user'),
+        reqTools.removePermissionFromUser(userTest.id, 'create_user'),
+        reqTools.removePermissionFromUser(userTest.id, 'find_all_users'),
+      ]);
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action users/toggle-status/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/users/toggle-status/one/${falseUserId}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`);
+      // .expect(403);
+
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action users/change-password/one', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/users/change-password/one`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action users/reset-password/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/users/reset-password/one/${falseUserId}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action users/remove/bulk ', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete('/users/remove/bulk')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action users/remove/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .delete(`/users/remove/one/${falseUserId}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action users/update/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .put(`/users/update/one/${falseUserId}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action users/one/:id', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get(`/users/one/${falseUserId}`)
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /users/all', async () => {
+      const response = await request
+        .default(app.getHttpServer())
+        .get('/users/all')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+
+    it('should throw an exception because the user JWT does not have permissions for this action /users/create', async () => {
+      const bodyRequest: UserDto = {
+        ...userDtoTemplete,
+      };
+
+      const response = await request
+        .default(app.getHttpServer())
+        .post('/users/create')
+        .set('x-tenant-id', tenantId)
+        .set('Cookie', `user-token=${token}`)
+        .send(bodyRequest)
+        .expect(403);
+      expect(response.body.message).toEqual(
+        `User ${userTest.first_name} need a permit for this action`,
+      );
+    });
+  });
+
   describe('users/all (GET)', () => {
     beforeAll(async () => {
       await Promise.all(Array.from({ length: 16 }).map(() => CreateUser({})));
@@ -468,7 +598,6 @@ describe('UsersController e2e', () => {
       //   .set('x-tenant-id', tenantId)
       //   .set('Cookie', `user-token=${token}`);
       // // .expect(404);
-      // console.log({ body, status });
       // expect(notFound).toBe(true);
     });
     it('You should throw exception for trying to delete a user that does not exist.', async () => {
@@ -634,136 +763,6 @@ describe('UsersController e2e', () => {
       // const user = await userRepository.findOne({ where: { id } });
       // expect(user).toHaveProperty('is_active');
       // expect(user.is_active).toEqual(false);
-    });
-  });
-
-  describe('should throw an exception because the user JWT does not have permissions for these actions', () => {
-    beforeAll(async () => {
-      await Promise.all([
-        reqTools.removePermissionFromUser(userTest.id, 'toggle_status_user'),
-        reqTools.removePermissionFromUser(userTest.id, 'change_password_user'),
-        reqTools.removePermissionFromUser(userTest.id, 'reset_password_user'),
-        reqTools.removePermissionFromUser(userTest.id, 'remove_bulk_users'),
-        reqTools.removePermissionFromUser(userTest.id, 'remove_one_user'),
-        reqTools.removePermissionFromUser(userTest.id, 'update_one_user'),
-        reqTools.removePermissionFromUser(userTest.id, 'find_one_user'),
-        reqTools.removePermissionFromUser(userTest.id, 'create_user'),
-        reqTools.removePermissionFromUser(userTest.id, 'find_all_users'),
-      ]);
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action users/toggle-status/one/:id', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .put(`/users/toggle-status/one/${falseUserId}`)
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`);
-      // .expect(403);
-
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action users/change-password/one', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .put(`/users/change-password/one`)
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action users/reset-password/one/:id', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .put(`/users/reset-password/one/${falseUserId}`)
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action users/remove/bulk ', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .delete('/users/remove/bulk')
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action users/remove/one/:id', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .delete(`/users/remove/one/${falseUserId}`)
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action users/update/one/:id', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .put(`/users/update/one/${falseUserId}`)
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action users/one/:id', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get(`/users/one/${falseUserId}`)
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action /users/all', async () => {
-      const response = await request
-        .default(app.getHttpServer())
-        .get('/users/all')
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
-    });
-
-    it('should throw an exception because the user JWT does not have permissions for this action /users/create', async () => {
-      const bodyRequest: UserDto = {
-        ...userDtoTemplete,
-      };
-
-      const response = await request
-        .default(app.getHttpServer())
-        .post('/users/create')
-        .set('x-tenant-id', tenantId)
-        .set('Cookie', `user-token=${token}`)
-        .send(bodyRequest)
-        .expect(403);
-      expect(response.body.message).toEqual(
-        `User ${userTest.first_name} need a permit for this action`,
-      );
     });
   });
 });

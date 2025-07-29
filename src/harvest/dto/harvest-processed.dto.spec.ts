@@ -39,7 +39,6 @@ describe('HarvestProcessedDto', () => {
     });
 
     const errors = await validate(dto);
-    console.log("🚀 ~ it ~ errors:", JSON.stringify(errors,null,2))
     expect(errors.length).toBeGreaterThan(0);
     
     // expect(errors[0].constraints).toHaveProperty('isPositive');

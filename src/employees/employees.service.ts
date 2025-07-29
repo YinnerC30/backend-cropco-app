@@ -24,6 +24,7 @@ import { QueryForYearDto } from 'src/common/dto/query-for-year.dto';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { EmployeeCertificationDto } from './dto/employee-certification.dto';
+import { BulkRemovalHelper } from 'src/common/helpers/bulk-removal.helper';
 
 @Injectable()
 export class EmployeesService extends BaseTenantService {
@@ -436,31 +437,16 @@ export class EmployeesService extends BaseTenantService {
   }
 
   async removeBulk(removeBulkEmployeesDto: RemoveBulkRecordsDto<Employee>) {
-    this.logWithContext(
-      `Starting bulk removal of ${removeBulkEmployeesDto.recordsIds.length} employees`,
-    );
-
     try {
-      const success: string[] = [];
-      const failed: { id: string; error: string }[] = [];
-
-      for (const { id } of removeBulkEmployeesDto.recordsIds) {
-        try {
-          await this.remove(id);
-          success.push(id);
-        } catch (error) {
-          failed.push({ id, error: error.message });
-        }
-      }
-
-      this.logWithContext(
-        `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+      return await BulkRemovalHelper.executeBulkRemoval(
+        removeBulkEmployeesDto.recordsIds,
+        (id: string) => this.remove(id),
+        this.logger,
+        { entityName: 'employees' },
       );
-
-      return { success, failed };
     } catch (error) {
       this.logWithContext(
-        'Failed to execute bulk removal of employees',
+        `Failed to execute bulk removal of employees`,
         'error',
       );
       this.handlerError.handle(error, this.logger);

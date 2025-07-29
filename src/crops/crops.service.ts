@@ -17,6 +17,7 @@ import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import { BulkRemovalHelper } from '@/common/helpers/bulk-removal.helper';
 
 @Injectable()
 export class CropsService extends BaseTenantService {
@@ -414,30 +415,15 @@ export class CropsService extends BaseTenantService {
   }
 
   async removeBulk(removeBulkCropsDto: RemoveBulkRecordsDto<Crop>) {
-    this.logWithContext(
-      `Starting bulk removal of ${removeBulkCropsDto.recordsIds.length} crops`,
-    );
-
     try {
-      const success: string[] = [];
-      const failed: { id: string; error: string }[] = [];
-
-      for (const { id } of removeBulkCropsDto.recordsIds) {
-        try {
-          await this.remove(id);
-          success.push(id);
-        } catch (error) {
-          failed.push({ id, error: error.message });
-        }
-      }
-
-      this.logWithContext(
-        `Bulk removal completed. Success: ${success.length}, Failed: ${failed.length}`,
+      return await BulkRemovalHelper.executeBulkRemoval(
+        removeBulkCropsDto.recordsIds,
+        (id: string) => this.remove(id),
+        this.logger,
+        { entityName: 'crops' },
       );
-
-      return { success, failed };
     } catch (error) {
-      this.logWithContext('Failed to execute bulk removal of crops', 'error');
+      this.logWithContext(`Failed to execute bulk removal of crops`, 'error');
       this.handlerError.handle(error, this.logger);
     }
   }
