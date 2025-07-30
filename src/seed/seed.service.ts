@@ -205,6 +205,10 @@ export class SeedService {
       consumptions = { quantity: 0, variant: 'extended' },
       payments = { variant: 'normal' },
       harvestsProcessed = { quantity: 0 }, // Añadido harvest processed
+      customUser = {
+        modules: [],
+        actions: [],
+      },
     } = options;
 
     const history: {
@@ -221,7 +225,21 @@ export class SeedService {
       insertedShoppingSupplies?: unknown[];
       insertedConsumptionSupplies?: unknown[];
       insertedPayments?: unknown[];
+      insertedCustomUser?: unknown;
     } = {};
+
+    if (customUser.modules.length > 0 || customUser.actions.length > 0) {
+      const user = await this.authService.createUserToTests();
+      for (const module of customUser.modules) {
+        await this.authService.addPermissionsToModule(user.id, module);
+      }
+      for (const action of customUser.actions) {
+        await this.authService.addPermission(user.id, action);
+      }
+
+      const finalUser = await this.usersService.findOne(user.id);
+      history.insertedCustomUser = finalUser;
+    }
 
     if (users > 0) {
       history.insertedUsers = [];

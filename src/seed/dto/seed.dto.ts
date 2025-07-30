@@ -78,7 +78,6 @@ export class SeedDto {
 }
 
 export class HarvestOptionsDto {
-
   @IsOptional()
   @IsDateString()
   date?: string;
@@ -128,7 +127,6 @@ export class HarvestOptionsDto {
 }
 
 export class WorkOptionsDto {
-
   @IsOptional()
   @IsDateString()
   date?: string;
@@ -168,7 +166,6 @@ export class WorkOptionsDto {
 }
 
 export class SaleOptionsDto {
-
   @IsOptional()
   @IsDateString()
   date?: string;
@@ -320,7 +317,6 @@ export class PaymentOptionsDto {
 }
 
 export class ConsumptionOptionsDto {
-
   @IsOptional()
   @IsDateString()
   date?: string;
@@ -391,6 +387,16 @@ export class HarvestProcessedOptionsDto {
   @IsNumber()
   @IsPositive()
   amount?: number;
+}
+
+export class CustomUserOptionsDto {
+  @IsOptional()
+  @IsArray()
+  modules?: string[];
+
+  @IsOptional()
+  @IsArray()
+  actions?: string[];
 }
 
 export class SeedControlledDto {
@@ -497,4 +503,9 @@ export class SeedControlledDto {
   @ValidateNested()
   @Type(() => PaymentOptionsDto)
   payments?: PaymentOptionsDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CustomUserOptionsDto)
+  customUser?: CustomUserOptionsDto;
 }
