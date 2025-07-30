@@ -65,7 +65,11 @@ export class CropsService extends BaseTenantService {
       } = queryParams;
 
       const queryBuilder = this.cropRepository.createQueryBuilder('crops');
-      queryBuilder.leftJoinAndSelect('crops.harvests_stock', 'harvests_stock');
+      !all_records &&
+        queryBuilder.leftJoinAndSelect(
+          'crops.harvests_stock',
+          'harvests_stock',
+        );
 
       !!query &&
         !all_records &&
@@ -91,24 +95,25 @@ export class CropsService extends BaseTenantService {
         );
       }
 
-      // Mapear los crops para asegurar un stock por defecto
-      const cropsWithDefaultStock = crops.map((crop) => ({
-        ...crop,
-        harvests_stock: crop.harvests_stock || {
-          id: null,
-          amount: 0,
-          createdDate: new Date(),
-          updatedDate: new Date(),
-          deletedDate: null,
-        },
-      }));
+      const records = !all_records
+        ? crops.map((crop) => ({
+            ...crop,
+            harvests_stock: crop.harvests_stock || {
+              id: null,
+              amount: 0,
+              createdDate: new Date(),
+              updatedDate: new Date(),
+              deletedDate: null,
+            },
+          }))
+        : crops;
 
       return {
         total_row_count: count,
         current_row_count: crops.length,
         total_page_count: all_records ? 1 : Math.ceil(count / limit),
         current_page_count: all_records ? 1 : offset + 1,
-        records: cropsWithDefaultStock,
+        records,
       };
     } catch (error) {
       this.logWithContext(
@@ -123,17 +128,13 @@ export class CropsService extends BaseTenantService {
     this.logWithContext('Finding all crops with harvests');
 
     try {
-      const [crops, count] = await this.cropRepository.findAndCount({
-        withDeleted: true,
-        where: {
-          harvests: {
-            id: Not(IsNull()),
-          },
-        },
-        relations: {
-          harvests: true,
-        },
-      });
+      const queryBuilder = this.cropRepository
+        .createQueryBuilder('crops')
+        .withDeleted()
+        .innerJoin('crops.harvests', 'harvests')
+        .where('harvests.id IS NOT NULL');
+
+      const [crops, count] = await queryBuilder.getManyAndCount();
 
       this.logWithContext(`Found ${crops.length} crops with harvests`);
 
@@ -153,17 +154,13 @@ export class CropsService extends BaseTenantService {
     this.logWithContext('Finding all crops with works');
 
     try {
-      const [crops, count] = await this.cropRepository.findAndCount({
-        withDeleted: true,
-        where: {
-          works: {
-            id: Not(IsNull()),
-          },
-        },
-        relations: {
-          works: true,
-        },
-      });
+      const queryBuilder = this.cropRepository
+        .createQueryBuilder('crops')
+        .withDeleted()
+        .innerJoin('crops.works', 'works')
+        .where('works.id IS NOT NULL');
+
+      const [crops, count] = await queryBuilder.getManyAndCount();
 
       this.logWithContext(`Found ${crops.length} crops with works`);
 
@@ -183,15 +180,13 @@ export class CropsService extends BaseTenantService {
     this.logWithContext('Finding all crops with sales');
 
     try {
-      const [crops, count] = await this.cropRepository.findAndCount({
-        withDeleted: true,
-        where: {
-          sales_detail: MoreThan(0),
-        },
-        relations: {
-          sales_detail: true,
-        },
-      });
+      const queryBuilder = this.cropRepository
+        .createQueryBuilder('crops')
+        .withDeleted()
+        .leftJoin('crops.sales_detail', 'sales_detail')
+        .where('sales_detail.id IS NOT NULL');
+
+      const [crops, count] = await queryBuilder.getManyAndCount();
 
       this.logWithContext(`Found ${crops.length} crops with sales`);
 
@@ -211,17 +206,16 @@ export class CropsService extends BaseTenantService {
     this.logWithContext('Finding all crops with consumptions');
 
     try {
-      const [crops, count] = await this.cropRepository.findAndCount({
-        withDeleted: true,
-        where: {
-          supplies_consumption_details: MoreThan(0),
-        },
-        relations: {
-          supplies_consumption_details: {
-            crop: true,
-          },
-        },
-      });
+      const queryBuilder = this.cropRepository
+        .createQueryBuilder('crops')
+        .withDeleted()
+        .leftJoin(
+          'crops.supplies_consumption_details',
+          'supplies_consumption_details',
+        )
+        .where('supplies_consumption_details.id IS NOT NULL');
+
+      const [crops, count] = await queryBuilder.getManyAndCount();
 
       this.logWithContext(`Found ${crops.length} crops with consumptions`);
 
@@ -250,7 +244,6 @@ export class CropsService extends BaseTenantService {
         relations: {
           harvests_stock: true,
         },
-        take: 5,
       });
 
       this.logWithContext(`Found ${crops.length} crops with stock`);
@@ -276,29 +269,6 @@ export class CropsService extends BaseTenantService {
     this.logWithContext(`Finding crop by ID: ${id}`);
 
     try {
-      // const crop = await this.cropRepository
-      //   .createQueryBuilder('crop')
-      //   .leftJoinAndSelect('crop.sales_detail', 'sales_detail')
-      //   .leftJoinAndSelect('crop.harvests_stock', 'harvestsStock')
-      //   .leftJoinAndSelect('crop.harvests', 'harvest', 'harvest.cropId = crop.id')
-      //   .leftJoinAndSelect(
-      //     'crop.supplies_consumption_details',
-      //     'supplies_consumption_details',
-      //   )
-      //   .select([
-      //     'crop',
-      //     'harvestsStock',
-      //     'SUM(harvest.amount) AS harvestsTotal',
-      //     'supplies_consumption_details',
-      //     'sales_detail',
-      //   ])
-      //   .where('crop.id = :id', { id })
-      //   .groupBy('crop.id')
-      //   .addGroupBy('sales_detail.id')
-      //   .addGroupBy('harvestsStock.id')
-      //   .addGroupBy('supplies_consumption_details.id')
-      //   .getOne();
-
       const crop = await this.cropRepository.findOne({
         where: { id },
         relations: {
