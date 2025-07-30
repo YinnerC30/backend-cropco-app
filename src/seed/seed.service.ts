@@ -242,118 +242,128 @@ export class SeedService {
     }
 
     if (users > 0) {
-      history.insertedUsers = [];
+      const userPromises: Promise<User>[] = [];
       for (let i = 0; i < users; i++) {
-        const user = await this.CreateUser({});
-        history.insertedUsers.push(user as any);
+        userPromises.push(this.CreateUser({}) as Promise<User>);
       }
+      history.insertedUsers = (await Promise.all(userPromises)) as any;
     }
 
     if (clients > 0) {
-      history.insertedClients = [];
+      const clientPromises: Promise<Client>[] = [];
       for (let i = 0; i < clients; i++) {
-        const client = await this.CreateClient({});
-        history.insertedClients.push(client as any);
+        clientPromises.push(this.CreateClient({}) as Promise<Client>);
       }
+      history.insertedClients = (await Promise.all(clientPromises)) as any;
     }
 
     if (suppliers > 0) {
-      history.insertedSuppliers = [];
+      const supplierPromises: Promise<Supplier>[] = [];
       for (let i = 0; i < suppliers; i++) {
-        const supplier = await this.CreateSupplier({});
-        history.insertedSuppliers.push(supplier as any);
+        supplierPromises.push(this.CreateSupplier({}) as Promise<Supplier>);
       }
+      history.insertedSuppliers = (await Promise.all(supplierPromises)) as any;
     }
 
     if (supplies > 0) {
-      history.insertedSupplies = [];
+      const supplyPromises: Promise<Supply>[] = [];
       for (let i = 0; i < supplies; i++) {
-        const supply = await this.CreateSupply({});
-        history.insertedSupplies.push(supply as any);
+        supplyPromises.push(this.CreateSupply({}) as Promise<Supply>);
       }
+      history.insertedSupplies = (await Promise.all(supplyPromises)) as any;
     }
 
     if (employees > 0) {
-      history.insertedEmployees = [];
+      const employeePromises: Promise<Employee>[] = [];
       for (let i = 0; i < employees; i++) {
-        const employee = await this.CreateEmployee({});
-        history.insertedEmployees.push(employee as any);
+        employeePromises.push(this.CreateEmployee({}) as Promise<Employee>);
       }
+      history.insertedEmployees = (await Promise.all(employeePromises)) as any;
     }
 
     if (crops > 0) {
-      history.insertedCrops = [];
+      const cropPromises: Promise<Crop>[] = [];
       for (let i = 0; i < crops; i++) {
-        const crop = await this.CreateCrop({});
-        history.insertedCrops.push(crop as any);
+        cropPromises.push(this.CreateCrop({}) as Promise<Crop>);
       }
+      history.insertedCrops = (await Promise.all(cropPromises)) as any;
     }
 
     if (harvests.quantity > 0) {
-      history.insertedHarvests = [];
+      const harvestPromises: Promise<any>[] = [];
       for (let i = 0; i < harvests.quantity; i++) {
-        let harvest;
         if (harvests.variant === 'advanced') {
-          harvest = await this.CreateHarvestAdvanced({
-            date: harvests.date,
-            employeeId: harvests.employeeId,
-            cropId: harvests.cropId,
-            valuePay: harvests.valuePay,
-            amount: harvests.amount,
-          });
+          harvestPromises.push(
+            this.CreateHarvestAdvanced({
+              date: harvests.date,
+              employeeId: harvests.employeeId,
+              cropId: harvests.cropId,
+              valuePay: harvests.valuePay,
+              amount: harvests.amount,
+            }),
+          );
         } else {
-          harvest = await this.CreateHarvest({
-            date: harvests.date,
-            quantityEmployees: harvests.quantityEmployees,
-            amount: harvests.amount,
-            valuePay: harvests.valuePay,
-          });
+          harvestPromises.push(
+            this.CreateHarvest({
+              date: harvests.date,
+              quantityEmployees: harvests.quantityEmployees,
+              amount: harvests.amount,
+              valuePay: harvests.valuePay,
+            }),
+          );
         }
-        history.insertedHarvests.push(harvest);
       }
+      history.insertedHarvests = await Promise.all(harvestPromises);
     }
 
-    // Añadido: creación de harvest processed
     if (harvestsProcessed.quantity > 0) {
-      history.insertedHarvestsProcessed = [];
+      const harvestProcessedPromises: Promise<any>[] = [];
       for (let i = 0; i < harvestsProcessed.quantity; i++) {
-        // Se asume que harvestsProcessed puede tener cropId, harvestId y amount, si no, se crean por defecto
-        let cropId = harvestsProcessed.cropId;
-        let harvestId = harvestsProcessed.harvestId;
-        let amount = harvestsProcessed.amount || 50;
+        const cropId = harvestsProcessed.cropId;
+        const harvestId = harvestsProcessed.harvestId;
+        const amount = harvestsProcessed.amount || 50;
 
-        const harvestProcessed = await this.CreateHarvestProcessed({
-          cropId,
-          harvestId,
-          amount,
-        });
-        history.insertedHarvestsProcessed.push(harvestProcessed);
+        harvestProcessedPromises.push(
+          this.CreateHarvestProcessed({
+            cropId,
+            harvestId,
+            amount,
+          }),
+        );
       }
+      history.insertedHarvestsProcessed = await Promise.all(
+        harvestProcessedPromises,
+      );
     }
 
     if (works.quantity > 0) {
-      history.insertedWorks = [];
-      for (let i = 0; i < works.quantity; i++) {
-        let work;
-        if (works.variant === 'forEmployee') {
-          if (!works.employeeId) {
-            const employee = await this.CreateEmployee({});
-            works.employeeId = employee.id;
-          }
-          work = await this.CreateWorkForEmployee({
-            date: works.date,
-            employeeId: works.employeeId,
-            valuePay: works.valuePay,
-          });
-        } else {
-          work = await this.CreateWork({
-            date: works.date,
-            quantityEmployees: works.quantityEmployees,
-            valuePay: works.valuePay,
-          });
-        }
-        history.insertedWorks.push(work);
+      const workPromises: Promise<any>[] = [];
+      let employeeId = works.employeeId;
+      if (works.variant === 'forEmployee' && !employeeId) {
+        const employee = await this.CreateEmployee({});
+        employeeId = employee.id;
+        works.employeeId = employeeId;
       }
+      for (let i = 0; i < works.quantity; i++) {
+        if (works.variant === 'forEmployee') {
+          workPromises.push(
+            this.CreateWorkForEmployee({
+              date: works.date,
+              employeeId: works.employeeId,
+              valuePay: works.valuePay,
+            }),
+          );
+        } else {
+          workPromises.push(
+            this.CreateWork({
+              date: works.date,
+              quantityEmployees: works.quantityEmployees,
+              valuePay: works.valuePay,
+            }),
+          );
+        }
+      }
+      history.insertedWorks = await Promise.all(workPromises);
     }
 
     if (sales.quantity > 0) {
@@ -384,24 +394,27 @@ export class SeedService {
     }
 
     if (shoppings.quantity > 0) {
-      history.insertedShoppingSupplies = [];
+      const shoppingPromises: Promise<any>[] = [];
       for (let i = 0; i < shoppings.quantity; i++) {
-        let shopping;
         if (shoppings.variant === 'normal') {
-          shopping = await this.CreateShopping({
-            supplyId: shoppings.supplyId,
-            amount: shoppings.amount,
-            valuePay: shoppings.valuePay,
-          });
+          shoppingPromises.push(
+            this.CreateShopping({
+              supplyId: shoppings.supplyId,
+              amount: shoppings.amount,
+              valuePay: shoppings.valuePay,
+            }),
+          );
         } else {
-          shopping = await this.CreateShoppingExtended({
-            quantitySupplies: shoppings.quantitySupplies,
-            amountForItem: shoppings.amountForItem,
-            valuePay: shoppings.valuePayExtended,
-          });
+          shoppingPromises.push(
+            this.CreateShoppingExtended({
+              quantitySupplies: shoppings.quantitySupplies,
+              amountForItem: shoppings.amountForItem,
+              valuePay: shoppings.valuePayExtended,
+            }),
+          );
         }
-        history.insertedShoppingSupplies.push(shopping);
       }
+      history.insertedShoppingSupplies = await Promise.all(shoppingPromises);
     }
 
     if (consumptions.quantity > 0) {
@@ -426,10 +439,10 @@ export class SeedService {
     }
 
     if (payments.quantity > 0) {
-      history.insertedPayments = [];
+      const paymentPromises: Promise<any>[] = [];
       for (let i = 0; i < payments.quantity; i++) {
-        try {
-          const payment = await this.CreatePayment({
+        paymentPromises.push(
+          this.CreatePayment({
             datePayment: payments.date,
             employeeId: payments.employeeId,
             methodOfPayment: payments.methodOfPayment || ('EFECTIVO' as any),
@@ -440,13 +453,15 @@ export class SeedService {
             worksId: Array.isArray(payments.worksId)
               ? [...payments.worksId]
               : [],
-          });
-
-          history.insertedPayments.push(payment);
-        } catch (error) {
-          console.log(error);
-        }
+          }).catch((error) => {
+            console.log(error);
+            return null;
+          }),
+        );
       }
+      history.insertedPayments = (await Promise.all(paymentPromises)).filter(
+        Boolean,
+      );
     }
 
     return {

@@ -31,7 +31,7 @@ export class SeedController {
    * @returns Un mensaje y el historial de registros insertados.
    */
   @Post('controlled')
-  @Throttle({ default: { ttl: 300000, limit: 1000 } })
+  @Throttle({ default: { ttl: 300000, limit: 10000 } })
   executeSeedControlled(@Body() seedDto: SeedControlledDto) {
     return this.seedService.runSeedControlled(seedDto);
   }

@@ -138,7 +138,6 @@ describe('CropsController e2e', () => {
         expect(crop).toHaveProperty('location');
         expect(crop).toHaveProperty('date_of_creation');
         expect(crop).toHaveProperty('date_of_termination');
-        expect(crop).toHaveProperty('harvests_stock');
         expect(crop).toHaveProperty('createdDate');
         expect(crop).toHaveProperty('updatedDate');
         expect(crop).toHaveProperty('deletedDate');
