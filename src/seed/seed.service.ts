@@ -200,7 +200,7 @@ export class SeedService {
       crops = 0,
       harvests = { quantity: 0, variant: 'normal' },
       works = { quantity: 0, variant: 'normal' },
-      sales = { quantity: 0, variant: 'generic' },
+      sales = { quantity: 0, variant: 'generic', isReceivable: false },
       shoppings = { quantity: 0, variant: 'extended' },
       consumptions = { quantity: 0, variant: 'extended' },
       payments = { variant: 'normal' },
