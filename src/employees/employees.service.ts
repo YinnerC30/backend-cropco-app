@@ -288,15 +288,13 @@ export class EmployeesService extends BaseTenantService {
     this.logWithContext('Finding all employees with harvests');
 
     try {
-      const [employees, count] = await this.employeeRepository.findAndCount({
-        withDeleted: true,
-        relations: {
-          harvests_detail: true,
-        },
-        where: {
-          harvests_detail: MoreThan(0),
-        },
-      });
+      const queryBuilder = this.employeeRepository
+        .createQueryBuilder('employees')
+        .withDeleted()
+        .innerJoin('employees.harvests_detail', 'harvests_detail')
+        .where('harvests_detail.id IS NOT NULL');
+
+      const [employees, count] = await queryBuilder.getManyAndCount();
 
       this.logWithContext(`Found ${employees.length} employees with harvests`);
 
@@ -317,15 +315,13 @@ export class EmployeesService extends BaseTenantService {
     this.logWithContext('Finding all employees with works');
 
     try {
-      const [employees, count] = await this.employeeRepository.findAndCount({
-        withDeleted: true,
-        relations: {
-          works_detail: true,
-        },
-        where: {
-          works_detail: MoreThan(0),
-        },
-      });
+      const queryBuilder = this.employeeRepository
+        .createQueryBuilder('employees')
+        .withDeleted()
+        .innerJoin('employees.works_detail', 'works_detail')
+        .where('works_detail.id IS NOT NULL');
+
+      const [employees, count] = await queryBuilder.getManyAndCount();
 
       this.logWithContext(`Found ${employees.length} employees with works`);
 

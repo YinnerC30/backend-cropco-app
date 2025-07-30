@@ -119,15 +119,12 @@ export class ClientsService extends BaseTenantService {
     this.logWithContext('Finding all clients with sales');
 
     try {
-      const clients = await this.clientRepository.find({
-        withDeleted: true,
-        where: {
-          sales_detail: MoreThan(0),
-        },
-        relations: {
-          sales_detail: true,
-        },
-      });
+      const clients = await this.clientRepository
+        .createQueryBuilder('clients')
+        .withDeleted()
+        .innerJoin('clients.sales_detail', 'sales_detail')
+        .where('sales_detail.id IS NOT NULL')
+        .getMany();
 
       this.logWithContext(`Found ${clients.length} clients with sales`);
 

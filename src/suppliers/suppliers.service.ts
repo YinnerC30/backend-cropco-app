@@ -108,15 +108,13 @@ export class SuppliersService extends BaseTenantService {
     this.logWithContext('Finding all suppliers with shopping records');
 
     try {
-      const [suppliers, count] = await this.supplierRepository.findAndCount({
-        withDeleted: true,
-        where: {
-          supplies_shopping_details: MoreThan(0),
-        },
-        relations: {
-          supplies_shopping_details: true,
-        },
-      });
+      const queryBuilder = this.supplierRepository
+        .createQueryBuilder('suppliers')
+        .withDeleted()
+        .innerJoin('suppliers.supplies_shopping_details', 'supplies_shopping_details')
+        .where('supplies_shopping_details.id IS NOT NULL');
+
+      const [suppliers, count] = await queryBuilder.getManyAndCount();
 
       this.logWithContext(
         `Found ${suppliers.length} suppliers with shopping records`,

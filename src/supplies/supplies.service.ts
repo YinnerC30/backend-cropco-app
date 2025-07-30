@@ -144,15 +144,13 @@ export class SuppliesService extends BaseTenantService {
     this.logWithContext('Finding all supplies with shopping records');
 
     try {
-      const [supplies, count] = await this.supplyRepository.findAndCount({
-        withDeleted: true,
-        where: {
-          shopping_details: MoreThan(0),
-        },
-        relations: {
-          shopping_details: true,
-        },
-      });
+      const queryBuilder = this.supplyRepository
+        .createQueryBuilder('supplies')
+        .withDeleted()
+        .innerJoin('supplies.shopping_details', 'shopping_details')
+        .where('shopping_details.id IS NOT NULL');
+
+      const [supplies, count] = await queryBuilder.getManyAndCount();
 
       this.logWithContext(
         `Found ${supplies.length} supplies with shopping records`,
@@ -178,15 +176,13 @@ export class SuppliesService extends BaseTenantService {
     this.logWithContext('Finding all supplies with consumption records');
 
     try {
-      const [supplies, count] = await this.supplyRepository.findAndCount({
-        withDeleted: true,
-        where: {
-          consumption_details: MoreThan(0),
-        },
-        relations: {
-          consumption_details: true,
-        },
-      });
+      const queryBuilder = this.supplyRepository
+        .createQueryBuilder('supplies')
+        .withDeleted()
+        .innerJoin('supplies.consumption_details', 'consumption_details')
+        .where('consumption_details.id IS NOT NULL');
+
+      const [supplies, count] = await queryBuilder.getManyAndCount();
 
       this.logWithContext(
         `Found ${supplies.length} supplies with consumption records`,
