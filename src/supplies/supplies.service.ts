@@ -84,12 +84,16 @@ export class SuppliesService extends BaseTenantService {
       queryBuilder.leftJoinAndSelect('supplies.stock', 'stock');
 
       if (!!query && !all_records) {
-        queryBuilder.where('supplies.name ILIKE :query', {
-          query: `${query}%`,
-        });
-        queryBuilder.orWhere('supplies.brand ILIKE :query', {
-          query: `${query}%`,
-        });
+        queryBuilder
+          .where('CAST(supplies.id AS TEXT) ILIKE :query', {
+            query: `${query}%`,
+          })
+          .orWhere('supplies.name ILIKE :query', {
+            query: `${query}%`,
+          })
+          .orWhere('supplies.brand ILIKE :query', {
+            query: `${query}%`,
+          });
       }
 
       !all_records && queryBuilder.take(limit).skip(offset * limit);

@@ -69,7 +69,11 @@ export class CropsService extends BaseTenantService {
 
       !!query &&
         !all_records &&
-        queryBuilder.where('crops.name ILIKE :query', { query: `${query}%` });
+        queryBuilder
+          .where('CAST(crops.id AS TEXT) ILIKE :query', {
+            query: `${query}%`,
+          })
+          .orWhere('crops.name ILIKE :query', { query: `${query}%` });
 
       !all_records && queryBuilder.take(limit).skip(offset * limit);
 

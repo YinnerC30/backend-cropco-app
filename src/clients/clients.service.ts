@@ -78,7 +78,10 @@ export class ClientsService extends BaseTenantService {
       !!query &&
         !all_records &&
         queryBuilder
-          .where('clients.first_name ILIKE :query', { query: `${query}%` })
+          .where('CAST(clients.id AS TEXT) ILIKE :query', {
+            query: `${query}%`,
+          })
+          .orWhere('clients.first_name ILIKE :query', { query: `${query}%` })
           .orWhere('clients.last_name ILIKE :query', { query: `${query}%` })
           .orWhere('clients.email ILIKE :query', { query: `${query}%` });
 

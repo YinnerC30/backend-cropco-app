@@ -120,7 +120,10 @@ export class EmployeesService extends BaseTenantService {
       !!query &&
         !all_records &&
         queryBuilder
-          .where('employees.first_name ILIKE :query', { query: `${query}%` })
+          .where('CAST(employees.id AS TEXT) ILIKE :query', {
+            query: `${query}%`,
+          })
+          .orWhere('employees.first_name ILIKE :query', { query: `${query}%` })
           .orWhere('employees.last_name ILIKE :query', { query: `${query}%` })
           .orWhere('employees.email ILIKE :query', { query: `${query}%` });
 

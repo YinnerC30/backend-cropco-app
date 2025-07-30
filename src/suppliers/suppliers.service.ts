@@ -67,7 +67,10 @@ export class SuppliersService extends BaseTenantService {
       !!query &&
         !all_records &&
         queryBuilder
-          .where('suppliers.first_name ILIKE :query', { query: `${query}%` })
+          .where('CAST(suppliers.id AS TEXT) ILIKE :query', {
+            query: `${query}%`,
+          })
+          .orWhere('suppliers.first_name ILIKE :query', { query: `${query}%` })
           .orWhere('suppliers.last_name ILIKE :query', { query: `${query}%` })
           .orWhere('suppliers.email ILIKE :query', { query: `${query}%` });
 
@@ -222,7 +225,7 @@ export class SuppliersService extends BaseTenantService {
         removeBulkSuppliersDto.recordsIds,
         (id: string) => this.remove(id),
         this.logger,
-        { entityName: 'suppliers',  },
+        { entityName: 'suppliers' },
       );
     } catch (error) {
       this.logWithContext(
