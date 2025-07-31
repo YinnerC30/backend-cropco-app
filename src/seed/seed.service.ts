@@ -227,13 +227,13 @@ export class SeedService {
       insertedPayments?: unknown[];
       insertedCustomUser?: unknown;
     } = {};
-
-    if (customUser.modules.length > 0 || customUser.actions.length > 0) {
+    const { modules = [], actions = [] } = customUser;
+    if (modules.length > 0 || actions.length > 0) {
       const user = await this.authService.createUserToTests();
-      for (const module of customUser.modules) {
+      for (const module of modules) {
         await this.authService.addPermissionsToModule(user.id, module);
       }
-      for (const action of customUser.actions) {
+      for (const action of actions) {
         await this.authService.addPermission(user.id, action);
       }
 
