@@ -39,6 +39,7 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { ModuleActions } from './entities/module-actions.entity';
 import { Module } from './entities/module.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { InformationGenerator } from '@/seed/helpers/InformationGenerator';
 
 @Injectable()
 export class AuthService extends BaseTenantService {
@@ -722,11 +723,11 @@ export class AuthService extends BaseTenantService {
     this.logWithContext('Creating test user');
 
     try {
-      const differentiator = Math.floor(Math.random() * 1000);
+      const differentiator = InformationGenerator.generateRandomId();
       const data = {
         first_name: `user test ${differentiator}`,
         last_name: '',
-        email: `usertest${differentiator}@example.com`,
+        email: `user-test-${differentiator}@example.com`,
         password: '123456',
         cell_phone_number: '3001234567',
         is_active: true,
