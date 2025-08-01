@@ -291,8 +291,7 @@ export class EmployeesService extends BaseTenantService {
       const queryBuilder = this.employeeRepository
         .createQueryBuilder('employees')
         .withDeleted()
-        .innerJoin('employees.harvests_detail', 'harvests_detail')
-        .where('harvests_detail.id IS NOT NULL');
+        .innerJoinAndSelect('employees.harvests_detail', 'harvests_detail');
 
       const [employees, count] = await queryBuilder.getManyAndCount();
 
@@ -318,8 +317,7 @@ export class EmployeesService extends BaseTenantService {
       const queryBuilder = this.employeeRepository
         .createQueryBuilder('employees')
         .withDeleted()
-        .innerJoin('employees.works_detail', 'works_detail')
-        .where('works_detail.id IS NOT NULL');
+        .innerJoinAndSelect('employees.works_detail', 'works_detail');
 
       const [employees, count] = await queryBuilder.getManyAndCount();
 
