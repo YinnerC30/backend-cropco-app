@@ -791,6 +791,7 @@ export class SeedService {
       email: InformationGenerator.generateEmail(),
       cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
       address: InformationGenerator.generateAddress(),
+      company_name: InformationGenerator.generateLastName(),
     };
 
     const supplier = await this.suppliersService.create(data);
