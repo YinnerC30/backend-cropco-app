@@ -2,28 +2,20 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Post,
-  Query,
-  UseGuards,
+  UseGuards
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { SeedService } from './seed.service';
-import { SeedDto, SeedControlledDto } from './dto/seed.dto';
-import { DevelopmentGuard } from './guards/development.guard';
 import { AuthAdministration } from 'src/auth/decorators/auth-administrator.decorator';
+import { SeedControlledDto } from './dto/seed.dto';
+import { DevelopmentGuard } from './guards/development.guard';
+import { SeedService } from './seed.service';
 
 @Controller('seed')
 @AuthAdministration()
 @UseGuards(DevelopmentGuard)
 export class SeedController {
   constructor(private readonly seedService: SeedService) {}
-
-  // @Get()
-  // @Throttle({ default: { ttl: 300000, limit: 3 } })
-  // executeSeed(@Query() seedDto: SeedDto) {
-  //   return this.seedService.runSeedSelective(seedDto);
-  // }
 
   /**
    * Permite ejecutar el seed controlado, especificando la cantidad de registros por entidad.
