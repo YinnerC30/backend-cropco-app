@@ -38,7 +38,6 @@ ARG VERSION
 ENV VERSION=${VERSION}
 ENV NODE_ENV=production
 COPY --from=prod-deps /app/node_modules ./node_modules
-COPY --from=builder /app/certs ./certs
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/dist ./dist
 EXPOSE 3000
