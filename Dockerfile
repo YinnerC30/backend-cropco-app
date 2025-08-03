@@ -24,7 +24,6 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 COPY --from=all-deps /app/node_modules ./node_modules
 COPY . .
-COPY certs ./certs
 COPY public ./public
 # Set build-time argument for version
 ARG VERSION
