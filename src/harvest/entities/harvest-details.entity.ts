@@ -17,6 +17,7 @@ import {
   MassUnit,
   UnitType,
 } from 'src/common/unit-conversion/unit-conversion.service';
+import { MassUnitDto } from 'src/common/utils/UnitTypesDto';
 
 @Entity({ name: 'harvests_detail' })
 export class HarvestDetails {
@@ -25,14 +26,7 @@ export class HarvestDetails {
 
   @Column({
     type: 'enum',
-    enum: [
-      // Unidades de masa
-      'GRAMOS',
-      'KILOGRAMOS',
-      'LIBRAS',
-      'ONZAS',
-      'TONELADAS',
-    ],
+    enum: MassUnitDto,
   })
   unit_of_measure: MassUnit;
 
@@ -54,7 +48,7 @@ export class HarvestDetails {
 
   // Relación con Employee
   @ManyToOne(() => Employee, (employee) => employee.harvests_detail, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'employeeId' })
   employee: Employee;
@@ -63,7 +57,7 @@ export class HarvestDetails {
   @OneToOne(
     () => PaymentsHarvest,
     (payments_harvest) => payments_harvest.harvests_detail,
-    { cascade: true },
+    { cascade: ['insert'] },
   )
   payments_harvest: PaymentsHarvest;
 

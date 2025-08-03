@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ClientsService } from 'src/clients/clients.service';
 import { CropsService } from 'src/crops/crops.service';
 import { EmployeesService } from 'src/employees/employees.service';
@@ -40,7 +40,7 @@ import { CreateEmployeeDto } from 'src/employees/dto/create-employee.dto';
 import { HarvestDetailsDto } from 'src/harvest/dto/harvest-details.dto';
 import { HarvestDetails } from 'src/harvest/entities/harvest-details.entity';
 import { HarvestProcessed } from 'src/harvest/entities/harvest-processed.entity';
-import { MethodOfPayment } from 'src/payments/entities/payment.entity';
+import { MethodOfPayment, Payment } from 'src/payments/entities/payment.entity';
 import { SaleDetailsDto } from 'src/sales/dto/sale-details.dto';
 import { Sale } from 'src/sales/entities/sale.entity';
 import { ShoppingSuppliesDetailsDto } from 'src/shopping/dto/shopping-supplies-details.dto';
@@ -53,10 +53,15 @@ import { Supply } from 'src/supplies/entities/supply.entity';
 import { WorkDetails } from 'src/work/entities/work-details.entity';
 import { InformationGenerator } from './helpers/InformationGenerator';
 import { EntityConvertedToDto } from './interfaces/EntityConvertedToDto';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+import { SeedControlledDto } from './dto/seed.dto';
+import { SeedControlledResponse } from './interfaces/SeedControlledResponse';
 
 @Injectable()
 export class SeedService {
   constructor(
+    @Inject(REQUEST) private readonly request: Request,
     private readonly usersService: UsersService,
     private readonly cropsService: CropsService,
     private readonly employeesService: EmployeesService,
@@ -171,6 +176,385 @@ export class SeedService {
       message: 'Selective seed executed successfully',
       history,
     };
+  }
+
+  /**
+   * Executes a controlled seed, allowing to specify the exact number of records to create for each entity.
+   * @param options - Object specifying the quantity for each entity to create.
+   * @returns An object with a message and the history of inserted records.
+   */
+  /**
+   * Executes a controlled seed, allowing to specify the exact number of records to create for each entity.
+   * @param options - Object specifying the quantity for each entity to create.
+   * @returns An object with a message and the history of inserted records.
+   */
+  async runSeedControlled(
+    options: SeedControlledDto,
+  ): Promise<SeedControlledResponse> {
+    const {
+      users = 0,
+      clients = 0,
+      suppliers = 0,
+      supplies = 0,
+      employees = 0,
+      crops = 0,
+      harvests = { quantity: 0, variant: 'normal' },
+      works = { quantity: 0, variant: 'normal' },
+      sales = { quantity: 0, variant: 'generic', isReceivable: false },
+      shoppings = { quantity: 0, variant: 'extended' },
+      consumptions = { quantity: 0, variant: 'extended' },
+      payments = { variant: 'normal' },
+      harvestsProcessed = { quantity: 0 }, // Añadido harvest processed
+      customUser = {
+        modules: [],
+        actions: [],
+      },
+    } = options;
+
+    const history: {
+      insertedUsers?: Promise<User>[];
+      insertedClients?: Promise<Client>[];
+      insertedSuppliers?: Promise<Supplier>[];
+      insertedSupplies?: Promise<Supply>[];
+      insertedEmployees?: Promise<Employee>[];
+      insertedCrops?: Promise<Crop>[];
+      insertedHarvests?: unknown[];
+      insertedHarvestsProcessed?: HarvestProcessed[]; // Añadido harvest processed
+      insertedWorks?: unknown[];
+      insertedSales?: unknown[];
+      insertedShoppingSupplies?: unknown[];
+      insertedConsumptionSupplies?: unknown[];
+      insertedPayments?: unknown[];
+      insertedCustomUser?: unknown;
+    } = {};
+    const { modules = [], actions = [] } = customUser;
+    if (modules.length > 0 || actions.length > 0) {
+      const user = await this.authService.createUserToTests();
+      for (const module of modules) {
+        await this.authService.addPermissionsToModule(user.id, module);
+      }
+      for (const action of actions) {
+        await this.authService.addPermission(user.id, action);
+      }
+
+      const finalUser = await this.usersService.findOne(user.id);
+      history.insertedCustomUser = finalUser;
+    }
+
+    if (users > 0) {
+      const userPromises: Promise<User>[] = [];
+      for (let i = 0; i < users; i++) {
+        userPromises.push(this.CreateUser({}) as Promise<User>);
+      }
+      history.insertedUsers = (await Promise.all(userPromises)) as any;
+    }
+
+    if (clients > 0) {
+      const clientPromises: Promise<Client>[] = [];
+      for (let i = 0; i < clients; i++) {
+        clientPromises.push(this.CreateClient({}) as Promise<Client>);
+      }
+      history.insertedClients = (await Promise.all(clientPromises)) as any;
+    }
+
+    if (suppliers > 0) {
+      const supplierPromises: Promise<Supplier>[] = [];
+      for (let i = 0; i < suppliers; i++) {
+        supplierPromises.push(this.CreateSupplier({}) as Promise<Supplier>);
+      }
+      history.insertedSuppliers = (await Promise.all(supplierPromises)) as any;
+    }
+
+    if (supplies > 0) {
+      const supplyPromises: Promise<Supply>[] = [];
+      for (let i = 0; i < supplies; i++) {
+        supplyPromises.push(this.CreateSupply({}) as Promise<Supply>);
+      }
+      history.insertedSupplies = (await Promise.all(supplyPromises)) as any;
+    }
+
+    if (employees > 0) {
+      const employeePromises: Promise<Employee>[] = [];
+      for (let i = 0; i < employees; i++) {
+        employeePromises.push(this.CreateEmployee({}) as Promise<Employee>);
+      }
+      history.insertedEmployees = (await Promise.all(employeePromises)) as any;
+    }
+
+    if (crops > 0) {
+      const cropPromises: Promise<Crop>[] = [];
+      for (let i = 0; i < crops; i++) {
+        cropPromises.push(this.CreateCrop({}) as Promise<Crop>);
+      }
+      history.insertedCrops = (await Promise.all(cropPromises)) as any;
+    }
+
+    if (harvests.quantity > 0) {
+      const harvestPromises: Promise<any>[] = [];
+      for (let i = 0; i < harvests.quantity; i++) {
+        if (harvests.variant === 'advanced') {
+          harvestPromises.push(
+            this.CreateHarvestAdvanced({
+              date: harvests.date,
+              employeeId: harvests.employeeId,
+              cropId: harvests.cropId,
+              valuePay: harvests.valuePay,
+              amount: harvests.amount,
+            }),
+          );
+        } else {
+          harvestPromises.push(
+            this.CreateHarvest({
+              date: harvests.date,
+              quantityEmployees: harvests.quantityEmployees,
+              amount: harvests.amount,
+              valuePay: harvests.valuePay,
+            }),
+          );
+        }
+      }
+      history.insertedHarvests = await Promise.all(harvestPromises);
+    }
+
+    if (harvestsProcessed.quantity > 0) {
+      const harvestProcessedPromises: Promise<any>[] = [];
+      for (let i = 0; i < harvestsProcessed.quantity; i++) {
+        const cropId = harvestsProcessed.cropId;
+        const harvestId = harvestsProcessed.harvestId;
+        const amount = harvestsProcessed.amount || 50;
+
+        harvestProcessedPromises.push(
+          this.CreateHarvestProcessed({
+            cropId,
+            harvestId,
+            amount,
+          }),
+        );
+      }
+      history.insertedHarvestsProcessed = await Promise.all(
+        harvestProcessedPromises,
+      );
+    }
+
+    if (works.quantity > 0) {
+      const workPromises: Promise<any>[] = [];
+      let employeeId = works.employeeId;
+      if (works.variant === 'forEmployee' && !employeeId) {
+        const employee = await this.CreateEmployee({});
+        employeeId = employee.id;
+        works.employeeId = employeeId;
+      }
+      for (let i = 0; i < works.quantity; i++) {
+        if (works.variant === 'forEmployee') {
+          workPromises.push(
+            this.CreateWorkForEmployee({
+              date: works.date,
+              employeeId: works.employeeId,
+              valuePay: works.valuePay,
+            }),
+          );
+        } else {
+          workPromises.push(
+            this.CreateWork({
+              date: works.date,
+              quantityEmployees: works.quantityEmployees,
+              valuePay: works.valuePay,
+            }),
+          );
+        }
+      }
+      history.insertedWorks = await Promise.all(workPromises);
+    }
+
+    if (sales.quantity > 0) {
+      history.insertedSales = [];
+      for (let i = 0; i < sales.quantity; i++) {
+        let sale;
+        if (sales.variant === 'normal') {
+          if (!sales.cropId) {
+            const crop = await this.CreateCrop({});
+            sales.cropId = crop.id;
+          }
+          sale = await this.CreateSale({
+            date: sales.date,
+            clientId: sales.clientId,
+            cropId: sales.cropId,
+            isReceivable: sales.isReceivable,
+            quantity: sales.quantityPerSale,
+          });
+        } else {
+          sale = await this.CreateSaleGeneric({
+            date: sales.date,
+            isReceivable: sales.isReceivableGeneric,
+            quantity: sales.quantityPerSaleGeneric,
+          });
+        }
+        history.insertedSales.push(sale);
+      }
+    }
+
+    if (shoppings.quantity > 0) {
+      const shoppingPromises: Promise<any>[] = [];
+      for (let i = 0; i < shoppings.quantity; i++) {
+        if (shoppings.variant === 'normal') {
+          shoppingPromises.push(
+            this.CreateShopping({
+              supplyId: shoppings.supplyId,
+              amount: shoppings.amount,
+              valuePay: shoppings.valuePay,
+            }),
+          );
+        } else {
+          shoppingPromises.push(
+            this.CreateShoppingExtended({
+              quantitySupplies: shoppings.quantitySupplies,
+              amountForItem: shoppings.amountForItem,
+              valuePay: shoppings.valuePayExtended,
+            }),
+          );
+        }
+      }
+      history.insertedShoppingSupplies = await Promise.all(shoppingPromises);
+    }
+
+    if (consumptions.quantity > 0) {
+      history.insertedConsumptionSupplies = [];
+      for (let i = 0; i < consumptions.quantity; i++) {
+        let consumption;
+        if (consumptions.variant === 'normal') {
+          consumption = await this.CreateConsumption({
+            supplyId: consumptions.supplyId,
+            cropId: consumptions.cropId,
+            amount: consumptions.amount,
+          });
+        } else {
+          consumption = await this.CreateConsumptionExtended({
+            date: consumptions.date,
+            quantitySupplies: consumptions.quantitySupplies,
+            amountForItem: consumptions.amountForItem,
+          });
+        }
+        history.insertedConsumptionSupplies.push(consumption);
+      }
+    }
+
+    if (payments.quantity > 0) {
+      const paymentPromises: Promise<any>[] = [];
+      for (let i = 0; i < payments.quantity; i++) {
+        paymentPromises.push(
+          this.CreatePayment({
+            datePayment: payments.date,
+            employeeId: payments.employeeId,
+            methodOfPayment: payments.methodOfPayment || ('EFECTIVO' as any),
+            value_pay: payments.valuePay,
+            harvestsId: Array.isArray(payments.harvestsId)
+              ? [...payments.harvestsId]
+              : [],
+            worksId: Array.isArray(payments.worksId)
+              ? [...payments.worksId]
+              : [],
+          }).catch((error) => {
+            console.log(error);
+            return null;
+          }),
+        );
+      }
+      history.insertedPayments = (await Promise.all(paymentPromises)).filter(
+        Boolean,
+      );
+    }
+
+    return {
+      message: 'Controlled seed executed successfully',
+      history: history as any,
+    };
+  }
+
+  async clearDatabaseControlled(
+    clearOptions: {
+      users?: boolean;
+      clients?: boolean;
+      supplies?: boolean;
+      shoppingSupplies?: boolean;
+      suppliers?: boolean;
+      consumptionSupplies?: boolean;
+      harvests?: boolean;
+      works?: boolean;
+      crops?: boolean;
+      employees?: boolean;
+      sales?: boolean;
+      payments?: boolean;
+    } = {},
+  ) {
+    const {
+      users = false,
+      clients = false,
+      supplies = false,
+      shoppingSupplies = false,
+      suppliers = false,
+      consumptionSupplies = false,
+      harvests = false,
+      works = false,
+      crops = false,
+      employees = false,
+      sales = false,
+      payments = false,
+    } = clearOptions;
+
+    const clearPromises: Promise<void>[] = [];
+
+    if (users) {
+      clearPromises.push(this.usersService.deleteAllUsers());
+    }
+
+    if (clients) {
+      clearPromises.push(this.clientsService.deleteAllClients());
+    }
+
+    if (supplies) {
+      clearPromises.push(this.suppliesService.deleteAllStockSupplies());
+      clearPromises.push(this.suppliesService.deleteAllSupplies());
+    }
+
+    if (shoppingSupplies) {
+      clearPromises.push(this.shoppingService.deleteAllShoppingSupplies());
+    }
+
+    if (suppliers) {
+      clearPromises.push(this.suppliersService.deleteAllSupplier());
+    }
+
+    if (consumptionSupplies) {
+      clearPromises.push(
+        this.consumptionsService.deleteAllConsumptionSupplies(),
+      );
+    }
+
+    if (harvests) {
+      clearPromises.push(this.harvestsService.deleteAllHarvest());
+    }
+
+    if (works) {
+      clearPromises.push(this.workService.deleteAllWork());
+    }
+
+    if (crops) {
+      clearPromises.push(this.cropsService.deleteAllCrops());
+    }
+
+    if (employees) {
+      clearPromises.push(this.employeesService.deleteAllEmployees());
+    }
+
+    if (sales) {
+      clearPromises.push(this.salesService.deleteAllSales());
+    }
+
+    if (payments) {
+      clearPromises.push(this.paymentsService.deleteAllPayments());
+    }
+
+    await Promise.all(clearPromises);
   }
 
   async runSeed() {
@@ -407,6 +791,7 @@ export class SeedService {
       email: InformationGenerator.generateEmail(),
       cell_phone_number: InformationGenerator.generateCellPhoneNumber(),
       address: InformationGenerator.generateAddress(),
+      company_name: InformationGenerator.generateLastName(),
     };
 
     const supplier = await this.suppliersService.create(data);
@@ -427,8 +812,9 @@ export class SeedService {
     mapperToDto = false,
   }): Promise<Crop | EntityConvertedToDto<Crop>> {
     const data: CreateCropDto = {
-      name: 'Crop ' + InformationGenerator.generateRandomId(),
+      name: 'Crop ' + InformationGenerator.generateRandomId().substring(0, 5),
       description: InformationGenerator.generateDescription(),
+      number_hectares: 12,
       units: 1000,
       location: InformationGenerator.generateAddress(),
       date_of_creation: InformationGenerator.generateRandomDate({}),
@@ -442,6 +828,7 @@ export class SeedService {
       id: crop.id,
       name: crop.name,
       description: crop.description,
+      number_hectares: crop.number_hectares,
       units: crop.units,
       location: crop.location,
       date_of_creation: crop.date_of_creation,
@@ -499,6 +886,7 @@ export class SeedService {
           employee: { id: employee.id },
           amount: amount,
           value_pay: valuePay,
+          unit_of_measure: 'GRAMOS',
         } as HarvestDetailsDto;
       }),
       amount: amount * quantityEmployees,
@@ -524,19 +912,19 @@ export class SeedService {
     harvestId: string;
     amount: number;
     date?: string;
-  }): Promise<any> {
-    return true;
-    // const data: HarvestProcessedDto = {
-    //   date: date,
-    //   crop: { id: cropId },
-    //   harvest: { id: harvestId },
-    //   amount,
-    // };
+  }): Promise<HarvestProcessed> {
+    const data: HarvestProcessedDto = {
+      date: date,
+      crop: { id: cropId },
+      harvest: { id: harvestId },
+      amount,
+      unit_of_measure: 'GRAMOS',
+    };
 
-    // const harvestProcessed =
-    //   await this.harvestsService.createHarvestProcessed(data);
+    const harvestProcessed =
+      await this.harvestsService.createHarvestProcessed(data);
 
-    // return harvestProcessed;
+    return harvestProcessed;
   }
 
   async CreateWork({
@@ -607,6 +995,7 @@ export class SeedService {
           employee: { id: employeeId || employee.id },
           value_pay: valuePay,
           amount: amount,
+          unit_of_measure: 'GRAMOS',
         } as HarvestDetailsDto,
       ],
       value_pay: valuePay,
@@ -681,6 +1070,7 @@ export class SeedService {
           crop: { id: cropId },
           client: { id: clientId || client.id },
           is_receivable: isReceivable,
+          unit_of_measure: 'GRAMOS',
         } as SaleDetailsDto,
       ],
     };
@@ -698,7 +1088,6 @@ export class SeedService {
     date?: string;
   }): Promise<{ sale: Sale; client: Client; crop: Crop }> {
     const client: Client = (await this.CreateClient({})) as Client;
-
     const { crop, harvest } = await this.CreateHarvest({});
     await this.CreateHarvestProcessed({
       cropId: crop.id,
@@ -712,6 +1101,7 @@ export class SeedService {
       value_pay: 840_000,
       details: [
         {
+          unit_of_measure: 'GRAMOS',
           amount: quantity,
           value_pay: 840_000,
           crop: { id: crop.id },
@@ -720,7 +1110,6 @@ export class SeedService {
         } as SaleDetailsDto,
       ],
     };
-
     const sale = await this.salesService.create(data);
     return { client, sale, crop };
   }
@@ -729,7 +1118,7 @@ export class SeedService {
     mapperToDto = false,
   }): Promise<Supply | EntityConvertedToDto<Supply>> {
     const data: CreateSupplyDto = {
-      name: 'Supply ' + InformationGenerator.generateRandomId(),
+      name: 'Supply ' + InformationGenerator.generateRandomId().substring(0, 5),
       brand: InformationGenerator.generateSupplyBrand(),
       unit_of_measure: InformationGenerator.generateUnitOfMeasure(),
       observation: InformationGenerator.generateObservation(),
@@ -746,6 +1135,7 @@ export class SeedService {
   }
 
   async CreateConsumption({
+    date = InformationGenerator.generateRandomDate({}),
     supplyId,
     cropId,
     amount = 2000,
@@ -753,6 +1143,7 @@ export class SeedService {
     supplyId?: string;
     cropId?: string;
     amount?: number;
+    date?: string;
   }): Promise<{
     consumption: SuppliesConsumption;
     crop: Crop;
@@ -764,6 +1155,8 @@ export class SeedService {
     if (!supplyId) {
       supply = (await this.CreateSupply({})) as Supply;
       await this.CreateShopping({ supplyId: supply.id, amount: 10_000 });
+    } else {
+      supply = await this.suppliesService.findOne(supplyId);
     }
     if (!cropId) {
       crop = (await this.CreateCrop({})) as Crop;
@@ -776,6 +1169,8 @@ export class SeedService {
           supply: { id: supplyId || supply.id },
           crop: { id: cropId || crop.id },
           amount,
+          unit_of_measure:
+            supply.unit_of_measure == 'GRAMOS' ? 'GRAMOS' : 'MILILITROS',
         } as ConsumptionSuppliesDetailsDto,
       ],
     };
@@ -797,7 +1192,6 @@ export class SeedService {
     supplies: Supply[];
   }> {
     const crop: Crop = (await this.CreateCrop({})) as Crop;
-
     const supplies = (await Promise.all(
       Array.from({ length: quantitySupplies }).map(async () => {
         const supply = await this.CreateSupply({});
@@ -807,7 +1201,6 @@ export class SeedService {
         return supply;
       }),
     )) as Supply[];
-
     const data: ConsumptionSuppliesDto = {
       date: date,
       details: supplies.map((supply) => {
@@ -815,6 +1208,8 @@ export class SeedService {
           supply: { id: supply.id },
           crop: { id: crop.id },
           amount: amountForItem,
+          unit_of_measure:
+            supply.unit_of_measure == 'GRAMOS' ? 'GRAMOS' : 'MILILITROS',
         } as ConsumptionSuppliesDetailsDto;
       }),
     };
@@ -836,8 +1231,13 @@ export class SeedService {
     supplier: Supplier;
     supply: Supply;
   }> {
+    let supply;
     const supplier = (await this.CreateSupplier({})) as Supplier;
-    const supply = (await this.CreateSupply({})) as Supply;
+    if (!supplyId) {
+      supply = (await this.CreateSupply({})) as Supply;
+    } else {
+      supply = await this.suppliesService.findOne(supplyId);
+    }
 
     const data: ShoppingSuppliesDto = {
       date: InformationGenerator.generateRandomDate({}),
@@ -848,6 +1248,8 @@ export class SeedService {
           supplier: { id: supplier.id },
           amount,
           value_pay: valuePay,
+          unit_of_measure:
+            supply.unit_of_measure == 'GRAMOS' ? 'GRAMOS' : 'MILILITROS',
         } as ShoppingSuppliesDetailsDto,
       ],
     };
@@ -882,6 +1284,8 @@ export class SeedService {
           supplier: { id: supplier.id },
           amount: amountForItem,
           value_pay: valuePay,
+          unit_of_measure:
+            supply.unit_of_measure === 'GRAMOS' ? 'GRAMOS' : 'MILILITROS',
         } as ShoppingSuppliesDetailsDto;
       }),
     };
@@ -899,12 +1303,12 @@ export class SeedService {
     value_pay,
   }: {
     datePayment?: string;
-    employeeId?: string;
+    employeeId: string;
     methodOfPayment?: MethodOfPayment;
-    worksId?: string[];
-    harvestsId?: string[];
+    worksId: string[];
+    harvestsId: string[];
     value_pay: number;
-  }) {
+  }): Promise<Payment> {
     const data: PaymentDto = plainToClass(PaymentDto, {
       date: datePayment,
       employee: { id: employeeId },
@@ -915,7 +1319,6 @@ export class SeedService {
         works: [...(worksId as DeepPartial<WorkDetails>[])],
       },
     });
-
     return await this.paymentsService.create(data);
   }
 }

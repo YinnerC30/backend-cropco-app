@@ -3,16 +3,24 @@ services:
     image: postgres:15
     container_name: server-db
     environment:
-      POSTGRES_DB: cropco
+      POSTGRES_DB: cropco_management
+      # Crear usuario administrativo inicial (solo para setup)
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
+      POSTGRES_PASSWORD: temp_admin_password_change_immediately
+      # Configuración de seguridad
+      POSTGRES_INITDB_ARGS: '--auth-host=md5'
+      # Permitir hasta 250 conexiones
+      POSTGRES_MAX_CONNECTIONS: 250
     ports:
       - '5432:5432'
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d cropco']
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d cropco_management']
       interval: 5s
       timeout: 5s
       retries: 5
     volumes:
-      - ./data-server-db-development:/var/lib/postgresql/data
-      - ./sql-scripts:/docker-entrypoint-initdb.d/
+      - data-server-db-cropco-multi-tenant:/var/lib/postgresql/data
+      # Script de configuración de seguridad
+      - ./scripts/sql:/docker-entrypoint-initdb.d/
+volumes:
+  data-server-db-cropco-multi-tenant:

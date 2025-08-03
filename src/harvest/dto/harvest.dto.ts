@@ -2,20 +2,20 @@ import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsDateString,
-  IsNumber,
   IsDefined,
-  IsInt,
+  IsNumber,
   IsPositive,
   IsString,
   ValidateNested,
 } from 'class-validator';
 
+import { MatchAmount } from 'src/common/decorators/match-amount.decorator';
+import { MatchTotals } from 'src/common/decorators/match-totals.decorator';
+import { UniqueRecordIdInArray } from 'src/common/decorators/unique-id-in-array.decorator';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
 import { HarvestDetailsDto } from './harvest-details.dto';
-import { MatchTotals } from 'src/common/decorators/match-totals.decorator';
-import { UniqueRecordIdInArray } from 'src/common/decorators/unique-id-in-array.decorator';
 
 export class HarvestDto {
   @IsDateString()
@@ -28,21 +28,24 @@ export class HarvestDto {
 
   @IsNumber()
   @IsPositive()
+  @MatchAmount({
+    nameArrayToCalculate: 'details',
+    targetUnit: 'GRAMOS',
+  })
   amount: number;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
+  @MatchTotals({
+    fields: ['value_pay'],
+    nameArrayToCalculate: 'details',
+  })
   value_pay: number;
 
   @IsString()
   observation: string;
 
   @ArrayNotEmpty()
-  // TODO: Crear decorador personalizado para validar unidades de medida del amount de cada registro
-  @MatchTotals({
-    fields: ['value_pay'],
-    nameArrayToCalculate: 'details',
-  })
   @UniqueRecordIdInArray('employee')
   @ValidateNested({ each: true })
   @Type(() => HarvestDetailsDto)

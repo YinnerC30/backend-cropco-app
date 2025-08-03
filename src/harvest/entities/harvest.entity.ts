@@ -34,7 +34,7 @@ export class Harvest {
 
   // Relación con Crop
   @ManyToOne(() => Crop, (crop) => crop.harvests, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'cropId' })
   crop: Crop;

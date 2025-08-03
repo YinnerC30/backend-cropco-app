@@ -8,6 +8,7 @@ import {
   Put,
   Post,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 
 import { Auth } from 'src/auth/decorators/auth.decorator';
@@ -20,6 +21,7 @@ import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { GetPropertyFromToken } from 'src/auth/decorators/get-property-from-user-token.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
 
 export const pathsUsersController: PathsController = {
   createUser: {
@@ -109,19 +111,20 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @Put(toggleStatusUser.path)
-  toggleStatusUser(@Param('id', ParseUUIDPipe) id: string) {
-    return this.usersService.toggleStatusUser(id);
-  }
-
   @Delete(removeUser.path)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.remove(id);
   }
 
   @Delete(removeUsers.path)
+  @UseInterceptors(ResponseStatusInterceptor)
   removeBulk(@Body() removeBulkUsersDto: RemoveBulkRecordsDto<User>) {
     return this.usersService.removeBulk(removeBulkUsersDto);
+  }
+
+  @Put(toggleStatusUser.path)
+  toggleStatusUser(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.toggleStatusUser(id);
   }
 
   @Put(resetPassword.path)

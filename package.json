@@ -22,7 +22,17 @@
     "test:cov": "jest --config jest.unit.config.ts --coverage",
     "test:e2e:cov": "jest --config jest.e2e.config.ts --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --config jest.unit.config.ts --runInBand",
-    "test:e2e:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --config jest.e2e.config.ts --runInBand"
+    "test:e2e:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --config jest.e2e.config.ts --runInBand",
+    "version:patch": "npm version patch --no-git-tag-version && npm run docker:build",
+    "version:minor": "npm version minor --no-git-tag-version && npm run docker:build",
+    "version:major": "npm version major --no-git-tag-version && npm run docker:build",
+    "docker:build": "docker build -t cropco-api-rest:$(node -p \"require('./package.json').version\") .",
+    "docker:build:latest": "docker build -t cropco-api-rest:latest .",
+    "docker:push": "docker push cropco-api-rest:$(node -p \"require('./package.json').version\")",
+    "docker:push:latest": "docker push cropco-api-rest:latest",
+    "release:patch": "npm run version:patch && git add . && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\")",
+    "release:minor": "npm run version:minor && git add . && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\")",
+    "release:major": "npm run version:major && git add . && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\")"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -32,12 +42,16 @@
     "@nestjs/mapped-types": "*",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/throttler": "6.4.0",
     "@nestjs/typeorm": "^10.0.2",
+    "@types/cookie-parser": "1.4.9",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "cookie-parser": "1.4.7",
     "generate-password": "^1.7.1",
     "mathjs": "^14.5.2",
+    "nest-winston": "1.10.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
@@ -46,7 +60,9 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.20",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "winston": "3.17.0",
+    "winston-daily-rotate-file": "5.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

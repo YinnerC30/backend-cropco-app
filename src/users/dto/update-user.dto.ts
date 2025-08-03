@@ -24,7 +24,8 @@ export class UpdateUserDto {
   email: string;
 
   @IsString()
-  @MaxLength(10)
+  @MaxLength(15)
+  @MinLength(9)
   cell_phone_number: string;
 
   @IsArray()

@@ -1,28 +1,28 @@
-
-import { DeepPartial } from 'typeorm';
+import { Type } from 'class-transformer';
 import {
   IsDefined,
   IsIn,
-  IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsPositive,
   IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { Crop } from 'src/crops/entities/crop.entity';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
-import { Type } from 'class-transformer';
-import { SuppliesConsumption } from '../entities/supplies-consumption.entity';
-import { Supply } from 'src/supplies/entities/supply.entity';
 import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
+import { AllUnitTypesDto } from 'src/common/utils/UnitTypesDto';
+import { Crop } from 'src/crops/entities/crop.entity';
+import { Supply } from 'src/supplies/entities/supply.entity';
+import { DeepPartial } from 'typeorm';
+import { SuppliesConsumption } from '../entities/supplies-consumption.entity';
 
 export class ConsumptionSuppliesDetailsDto {
   @IsUUID(4)
   @IsOptional()
   id: string;
-  
+
   @ValidateNested()
   @Type(() => ValidateUUID)
   consumption: DeepPartial<SuppliesConsumption>;
@@ -39,24 +39,10 @@ export class ConsumptionSuppliesDetailsDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsIn([
-    // Unidades de masa
-    'GRAMOS',
-    'KILOGRAMOS',
-    'LIBRAS',
-    'ONZAS',
-    'TONELADAS',
-    // Unidades de volumen
-    'MILILITROS',
-    'LITROS',
-    'GALONES',
-    // 'ONZAS_FLUIDAS',
-    // 'CUCHARADAS',
-    // 'CUCHARADAS_SOPERAS',
-  ])
+  @IsIn(AllUnitTypesDto)
   unit_of_measure: UnitType;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   amount: number;
 }

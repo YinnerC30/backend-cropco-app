@@ -39,9 +39,10 @@ export class Supply {
       'MILILITROS',
       'LITROS',
       'GALONES',
-      'ONZAS_FLUIDAS',
-      'CUCHARADAS',
-      'CUCHARADAS_SOPERAS',
+      // Longitud
+      'MILIMETROS',
+      'CENTIMETROS',
+      'METROS',
     ],
   })
   unit_of_measure: UnitType;
@@ -54,7 +55,7 @@ export class Supply {
   @OneToMany(
     () => SuppliesShoppingDetails,
     (shopping_details) => shopping_details.supply,
-    { cascade: true },
+    { cascade: ['insert', 'update'] },
   )
   shopping_details: SuppliesShoppingDetails[];
 
@@ -64,7 +65,7 @@ export class Supply {
   @OneToMany(
     () => SuppliesConsumptionDetails,
     (consumption_details) => consumption_details.supply,
-    { cascade: true },
+    { cascade: ['insert', 'update'] },
   )
   consumption_details: SuppliesConsumptionDetails[];
 

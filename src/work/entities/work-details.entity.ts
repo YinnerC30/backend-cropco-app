@@ -18,7 +18,7 @@ export class WorkDetails {
   id: string;
 
   @ManyToOne(() => Employee, (employee) => employee.works_detail, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   employee: Employee;
 
@@ -42,7 +42,7 @@ export class WorkDetails {
 
   // External relations
   @OneToOne(() => PaymentsWork, (payments_work) => payments_work.works_detail, {
-    cascade: true,
+    cascade: ['insert'],
   })
   payments_work: PaymentsWork;
 

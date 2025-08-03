@@ -12,7 +12,7 @@ describe('QueryParamsWork', () => {
       type_filter_date: TypeFilterDate.EQUAL,
       date: '2023-01-01',
       filter_by_total: 'false',
-      type_filter_total: TypeFilterNumber.MAX,
+      type_filter_total: TypeFilterNumber.GREATER_THAN,
       value_pay: 100,
       employees: [
         'f7314366-5f63-4f2b-9639-744eb652c26b',

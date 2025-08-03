@@ -7,17 +7,19 @@ import { headerSection } from 'src/common/reports/sections/header.section';
 import { MyStyles } from 'src/common/reports/sections/styles-dictionary';
 import { Harvest } from '../entities/harvest.entity';
 import { DateFormatter } from 'src/common/helpers';
+import { buildFrontendURL } from 'src/common/utils/constants';
 
 interface ReportOptions {
   data: Harvest & { total_amount_processed: number };
+  subdomain: string;
 }
 
 export const getHarvestReport = (
   options: ReportOptions,
 ): TDocumentDefinitions => {
-  const { data } = options;
+  const { data, subdomain } = options;
 
-  const pathFrontend = process.env['HOST_FRONTED'] ?? 'http://localhost:5173';
+  const pathFrontend = buildFrontendURL(subdomain).url;
 
   return {
     header: headerSection({
@@ -144,12 +146,13 @@ export const getHarvestReport = (
       {
         table: {
           headerRows: 1,
-          widths: [100, 'auto', 'auto', 'auto', 'auto'],
+          widths: [100, 'auto', 'auto', 'auto', 'auto', 'auto'],
           body: [
             [
               { text: 'Id Empleado', style: 'tableHeader' },
               { text: 'Empleado', style: 'tableHeader' },
               { text: 'Total cosechado', style: 'tableHeader' },
+              { text: 'Unidad de medida', style: 'tableHeader' },
               { text: 'Valor a pagar', style: 'tableHeader' },
               { text: 'Pendiente de pago', style: 'tableHeader' },
             ],
@@ -165,6 +168,11 @@ export const getHarvestReport = (
               },
               {
                 text: FormatNumber(detail.amount),
+                style: 'tableCell',
+                alignment: 'center',
+              },
+              {
+                text: detail.unit_of_measure,
                 style: 'tableCell',
                 alignment: 'center',
               },
@@ -204,18 +212,19 @@ export const getHarvestReport = (
       },
 
       // Procesos realizados
-      data.processed.length > 0 
+      data.processed.length > 0
         ? [
             { text: 'Información sobre cosecha procesada', style: 'subheader' },
             {
               table: {
                 headerRows: 1,
-                widths: ['auto', 'auto', 'auto'],
+                widths: ['auto', 'auto', 'auto', 'auto'],
                 body: [
                   [
                     { text: 'Id', style: 'tableHeader' },
                     { text: 'Fecha', style: 'tableHeader' },
                     { text: 'Total', style: 'tableHeader' },
+                    { text: 'Unidad de medida', style: 'tableHeader' },
                   ],
                   ...data.processed.map((proc) => [
                     {
@@ -229,6 +238,11 @@ export const getHarvestReport = (
                     },
                     {
                       text: FormatNumber(proc.amount),
+                      style: 'tableCell',
+                      alignment: 'center',
+                    },
+                    {
+                      text: proc.unit_of_measure,
                       style: 'tableCell',
                       alignment: 'center',
                     },

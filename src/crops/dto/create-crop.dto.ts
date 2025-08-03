@@ -1,7 +1,8 @@
 import {
   IsDateString,
-  IsInt,
+  IsNumber,
   IsOptional,
+  IsPositive,
   IsString,
   Length,
   Min,
@@ -14,15 +15,19 @@ export class CreateCropDto {
 
   @IsOptional()
   @IsString()
-  @Length(0, 500)
+  @Length(15, 500)
   description: string;
 
-  @IsInt()
+  @IsNumber()
+  @IsPositive()
+  number_hectares: number;
+
+  @IsNumber()
   @Min(1)
   units: number;
 
   @IsString()
-  @Length(4, 150)
+  @Length(15, 150)
   location: string;
 
   @IsDateString()

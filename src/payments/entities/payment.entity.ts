@@ -27,7 +27,7 @@ export class Payment {
   date: string;
 
   @ManyToOne(() => Employee, (employee) => employee.payments, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   employee: Employee;
 

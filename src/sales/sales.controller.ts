@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -22,6 +23,7 @@ import { Sale } from './entities/sale.entity';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Response } from 'express';
 import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
+import { GetSubdomain } from 'src/common/decorators/get-subdomain.decorator';
 
 export const pathsSalesController: PathsController = {
   createSale: {
@@ -82,13 +84,17 @@ export class SalesController {
   }
 
   @Get(exportSaleToPDF.path)
+  @Header('Content-Type', 'application/pdf')
   async exportWorkToPDF(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() response: Response,
+    @GetSubdomain() subdomain: string,
   ) {
-    const pdfDoc = await this.salesService.exportSaleToPDF(id);
-    response.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.info.Title = 'Registro de venta';
+    const pdfDoc = await this.salesService.exportSaleToPDF(id, subdomain);
+    response.setHeader(
+      'Content-Disposition',
+      `inline; filename="registro-venta-${id}.pdf"`,
+    );
     pdfDoc.pipe(response);
     pdfDoc.end();
   }

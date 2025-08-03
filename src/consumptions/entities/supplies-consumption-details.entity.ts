@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { SuppliesConsumption } from './supplies-consumption.entity';
 import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
+import { AllUnitTypesDto } from 'src/common/utils/UnitTypesDto';
 
 @Entity({ name: 'supplies_consumption_details' })
 export class SuppliesConsumptionDetails {
@@ -28,37 +29,23 @@ export class SuppliesConsumptionDetails {
   consumption: SuppliesConsumption;
 
   @ManyToOne(() => Supply, (supply) => supply.consumption_details, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   supply: Supply;
 
   @ManyToOne(() => Crop, (crop) => crop.supplies_consumption_details, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   crop: Crop;
 
   @Column({
     type: 'enum',
-    enum: [
-      // Unidades de masa
-      'GRAMOS',
-      'KILOGRAMOS',
-      'LIBRAS',
-      'ONZAS',
-      'TONELADAS',
-      // Unidades de volumen
-      'MILILITROS',
-      'LITROS',
-      'GALONES',
-      'ONZAS_FLUIDAS',
-      'CUCHARADAS',
-      'CUCHARADAS_SOPERAS',
-    ],
+    enum: AllUnitTypesDto,
   })
   unit_of_measure: UnitType;
 
   @Column({
-    type: 'int4',
+    type: 'float8',
   })
   amount: number;
 

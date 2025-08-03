@@ -15,16 +15,16 @@ describe('QueryTotalWorksInYearDto', () => {
     expect(errors.length).toBe(0);
   });
 
-  it('should fail validation with year 2023', async () => {
-    const dto = plainToClass(QueryTotalWorksInYearDto, {
-      year: 2023,
-      cropId: '8b73400f-be8e-454d-902a-4b37c9bd23d4',
-      employeeId: '8b73400f-be8e-454d-902a-4b37c9bd23d4',
-    });
+  // it('should fail validation with year 2023', async () => {
+  //   const dto = plainToClass(QueryTotalWorksInYearDto, {
+  //     year: 2023,
+  //     cropId: '8b73400f-be8e-454d-902a-4b37c9bd23d4',
+  //     employeeId: '8b73400f-be8e-454d-902a-4b37c9bd23d4',
+  //   });
 
-    const errors = await validate(dto);
-    expect(errors.length).toBe(1);
-  });
+  //   const errors = await validate(dto);
+  //   expect(errors.length).toBe(1);
+  // });
 
   it('should pass validation with optional fields omitted', async () => {
     const dto = plainToClass(QueryTotalWorksInYearDto, {

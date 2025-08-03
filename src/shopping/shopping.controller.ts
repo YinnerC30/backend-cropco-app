@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -21,6 +22,7 @@ import { Response } from 'express';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
 import { ShoppingSuppliesDto } from './dto/shopping-supplies.dto';
+import { GetSubdomain } from 'src/common/decorators/get-subdomain.decorator';
 
 export const pathsShoppingController: PathsController = {
   createShopping: {
@@ -90,13 +92,20 @@ export class ShoppingController {
   }
 
   @Get(exportShoppingToPDF.path)
+  @Header('Content-Type', 'application/pdf')
   async exportShoppingToPDF(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() response: Response,
+    @GetSubdomain() subdomain: string,
   ) {
-    const pdfDoc = await this.shoppingService.exportShoppingToPDF(id);
-    response.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.info.Title = 'Registro de compra';
+    const pdfDoc = await this.shoppingService.exportShoppingToPDF(
+      id,
+      subdomain,
+    );
+    response.setHeader(
+      'Content-Disposition',
+      `inline; filename="registro-compra-${id}.pdf"`,
+    );
     pdfDoc.pipe(response);
     pdfDoc.end();
   }

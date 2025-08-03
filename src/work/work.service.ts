@@ -1,43 +1,57 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { organizeIDsToUpdateEntity } from 'src/common/helpers/organize-ids-to-update-entity';
+import { BaseTenantService } from 'src/common/services/base-tenant.service';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { monthNamesES } from 'src/common/utils/monthNamesEs';
 import { PrinterService } from 'src/printer/printer.service';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { WorkDetailsDto } from './dto/work-details.dto';
 import { WorkDto } from './dto/work.dto';
 
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+import { BulkRemovalHelper } from '@common/helpers/bulk-removal.helper';
+import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
+import { QueryTotalWorksInYearDto } from './dto/query-params-total-works-year';
 import { QueryParamsWork } from './dto/query-params-work.dto';
 import { WorkDetails } from './entities/work-details.entity';
 import { Work } from './entities/work.entity';
 import { getWorkReport } from './reports/get-work';
-import { getComparisonOperator } from 'src/common/helpers/get-comparison-operator';
-import { QueryTotalWorksInYearDto } from './dto/query-params-total-works-year';
 
 @Injectable()
-export class WorkService {
-  private readonly logger = new Logger('WorkService');
+export class WorkService extends BaseTenantService {
+  protected readonly logger = new Logger('WorkService');
+  private workRepository: Repository<Work>;
+  private dataSource: DataSource;
 
   constructor(
-    @InjectRepository(Work)
-    private readonly workRepository: Repository<Work>,
-    private readonly dataSource: DataSource,
+    @Inject(REQUEST) request: Request,
     private readonly printerService: PrinterService,
     private readonly handlerError: HandlerErrorService,
-  ) {}
+  ) {
+    super(request);
+    this.setLogger(this.logger);
+    this.workRepository = this.getTenantRepository(Work);
+    this.dataSource = this.tenantConnection;
+  }
 
   async create(createWorkDto: WorkDto) {
+    this.logWithContext(
+      `Creating new work with ${createWorkDto.details?.length || 0} details`,
+    );
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+
     try {
       const { details, ...rest } = createWorkDto;
 
@@ -47,12 +61,18 @@ export class WorkService {
         return queryRunner.manager.create(WorkDetails, workDetails);
       });
 
-      await queryRunner.manager.save(work);
-
+      const savedWork = await queryRunner.manager.save(work);
       await queryRunner.commitTransaction();
-      return work;
+
+      this.logWithContext(`Work created successfully with ID: ${savedWork.id}`);
+
+      return savedWork;
     } catch (error) {
       await queryRunner.rollbackTransaction();
+      this.logWithContext(
+        `Failed to create work with ${createWorkDto.details?.length || 0} details`,
+        'error',
+      );
       this.handlerError.handle(error, this.logger);
     } finally {
       await queryRunner.release();
@@ -60,273 +80,378 @@ export class WorkService {
   }
 
   async findAll(queryParams: QueryParamsWork) {
-    const {
-      limit = 10,
-      offset = 0,
+    this.logWithContext(
+      `Finding all works with filters - crop: ${queryParams.crop || 'any'}, employees: ${queryParams.employees?.length || 0}, filter_by_date: ${queryParams.filter_by_date || false}, filter_by_value_pay: ${queryParams.filter_by_value_pay || false}`,
+    );
 
-      crop = '',
+    try {
+      const {
+        limit = 10,
+        offset = 0,
+        crop = '',
+        filter_by_date = false,
+        type_filter_date,
+        date,
+        filter_by_value_pay = false,
+        type_filter_value_pay,
+        value_pay,
+        employees = [],
+      } = queryParams;
 
-      filter_by_date = false,
-      type_filter_date,
-      date,
+      const queryBuilder = this.workRepository
+        .createQueryBuilder('work')
+        .withDeleted()
+        .leftJoinAndSelect('work.crop', 'crop')
+        .leftJoinAndSelect('work.details', 'details')
+        .leftJoinAndSelect('details.employee', 'employee')
+        .andWhere('work.deletedDate IS NULL')
+        .orderBy('work.date', 'DESC')
+        .take(limit)
+        .skip(offset * limit);
 
-      filter_by_value_pay = false,
-      type_filter_value_pay,
-      value_pay,
+      crop.length > 0 &&
+        queryBuilder.andWhere('crop.id = :cropId', { cropId: crop });
 
-      employees = [],
-    } = queryParams;
-    const queryBuilder = this.workRepository
-      .createQueryBuilder('work')
-      .withDeleted()
-      .leftJoinAndSelect('work.crop', 'crop')
-      .leftJoinAndSelect('work.details', 'details')
-      .leftJoinAndSelect('details.employee', 'employee')
-      .orderBy('work.date', 'DESC')
-      .take(limit)
-      .skip(offset * limit);
+      filter_by_date &&
+        queryBuilder.andWhere(
+          `work.date ${getComparisonOperator(type_filter_date)} :date`,
+          { date },
+        );
 
-    crop.length > 0 &&
-      queryBuilder.andWhere('crop.id = :cropId', { cropId: crop });
+      filter_by_value_pay &&
+        queryBuilder.andWhere(
+          `work.value_pay ${getComparisonOperator(type_filter_value_pay)} :value_pay`,
+          { value_pay },
+        );
 
-    filter_by_date &&
-      queryBuilder.andWhere(
-        `work.date ${getComparisonOperator(type_filter_date)} :date`,
-        { date },
+      employees.length > 0 &&
+        queryBuilder.andWhere((qb) => {
+          const subQuery = qb
+            .subQuery()
+            .withDeleted()
+            .select('work.id')
+            .from('works', 'work')
+            .leftJoin('work.details', 'details')
+            .leftJoin('details.employee', 'employee')
+            .where('employee.id IN (:...employees)', { employees })
+            .getQuery();
+          return 'work.id IN ' + subQuery;
+        });
+
+      const [works, count] = await queryBuilder.getManyAndCount();
+
+      this.logWithContext(
+        `Found ${works.length} works out of ${count} total works`,
       );
 
-    filter_by_value_pay &&
-      queryBuilder.andWhere(
-        `work.value_pay ${getComparisonOperator(type_filter_value_pay)} :value_pay`,
-        { value_pay },
-      );
+      if (works.length === 0 && count > 0) {
+        throw new NotFoundException(
+          'There are no work records with the requested pagination',
+        );
+      }
 
-    employees.length > 0 &&
-      queryBuilder.andWhere((qb) => {
-        const subQuery = qb
-          .subQuery()
-          .select('work.id')
-          .from('works', 'work')
-          .leftJoin('work.details', 'details')
-          .leftJoin('details.employee', 'employee')
-          .where('employee.id IN (:...employees)', { employees })
-          .getQuery();
-        return 'work.id IN ' + subQuery;
-      });
-
-    const [works, count] = await queryBuilder.getManyAndCount();
-
-    if (works.length === 0 && count > 0) {
-      throw new NotFoundException(
-        'There are no work records with the requested pagination',
-      );
+      return {
+        total_row_count: count,
+        current_row_count: works.length,
+        total_page_count: Math.ceil(count / limit),
+        current_page_count: works.length > 0 ? offset + 1 : 0,
+        records: works,
+      };
+    } catch (error) {
+      this.logWithContext('Failed to find works with filters', 'error');
+      this.handlerError.handle(error, this.logger);
     }
-
-    return {
-      total_row_count: count,
-      current_row_count: works.length,
-      total_page_count: Math.ceil(count / limit),
-      current_page_count: works.length > 0 ? offset + 1 : 0,
-      records: works,
-    };
   }
 
   async findOne(id: string) {
-    const work = await this.workRepository.findOne({
-      withDeleted: true,
-      where: { id },
-      relations: {
-        crop: true,
-        details: { employee: true, payments_work: true },
-      },
-    });
-    if (!work) throw new NotFoundException(`Work with id: ${id} not found`);
-    return work;
+    this.logWithContext(`Finding work by ID: ${id}`);
+
+    try {
+      const work = await this.workRepository.findOne({
+        withDeleted: true,
+        where: { id, deletedDate: IsNull() },
+        relations: {
+          crop: true,
+          details: { employee: true, payments_work: true },
+        },
+      });
+
+      if (!work) {
+        this.logWithContext(`Work with ID: ${id} not found`, 'warn');
+        throw new NotFoundException(`Work with id: ${id} not found`);
+      }
+
+      this.logWithContext(`Work found successfully with ID: ${id}`);
+      return work;
+    } catch (error) {
+      this.logWithContext(`Failed to find work with ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async update(id: string, updateWorkDto: WorkDto) {
-    const work = await this.findOne(id);
+    this.logWithContext(`Updating work with ID: ${id}`);
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
     try {
-      const { details, crop, ...rest } = updateWorkDto;
+      const work = await this.findOne(id);
 
-      const oldDetails: WorkDetails[] = work.details;
-      const newDetails: WorkDetailsDto[] = updateWorkDto.details ?? [];
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
 
-      const oldIDs: string[] = oldDetails.map((record) => record.id);
-      const newIDs: string[] = newDetails.map((record) =>
-        new String(record.id).toString(),
-      );
+      try {
+        const { details, ...rest } = updateWorkDto;
 
-      const { toCreate, toUpdate, toDelete } = organizeIDsToUpdateEntity(
-        newIDs,
-        oldIDs,
-      );
+        const oldDetails: WorkDetails[] = work.details;
+        const newDetails: WorkDetailsDto[] = updateWorkDto.details ?? [];
 
-      for (const recordId of toDelete) {
-        const dataRecordOld = oldDetails.find(
-          (record) => record.id === recordId,
+        const oldIDs: string[] = oldDetails.map((record) => record.id);
+        const newIDs: string[] = newDetails.map((record) =>
+          new String(record.id).toString(),
         );
 
-        if (dataRecordOld.payment_is_pending === false) {
-          throw new BadRequestException(
-            `You cannot delete the record with id ${recordId} , it is linked to a payment record.`,
+        const { toCreate, toUpdate, toDelete } = organizeIDsToUpdateEntity(
+          newIDs,
+          oldIDs,
+        );
+
+        this.logWithContext(
+          `Work update operations - Create: ${toCreate.length}, Update: ${toUpdate.length}, Delete: ${toDelete.length}`,
+        );
+
+        for (const recordId of toDelete) {
+          const dataRecordOld = oldDetails.find(
+            (record) => record.id === recordId,
           );
-        }
 
-        if (dataRecordOld.deletedDate !== null) {
-          throw new BadRequestException(
-            `You cannot delete the record with id ${recordId} , it is linked to other records.`,
-          );
-        }
-        await queryRunner.manager.delete(WorkDetails, recordId);
-      }
-
-      for (const recordId of toUpdate) {
-        const dataRecordNew = newDetails.find(
-          (record) => record.id === recordId,
-        );
-        const dataRecordOld = oldDetails.find(
-          (record) => record.id === recordId,
-        );
-
-        const valuesAreDifferent =
-          dataRecordNew.value_pay !== dataRecordOld.value_pay;
-
-        if (valuesAreDifferent) {
-          switch (true) {
-            case dataRecordOld.payment_is_pending === false:
-              throw new BadRequestException(
-                `You cannot update the record with id ${recordId} , it is linked to a payment record.`,
-              );
-            case dataRecordOld.deletedDate !== null:
-              throw new BadRequestException(
-                `You cannot update the record with id ${recordId} , it is linked to other records.`,
-              );
+          if (dataRecordOld.payment_is_pending === false) {
+            this.logWithContext(
+              `Cannot delete work detail ${recordId} - linked to payment`,
+              'warn',
+            );
+            throw new BadRequestException(
+              `You cannot delete the record with id ${recordId} , it is linked to a payment record.`,
+            );
           }
+
+          if (dataRecordOld.deletedDate !== null) {
+            this.logWithContext(
+              `Cannot delete work detail ${recordId} - linked to other records`,
+              'warn',
+            );
+            throw new BadRequestException(
+              `You cannot delete the record with id ${recordId} , it is linked to other records.`,
+            );
+          }
+          await queryRunner.manager.delete(WorkDetails, recordId);
         }
-        await queryRunner.manager.update(
-          WorkDetails,
-          { id: recordId },
-          dataRecordNew,
-        );
-      }
 
-      for (const recordId of toCreate) {
-        const { id: idWorkDetail, ...rest } = newDetails.find((item) => {
-          return item.id === recordId;
-        });
-        const recordToCreate = queryRunner.manager.create(WorkDetails, {
-          ...rest,
-          work: { id },
-        });
-        await queryRunner.manager.save(WorkDetails, recordToCreate);
-      }
+        for (const recordId of toUpdate) {
+          const dataRecordNew = newDetails.find(
+            (record) => record.id === recordId,
+          );
+          const dataRecordOld = oldDetails.find(
+            (record) => record.id === recordId,
+          );
 
-      await queryRunner.manager.update(Work, id, rest);
-      await queryRunner.commitTransaction();
-      return this.findOne(id);
+          const valuesAreDifferent =
+            dataRecordNew.value_pay !== dataRecordOld.value_pay;
+
+          if (valuesAreDifferent) {
+            switch (true) {
+              case dataRecordOld.payment_is_pending === false:
+                this.logWithContext(
+                  `Cannot update work detail ${recordId} - linked to payment`,
+                  'warn',
+                );
+                throw new BadRequestException(
+                  `You cannot update the record with id ${recordId} , it is linked to a payment record.`,
+                );
+              case dataRecordOld.deletedDate !== null:
+                this.logWithContext(
+                  `Cannot update work detail ${recordId} - linked to other records`,
+                  'warn',
+                );
+                throw new BadRequestException(
+                  `You cannot update the record with id ${recordId} , it is linked to other records.`,
+                );
+            }
+          }
+          await queryRunner.manager.update(
+            WorkDetails,
+            { id: recordId },
+            dataRecordNew,
+          );
+        }
+
+        for (const recordId of toCreate) {
+          const { id: idWorkDetail, ...rest } = newDetails.find((item) => {
+            return item.id === recordId;
+          });
+          const recordToCreate = queryRunner.manager.create(WorkDetails, {
+            ...rest,
+            work: { id },
+          });
+          await queryRunner.manager.save(WorkDetails, recordToCreate);
+        }
+
+        await queryRunner.manager.update(Work, id, rest);
+        await queryRunner.commitTransaction();
+
+        this.logWithContext(`Work updated successfully with ID: ${id}`);
+
+        return this.findOne(id);
+      } catch (error) {
+        await queryRunner.rollbackTransaction();
+        throw error;
+      } finally {
+        await queryRunner.release();
+      }
     } catch (error) {
-      await queryRunner.rollbackTransaction();
+      this.logWithContext(`Failed to update work with ID: ${id}`, 'error');
       this.handlerError.handle(error, this.logger);
-    } finally {
-      await queryRunner.release();
     }
   }
 
   async remove(id: string) {
-    const work = await this.findOne(id);
+    this.logWithContext(`Attempting to remove work with ID: ${id}`);
 
-    if (work.details.some((item) => item.payments_work !== null)) {
-      throw new ConflictException(
-        `The record with id ${id} cannot be deleted because it has payments linked to it.`,
-      );
+    try {
+      const work = await this.findOne(id);
+
+      if (work.details.some((item) => item.payments_work !== null)) {
+        this.logWithContext(
+          `Cannot remove work with ID: ${id} - has payments linked`,
+          'warn',
+        );
+        throw new ConflictException(
+          `The record with id ${id} cannot be deleted because it has payments linked to it.`,
+        );
+      }
+
+      await this.workRepository.softRemove(work);
+      this.logWithContext(`Work with ID: ${id} removed successfully`);
+    } catch (error) {
+      this.logWithContext(`Failed to remove work with ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
     }
-    await this.workRepository.remove(work);
   }
 
   async deleteAllWork() {
+    this.logWithContext(
+      'Deleting ALL works - this is a destructive operation',
+      'warn',
+    );
+
     try {
-      await this.workRepository.delete({});
+      await this.workRepository.query(
+        'TRUNCATE TABLE works RESTART IDENTITY CASCADE',
+      );
+      this.logWithContext('All works deleted successfully');
     } catch (error) {
+      this.logWithContext('Failed to delete all works', 'error');
       this.handlerError.handle(error, this.logger);
     }
   }
 
   async removeBulk(removeBulkWorksDto: RemoveBulkRecordsDto<Work>) {
-    const success: string[] = [];
-    const failed: { id: string; error: string }[] = [];
-
-    for (const { id } of removeBulkWorksDto.recordsIds) {
-      try {
-        await this.remove(id);
-        success.push(id);
-      } catch (error) {
-        failed.push({ id, error: error.message });
-      }
+    try {
+      return await BulkRemovalHelper.executeBulkRemoval(
+        removeBulkWorksDto.recordsIds,
+        (id: string) => this.remove(id),
+        this.logger,
+        { entityName: 'works',  },
+      );
+    } catch (error) {
+      this.logWithContext('Failed to execute bulk removal of works', 'error');
+      this.handlerError.handle(error, this.logger);
     }
-
-    return { success, failed };
   }
 
-  async exportWorkToPDF(id: string) {
-    const work = await this.findOne(id);
-    const docDefinition = getWorkReport({ data: work });
-    return this.printerService.createPdf({ docDefinition });
+  async exportWorkToPDF(id: string, subdomain: string) {
+    this.logWithContext(`Exporting work to PDF for ID: ${id}`);
+
+    try {
+      const work = await this.findOne(id);
+      const docDefinition = getWorkReport({ data: work, subdomain });
+      const pdfDoc = this.printerService.createPdf({
+        docDefinition,
+        title: 'Registro de trabajo',
+        keywords: 'report-work',
+      });
+
+      this.logWithContext(`Work PDF exported successfully for ID: ${id}`);
+      return pdfDoc;
+    } catch (error) {
+      this.logWithContext(`Failed to export work PDF for ID: ${id}`, 'error');
+      this.handlerError.handle(error, this.logger);
+    }
   }
 
   async getWorkData(year: number, cropId: string, employeeId: string) {
-    const queryBuilder = this.workRepository
-      .createQueryBuilder('work')
-      .leftJoin('work.crop', 'crop')
-      .leftJoin('work.details', 'details')
-      .leftJoin('details.employee', 'employee')
-      .select([
-        'CAST(EXTRACT(MONTH FROM work.date) AS INTEGER) as month',
-        'CAST(SUM(DISTINCT work.value_pay) AS INTEGER) as value_pay',
-        'COUNT(work) as quantity_works',
-      ])
-      .where('EXTRACT(YEAR FROM work.date) = :year', { year })
-      .groupBy('EXTRACT(MONTH FROM work.date)')
-      .orderBy('month', 'ASC');
+    this.logWithContext(
+      `Getting work data for year: ${year}, crop: ${cropId || 'any'}, employee: ${employeeId || 'any'}`,
+    );
 
-    if (cropId) {
-      queryBuilder.andWhere('crop.id = :cropId', { cropId });
-    }
-    if (employeeId) {
-      queryBuilder.andWhere('employee.id = :employeeId', { employeeId });
-    }
+    try {
+      const queryBuilder = this.workRepository
+        .createQueryBuilder('work')
+        .leftJoin('work.crop', 'crop')
+        .leftJoin('work.details', 'details')
+        .leftJoin('details.employee', 'employee')
+        .select([
+          'CAST(EXTRACT(MONTH FROM work.date) AS INTEGER) as month',
+          'CAST(SUM(DISTINCT details.value_pay) AS INTEGER) as value_pay',
+          'COUNT(work) as quantity_works',
+        ])
+        .where('EXTRACT(YEAR FROM work.date) = :year', { year })
+        .groupBy('EXTRACT(MONTH FROM work.date)')
+        .orderBy('month', 'ASC');
 
-    const rawData = await queryBuilder.getRawMany();
-
-    const formatData = monthNamesES.map((monthName: string, index: number) => {
-      const monthNumber = index + 1;
-      const record = rawData.find((item) => {
-        return item.month === monthNumber;
-      });
-
-      if (!record) {
-        return {
-          month_name: monthName,
-          month_number: monthNumber,
-          value_pay: 0,
-          quantity_works: 0,
-        };
+      if (cropId) {
+        queryBuilder.andWhere('crop.id = :cropId', { cropId });
+      }
+      if (employeeId) {
+        queryBuilder.andWhere('employee.id = :employeeId', { employeeId });
       }
 
-      delete record.month;
+      const rawData = await queryBuilder.getRawMany();
 
-      return {
-        ...record,
-        month_name: monthName,
-        month_number: monthNumber,
-      };
-    });
+      const formatData = monthNamesES.map(
+        (monthName: string, index: number) => {
+          const monthNumber = index + 1;
+          const record = rawData.find((item) => {
+            return item.month === monthNumber;
+          });
 
-    return formatData;
+          if (!record) {
+            return {
+              month_name: monthName,
+              month_number: monthNumber,
+              value_pay: 0,
+              quantity_works: 0,
+            };
+          }
+
+          delete record.month;
+
+          return {
+            ...record,
+            month_name: monthName,
+            month_number: monthNumber,
+          };
+        },
+      );
+
+      this.logWithContext(
+        `Work data retrieved successfully for year: ${year}, ${rawData.length} months with data`,
+      );
+
+      return formatData;
+    } catch (error) {
+      this.logWithContext(`Failed to get work data for year: ${year}`, 'error');
+      throw error;
+    }
   }
 
   async findTotalWorkInYear({
@@ -334,22 +459,38 @@ export class WorkService {
     cropId = '',
     employeeId = '',
   }: QueryTotalWorksInYearDto) {
-    const previousYear = year - 1;
-
-    const currentYearData = await this.getWorkData(year, cropId, employeeId);
-    const previousYearData = await this.getWorkData(
-      previousYear,
-      cropId,
-      employeeId,
+    this.logWithContext(
+      `Finding total work in year: ${year} with crop: ${cropId || 'any'}, employee: ${employeeId || 'any'}`,
     );
 
-    const workDataByYear = [
-      { year, data: currentYearData },
-      { year: previousYear, data: previousYearData },
-    ];
+    try {
+      const previousYear = year - 1;
 
-    return {
-      years: workDataByYear,
-    };
+      const currentYearData = await this.getWorkData(year, cropId, employeeId);
+      const previousYearData = await this.getWorkData(
+        previousYear,
+        cropId,
+        employeeId,
+      );
+
+      const workDataByYear = [
+        { year, data: currentYearData },
+        { year: previousYear, data: previousYearData },
+      ];
+
+      this.logWithContext(
+        `Total work data calculated successfully for year: ${year}`,
+      );
+
+      return {
+        years: workDataByYear,
+      };
+    } catch (error) {
+      this.logWithContext(
+        `Failed to find total work in year: ${year}`,
+        'error',
+      );
+      this.handlerError.handle(error, this.logger);
+    }
   }
 }
