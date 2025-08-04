@@ -5,27 +5,24 @@ import {
   Get,
   HttpCode,
   Param,
-  ParseUUIDPipe,
   Patch,
   Post,
   Res,
-  UseGuards,
-  UseInterceptors,
+  UseGuards
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 
+import { rateLimitConfig } from '@/common/config/rate-limit.config';
+import { Response } from 'express';
 import { PathsController } from 'src/common/interfaces/PathsController';
+import { DevelopmentGuard } from 'src/seed/guards/development.guard';
 import { AuthService } from './auth.service';
+import { AuthAdministration } from './decorators/auth-administrator.decorator';
 import { Auth } from './decorators/auth.decorator';
+import { GetTokenAdministration } from './decorators/get-token-administrator.headers.decorator';
 import { GetToken } from './decorators/get-token.headers.decorator';
 import { LoginUserDto } from './dto/login-user.dto';
 import { AuthAdministratorService } from './services/auth-administrator.service';
-import { AuthAdministration } from './decorators/auth-administrator.decorator';
-import { GetTokenAdministration } from './decorators/get-token-administrator.headers.decorator';
-import { Response } from 'express';
-import { User } from 'src/users/entities/user.entity';
-import { Module } from './entities/module.entity';
-import { DevelopmentGuard } from 'src/seed/guards/development.guard';
 
 export const pathsAuthController: PathsController = {
   login: {
@@ -113,7 +110,7 @@ export class AuthController {
   @Throttle({
     default: {
       ttl: 60000,
-      limit: process.env.STATUS_PROJECT === 'development' ? 1000 : 10,
+      limit: rateLimitConfig.testing.limit,
     },
   })
   async login(
@@ -136,7 +133,7 @@ export class AuthController {
   }
 
   @Post(loginManagement.path)
-  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Throttle({ default: { ttl: 60000, limit: rateLimitConfig.testing.limit } })
   async loginManagement(
     @Body() loginUserDto: LoginUserDto,
     @Res({ passthrough: true }) response: Response,
