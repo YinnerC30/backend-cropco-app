@@ -98,6 +98,10 @@ export class HarvestOptionsDto {
   @IsEnum(['normal', 'advanced'])
   variant?: 'normal' | 'advanced';
 
+  @IsOptional()
+  @IsString()
+  unitOfMeasure?: UnitType;
+
   // Parámetros para variant 'normal'
   @IsOptional()
   @Type(() => Number)

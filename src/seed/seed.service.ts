@@ -200,7 +200,7 @@ export class SeedService {
       customSupplies = { quantity: 0, unitOfMeasure: 'GRAMOS' },
       employees = 0,
       crops = 0,
-      harvests = { quantity: 0, variant: 'normal' },
+      harvests = { quantity: 0, variant: 'normal', unitOfMeasure: 'GRAMOS' },
       works = { quantity: 0, variant: 'normal' },
       sales = { quantity: 0, variant: 'generic', isReceivable: false },
       shoppings = { quantity: 0, variant: 'extended' },
@@ -318,6 +318,7 @@ export class SeedService {
             this.CreateHarvest({
               date: harvests.date,
               quantityEmployees: harvests.quantityEmployees,
+              unitOfMeasure: harvests.unitOfMeasure,
               amount: harvests.amount,
               valuePay: harvests.valuePay,
             }),
@@ -876,10 +877,12 @@ export class SeedService {
     amount = 150,
     valuePay = 90_000,
     date = InformationGenerator.generateRandomDate({}),
+    unitOfMeasure = 'GRAMOS',
   }: {
     quantityEmployees?: number;
     amount?: number;
     valuePay?: number;
+    unitOfMeasure?: UnitType;
     date?: string;
   }): Promise<{ employees: Employee[]; crop: Crop; harvest: Harvest }> {
     const employees = (await Promise.all(
@@ -897,7 +900,7 @@ export class SeedService {
           employee: { id: employee.id },
           amount: amount,
           value_pay: valuePay,
-          unit_of_measure: 'GRAMOS',
+          unit_of_measure: unitOfMeasure,
         } as HarvestDetailsDto;
       }),
       amount: amount * quantityEmployees,
