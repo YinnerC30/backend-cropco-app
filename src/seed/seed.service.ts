@@ -57,7 +57,7 @@ import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { SeedControlledDto } from './dto/seed.dto';
 import { SeedControlledResponse } from './interfaces/SeedControlledResponse';
-import { UnitType } from '@/common/unit-conversion/unit-conversion.service';
+import { MassUnit, UnitType } from '@/common/unit-conversion/unit-conversion.service';
 
 @Injectable()
 export class SeedService {
@@ -334,12 +334,14 @@ export class SeedService {
         const cropId = harvestsProcessed.cropId;
         const harvestId = harvestsProcessed.harvestId;
         const amount = harvestsProcessed.amount || 50;
+        const unitOfMeasure = harvestsProcessed.unitOfMeasure || 'GRAMOS';
 
         harvestProcessedPromises.push(
           this.CreateHarvestProcessed({
             cropId,
             harvestId,
             amount,
+            unitOfMeasure,
           }),
         );
       }
@@ -921,18 +923,20 @@ export class SeedService {
     harvestId,
     amount,
     date = InformationGenerator.generateRandomDate({}),
+    unitOfMeasure = 'GRAMOS',
   }: {
     cropId: string;
     harvestId: string;
     amount: number;
     date?: string;
+    unitOfMeasure?: UnitType;
   }): Promise<HarvestProcessed> {
     const data: HarvestProcessedDto = {
       date: date,
       crop: { id: cropId },
       harvest: { id: harvestId },
       amount,
-      unit_of_measure: 'GRAMOS',
+      unit_of_measure: unitOfMeasure as MassUnit,
     };
 
     const harvestProcessed =

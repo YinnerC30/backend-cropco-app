@@ -392,6 +392,10 @@ export class HarvestProcessedOptionsDto {
   @IsNumber()
   @IsPositive()
   amount?: number;
+
+  @IsOptional()
+  @IsString()
+  unitOfMeasure?: UnitType;
 }
 
 export class CustomUserOptionsDto {
