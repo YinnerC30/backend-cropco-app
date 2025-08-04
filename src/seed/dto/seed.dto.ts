@@ -1,3 +1,4 @@
+import { UnitType } from '@/common/unit-conversion/unit-conversion.service';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
@@ -399,6 +400,18 @@ export class CustomUserOptionsDto {
   actions?: string[];
 }
 
+export class CustomSupplyOptionsDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  quantity?: number;
+
+  @IsOptional()
+  @IsString()
+  unitOfMeasure?: UnitType;
+}
+
 export class SeedControlledDto {
   /**
    * Número de usuarios a crear.
@@ -435,6 +448,11 @@ export class SeedControlledDto {
   @IsInt()
   @Min(0)
   supplies?: number;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CustomSupplyOptionsDto)
+  customSupplies?: CustomSupplyOptionsDto;
 
   /**
    * Número de empleados a crear.

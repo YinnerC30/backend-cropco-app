@@ -57,6 +57,7 @@ import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { SeedControlledDto } from './dto/seed.dto';
 import { SeedControlledResponse } from './interfaces/SeedControlledResponse';
+import { UnitType } from '@/common/unit-conversion/unit-conversion.service';
 
 @Injectable()
 export class SeedService {
@@ -196,6 +197,7 @@ export class SeedService {
       clients = 0,
       suppliers = 0,
       supplies = 0,
+      customSupplies = { quantity: 0, unitOfMeasure: 'GRAMOS' },
       employees = 0,
       crops = 0,
       harvests = { quantity: 0, variant: 'normal' },
@@ -216,6 +218,7 @@ export class SeedService {
       insertedClients?: Promise<Client>[];
       insertedSuppliers?: Promise<Supplier>[];
       insertedSupplies?: Promise<Supply>[];
+      insertedCustomSupplies?: Promise<Supply>[];
       insertedEmployees?: Promise<Employee>[];
       insertedCrops?: Promise<Crop>[];
       insertedHarvests?: unknown[];
@@ -271,6 +274,14 @@ export class SeedService {
         supplyPromises.push(this.CreateSupply({}) as Promise<Supply>);
       }
       history.insertedSupplies = (await Promise.all(supplyPromises)) as any;
+    }
+
+    if (customSupplies.quantity > 0) {
+      const supplyPromises: Promise<Supply>[] = [];
+      for (let i = 0; i < customSupplies.quantity; i++) {
+        supplyPromises.push(this.CreateSupply({ unitOfMeasure: customSupplies.unitOfMeasure }) as Promise<Supply>);
+      }
+      history.insertedCustomSupplies = (await Promise.all(supplyPromises)) as any;
     }
 
     if (employees > 0) {
@@ -1116,11 +1127,15 @@ export class SeedService {
 
   async CreateSupply({
     mapperToDto = false,
+    unitOfMeasure = InformationGenerator.generateUnitOfMeasure(),
+  }: {
+    mapperToDto?: boolean;
+    unitOfMeasure?: UnitType;
   }): Promise<Supply | EntityConvertedToDto<Supply>> {
     const data: CreateSupplyDto = {
       name: 'Supply ' + InformationGenerator.generateRandomId().substring(0, 5),
       brand: InformationGenerator.generateSupplyBrand(),
-      unit_of_measure: InformationGenerator.generateUnitOfMeasure(),
+      unit_of_measure: unitOfMeasure,
       observation: InformationGenerator.generateObservation(),
     };
 
