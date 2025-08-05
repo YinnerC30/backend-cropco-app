@@ -12,7 +12,7 @@ services:
       # Permitir hasta 250 conexiones
       POSTGRES_MAX_CONNECTIONS: 250
     ports:
-      - '5432:5432'
+      - '5433:5432'
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d cropco_management']
       interval: 5s
