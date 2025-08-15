@@ -552,13 +552,15 @@ export class HarvestService extends BaseTenantService {
         );
       } else if (type_update === 'decrement') {
         const amountActually = recordHarvestCropStock.amount;
-
         if (amountActually < amount) {
           this.logWithContext(
             `Insufficient harvest stock for crop ID: ${cropId}, available: ${amountActually}, requested: ${amount}`,
             'warn',
           );
-          throw new InsufficientHarvestStockException(amountActually, crop.id);
+
+          throw new BadRequestException(
+            `Insufficient harvest stock for crop ID: ${cropId}, available: ${amountActually} GRAMOS, requested: ${amount} GRAMOS`,
+          );
         }
 
         const result = await queryRunner.manager.decrement(

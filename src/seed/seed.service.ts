@@ -879,7 +879,7 @@ export class SeedService {
     amount = 150,
     valuePay = 90_000,
     date = InformationGenerator.generateRandomDate({}),
-    unitOfMeasure = 'GRAMOS',
+    unitOfMeasure = 'KILOGRAMOS',
   }: {
     quantityEmployees?: number;
     amount?: number;
@@ -1013,7 +1013,7 @@ export class SeedService {
           employee: { id: employeeId || employee.id },
           value_pay: valuePay,
           amount: amount,
-          unit_of_measure: 'GRAMOS',
+          unit_of_measure: 'KILOGRAMOS',
         } as HarvestDetailsDto,
       ],
       value_pay: valuePay,
@@ -1088,7 +1088,7 @@ export class SeedService {
           crop: { id: cropId },
           client: { id: clientId || client.id },
           is_receivable: isReceivable,
-          unit_of_measure: 'GRAMOS',
+          unit_of_measure: 'KILOGRAMOS',
         } as SaleDetailsDto,
       ],
     };
@@ -1111,6 +1111,7 @@ export class SeedService {
       cropId: crop.id,
       harvestId: harvest.id,
       amount: 100,
+      unitOfMeasure: 'KILOGRAMOS'
     });
 
     const data: SaleDto = {
@@ -1119,7 +1120,7 @@ export class SeedService {
       value_pay: 840_000,
       details: [
         {
-          unit_of_measure: 'GRAMOS',
+          unit_of_measure: 'KILOGRAMOS',
           amount: quantity,
           value_pay: 840_000,
           crop: { id: crop.id },

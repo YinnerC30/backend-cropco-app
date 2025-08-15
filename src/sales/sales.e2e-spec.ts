@@ -1682,7 +1682,7 @@ describe('SalesController (e2e)', () => {
 
       const bodyRequest: SaleDto = {
         ...rest,
-        amount: rest.amount + 10 * sale.details.length,
+        amount: rest.amount + 10_000 * sale.details.length,
         value_pay: rest.value_pay + 2000 * sale.details.length,
         details: sale.details.map((detail) => ({
           id: detail.id,
@@ -1691,7 +1691,7 @@ describe('SalesController (e2e)', () => {
           amount: detail.amount + 10,
           value_pay: detail.value_pay + 2000,
           is_receivable: false,
-          unit_of_measure: 'GRAMOS',
+          unit_of_measure: 'KILOGRAMOS',
         })) as SaleDetailsDto[],
       };
 

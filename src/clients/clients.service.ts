@@ -122,7 +122,7 @@ export class ClientsService extends BaseTenantService {
       const clients = await this.clientRepository
         .createQueryBuilder('clients')
         .withDeleted()
-        .innerJoin('clients.sales_detail', 'sales_detail')
+        .leftJoinAndSelect('clients.sales_detail', 'sales_detail')
         .where('sales_detail.id IS NOT NULL')
         .getMany();
 

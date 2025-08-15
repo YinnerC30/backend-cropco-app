@@ -1635,7 +1635,7 @@ describe('HarvestsController (e2e)', () => {
 
       const bodyRequest: HarvestDto = {
         ...rest,
-        amount: rest.amount + 10 * record.details.length,
+        amount: rest.amount + 10_000 * record.details.length,
         value_pay: rest.value_pay + 2000 * record.details.length,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
@@ -1644,7 +1644,7 @@ describe('HarvestsController (e2e)', () => {
           employee: { id: detail.employee.id },
           amount: detail.amount + 10,
           value_pay: detail.value_pay + 2000,
-          unit_of_measure: 'GRAMOS',
+          unit_of_measure: 'KILOGRAMOS',
         })) as HarvestDetailsDto[],
       };
 
@@ -1809,7 +1809,7 @@ describe('HarvestsController (e2e)', () => {
 
       const bodyRequest: HarvestDto = {
         ...rest,
-        amount: rest.amount + 10 * record.details.length,
+        amount: rest.amount + 10_000 * record.details.length,
         value_pay: rest.value_pay + 2000 * record.details.length,
         crop: { id: rest.crop.id },
         observation: 'Observation updated',
@@ -1818,7 +1818,7 @@ describe('HarvestsController (e2e)', () => {
           employee: { id: detail.employee.id },
           amount: detail.amount + 10,
           value_pay: detail.value_pay + 2000,
-          unit_of_measure: 'GRAMOS',
+          unit_of_measure: 'KILOGRAMOS',
         })) as HarvestDetailsDto[],
       };
 
@@ -2256,7 +2256,7 @@ describe('HarvestsController (e2e)', () => {
         crop: { id: harvest.crop.id },
         harvest: { id: harvest.id },
         amount: harvest.amount + 50,
-        unit_of_measure: 'GRAMOS',
+        unit_of_measure: 'KILOGRAMOS',
       } as HarvestProcessedDto;
 
       const { body } = await request
@@ -2268,7 +2268,7 @@ describe('HarvestsController (e2e)', () => {
         .expect(409);
 
       expect(body.message).toBe(
-        `You cannot add more processed harvest records, it exceeds the value of the harvest with id ${harvest.id}, only available 150 GRAMOS.`,
+        `You cannot add more processed harvest records, it exceeds the value of the harvest with id ${harvest.id}, only available 150000 GRAMOS.`,
       );
     });
 

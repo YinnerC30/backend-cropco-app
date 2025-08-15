@@ -149,7 +149,7 @@ describe('DashboardController (e2e)', () => {
         expect(record).toHaveProperty('last_name');
         expect(record).toHaveProperty('total_harvests_amount');
         expect(record).toHaveProperty('total_value_pay');
-        expect(record.total_harvests_amount).toBe(150);
+        expect(record.total_harvests_amount).toBe(150_000);
         expect(record.total_value_pay).toBe(90_000);
       });
     });
@@ -179,7 +179,7 @@ describe('DashboardController (e2e)', () => {
         expect(record).toHaveProperty('last_name');
         expect(record).toHaveProperty('total_harvests_amount');
         expect(record).toHaveProperty('total_value_pay');
-        expect(record.total_harvests_amount).toBe(150);
+        expect(record.total_harvests_amount).toBe(150_000);
         expect(record.total_value_pay).toBe(90_000);
       });
     });
@@ -439,7 +439,7 @@ describe('DashboardController (e2e)', () => {
         expect(record).toHaveProperty('total_value_pay');
         expect(record).toHaveProperty('total_amount');
         expect(record.total_value_pay).toBe(840000);
-        expect(record.total_amount).toBe(15);
+        expect(record.total_amount).toBe(15_000);
       });
     });
 
@@ -470,7 +470,7 @@ describe('DashboardController (e2e)', () => {
         expect(record).toHaveProperty('total_value_pay');
         expect(record).toHaveProperty('total_amount');
         expect(record.total_value_pay).toBe(840000);
-        expect(record.total_amount).toBe(15);
+        expect(record.total_amount).toBe(15_000);
       });
     });
   });
@@ -604,7 +604,7 @@ describe('DashboardController (e2e)', () => {
         expect(record).toHaveProperty('total_harvests');
         expect(record).toHaveProperty('total_amount');
         expect(record.total_harvests).toBe(1);
-        expect(record.total_amount).toBe(200);
+        expect(record.total_amount).toBe(200_000);
       });
     });
   });
@@ -661,9 +661,9 @@ describe('DashboardController (e2e)', () => {
       expect(body.growth).toHaveProperty('status');
       expect(body.growth.status).toBe('stable');
       expect(body.growth).toHaveProperty('total_current');
-      expect(body.growth.total_current).toBe(600);
+      expect(body.growth.total_current).toBe(600_000);
       expect(body.growth).toHaveProperty('total_previous');
-      expect(body.growth.total_previous).toBe(600);
+      expect(body.growth.total_previous).toBe(600_000);
 
       expect(body).toHaveProperty('years');
 
@@ -695,9 +695,9 @@ describe('DashboardController (e2e)', () => {
       expect(body.growth).toHaveProperty('status');
       expect(body.growth.status).toBe('increment');
       expect(body.growth).toHaveProperty('total_current');
-      expect(body.growth.total_current).toBe(750);
+      expect(body.growth.total_current).toBe(750_000);
       expect(body.growth).toHaveProperty('total_previous');
-      expect(body.growth.total_previous).toBe(600);
+      expect(body.growth.total_previous).toBe(600_000);
 
       expect(body).toHaveProperty('years');
 
@@ -730,9 +730,9 @@ describe('DashboardController (e2e)', () => {
       expect(body.growth).toHaveProperty('status');
       expect(body.growth.status).toBe('decrement');
       expect(body.growth).toHaveProperty('total_current');
-      expect(body.growth.total_current).toBeGreaterThan(500);
+      expect(body.growth.total_current).toBeGreaterThan(500_000);
       expect(body.growth).toHaveProperty('total_previous');
-      expect(body.growth.total_previous).toBe(1100);
+      expect(body.growth.total_previous).toBe(1_100_000);
 
       expect(body).toHaveProperty('years');
 

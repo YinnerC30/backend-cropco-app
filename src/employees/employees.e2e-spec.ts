@@ -1076,7 +1076,7 @@ describe('EmployeesController (e2e)', () => {
         .set('Cookie', `user-token=${token}`)
         .send(bodyRequest);
       // .expect(201);
-      console.log(response.body);
+
       expect(response.body).toBeDefined();
       expect(response.body).toBeInstanceOf(Buffer);
     });
