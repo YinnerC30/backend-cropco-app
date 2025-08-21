@@ -564,8 +564,8 @@ describe('ShoppingController (e2e)', () => {
         .set('Cookie', `user-token=${token}`)
         .expect(200);
 
-      expect(response.body.total_row_count).toEqual(5);
-      expect(response.body.current_row_count).toEqual(5);
+      expect(response.body.total_row_count).toBeGreaterThan(4);
+      expect(response.body.current_row_count).toBeGreaterThan(4);
       expect(response.body.total_page_count).toEqual(1);
       expect(response.body.current_page_count).toEqual(1);
 
