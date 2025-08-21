@@ -1,15 +1,33 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EncryptionService } from './encryption.service';
+import { HandlerErrorService } from './handler-error.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('EncryptionService', () => {
   let service: EncryptionService;
+  let configService: ConfigService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [EncryptionService],
+      providers: [
+        EncryptionService,
+        HandlerErrorService,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              if (key === 'TENANT_ENCRYPTION_KEY') {
+                return 'test-encryption-key-for-unit-tests-32-chars';
+              }
+              return undefined;
+            }),
+          },
+        },
+      ],
     }).compile();
 
     service = module.get<EncryptionService>(EncryptionService);
+    configService = module.get<ConfigService>(ConfigService);
   });
 
   it('should be defined', () => {
@@ -84,6 +102,18 @@ describe('EncryptionService', () => {
       const decrypted = service.decryptPassword(encrypted);
 
       expect(decrypted).toBe(longPassword);
+    });
+
+    it('should throw error when encryption key is not found', () => {
+      // Mock ConfigService para retornar undefined
+      jest.spyOn(configService, 'get').mockReturnValue(undefined);
+
+      expect(() => service.encryptPassword('test')).toThrow(
+        'Not found tenant encryption key',
+      );
+      expect(() => service.decryptPassword('test:test:test')).toThrow(
+        'Not found tenant encryption key',
+      );
     });
   });
 });
