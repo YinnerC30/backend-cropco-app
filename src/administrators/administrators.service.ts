@@ -100,7 +100,7 @@ export class AdministratorsService extends BaseAdministratorService {
         current_row_count: tenantAdmins.length,
         total_page_count: Math.ceil(count / limit),
         current_page_count: offset + 1,
-        records: tenantAdmins,
+        records: tenantAdmins.map(({ password, ...admin }) => admin),
       };
     } catch (error) {
       this.logWithContext(
