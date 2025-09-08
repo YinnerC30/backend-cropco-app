@@ -1,26 +1,27 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Scope } from '@nestjs/common';
 import { EncryptionService } from 'src/common/services/encryption.service';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { DataSource } from 'typeorm';
-import { TenantsService } from '../tenants.service';
+import { TenantsDatabaseService } from './tenant-database.service';
 
-@Injectable()
+@Injectable({ scope: Scope.DEFAULT })
 export class TenantConnectionService {
   private readonly logger = new Logger('TenantsConnectionsService');
   private tenantConnections: Map<string, DataSource> = new Map();
 
   constructor(
-    @Inject(forwardRef(() => TenantsService))
-    private readonly tenantsService: TenantsService,
+    private readonly tenantsDatabaseService: TenantsDatabaseService,
     private readonly handlerError: HandlerErrorService,
     private readonly encryptionService: EncryptionService,
-  ) {}
+  ) {
+    console.log('Se crea el servicio de conexiones de tenants');
+  }
 
   async getTenantConnection(tenantId: string): Promise<DataSource> {
     try {
       if (!this.tenantConnections.has(tenantId)) {
         const tenantDatabase =
-          await this.tenantsService.getOneTenantDatabase(tenantId);
+          await this.tenantsDatabaseService.getOneTenantDatabase(tenantId);
 
         // Extraer credenciales específicas del tenant desde la configuración
         const connectionConfig = tenantDatabase.connection_config as any;

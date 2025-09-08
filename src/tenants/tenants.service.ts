@@ -1,21 +1,24 @@
 import {
   BadRequestException,
   ForbiddenException,
-  forwardRef,
   Inject,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Request } from 'express';
 import { pathsAuthController } from 'src/auth/auth.controller';
 import { ModuleActions } from 'src/auth/entities/module-actions.entity';
 import { Module } from 'src/auth/entities/module.entity';
+import { BaseAdministratorService } from 'src/auth/services/base-administrator.service';
 import { pathsClientsController } from 'src/clients/clients.controller';
 import { QueryParamsDto } from 'src/common/dto/query-params.dto';
 import { PathProperties } from 'src/common/interfaces/PathsController';
-import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { EncryptionService } from 'src/common/services/encryption.service';
+import { HandlerErrorService } from 'src/common/services/handler-error.service';
 import { pathsConsumptionController } from 'src/consumptions/consumptions.controller';
 import { pathsCropsController } from 'src/crops/crops.controller';
 import { pathsDashboardController } from 'src/dashboard/dashboard.controller';
@@ -34,15 +37,10 @@ import { pathsUsersController } from 'src/users/users.controller';
 import { pathsWorksController } from 'src/work/work.controller';
 import { DataSource, QueryRunner, Raw, Repository } from 'typeorm';
 import { CreateTenantDto } from './dto/create-tenant.dto';
-import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { UserTenantDto } from './dto/user-tenant.dto';
 import { TenantDatabase } from './entities/tenant-database.entity';
 import { Tenant } from './entities/tenant.entity';
 import { TenantConnectionService } from './services/tenant-connection.service';
-import { BaseAdministratorService } from 'src/auth/services/base-administrator.service';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class TenantsService extends BaseAdministratorService {
@@ -50,9 +48,8 @@ export class TenantsService extends BaseAdministratorService {
 
   constructor(
     @Inject(REQUEST) request: Request,
-    @Inject(forwardRef(() => TenantConnectionService))
-    private tenantConnectionService: TenantConnectionService,
 
+    private tenantConnectionService: TenantConnectionService,
     @InjectRepository(Tenant)
     private tenantRepository: Repository<Tenant>,
 
