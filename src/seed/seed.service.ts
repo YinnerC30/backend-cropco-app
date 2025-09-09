@@ -57,12 +57,14 @@ import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { SeedControlledDto } from './dto/seed.dto';
 import { SeedControlledResponse } from './interfaces/SeedControlledResponse';
-import { MassUnit, UnitType } from '@/common/unit-conversion/unit-conversion.service';
+import {
+  MassUnit,
+  UnitType,
+} from '@/common/unit-conversion/unit-conversion.service';
 
 @Injectable()
 export class SeedService {
   constructor(
-    @Inject(REQUEST) private readonly request: Request,
     private readonly usersService: UsersService,
     private readonly cropsService: CropsService,
     private readonly employeesService: EmployeesService,
@@ -279,9 +281,15 @@ export class SeedService {
     if (customSupplies.quantity > 0) {
       const supplyPromises: Promise<Supply>[] = [];
       for (let i = 0; i < customSupplies.quantity; i++) {
-        supplyPromises.push(this.CreateSupply({ unitOfMeasure: customSupplies.unitOfMeasure }) as Promise<Supply>);
+        supplyPromises.push(
+          this.CreateSupply({
+            unitOfMeasure: customSupplies.unitOfMeasure,
+          }) as Promise<Supply>,
+        );
       }
-      history.insertedCustomSupplies = (await Promise.all(supplyPromises)) as any;
+      history.insertedCustomSupplies = (await Promise.all(
+        supplyPromises,
+      )) as any;
     }
 
     if (employees > 0) {
@@ -1111,7 +1119,7 @@ export class SeedService {
       cropId: crop.id,
       harvestId: harvest.id,
       amount: 100,
-      unitOfMeasure: 'KILOGRAMOS'
+      unitOfMeasure: 'KILOGRAMOS',
     });
 
     const data: SaleDto = {

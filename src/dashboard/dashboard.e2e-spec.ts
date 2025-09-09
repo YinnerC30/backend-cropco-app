@@ -41,7 +41,7 @@ describe('DashboardController (e2e)', () => {
 
     await app.init();
 
-    reqTools = new RequestTools({ moduleFixture });
+    reqTools = RequestTools.getInstance({ moduleFixture });
     reqTools.setApp(app);
     await reqTools.initializeTenant();
     tenantId = reqTools.getTenantIdPublic();
@@ -64,6 +64,8 @@ describe('DashboardController (e2e)', () => {
   });
 
   afterAll(async () => {
+    await reqTools.closeConnection();
+    RequestTools.resetInstance();
     await reqTools.deleteTestUser();
     await app.close();
   });

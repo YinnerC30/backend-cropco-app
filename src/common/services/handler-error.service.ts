@@ -4,10 +4,11 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  Scope,
 } from '@nestjs/common';
 import { UpdateValuesMissingError } from 'typeorm';
 
-@Injectable()
+@Injectable({ scope: Scope.DEFAULT })
 export class HandlerErrorService {
   handle(error: any, logger: Logger): void {
     logger.error(error);

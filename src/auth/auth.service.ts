@@ -618,6 +618,7 @@ export class AuthService extends BaseTenantService {
       this.logWithContext(
         `Permission ${actionName} successfully added to user ${user.first_name} ${user.last_name}`,
       );
+      
       return 'Toco crear la acción';
     } catch (error) {
       this.logWithContext(
