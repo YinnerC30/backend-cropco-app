@@ -62,7 +62,7 @@ describe('EmployeesController (e2e)', () => {
 
     await app.init();
 
-    reqTools = new RequestTools({ moduleFixture });
+    reqTools = RequestTools.getInstance({ moduleFixture });
     reqTools.setApp(app);
     await reqTools.initializeTenant();
     tenantId = reqTools.getTenantIdPublic();
@@ -74,6 +74,8 @@ describe('EmployeesController (e2e)', () => {
   });
 
   afterAll(async () => {
+    await reqTools.closeConnection();
+    RequestTools.resetInstance();
     await reqTools.deleteTestUser();
     await app.close();
   });
@@ -332,15 +334,17 @@ describe('EmployeesController (e2e)', () => {
   describe('employees/all (GET)', () => {
     beforeAll(async () => {
       try {
-        await reqTools.clearDatabaseControlled({ employees: true });
-        await Promise.all(
-          Array.from({ length: 17 }).map(() => CreateEmployee()),
-        );
+        // await reqTools.clearDatabaseControlled({ employees: true });
         await reqTools.addActionToUser('find_all_employees');
+
+        Array.from({ length: 17 }).map(async () => {
+          await CreateEmployee();
+          return 'usuario creado';
+        });
       } catch (error) {
         console.log(error);
       }
-    });
+    }, 20_000);
 
     it('should throw an exception for not sending a JWT to the protected path /employees/all', async () => {
       const response = await request

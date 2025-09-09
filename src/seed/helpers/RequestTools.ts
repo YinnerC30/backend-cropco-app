@@ -25,8 +25,11 @@ import { InformationGenerator } from './InformationGenerator';
 
 /**
  * Utility class for making HTTP requests related to user and permission management in tests.
+ * Implementa el patrón Singleton para asegurar una única instancia en toda la aplicación.
  */
 export class RequestTools {
+  private static instance: RequestTools | null = null;
+
   private moduleFixture: TestingModule;
   private tenantRepository: Repository<Tenant>;
   private tenantConnectionService: TenantConnectionService;
@@ -37,10 +40,10 @@ export class RequestTools {
   private adminToken: string;
 
   /**
-   * Creates an instance of RequestTools.
+   * Constructor privado para implementar el patrón Singleton.
    * @param params - Object containing the moduleFixture.
    */
-  constructor(params: { moduleFixture: TestingModule }) {
+  private constructor(params: { moduleFixture: TestingModule }) {
     this.moduleFixture = params.moduleFixture;
     this.tenantRepository = this.moduleFixture.get<Repository<Tenant>>(
       getRepositoryToken(Tenant),
@@ -51,6 +54,38 @@ export class RequestTools {
 
     this.tenantConnectionService =
       this.moduleFixture.get<TenantConnectionService>(TenantConnectionService);
+  }
+
+  /**
+   * Obtiene la instancia única de RequestTools (patrón Singleton).
+   * Si no existe una instancia, crea una nueva.
+   * @param params - Object containing the moduleFixture (solo necesario en la primera llamada).
+   * @returns La instancia única de RequestTools.
+   */
+  public static getInstance(params?: {
+    moduleFixture: TestingModule;
+  }): RequestTools {
+    if (!RequestTools.instance) {
+      if (!params) {
+        throw new Error(
+          'Se requiere moduleFixture para crear la primera instancia de RequestTools',
+        );
+      }
+      RequestTools.instance = new RequestTools(params);
+    }
+    return RequestTools.instance;
+  }
+
+  /**
+   * Resetea la instancia singleton (útil para tests).
+   * ATENCIÓN: Solo usar en tests para limpiar el estado.
+   */
+  public static resetInstance(): void {
+    RequestTools.instance = null;
+  }
+
+  public async closeConnection(): Promise<void> {
+    await this.tenantConnectionService.closeTenantConnection(this.tenantId);
   }
 
   /**

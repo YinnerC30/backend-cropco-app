@@ -13,9 +13,7 @@ export class TenantConnectionService {
     private readonly tenantsDatabaseService: TenantsDatabaseService,
     private readonly handlerError: HandlerErrorService,
     private readonly encryptionService: EncryptionService,
-  ) {
-    console.log('Se crea el servicio de conexiones de tenants');
-  }
+  ) {}
 
   async getTenantConnection(tenantId: string): Promise<DataSource> {
     try {
@@ -66,6 +64,7 @@ export class TenantConnectionService {
       if (connection) {
         await connection.destroy();
         this.tenantConnections.delete(tenantId);
+        this.logger.log(`Connection closed for tenant ${tenantId}`);
       }
     } catch (error) {
       this.handlerError.handle(error, this.logger);
