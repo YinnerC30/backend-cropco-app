@@ -24,16 +24,18 @@ export class Employee extends PersonalInformation {
   @OneToMany(
     () => HarvestDetails,
     (harvest_details) => harvest_details.employee,
-    { cascade: false },
+    { cascade: ['insert', 'update'] },
   )
   harvests_detail: HarvestDetails[];
 
   @OneToMany(() => WorkDetails, (workDetails) => workDetails.employee, {
-    cascade: true,
+    cascade: ['insert', 'update'],
   })
   works_detail: WorkDetails[];
 
-  @OneToMany(() => Payment, (payment) => payment.employee, { cascade: true })
+  @OneToMany(() => Payment, (payment) => payment.employee, {
+    cascade: ['insert', 'update'],
+  })
   payments: Payment[];
 
   @CreateDateColumn()

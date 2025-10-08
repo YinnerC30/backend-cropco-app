@@ -13,10 +13,19 @@ import { ModuleActions } from './entities/module-actions.entity';
 import { User } from 'src/users/entities/user.entity';
 import { UserActions } from 'src/users/entities/user-actions.entity';
 import { CommonModule } from 'src/common/common.module';
+import { AuthAdministratorService } from './services/auth-administrator.service';
+
+import { Administrator } from 'src/administrators/entities/administrator.entity';
+import { JwtAdministrationStrategy } from './strategies/jwt-administration-strategy';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    JwtAdministrationStrategy,
+    AuthAdministratorService,
+  ],
   imports: [
     ConfigModule,
     forwardRef(() => UsersModule),
@@ -39,9 +48,17 @@ import { CommonModule } from 'src/common/common.module';
       ModuleActions,
       User,
       UserActions,
+      Administrator,
     ]),
     CommonModule,
   ],
-  exports: [JwtStrategy, PassportModule, JwtModule, TypeOrmModule, AuthService],
+  exports: [
+    JwtStrategy,
+    JwtAdministrationStrategy,
+    PassportModule,
+    JwtModule,
+    TypeOrmModule,
+    AuthService,
+  ],
 })
 export class AuthModule {}

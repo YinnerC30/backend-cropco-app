@@ -1,4 +1,4 @@
-import { IsIn, IsString, Length, MaxLength } from 'class-validator';
+import { IsIn, IsString, Length } from 'class-validator';
 import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
 
 export class CreateSupplyDto {
@@ -22,9 +22,10 @@ export class CreateSupplyDto {
     'MILILITROS',
     'LITROS',
     'GALONES',
-    'ONZAS_FLUIDAS',
-    'CUCHARADAS',
-    'CUCHARADAS_SOPERAS',
+    // Longitud
+    'MILIMETROS',
+    'CENTIMETROS',
+    'METROS',
   ])
   unit_of_measure: UnitType;
 

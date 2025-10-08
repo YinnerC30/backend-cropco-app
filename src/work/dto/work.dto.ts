@@ -3,7 +3,8 @@ import {
   ArrayNotEmpty,
   IsArray,
   IsDateString,
-  IsInt,
+  IsDefined,
+  IsNumber,
   IsPositive,
   IsString,
   Length,
@@ -20,23 +21,24 @@ export class WorkDto {
   date: string;
 
   @IsString()
-  @Length(10, 500)
+  @Length(15, 500)
   description: string;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
+  @MatchTotals({
+    fields: ['value_pay'],
+    nameArrayToCalculate: 'details',
+  })
   value_pay: number;
 
+  @IsDefined()
   @ValidateNested()
   @Type(() => ValidateUUID)
   crop: DeepPartial<Crop>;
 
   @IsArray()
   @ArrayNotEmpty()
-  @MatchTotals({
-    fields: ['value_pay'],
-    nameArrayToCalculate: 'details',
-  })
   @ValidateNested({ each: true })
   @Type(() => WorkDetailsDto)
   details: WorkDetailsDto[];

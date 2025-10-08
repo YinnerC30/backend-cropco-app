@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   ParseUUIDPipe,
   Post,
@@ -21,6 +22,7 @@ import { RemoveBulkRecordsDto } from 'src/common/dto/remove-bulk-records.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Response } from 'express';
 import { ResponseStatusInterceptor } from 'src/common/interceptors/response-status.interceptor';
+import { GetSubdomain } from 'src/common/decorators/get-subdomain.decorator';
 
 export const pathsPaymentsController: PathsController = {
   createPayment: {
@@ -85,13 +87,17 @@ export class PaymentsController {
   }
 
   @Get(exportPaymentToPDF.path)
+  @Header('Content-Type', 'application/pdf')
   async exportWorkToPDF(
     @Param('id', ParseUUIDPipe) id: string,
     @Res() response: Response,
+    @GetSubdomain() subdomain: string,
   ) {
-    const pdfDoc = await this.paymentsService.exportPaymentToPDF(id);
-    response.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.info.Title = 'Registro de pago';
+    const pdfDoc = await this.paymentsService.exportPaymentToPDF(id, subdomain);
+    response.setHeader(
+      'Content-Disposition',
+      `inline; filename="registro-pago-${id}.pdf"`,
+    );
     pdfDoc.pipe(response);
     pdfDoc.end();
   }

@@ -21,7 +21,7 @@ export class ModuleActions {
   @Column({ type: 'varchar' })
   description: string;
 
-  @Column({ type: 'varchar', default: 'http://localhost' })
+  @Column({ type: 'varchar', default: 'http://localhost', select: false })
   path_endpoint: string;
 
   @Column({ type: 'boolean', default: false })

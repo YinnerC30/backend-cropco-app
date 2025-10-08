@@ -1,7 +1,6 @@
 import { Type } from 'class-transformer';
 import {
   IsIn,
-  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -10,22 +9,22 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
-import { DeepPartial } from 'typeorm';
-import { Supply } from 'src/supplies/entities';
-import { Supplier } from 'src/suppliers/entities/supplier.entity';
-import { SuppliesShopping } from '../entities/supplies-shopping.entity';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
+import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
+import { AllUnitTypesDto } from 'src/common/utils/UnitTypesDto';
+import { Supplier } from 'src/suppliers/entities/supplier.entity';
+import { Supply } from 'src/supplies/entities';
+import { DeepPartial } from 'typeorm';
 
 export class ShoppingSuppliesDetailsDto {
   @IsOptional()
   @IsUUID()
   id?: string;
 
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => String)
-  shopping?: DeepPartial<SuppliesShopping>;
+  // @IsOptional()
+  // @ValidateNested()
+  // @Type(() => String)
+  // shopping?: DeepPartial<SuppliesShopping>;
 
   @IsNotEmpty()
   @ValidateNested()
@@ -47,21 +46,7 @@ export class ShoppingSuppliesDetailsDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsIn([
-    // Unidades de masa
-    'GRAMOS',
-    'KILOGRAMOS',
-    'LIBRAS',
-    'ONZAS',
-    'TONELADAS',
-    // Unidades de volumen
-    'MILILITROS',
-    'LITROS',
-    'GALONES',
-    // 'ONZAS_FLUIDAS',
-    // 'CUCHARADAS',
-    // 'CUCHARADAS_SOPERAS',
-  ])
+  @IsIn(AllUnitTypesDto)
   unit_of_measure: UnitType;
 
   // @IsOptional()

@@ -3,9 +3,8 @@ import {
   IsBoolean,
   IsDefined,
   IsIn,
-  IsInt,
-  IsNotEmpty,
   IsNumber,
+  IsNotEmpty,
   IsOptional,
   IsPositive,
   IsString,
@@ -15,6 +14,7 @@ import {
 import { Client } from 'src/clients/entities/client.entity';
 import { ValidateUUID } from 'src/common/dto/validate-uuid';
 import { MassUnit } from 'src/common/unit-conversion/unit-conversion.service';
+import { MassUnitDto } from 'src/common/utils/UnitTypesDto';
 import { Crop } from 'src/crops/entities/crop.entity';
 import { DeepPartial } from 'typeorm';
 
@@ -25,21 +25,14 @@ export class SaleDetailsDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsIn([
-    // Unidades de masa
-    'GRAMOS',
-    'KILOGRAMOS',
-    'LIBRAS',
-    'ONZAS',
-    'TONELADAS',
-  ])
+  @IsIn(MassUnitDto)
   unit_of_measure: MassUnit;
 
   @IsNumber()
   @IsPositive()
   amount: number;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   value_pay: number;
 

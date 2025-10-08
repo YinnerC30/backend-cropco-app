@@ -7,7 +7,7 @@ describe('GetToken Decorator', () => {
 
   beforeEach(() => {
     mockRequest = {
-      headers: {},
+      cookies: {},
     };
 
     mockExecutionContext = {
@@ -17,40 +17,19 @@ describe('GetToken Decorator', () => {
     } as unknown as ExecutionContext;
   });
 
-  it('should correctly extract the token when it is present with lowercase “authorization”.', () => {
-    mockRequest.headers['authorization'] = 'Bearer validToken123';
+  it('should correctly extract the token when it is present in the user-token cookie', () => {
+    mockRequest.cookies['user-token'] = 'validToken123';
     const result = GetToken(null, mockExecutionContext);
     expect(result).toBe('validToken123');
   });
 
-  it('should correctly extract the token when it is present with “Authorization” in uppercase letters', () => {
-    mockRequest.headers['Authorization'] = 'Bearer validToken123';
-    const result = GetToken(null, mockExecutionContext);
-    expect(result).toBe('validToken123');
-  });
-
-  it('should throw UnauthorizedException when there is no authorization header', () => {
+  it('should throw UnauthorizedException when there is no user-token cookie', () => {
     expect(() => {
       GetToken(null, mockExecutionContext);
     }).toThrow(UnauthorizedException);
   });
 
-  it('should throw UnauthorizedException when token format is incorrect (without “Bearer”)', () => {
-    mockRequest.headers['authorization'] = 'InvalidToken123';
-    expect(() => {
-      GetToken(null, mockExecutionContext);
-    }).toThrow(UnauthorizedException);
-  });
-
-  it('should throw UnauthorizedException when token format is incorrect (without token)', () => {
-    mockRequest.headers['authorization'] = 'Bearer ';
-    expect(() => {
-      GetToken(null, mockExecutionContext);
-    }).toThrow(UnauthorizedException);
-  });
-
-  it('should check for the correct error message when there is no token', () => {
-    mockRequest.headers['authorization'] = 'Bearer ';
+  it('should throw UnauthorizedException with correct message when there is no token', () => {
     try {
       GetToken(null, mockExecutionContext);
       fail('It was expected to launch an exception');

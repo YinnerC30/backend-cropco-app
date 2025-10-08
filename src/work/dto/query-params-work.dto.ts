@@ -3,8 +3,9 @@ import {
   IsBooleanString,
   IsDateString,
   IsEnum,
-  IsInt,
+  IsNumber,
   IsOptional,
+  IsPositive,
   IsString,
   IsUUID,
 } from 'class-validator';
@@ -38,9 +39,10 @@ export class QueryParamsWork extends QueryParamsDto {
   @IsEnum(TypeFilterNumber)
   type_filter_value_pay?: TypeFilterNumber;
 
-  @IsOptional()
+ @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber()
+  @IsPositive()
   value_pay?: number;
 
   @IsOptional()

@@ -14,10 +14,12 @@ import { RoleUser } from '../types/role-user.type';
 
 export class UserDto {
   @IsString()
+  @MinLength(2)
   @MaxLength(100)
   first_name: string;
 
   @IsString()
+  @MinLength(2)
   @MaxLength(100)
   last_name: string;
 
@@ -32,7 +34,8 @@ export class UserDto {
   password: string;
 
   @IsString()
-  @MaxLength(10)
+  @MaxLength(15)
+  @MinLength(9)
   cell_phone_number: string;
 
   @IsArray()

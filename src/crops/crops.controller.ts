@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseInterceptors,
 } from '@nestjs/common';
 
@@ -20,6 +21,7 @@ import { CropsService } from './crops.service';
 import { CreateCropDto } from './dto/create-crop.dto';
 import { UpdateCropDto } from './dto/update-crop.dto';
 import { Crop } from './entities/crop.entity';
+import { Request } from 'express';
 
 export const pathsCropsController: PathsController = {
   createCrop: {
@@ -105,8 +107,6 @@ export class CropsController {
 
   // Crear cultivo
   @Post(createCrop.path)
-  // Documentación
-
   // Método
   create(@Body() createCropDto: CreateCropDto) {
     return this.cropsService.create(createCropDto);

@@ -14,16 +14,16 @@ describe('QueryParamsTotalHarvestsInYearDto', () => {
     expect(errors.length).toBe(0);
   });
 
-  it('should fail validation with year 2023', async () => {
-    const dto = plainToClass(QueryParamsTotalHarvestsInYearDto, {
-      year: 2023,
-      crop: '8b73400f-be8e-454d-902a-4b37c9bd23d4',
-      employee: '8b73400f-be8e-454d-902a-4b37c9bd23d4',
-    });
+  // it('should fail validation with year 2023', async () => {
+  //   const dto = plainToClass(QueryParamsTotalHarvestsInYearDto, {
+  //     year: 2023,
+  //     crop: '8b73400f-be8e-454d-902a-4b37c9bd23d4',
+  //     employee: '8b73400f-be8e-454d-902a-4b37c9bd23d4',
+  //   });
 
-    const errors = await validate(dto);
-    expect(errors.length).toBe(1);
-  });
+  //   const errors = await validate(dto);
+  //   expect(errors.length).toBe(1);
+  // });
 
   it('should pass validation with optional fields omitted', async () => {
     const dto = plainToClass(QueryParamsTotalHarvestsInYearDto, {

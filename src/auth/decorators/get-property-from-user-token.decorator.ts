@@ -6,13 +6,8 @@ export const getPropertyFromTokenFactory = (
   ctx: ExecutionContext,
 ): string | null => {
   const request = ctx.switchToHttp().getRequest();
-  const authorizationHeader = request.headers['authorization'];
+  const token = request.cookies['user-token'];
 
-  if (!authorizationHeader) {
-    return null;
-  }
-
-  const token = authorizationHeader.split(' ')[1];
   if (!token) {
     return null;
   }

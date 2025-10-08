@@ -1,4 +1,6 @@
 import { Client } from 'src/clients/entities/client.entity';
+import { MassUnit } from 'src/common/unit-conversion/unit-conversion.service';
+import { MassUnitDto } from 'src/common/utils/UnitTypesDto';
 import { Crop } from 'src/crops/entities/crop.entity';
 import {
   Column,
@@ -10,7 +12,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Sale } from './sale.entity';
-import { MassUnit } from 'src/common/unit-conversion/unit-conversion.service';
 
 @Entity({ name: 'sales_detail' })
 export class SaleDetails {
@@ -19,14 +20,7 @@ export class SaleDetails {
 
   @Column({
     type: 'enum',
-    enum: [
-      // Unidades de masa
-      'GRAMOS',
-      'KILOGRAMOS',
-      'LIBRAS',
-      'ONZAS',
-      'TONELADAS',
-    ],
+    enum: MassUnitDto,
   })
   unit_of_measure: MassUnit;
 
@@ -47,12 +41,12 @@ export class SaleDetails {
   sale: Sale;
 
   @ManyToOne(() => Crop, (crop) => crop.sales_detail, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   crop: Crop;
 
   @ManyToOne(() => Client, (client) => client.sales_detail, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   client: Client;
 

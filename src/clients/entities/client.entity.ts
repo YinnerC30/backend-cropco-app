@@ -21,7 +21,7 @@ export class Client extends PersonalInformation {
   // External relations
 
   @OneToMany(() => SaleDetails, (sales_detail) => sales_detail.client, {
-    cascade: true,
+    cascade: ['insert', 'update'],
   })
   sales_detail: SaleDetails[];
 

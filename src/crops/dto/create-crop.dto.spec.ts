@@ -15,6 +15,7 @@ describe('CreateCropDto', () => {
     dto.location = 'Parcela 4, Sector A';
     dto.date_of_creation = '2023-07-01';
     dto.date_of_termination = '2023-10-01';
+    dto.number_hectares = 12;
 
     const errors = await validate(dto);
     expect(errors.length).toBe(0);
@@ -36,6 +37,7 @@ describe('CreateCropDto', () => {
     dto.units = 0;
     dto.location = 'Parcela 4, Sector A';
     dto.date_of_creation = '2023-07-01';
+    dto.number_hectares = 12;
 
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
@@ -47,6 +49,7 @@ describe('CreateCropDto', () => {
     dto.units = 10;
     dto.location = 'A';
     dto.date_of_creation = '2023-07-01';
+    dto.number_hectares = 12;
 
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
@@ -58,6 +61,7 @@ describe('CreateCropDto', () => {
     dto.units = 10;
     dto.location = 'Parcela 4, Sector A';
     dto.date_of_creation = 'invalid-date';
+    dto.number_hectares = 12;
 
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
@@ -69,6 +73,7 @@ describe('CreateCropDto', () => {
     dto.units = 10;
     dto.location = 'Parcela 4, Sector A';
     dto.date_of_creation = '2023-07-01';
+    dto.number_hectares = 12;
 
     const errors = await validate(dto);
     expect(errors.length).toBe(0);
@@ -80,6 +85,7 @@ describe('CreateCropDto', () => {
     dto.location = 'Parcela 4, Sector A';
     dto.date_of_creation = '2023-07-01';
     dto.description = 'a'.repeat(501);
+    dto.number_hectares = 12;
 
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);

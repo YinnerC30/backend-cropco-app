@@ -6,17 +6,19 @@ import { FormatMoneyValue } from 'src/common/helpers/money-formatter';
 import { FormatNumber } from 'src/common/helpers/number-formatter';
 import { MyStyles } from 'src/common/reports/sections/styles-dictionary';
 import { DateFormatter } from 'src/common/helpers';
+import { buildFrontendURL } from 'src/common/utils/constants';
 
 interface ReportOptions {
   title?: string;
   subTitle?: string;
   data: Work;
+  subdomain: string;
 }
 
 export const getWorkReport = (options: ReportOptions): TDocumentDefinitions => {
-  const { title, subTitle, data } = options;
+  const { title, subTitle, data, subdomain } = options;
 
-  const pathFrontend = process.env['HOST_FRONTED'] ?? 'http://localhost:5173';
+  const pathFrontend = buildFrontendURL(subdomain).url;
 
   return {
     header: headerSection({

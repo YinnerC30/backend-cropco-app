@@ -1,4 +1,4 @@
-import { Crop } from 'src/crops/entities/crop.entity';
+
 import {
   Column,
   CreateDateColumn,
@@ -10,6 +10,7 @@ import {
   UpdateDateColumn
 } from 'typeorm';
 import { WorkDetails } from './work-details.entity';
+import { Crop } from 'src/crops/entities/crop.entity';
 
 @Entity({ name: 'works' })
 export class Work {
@@ -34,7 +35,7 @@ export class Work {
   // Internal relations
 
   @ManyToOne(() => Crop, (crop) => crop.works, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   crop: Crop;
 

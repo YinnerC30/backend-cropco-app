@@ -12,6 +12,7 @@ describe('CreateHarvestDto', () => {
     amount: 100,
     value_pay: 500,
     payment_is_pending: false,
+    unit_of_measure: 'GRAMOS'
   };
 
   const validDto = {

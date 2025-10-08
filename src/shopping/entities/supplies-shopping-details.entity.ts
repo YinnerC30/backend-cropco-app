@@ -1,4 +1,7 @@
+import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
+import { AllUnitTypesDto } from 'src/common/utils/UnitTypesDto';
 import { Supplier } from 'src/suppliers/entities/supplier.entity';
+import { Supply } from 'src/supplies/entities';
 import {
   Column,
   CreateDateColumn,
@@ -10,8 +13,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { SuppliesShopping } from './supplies-shopping.entity';
-import { Supply } from 'src/supplies/entities';
-import { UnitType } from 'src/common/unit-conversion/unit-conversion.service';
 
 @Entity({ name: 'supplies_shopping_details' })
 export class SuppliesShoppingDetails {
@@ -19,9 +20,10 @@ export class SuppliesShoppingDetails {
   id: string;
 
   @Column({
-    type: 'int4',
+    type: 'float8',
   })
   amount: number;
+
   @Column({
     type: 'int4',
   })
@@ -39,34 +41,20 @@ export class SuppliesShoppingDetails {
   shopping: SuppliesShopping;
 
   @ManyToOne(() => Supply, (supply) => supply.shopping_details, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
-  // @JoinColumn()
+  @JoinColumn()
   supply: Supply;
 
   @ManyToOne(() => Supplier, (supplier) => supplier.supplies_shopping_details, {
-    onDelete: 'CASCADE',
+    onDelete: 'RESTRICT',
   })
   @JoinColumn()
   supplier: Supplier;
 
   @Column({
     type: 'enum',
-    enum: [
-      // Unidades de masa
-      'GRAMOS',
-      'KILOGRAMOS',
-      'LIBRAS',
-      'ONZAS',
-      'TONELADAS',
-      // Unidades de volumen
-      'MILILITROS',
-      'LITROS',
-      'GALONES',
-      'ONZAS_FLUIDAS',
-      'CUCHARADAS',
-      'CUCHARADAS_SOPERAS',
-    ],
+    enum: AllUnitTypesDto,
   })
   unit_of_measure: UnitType;
 

@@ -54,7 +54,7 @@ describe('CreateSupplierDto', () => {
   });
 
   it('should fail if cell_phone_number exceeds max length', async () => {
-    dto.cell_phone_number = '12345678901';
+    dto.cell_phone_number = '123456789017878787887';
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].property).toBe('cell_phone_number');

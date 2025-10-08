@@ -27,7 +27,10 @@ export class Crop {
   @Column({ type: 'text' })
   description: string;
 
-  @Column({ type: 'int4' })
+  @Column({ type: 'float' })
+  number_hectares: number;
+
+  @Column({ type: 'float' })
   units: number;
 
   @Column({ type: 'text' })
@@ -50,26 +53,28 @@ export class Crop {
     () => HarvestProcessed,
     (harvests_processed) => harvests_processed.crop,
     {
-      cascade: true,
+      cascade: ['insert', 'update'],
     },
   )
   harvests_processed: HarvestProcessed[];
 
-  @OneToMany(() => Harvest, (harvest) => harvest.crop, { cascade: true })
+  @OneToMany(() => Harvest, (harvest) => harvest.crop, {
+    cascade: ['insert', 'update'],
+  })
   harvests: Harvest[];
 
   @OneToMany(
     () => SuppliesConsumptionDetails,
     (supplies_consumption_details) => supplies_consumption_details.crop,
-    { cascade: true },
+    { cascade: ['insert', 'update'] },
   )
   supplies_consumption_details: SuppliesConsumptionDetails[];
 
-  @OneToMany(() => Work, (work) => work.crop, { cascade: true })
+  @OneToMany(() => Work, (work) => work.crop, { cascade: ['insert', 'update'] })
   works: Work[];
 
   @OneToMany(() => SaleDetails, (sales_detail) => sales_detail.crop, {
-    cascade: true,
+    cascade: ['insert', 'update'],
   })
   sales_detail: SaleDetails[];
 

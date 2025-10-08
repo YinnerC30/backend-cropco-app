@@ -3,7 +3,7 @@ import {
   IsNumber,
   IsDefined,
   IsIn,
-  IsInt,
+  
   IsNotEmpty,
   IsOptional,
   IsPositive,
@@ -45,7 +45,7 @@ export class HarvestDetailsDto {
   @IsPositive()
   amount: number;
 
-  @IsInt()
+  @IsNumber()
   @IsPositive()
   value_pay: number;
 }
