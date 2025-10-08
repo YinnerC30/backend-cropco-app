@@ -165,6 +165,8 @@ Con el servidor en ejecución, puedes poblar la base de datos accediendo a:
 
 [http://localhost:3000/seed](http://localhost:3000/seed)
 
+Nota: Esto solo es permito en el entorno de desarrollo y requiere autorización de un usuario administrador.
+
 ## 👥 Autores
 
 - **Yinner Chilito** - _Desarrollo inicial_
