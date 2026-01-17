@@ -190,7 +190,7 @@ export class TenantsController {
   }
 
 
-  // @AuthAdministration()
+  @AuthAdministration()
   @Put('update/database/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   updateTenantDB(
