@@ -1,8 +1,9 @@
-import { Injectable, Logger, Scope } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { EncryptionService } from 'src/common/services/encryption.service';
 import { HandlerErrorService } from 'src/common/services/handler-error.service';
-import { DataSource } from 'typeorm';
-import { TenantsDatabaseService } from './tenant-database.service';
+import { DataSource, Repository } from 'typeorm';
+import { TenantDatabase } from '../entities/tenant-database.entity';
 
 @Injectable({ scope: Scope.DEFAULT })
 export class TenantConnectionService {
@@ -10,16 +11,43 @@ export class TenantConnectionService {
   private tenantConnections: Map<string, DataSource> = new Map();
 
   constructor(
-    private readonly tenantsDatabaseService: TenantsDatabaseService,
+    @InjectRepository(TenantDatabase)
+    private tenantDatabaseRepository: Repository<TenantDatabase>,
     private readonly handlerError: HandlerErrorService,
     private readonly encryptionService: EncryptionService,
-  ) {}
+  ) { }
+
+  async getOneTenantDatabase(tenantId: string) {
+    try {
+      const tenantDatabase = await this.tenantDatabaseRepository
+        .createQueryBuilder('tenant_databases')
+        .leftJoinAndSelect('tenant_databases.tenant', 'tenant')
+        .where('tenant.id = :tenantId', { tenantId })
+        .getOne();
+
+      if (!tenantDatabase) {
+        throw new NotFoundException(
+          `Database for tenant ${tenantId} not found`,
+        );
+      }
+
+      if (tenantDatabase.tenant.is_active === false) {
+        throw new ForbiddenException(
+          `Database for tenant ${tenantId} is disabled`,
+        );
+      }
+
+      return tenantDatabase;
+    } catch (error) {
+      this.handlerError.handle(error, this.logger);
+    }
+  }
 
   async getTenantConnection(tenantId: string): Promise<DataSource> {
     try {
       if (!this.tenantConnections.has(tenantId)) {
         const tenantDatabase =
-          await this.tenantsDatabaseService.getOneTenantDatabase(tenantId);
+          await this.getOneTenantDatabase(tenantId);
 
         // Extraer credenciales específicas del tenant desde la configuración
         const connectionConfig = tenantDatabase.connection_config as any;
