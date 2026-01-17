@@ -190,8 +190,8 @@ export class TenantsController {
   }
 
 
-  @AuthAdministration()
-  @Post('update/database/:id')
+  // @AuthAdministration()
+  @Put('update/database/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   updateTenantDB(
     @Param('id', ParseUUIDPipe) id: string,
