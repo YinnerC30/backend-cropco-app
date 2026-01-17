@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -18,6 +20,8 @@ import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantsService } from './tenants.service';
 import { UserDto } from 'src/users/dto/user.dto';
 import { UserTenantDto } from './dto/user-tenant.dto';
+import { UpdateTenantDatabaseDto } from './dto/update-tenant-database.dto';
+import { TenantsDatabaseService } from './services/tenant-database.service';
 
 export const pathsTenantsController: PathsController = {
   create: {
@@ -101,7 +105,7 @@ const {
 
 @Controller('tenants')
 export class TenantsController {
-  constructor(private readonly tenantsService: TenantsService) {}
+  constructor(private readonly tenantsService: TenantsService, private readonly tenantsDatabaseService: TenantsDatabaseService,) { }
 
   @AuthAdministration()
   @Post(create.path)
@@ -183,5 +187,19 @@ export class TenantsController {
     @Param('userId') userId: string,
   ) {
     return this.tenantsService.removeUserAdminTenantDB(tenantId, userId);
+  }
+
+
+  @AuthAdministration()
+  @Post('update/database/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  updateTenantDB(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() tenantDatabaseDto: UpdateTenantDatabaseDto,
+  ) {
+    return this.tenantsDatabaseService.updateTenantDatabase(
+      id,
+      tenantDatabaseDto,
+    );
   }
 }
